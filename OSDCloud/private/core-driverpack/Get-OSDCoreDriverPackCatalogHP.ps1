@@ -75,7 +75,7 @@ function Get-OSDCoreDriverPackCatalogHP {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LocalOnly requested; skipping online catalog download"
             }
             elseif ($Force -or -not (Test-Path $tempCatalogPath)) {
-
+                Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog"
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading $OemDriverPackCatalog"
                 $null = Invoke-WebRequest -Uri $OemDriverPackCatalog -OutFile $tempCatalogPackagePath -ErrorAction Stop
 
@@ -98,10 +98,12 @@ function Get-OSDCoreDriverPackCatalogHP {
                         Remove-Item -Path $tempCatalogPackagePath -Force -ErrorAction SilentlyContinue
                     }
                 }
-            } else {
+            }
+            else {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using temp catalog"
             }
-        } catch {
+        }
+        catch {
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Failed to download DriverPack catalog: $($_.Exception.Message)"
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Falling back to local catalog"
         }
@@ -114,7 +116,8 @@ function Get-OSDCoreDriverPackCatalogHP {
         elseif (Test-Path $tempCatalogPath) {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Indexing $tempCatalogPath"
             [xml]$XmlCatalogContent = Get-Content -Path $tempCatalogPath -Raw
-        } else {
+        }
+        else {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Indexing $LocalDriverPackCatalog"
             [xml]$XmlCatalogContent = Get-Content -Path $LocalDriverPackCatalog -Raw
         }
@@ -143,7 +146,8 @@ function Get-OSDCoreDriverPackCatalogHP {
             # DateReleased is in format: 2026-06-11
             $dtDateReleased = [datetime]::ParseExact($HpCatalogRoot.DateReleased, 'yyyy-MM-dd', $null)
             $CatalogVersion = $dtDateReleased.ToString('yy.MM.dd')
-        } else {
+        }
+        else {
             # Fallback to current date if DateReleased is not available
             $CatalogVersion = Get-Date -Format yy.MM.dd
         }
@@ -151,13 +155,13 @@ function Get-OSDCoreDriverPackCatalogHP {
 
         $HpSoftPaqList = $XmlCatalogContent.NewDataSet.HPClientDriverPackCatalog.SoftPaqList.SoftPaq
         $HpModelList = $XmlCatalogContent.NewDataSet.HPClientDriverPackCatalog.ProductOSDriverPackList.ProductOSDriverPack
-        $HpModelList = $HpModelList | Where-Object {$_.OSId -ge '4317'}
+        $HpModelList = $HpModelList | Where-Object { $_.OSId -ge '4317' }
         #=================================================
         # Create Object
         #=================================================
         $Results = foreach ($Item in $HpModelList) {
             $HpSoftPaq = $null
-            $HpSoftPaq = $HpSoftPaqList | Where-Object {$_.Id -eq $Item.SoftPaqId}
+            $HpSoftPaq = $HpSoftPaqList | Where-Object { $_.Id -eq $Item.SoftPaqId }
 
             if ($null -eq $HpSoftPaq) {
                 Continue
@@ -174,8 +178,9 @@ function Get-OSDCoreDriverPackCatalogHP {
 
             # Handle null SystemId
             $SystemIds = if ($Item.SystemId) {
-                $Item.SystemId.split(',').ForEach({$_.Trim()})
-            } else {
+                $Item.SystemId.split(',').ForEach({ $_.Trim() })
+            }
+            else {
                 @()
             }
 
@@ -199,7 +204,7 @@ function Get-OSDCoreDriverPackCatalogHP {
         # Cleanup Catalog
         #=================================================
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Filtering to latest driver packs per model"
-        $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object Model | ForEach-Object {$_.Group | Select-Object -First 1}
+        $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object Model | ForEach-Object { $_.Group | Select-Object -First 1 }
         #=================================================
         # Sort Results
         #=================================================

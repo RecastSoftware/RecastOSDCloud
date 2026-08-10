@@ -80,6 +80,7 @@ function Get-OSDCoreDriverPackCatalogDell {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LocalOnly requested; skipping online catalog download"
             }
             elseif ($Force -or -not (Test-Path $tempCatalogPath)) {
+                Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog"
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading $OemDriverPackCatalog"
                 $null = Invoke-WebRequest -Uri $OemDriverPackCatalog -OutFile $tempCatalogPackagePath -ErrorAction Stop
 
@@ -91,10 +92,12 @@ function Get-OSDCoreDriverPackCatalogDell {
                         Write-Warning "Failed to extract catalog: $expandResult"
                     }
                 }
-            } else {
+            }
+            else {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using temp catalog"
             }
-        } catch {
+        }
+        catch {
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Failed to download DriverPack catalog: $($_.Exception.Message)"
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Falling back to local catalog"
         }
@@ -107,7 +110,8 @@ function Get-OSDCoreDriverPackCatalogDell {
         elseif (Test-Path $tempCatalogPath) {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Indexing $tempCatalogPath"
             [xml]$XmlCatalogContent = Get-Content -Path $tempCatalogPath -Raw
-        } else {
+        }
+        else {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Indexing $LocalDriverPackCatalog"
             [xml]$XmlCatalogContent = Get-Content -Path $LocalDriverPackCatalog -Raw
         }
@@ -132,7 +136,7 @@ function Get-OSDCoreDriverPackCatalogDell {
         $OnlineBaseUri = 'https://downloads.dell.com/'
 
         #$CatalogVersion = (Get-Date $XmlCatalogContent.DriverPackManifest.version).ToString('yy.MM.dd')
-        $RawCatalogVersion = $XmlCatalogContent.DriverPackManifest.version -replace '.00','.01'
+        $RawCatalogVersion = $XmlCatalogContent.DriverPackManifest.version -replace '.00', '.01'
         $CatalogVersion = (Get-Date $RawCatalogVersion).ToString('yy.MM.dd')
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Catalog version: $CatalogVersion"
 
@@ -150,13 +154,14 @@ function Get-OSDCoreDriverPackCatalogDell {
             $osCode = $Item.SupportedOperatingSystems.OperatingSystem.osCode.Trim() | Select-Object -Unique
             if ($osCode -match 'Windows11') {
                 $OperatingSystem = 'Windows 11'
-            } else {
+            }
+            else {
                 Continue
             }
 
             $Name = "Dell $($Item.SupportedSystems.Brand.Model.name | Select-Object -Unique)"
-            $Name = $Name -replace '  ',' '
-            $Name = $Name -replace 'Dell Dell','Dell'
+            $Name = $Name -replace '  ', ' '
+            $Name = $Name -replace 'Dell Dell', 'Dell'
             $Model = ($Item.SupportedSystems.Brand.Model.name | Select-Object -Unique)
 
             # DriverPack Version
@@ -168,17 +173,17 @@ function Get-OSDCoreDriverPackCatalogDell {
             $ReleaseDate = Get-Date $Item.dateTime -Format "yy.MM.dd"
 
             $ObjectProperties = [Ordered]@{
-                CatalogVersion      = $CatalogVersion
-                ReleaseDate         = $ReleaseDate
-                Name                = "$Name $DriverPackVersion [$ReleaseDate]"
-                Manufacturer        = 'Dell'
-                Model               = $Model
-                SystemId            = [string[]]@($Item.SupportedSystems.Brand.Model.systemID | Select-Object -Unique)
-                FileName            = (Split-Path -Leaf $Item.path)
-                Url                 = -join ($OnlineBaseUri, $Item.path)
-                OperatingSystem     = $OperatingSystem
-                OSArchitecture      = 'amd64'
-                HashMD5             = $Item.HashMD5
+                CatalogVersion  = $CatalogVersion
+                ReleaseDate     = $ReleaseDate
+                Name            = "$Name $DriverPackVersion [$ReleaseDate]"
+                Manufacturer    = 'Dell'
+                Model           = $Model
+                SystemId        = [string[]]@($Item.SupportedSystems.Brand.Model.systemID | Select-Object -Unique)
+                FileName        = (Split-Path -Leaf $Item.path)
+                Url             = -join ($OnlineBaseUri, $Item.path)
+                OperatingSystem = $OperatingSystem
+                OSArchitecture  = 'amd64'
+                HashMD5         = $Item.HashMD5
             }
             New-Object -TypeName PSObject -Property $ObjectProperties
         }

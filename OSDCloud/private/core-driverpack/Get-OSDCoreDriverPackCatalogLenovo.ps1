@@ -73,6 +73,7 @@ function Get-OSDCoreDriverPackCatalogLenovo {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LocalOnly requested; skipping online catalog download"
             }
             elseif ($Force -or -not (Test-Path $tempCatalogPath)) {
+                Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog"
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading $OemDriverPackCatalog"
                 $sourceContent = Invoke-RestMethod -Uri $OemDriverPackCatalog -UseBasicParsing -ErrorAction Stop
 
@@ -83,14 +84,16 @@ function Get-OSDCoreDriverPackCatalogLenovo {
                     $catalogContent | Out-File -FilePath $tempCatalogPath -Encoding utf8 -Force
                     [xml]$XmlCatalogContent = $catalogContent
                 }
-            } else {
+            }
+            else {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using temp catalog"
                 if (Test-Path $tempCatalogPath) {
                     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Indexing $tempCatalogPath"
                     [xml]$XmlCatalogContent = Get-Content -Path $tempCatalogPath -Raw
                 }
             }
-        } catch {
+        }
+        catch {
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Failed to download DriverPack catalog: $($_.Exception.Message)"
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Falling back to local catalog"
         }
@@ -146,7 +149,8 @@ function Get-OSDCoreDriverPackCatalogLenovo {
 
                 if ($Item.os -eq 'win11') {
                     $OperatingSystem = "Windows 11"
-                } else {
+                }
+                else {
                     continue
                 }
 
@@ -158,7 +162,7 @@ function Get-OSDCoreDriverPackCatalogLenovo {
                     Name            = $NewName
                     Manufacturer    = 'Lenovo'
                     Model           = $Model.name
-                    SystemId        = $Model.Types.Type.split(',').ForEach({$_.Trim()})
+                    SystemId        = $Model.Types.Type.split(',').ForEach({ $_.Trim() })
                     FileName        = $DownloadUrl | Split-Path -Leaf
                     Url             = $DownloadUrl
                     OperatingSystem = $OperatingSystem
@@ -173,7 +177,7 @@ function Get-OSDCoreDriverPackCatalogLenovo {
         # Cleanup Catalog
         #=================================================
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Filtering to latest driver packs per model"
-        $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object Model | ForEach-Object {$_.Group | Select-Object -First 1}
+        $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object Model | ForEach-Object { $_.Group | Select-Object -First 1 }
         # $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object HashMD5 | ForEach-Object {$_.Group | Select-Object -First 1}
         #=================================================
         # Sort Results

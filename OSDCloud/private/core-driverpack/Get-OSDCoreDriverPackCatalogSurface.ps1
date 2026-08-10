@@ -68,7 +68,7 @@ function Get-OSDCoreDriverPackCatalogSurface {
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
         #=================================================
         # Paths
-        $tempCatalogPath  = "$env:TEMP\osdcloud-driverpack-surface.json"
+        $tempCatalogPath = "$env:TEMP\osdcloud-driverpack-surface.json"
         #=================================================
         # Load from temp cache if available
         $useCache = $false
@@ -106,21 +106,21 @@ function Get-OSDCoreDriverPackCatalogSurface {
         #=================================================
         # Build enriched catalog from base JSON
         #=================================================
-        $processStopwatch  = [System.Diagnostics.Stopwatch]::StartNew()
-        $CatalogVersion    = Get-Date -Format yy.MM.dd
-        $userAgent         = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-        $msiPattern        = 'https://download\.microsoft\.com/download/[^"''<>\s]+\.msi'
-        $datePattern       = 'Date Published[^:]*:[^\d]*(\d{1,2}/\d{1,2}/\d{4})'
-        $parallelThrottle  = 4
-        $updatePageCache   = @{}
+        $processStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+        $CatalogVersion = Get-Date -Format yy.MM.dd
+        $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+        $msiPattern = 'https://download\.microsoft\.com/download/[^"''<>\s]+\.msi'
+        $datePattern = 'Date Published[^:]*:[^\d]*(\d{1,2}/\d{1,2}/\d{4})'
+        $parallelThrottle = 4
+        $updatePageCache = @{}
         $urlReachabilityCache = @{}
-        $networkCalls      = 0
-        $fallbackCalls     = 0
-        $cacheHits         = 0
+        $networkCalls = 0
+        $fallbackCalls = 0
+        $cacheHits = 0
         $reachabilityChecks = 0
         $reachabilityMisses = 0
-        $isOnline          = $true
-        $skipLiveUpdates   = [bool]$LocalOnly
+        $isOnline = $true
+        $skipLiveUpdates = [bool]$LocalOnly
 
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Building Surface driver pack catalog (CatalogVersion: $CatalogVersion)"
 
@@ -134,8 +134,8 @@ function Get-OSDCoreDriverPackCatalogSurface {
         # Determine online/offline state from the first catalog URL that does not require UpdatePage scraping.
         $connectivityProbeUrl = (
             $JsonCatalogContent |
-                Where-Object { $_.Url -and (-not $_.UpdatePage) } |
-                Select-Object -First 1
+            Where-Object { $_.Url -and (-not $_.UpdatePage) } |
+            Select-Object -First 1
         ).Url
 
         if ($LocalOnly) {
@@ -165,6 +165,7 @@ function Get-OSDCoreDriverPackCatalogSurface {
         # Probe existing target URLs first; only scrape UpdatePage when the current URL is unreachable.
         $uniqueUpdatePages = @()
         if (-not $skipLiveUpdates) {
+            Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog"
             $targetItems = @(
                 $JsonCatalogContent | Where-Object {
                     $_.UpdatePage -and ((-not $escapedOsdProduct) -or ($_.SystemId -match $escapedOsdProduct))
@@ -231,8 +232,8 @@ function Get-OSDCoreDriverPackCatalogSurface {
 
                         $allMsi = @(
                             [regex]::Matches($html, $using:msiPattern) |
-                                ForEach-Object { $_.Value } |
-                                Select-Object -Unique
+                            ForEach-Object { $_.Value } |
+                            Select-Object -Unique
                         )
 
                         if ($allMsi.Count -eq 0 -and $updatePage -match '[?&]id=(\d+)') {
@@ -242,8 +243,8 @@ function Get-OSDCoreDriverPackCatalogSurface {
                             $html = $response.Content
                             $allMsi = @(
                                 [regex]::Matches($html, $using:msiPattern) |
-                                    ForEach-Object { $_.Value } |
-                                    Select-Object -Unique
+                                ForEach-Object { $_.Value } |
+                                Select-Object -Unique
                             )
                         }
 
@@ -251,10 +252,10 @@ function Get-OSDCoreDriverPackCatalogSurface {
                             $win11Uris = @($allMsi | Where-Object { $_ -match 'Win11' })
                             $candidates = if ($win11Uris.Count -gt 0) { $win11Uris } else { $allMsi }
                             $bestUri = $candidates |
-                                Sort-Object {
-                                    if ($_ -match '_(\d{5})_') { [int]$Matches[1] } else { 0 }
-                                } -Descending |
-                                Select-Object -First 1
+                            Sort-Object {
+                                if ($_ -match '_(\d{5})_') { [int]$Matches[1] } else { 0 }
+                            } -Descending |
+                            Select-Object -First 1
 
                             $newDate = $null
                             $now = [datetime]::UtcNow
@@ -303,12 +304,12 @@ function Get-OSDCoreDriverPackCatalogSurface {
                     $networkCalls++
                     try {
                         $response = Invoke-WebRequest -Uri $updatePage -UseBasicParsing -UserAgent $userAgent -MaximumRedirection 5 -ErrorAction Stop
-                        $html     = $response.Content
+                        $html = $response.Content
 
                         $allMsi = @(
                             [regex]::Matches($html, $msiPattern) |
-                                ForEach-Object { $_.Value } |
-                                Select-Object -Unique
+                            ForEach-Object { $_.Value } |
+                            Select-Object -Unique
                         )
 
                         if ($allMsi.Count -eq 0 -and $updatePage -match '[?&]id=(\d+)') {
@@ -317,11 +318,11 @@ function Get-OSDCoreDriverPackCatalogSurface {
                             $fallbackCalls++
                             $networkCalls++
                             $response = Invoke-WebRequest -Uri $confirmUri -UseBasicParsing -UserAgent $userAgent -MaximumRedirection 5 -ErrorAction Stop
-                            $html     = $response.Content
-                            $allMsi   = @(
+                            $html = $response.Content
+                            $allMsi = @(
                                 [regex]::Matches($html, $msiPattern) |
-                                    ForEach-Object { $_.Value } |
-                                    Select-Object -Unique
+                                ForEach-Object { $_.Value } |
+                                Select-Object -Unique
                             )
                         }
 
@@ -329,13 +330,13 @@ function Get-OSDCoreDriverPackCatalogSurface {
                             $win11Uris = @($allMsi | Where-Object { $_ -match 'Win11' })
                             $candidates = if ($win11Uris.Count -gt 0) { $win11Uris } else { $allMsi }
                             $bestUri = $candidates |
-                                Sort-Object {
-                                    if ($_ -match '_(\d{5})_') { [int]$Matches[1] } else { 0 }
-                                } -Descending |
-                                Select-Object -First 1
+                            Sort-Object {
+                                if ($_ -match '_(\d{5})_') { [int]$Matches[1] } else { 0 }
+                            } -Descending |
+                            Select-Object -First 1
 
                             $newDate = $null
-                            $now     = [datetime]::UtcNow
+                            $now = [datetime]::UtcNow
                             foreach ($m in [regex]::Matches($html, $datePattern)) {
                                 try {
                                     $parsed = [datetime]::ParseExact($m.Groups[1].Value, 'M/d/yyyy', $null)
@@ -367,8 +368,8 @@ function Get-OSDCoreDriverPackCatalogSurface {
 
         $Results = foreach ($item in $JsonCatalogContent) {
             $releaseDate = $item.ReleaseDate
-            $fileName    = $item.FileName
-            $url         = $item.Url
+            $fileName = $item.FileName
+            $url = $item.Url
 
             $isTargetDevice = (-not $escapedOsdProduct) -or ($item.SystemId -match $escapedOsdProduct)
 
@@ -379,8 +380,8 @@ function Get-OSDCoreDriverPackCatalogSurface {
                     $cacheHits++
                     $cached = $updatePageCache[$updatePage]
                     if (-not $cached.Error) {
-                        $fileName    = $cached.FileName
-                        $url         = $cached.Url
+                        $fileName = $cached.FileName
+                        $url = $cached.Url
                         if ($cached.ReleaseDate) {
                             $releaseDate = $cached.ReleaseDate
                         }
@@ -393,7 +394,7 @@ function Get-OSDCoreDriverPackCatalogSurface {
             }
 
             # Rebuild the Name bracket date with current releaseDate
-            $baseName    = $item.Name -replace '\s*\[.*?\]$', ''
+            $baseName = $item.Name -replace '\s*\[.*?\]$', ''
             $displayName = "$baseName [$releaseDate]"
 
             $objectProperties = [Ordered]@{

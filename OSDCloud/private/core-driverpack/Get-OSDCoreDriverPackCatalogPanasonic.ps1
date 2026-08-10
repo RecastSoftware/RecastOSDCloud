@@ -28,6 +28,7 @@ function Get-OSDCoreDriverPackCatalogPanasonic {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LocalOnly requested; skipping online catalog download"
             }
             elseif ($Force -or -not (Test-Path $tempCatalogPath)) {
+                Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog"
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading $OemDriverPackCatalog"
                 $sourceContent = Invoke-RestMethod -Uri $OemDriverPackCatalog -UseBasicParsing -ErrorAction Stop
 
@@ -36,14 +37,16 @@ function Get-OSDCoreDriverPackCatalogPanasonic {
                     $sourceContent | Out-File -FilePath $tempCatalogPath -Encoding utf8 -Force
                     $JsonCatalogContent = $sourceContent
                 }
-            } else {
+            }
+            else {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using temp Panasonic driver pack catalog"
                 if (Test-Path $tempCatalogPath) {
                     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Indexing $tempCatalogPath"
                     $JsonCatalogContent = Get-Content -Path $tempCatalogPath -Raw | ConvertFrom-Json
                 }
             }
-        } catch {
+        }
+        catch {
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Failed to download Panasonic driver pack catalog: $($_.Exception.Message)"
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Falling back to local catalog"
         }
@@ -118,8 +121,8 @@ function Get-OSDCoreDriverPackCatalogPanasonic {
         # Cleanup Catalog
         #=================================================
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Filtering to latest driver packs per model"
-        $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object Model | ForEach-Object {$_.Group | Select-Object -First 1}
-        $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object HashMD5 | ForEach-Object {$_.Group | Select-Object -First 1}
+        $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object Model | ForEach-Object { $_.Group | Select-Object -First 1 }
+        $Results = $Results | Sort-Object Model, OSVersion -Descending | Group-Object HashMD5 | ForEach-Object { $_.Group | Select-Object -First 1 }
         #=================================================
         # Sort Results
         #=================================================
