@@ -80,7 +80,7 @@ function Get-OSDCoreDriverPackCatalogDell {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LocalOnly requested; skipping online catalog download"
             }
             elseif ($Force -or -not (Test-Path $tempCatalogPath)) {
-                Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog"
+                Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog."
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading $OemDriverPackCatalog"
                 $null = Invoke-WebRequest -Uri $OemDriverPackCatalog -OutFile $tempCatalogPackagePath -ErrorAction Stop
 

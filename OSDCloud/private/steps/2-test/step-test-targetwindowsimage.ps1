@@ -37,7 +37,7 @@ function step-test-targetwindowsimage {
         }
     }
     catch {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem URL is not reachable."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem URL is not reachable online and cannot be downloaded."
     }
     #=================================================
     # Does the file exist on a Drive?

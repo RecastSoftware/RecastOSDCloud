@@ -47,7 +47,7 @@ function step-test-targetdriverpack {
         }
     }
     catch {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack URL is not reachable."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack URL is not reachable online and cannot be downloaded."
     }
     #=================================================
     # Does the file exist on a Drive?

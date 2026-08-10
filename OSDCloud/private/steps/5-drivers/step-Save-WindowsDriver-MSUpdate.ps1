@@ -36,7 +36,7 @@ function step-Save-WindowsDriver-MSUpdate {
         }
     }
     catch {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Update Catalog URL is not reachable. Skip."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Update Catalog URL is not reachable online and cannot be downloaded. Skip."
         return
     }
     #=================================================

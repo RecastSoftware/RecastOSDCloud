@@ -61,13 +61,13 @@ function Sync-OSDCoreDateTime {
 
     process {
         $result = [PSCustomObject]@{
-            LocalDateTime    = $null
-            InternetDateTime = $null
+            LocalDateTime     = $null
+            InternetDateTime  = $null
             DifferenceMinutes = $null
-            IsWinPE          = $env:SystemDrive -eq "X:"
-            ClockUpdated     = $false
-            Success          = $false
-            ErrorMessage     = $null
+            IsWinPE           = $env:SystemDrive -eq "X:"
+            ClockUpdated      = $false
+            Success           = $false
+            ErrorMessage      = $null
         }
 
         try {
@@ -146,7 +146,7 @@ function Sync-OSDCoreDateTime {
                 }
             }
             else {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System clock is synchronized within threshold ($($result.DifferenceMinutes) minutes difference)"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System clock is synchronized within threshold ($($result.DifferenceMinutes) minutes difference)."
             }
         }
 

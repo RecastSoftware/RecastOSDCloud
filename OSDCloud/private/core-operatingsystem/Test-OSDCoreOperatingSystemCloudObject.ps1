@@ -1,7 +1,7 @@
 function Test-OSDCoreOperatingSystemCloudObject {
     <#
     .SYNOPSIS
-    Tests whether an OSDCore operating system object URL is reachable.
+    Tests whether an OSDCore operating system object is available online and ready to downloaded.
 
     .DESCRIPTION
     Reads the operating system download URL from the supplied object, or from

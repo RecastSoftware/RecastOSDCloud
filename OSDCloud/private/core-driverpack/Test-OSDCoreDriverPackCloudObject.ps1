@@ -1,7 +1,7 @@
 function Test-OSDCoreDriverPackCloudObject {
     <#
     .SYNOPSIS
-    Tests whether an OSDCore driver pack object URL is reachable.
+    Tests whether an OSDCore driver pack object is available online and ready to downloaded.
 
     .DESCRIPTION
     Reads the Url property from the supplied driver pack object, or from
@@ -57,7 +57,7 @@ function Test-OSDCoreDriverPackCloudObject {
             # Build the exact set of URLs to probe before making any web requests.
             $DriverPackCloudObjectUri = [System.Uri]$DriverPackCloudObjectUrl
             $IsSpecificAbsoluteUrl = $DriverPackCloudObjectUri.IsAbsoluteUri -and -not [string]::IsNullOrWhiteSpace($DriverPackCloudObjectUri.AbsolutePath) -and $DriverPackCloudObjectUri.AbsolutePath -ne '/'
-            if ($DriverPackCloudObjectUri.IsAbsoluteUri -and ($DriverPackCloudObjectUri.Scheme -notin @('http','https') -or $IsSpecificAbsoluteUrl)) {
+            if ($DriverPackCloudObjectUri.IsAbsoluteUri -and ($DriverPackCloudObjectUri.Scheme -notin @('http', 'https') -or $IsSpecificAbsoluteUrl)) {
                 # Non-web absolute URIs and specific file URLs are tested as provided.
                 $RequestUris = @($DriverPackCloudObjectUri)
             }
@@ -89,7 +89,7 @@ function Test-OSDCoreDriverPackCloudObject {
 
         $InvokeWebRequestCommand = Get-Command Invoke-WebRequest
         $Results = foreach ($RequestUri in $RequestUris) {
-            if ($RequestUri.Scheme -in @('http','https')) {
+            if ($RequestUri.Scheme -in @('http', 'https')) {
                 $RequestPort = $RequestUri.Port
                 if ($RequestUri.IsDefaultPort) {
                     if ($RequestUri.Scheme -eq 'https') {
@@ -162,14 +162,14 @@ function Test-OSDCoreDriverPackCloudObject {
         }
 
         # If only HTTP succeeds, the network may be reachable but HTTPS can fail because the clock is wrong.
-        $HttpsResult = $Results | Where-Object {$_.Uri.Scheme -eq 'https'} | Select-Object -First 1
-        $HttpResult = $Results | Where-Object {$_.Uri.Scheme -eq 'http'} | Select-Object -First 1
+        $HttpsResult = $Results | Where-Object { $_.Uri.Scheme -eq 'https' } | Select-Object -First 1
+        $HttpResult = $Results | Where-Object { $_.Uri.Scheme -eq 'http' } | Select-Object -First 1
 
         if ($HttpsResult -and $HttpResult -and -not $HttpsResult.Success -and $HttpResult.Success) {
             Write-Warning "HTTPS connection failed for $($HttpsResult.Uri), but HTTP connection succeeded for $($HttpResult.Uri). Check the system date and time."
         }
 
         # Return true when any attempted URL succeeds.
-        [bool]($Results | Where-Object {$_.Success} | Select-Object -First 1)
+        [bool]($Results | Where-Object { $_.Success } | Select-Object -First 1)
     }
 }

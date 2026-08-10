@@ -182,10 +182,10 @@ function Initialize-DeployOSDCloud {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Verifying OSDCoreDriverPackCloudObject."
         $OSDCoreDriverPackCloudObjectUrlReachable = Test-OSDCoreDriverPackCloudObject -DriverPackCloudObject $global:OSDCoreDriverPackCloudObject
         if ($OSDCoreDriverPackCloudObjectUrlReachable) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack URL is reachable."
+            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] DriverPack is available online and ready to downloaded."
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] DriverPack URL is not reachable."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] DriverPack URL is not reachable online and cannot be downloaded."
         }
 
         # Driver pack catalogs use either HashMD5 or MD5Hash depending on the source.
@@ -214,7 +214,7 @@ function Initialize-DeployOSDCloud {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($OSDCoreDriverPackCacheObject.FullName)"
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] DriverPack is not available on a USB Drive."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] DriverPack is not available offline in cache."
             $OSDCoreDriverPackCacheObject = $null
         }
         $global:OSDCoreDriverPackCloudObject | Format-List | Out-Host
@@ -437,10 +437,10 @@ function Initialize-DeployOSDCloud {
         # Confirm the selected operating system download URL before offering cache download work.
         $OSDCoreOperatingSystemCloudObjectUrlReachable = Test-OSDCoreOperatingSystemCloudObject -OperatingSystemCloudObject $global:OSDCoreOperatingSystemCloudObject
         if ($OSDCoreOperatingSystemCloudObjectUrlReachable) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem URL is reachable."
+            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] OperatingSystem is available online and ready to downloaded."
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OperatingSystem URL is not reachable."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OperatingSystem URL is not reachable online and cannot be downloaded."
         }
 
         # Prefer SHA256 when the catalog provides it, and fall back to SHA1 for older entries.
@@ -474,7 +474,7 @@ function Initialize-DeployOSDCloud {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($OSDCoreOperatingSystemCacheObject.FullName)"
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OperatingSystem is not available on a USB drive."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OperatingSystem is not available offline in cache."
         }
         # Build a display object that supports both OSD and OSDCloud property shapes.
         $selectedOperatingSystemName = if ($global:OSDCoreOperatingSystemCloudObject.Id) { $global:OSDCoreOperatingSystemCloudObject.Id } else { $global:OSDCoreOperatingSystemCloudObject.Name }

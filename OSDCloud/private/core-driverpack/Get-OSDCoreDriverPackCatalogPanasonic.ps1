@@ -28,7 +28,7 @@ function Get-OSDCoreDriverPackCatalogPanasonic {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LocalOnly requested; skipping online catalog download"
             }
             elseif ($Force -or -not (Test-Path $tempCatalogPath)) {
-                Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog"
+                Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog."
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading $OemDriverPackCatalog"
                 $sourceContent = Invoke-RestMethod -Uri $OemDriverPackCatalog -UseBasicParsing -ErrorAction Stop
 

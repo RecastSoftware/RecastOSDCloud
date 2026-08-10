@@ -68,27 +68,27 @@ function Update-RecastOSDCloudUSBCache {
 
         [Parameter(Mandatory = $false, HelpMessage = 'Operating system release identifier for deployment selection.')]
         [ValidateNotNullOrEmpty()]
-        [ValidateSet('25H2','24H2','23H2','22H2','21H2')]
+        [ValidateSet('25H2', '24H2', '23H2', '22H2', '21H2')]
         [string]
         $OSReleaseID = '25H2',
 
         [Parameter(Mandatory = $false, HelpMessage = 'Operating system language code for deployment selection.')]
         [ValidateNotNullOrEmpty()]
         [ValidateSet (
-            'ar-sa','bg-bg','cs-cz','da-dk','de-de','el-gr',
-            'en-gb','en-us','es-es','es-mx','et-ee','fi-fi',
-            'fr-ca','fr-fr','he-il','hr-hr','hu-hu','it-it',
-            'ja-jp','ko-kr','lt-lt','lv-lv','nb-no','nl-nl',
-            'pl-pl','pt-br','pt-pt','ro-ro','ru-ru','sk-sk',
-            'sl-si','sr-latn-rs','sv-se','th-th','tr-tr',
-            'uk-ua','zh-cn','zh-tw'
+            'ar-sa', 'bg-bg', 'cs-cz', 'da-dk', 'de-de', 'el-gr',
+            'en-gb', 'en-us', 'es-es', 'es-mx', 'et-ee', 'fi-fi',
+            'fr-ca', 'fr-fr', 'he-il', 'hr-hr', 'hu-hu', 'it-it',
+            'ja-jp', 'ko-kr', 'lt-lt', 'lv-lv', 'nb-no', 'nl-nl',
+            'pl-pl', 'pt-br', 'pt-pt', 'ro-ro', 'ru-ru', 'sk-sk',
+            'sl-si', 'sr-latn-rs', 'sv-se', 'th-th', 'tr-tr',
+            'uk-ua', 'zh-cn', 'zh-tw'
         )]
         [string]
         $OSLanguageCode,
 
         [Parameter(Mandatory = $false, HelpMessage = 'Operating system activation channel for deployment selection.')]
         [ValidateNotNullOrEmpty()]
-        [ValidateSet('Retail','Volume')]
+        [ValidateSet('Retail', 'Volume')]
         [string]
         $OSActivation = 'Retail',
 
@@ -114,7 +114,7 @@ function Update-RecastOSDCloudUSBCache {
 
         [Parameter(Mandatory = $false, HelpMessage = 'WinPE Post Action.')]
         [ValidateNotNullOrEmpty()]
-        [ValidateSet('Quit','Restart','Shutdown')]
+        [ValidateSet('Quit', 'Restart', 'Shutdown')]
         [string]
         $WinPEPostAction = 'Quit'
     )
@@ -144,8 +144,8 @@ function Update-RecastOSDCloudUSBCache {
     #=================================================
     # Resolve architecture-specific edition constraints and normalize edition metadata.
     $OSEditionValuesByArchitecture = @{
-        amd64 = @('Home','Home N','Education','Education N','Pro','Pro N','Enterprise','Enterprise N')
-        arm64 = @('Home','Pro','Enterprise')
+        amd64 = @('Home', 'Home N', 'Education', 'Education N', 'Pro', 'Pro N', 'Enterprise', 'Enterprise N')
+        arm64 = @('Home', 'Pro', 'Enterprise')
     }
     if (-not $OSEditionValuesByArchitecture.ContainsKey($OSArchitecture)) {
         throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unsupported OSArchitecture '$OSArchitecture'."
@@ -157,13 +157,13 @@ function Update-RecastOSDCloudUSBCache {
     }
 
     $OSEditionIdByName = @{
-        'Home' = 'Core'
-        'Home N' = 'CoreN'
-        'Education' = 'Education'
-        'Education N' = 'EducationN'
-        'Pro' = 'Professional'
-        'Pro N' = 'ProfessionalN'
-        'Enterprise' = 'Enterprise'
+        'Home'         = 'Core'
+        'Home N'       = 'CoreN'
+        'Education'    = 'Education'
+        'Education N'  = 'EducationN'
+        'Pro'          = 'Professional'
+        'Pro N'        = 'ProfessionalN'
+        'Enterprise'   = 'Enterprise'
         'Enterprise N' = 'EnterpriseN'
     }
     $OSEditionId = $OSEditionIdByName[$OSEdition]
@@ -233,11 +233,11 @@ function Update-RecastOSDCloudUSBCache {
 
         # Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] OSDCoreOperatingSystemCloudObject:"
         $tempOSDCoreOperatingSystemCloudObject = [pscustomobject]@{
-            Name = $selectedOperatingSystemName
+            Name     = $selectedOperatingSystemName
             FileName = [string]$global:OSDCoreOperatingSystemCloudObject.FileName
-            Url = [string]$selectedOperatingSystemUrl
-            SHA1 = [string]$selectedOperatingSystemSha1
-            SHA256 = [string]$selectedOperatingSystemSha256
+            Url      = [string]$selectedOperatingSystemUrl
+            SHA1     = [string]$selectedOperatingSystemSha1
+            SHA256   = [string]$selectedOperatingSystemSha256
         }
         # $global:OSDCoreOperatingSystemCloudObject | Out-Host
         $tempOSDCoreOperatingSystemCloudObject | Out-Host
@@ -245,10 +245,10 @@ function Update-RecastOSDCloudUSBCache {
         # Confirm the selected operating system download URL before offering cache download work.
         $OSDCoreOperatingSystemCloudObjectUrlReachable = Test-OSDCoreOperatingSystemCloudObject -OperatingSystemCloudObject $global:OSDCoreOperatingSystemCloudObject
         if ($OSDCoreOperatingSystemCloudObjectUrlReachable) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem URL is reachable."
+            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] OperatingSystem is available online and ready to downloaded."
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OperatingSystem URL is not reachable."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OperatingSystem URL is not reachable online and cannot be downloaded."
         }
 
         # Prefer SHA256 when the catalog provides it, and fall back to SHA1 for older entries.
@@ -280,11 +280,11 @@ function Update-RecastOSDCloudUSBCache {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem is ready at $($osdCoreOperatingSystemCacheContent.FullName)."
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OperatingSystem is not available on a USB drive."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OperatingSystem is not available offline in cache."
 
             # Do not offer a download when the catalog URL cannot be reached.
             if (-not $OSDCoreOperatingSystemCloudObjectUrlReachable) {
-                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OperatingSystem download was not offered because the URL is not reachable."
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OperatingSystem download was not offered because the URL is not reachable online and cannot be downloaded."
             }
             elseif (Test-OSDCoreCacheUSB) {
                 $osdCoreCacheUsbPath = Get-OSDCoreCacheUSBPath | Select-Object -First 1
@@ -341,7 +341,8 @@ function Update-RecastOSDCloudUSBCache {
                 Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] No eligible OSDCoreCache USB drive is available for OperatingSystem download."
             }
         }
-    } else {
+    }
+    else {
         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OSDCoreOperatingSystemCloudObject is not set."
         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OSDCloud will not function on this device or on this network."
     }
@@ -356,10 +357,10 @@ function Update-RecastOSDCloudUSBCache {
 
         $OSDCoreDriverPackCloudObjectUrlReachable = Test-OSDCoreDriverPackCloudObject -DriverPackCloudObject $global:OSDCoreDriverPackCloudObject
         if ($OSDCoreDriverPackCloudObjectUrlReachable) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack URL is reachable."
+            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] DriverPack is available online and ready to downloaded."
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] DriverPack URL is not reachable."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] DriverPack URL is not reachable online and cannot be downloaded."
         }
 
         # Driver pack catalogs use either HashMD5 or MD5Hash depending on the source.
@@ -389,11 +390,11 @@ function Update-RecastOSDCloudUSBCache {
             }
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] DriverPack is not available on a USB Drive."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] DriverPack is not available offline in cache."
 
             # Do not offer a download when the driver pack URL cannot be reached.
             if (-not $OSDCoreDriverPackCloudObjectUrlReachable) {
-                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] DriverPack download was not offered because the URL is not reachable."
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] DriverPack download was not offered because the URL is not reachable online and cannot be downloaded."
             }
             elseif (Test-OSDCoreCacheUSB) {
                 $osdCoreCacheUsbPath = Get-OSDCoreCacheUSBPath | Select-Object -First 1
