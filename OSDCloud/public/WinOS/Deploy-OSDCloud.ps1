@@ -33,6 +33,9 @@ function Deploy-OSDCloud {
         The full OS profile name used to resolve the Env file path. Defaults to 'default'.
         Ignored in WinPE.
 
+    .PARAMETER SkipWorkflowVerification
+        Skips the custom-workflow warning prompt and continues immediately.
+
     .EXAMPLE
         Deploy-OSDCloud
 
@@ -58,6 +61,11 @@ function Deploy-OSDCloud {
         Deploy-OSDCloud -ProfileName 'Lab'
 
         Launches the OSDCloud graphical UX using the 'Lab' profile Env path.
+
+    .EXAMPLE
+        Deploy-OSDCloud -WorkflowName 'latest' -SkipWorkflowVerification
+
+        Runs with a non-default workflow without showing the verification prompt.
 
     .OUTPUTS
         System.Void
@@ -111,6 +119,10 @@ function Deploy-OSDCloud {
         [ValidateNotNullOrEmpty()]
         [System.String]
         $ProfileName = 'default',
+
+        [Parameter(Mandatory = $false, HelpMessage = 'Skips the custom workflow verification prompt.')]
+        [System.Management.Automation.SwitchParameter]
+        $SkipWorkflowVerification,
 
         [Parameter(Mandatory = $false, HelpMessage = 'Optional manufacturer override used for driver pack selection.')]
         [ValidateNotNullOrEmpty()]
@@ -177,6 +189,28 @@ function Deploy-OSDCloud {
         $OSDManufacturer = $global:OSDCoreDevice.OSDManufacturer
         $OSDModel = $global:OSDCoreDevice.OSDModel
         $OSDProduct = $global:OSDCoreDevice.OSDProduct
+        #=================================================
+        # Workflow Verification and Warning
+        if ($WorkflowName -ne 'default' -and -not $SkipWorkflowVerification.IsPresent) {
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow: $WorkflowName"
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] This version of OSDCloud is designed to run the default workflow."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Using a custom workflow may result in unexpected behavior or errors."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Please contact OSDCloud support to report issues with custom workflows and to seek assistance."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Press any key to continue."
+            if ($Host -and $Host.UI -and $Host.UI.RawUI) {
+                $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+            }
+            else {
+                Write-Warning "Unable to read key input in this host. Continuing without key confirmation."
+            }
+        }
+        elseif ($WorkflowName -ne 'default' -and $SkipWorkflowVerification.IsPresent) {
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow: $WorkflowName"
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] SkipWorkflowVerification is set; continuing without verification prompt."
+        }
+        else {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud Workflow: default"
+        }
         #=================================================
         # Start Initialization of OSDCloud Deployment
         $initializeOSDCloudDeployParameters = @{
