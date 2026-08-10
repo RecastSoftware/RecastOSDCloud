@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.8.10.1 - August 10, 2026
+
+### Added
+
+- Added `Initialize-DeployOSDCloud` as the new deployment initialization implementation with expanded deployment/device state handling and validation flow.
+- Added cache and validation helpers across core systems:
+  - `Initialize-OSDCoreCache`
+  - `Get-OSDCoreDriverPackCacheObject`
+  - `Get-OSDCoreOperatingSystemCacheObject`
+  - `Test-OSDCoreDriverPackCloudObject`
+  - `Test-OSDCoreOperatingSystemCloudObject`
+- Added workflow operating system helper functions:
+  - `Get-OSDCloudWorkflowSettingsOSFile`
+  - `Resolve-OSDCloudWorkflowOSActivation`
+  - `Test-OSDCloudWorkflowSettingsOS`
+- Added deployment hardware override support for workflow-driven operating system selection constraints.
+- Added repository documentation pages `docs/about_osdcorecache.md` and `docs/about_osdcoredevice.md`.
+- Added the `osdcore-operating-system-cloud-object` Copilot skill for core operating system object mapping and maintenance.
+
+### Changed
+
+- Refactored deployment initialization by replacing `Initialize-OSDCloudDeploy` usage with `Initialize-DeployOSDCloud` across deployment entry points (`Deploy-OSDCloud`, `Deploy-OSDCloudCLI`, and `Deploy-OSDCloudGUI`).
+- Renamed module catalog initializer functions to align naming and intent:
+  - `Get-ModuleCoreDriverPacks` -> `Initialize-ModuleCoreDriverPacks`
+  - `Get-ModuleCoreOperatingSystems` -> `Initialize-ModuleCoreOperatingSystems`
+- Centralized and reorganized cache handling by moving cache helpers from `private/core-device/` to `private/core-cache/` and improving USB cache object refresh behavior.
+- Improved core operating system and driver pack selection reliability by validating cloud/cache objects, normalizing schema handling, and supporting file-path based operating system URL checks.
+- Improved workflow operating system resolution and parameter flow by centralizing OS settings selection and activation resolution logic.
+- Updated workflow and task execution scripts with standardized informational logging markers and aligned step/test behavior for target disk, driver pack, and Windows image validation.
+- Updated WinPE startup components, including Wi-Fi and USB drive-letter initialization paths, to align with the revised deployment/core orchestration flow.
+- Updated Microsoft Update Catalog save helpers and related driver workflow step behavior to match revised validation and logging patterns.
+- Updated workflow UI `MainWindow` scripts across classic, default, dev, insiders, and vNext channels for consistency with the updated deployment flow.
+- Updated repository guidance in Copilot instruction assets and catalog update instructions.
+
+### Removed
+
+- Removed legacy `Initialize-OSDCloudDeploy.ps1` in favor of `Initialize-DeployOSDCloud.ps1`.
+
 ## 26.8.5.1 - August 5, 2026
 
 ### Added
