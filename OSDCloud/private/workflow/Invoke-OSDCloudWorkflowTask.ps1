@@ -23,9 +23,11 @@ function Invoke-OSDCloudWorkflowTask {
     # Re-apply the OSDCloud Property override layer to $global:OSDCloudDeploy so authoritative
     # overrides win over any changes made by the workflow UI, and so the snapshot below
     # inherits the final values.
+    <#
     if ($global:OSDCloudEnv -and (Get-Command -Name 'Set-OSDCloudEnvOverride' -ErrorAction SilentlyContinue)) {
         Set-OSDCloudEnvOverride -Target $global:OSDCloudDeploy -ResolveOperatingSystem -AddMissingKeys
     }
+    #>
     #=================================================
     $global:OSDCloudWorkflowInvoke = $null
     $global:OSDCloudWorkflowInvoke = [ordered]@{

@@ -8,6 +8,10 @@ function Initialize-DeployOSDCloud {
         [System.String]
         $WorkflowName = 'default',
 
+        [Parameter(Mandatory = $false, HelpMessage = 'Optional local disk number to use as the deployment target.')]
+        [System.UInt32]
+        $DiskNumber,
+
         [Parameter(Mandatory = $false)]
         [System.Collections.IDictionary]
         $EnvParameters,
@@ -155,6 +159,68 @@ function Initialize-DeployOSDCloud {
     $OSDManufacturer = $global:OSDCoreDevice.OSDManufacturer
     $OSDModel = $global:OSDCoreDevice.OSDModel
     $OSDProduct = $global:OSDCoreDevice.OSDProduct
+    #=================================================
+    # OSDCoreDevice Deployment Disk
+    $localDisks = @($global:OSDCoreDevice.LocalDisk)
+    if ($PSBoundParameters.ContainsKey('DiskNumber')) {
+        $selectedDeploymentDisk = $localDisks |
+        Where-Object {
+            ($_.PSObject.Properties.Match('Number').Count -gt 0 -and [System.UInt32]$_.Number -eq $DiskNumber) -or
+            ($_.PSObject.Properties.Match('DiskNumber').Count -gt 0 -and [System.UInt32]$_.DiskNumber -eq $DiskNumber)
+        } |
+        Select-Object -First 1
+
+        if (-not $selectedDeploymentDisk) {
+            $availableLocalDiskDetails = @(
+                $localDisks | ForEach-Object {
+                    $availableDiskNumber = if ($_.PSObject.Properties.Match('Number').Count -gt 0) { $_.Number } else { $_.DiskNumber }
+                    $availableDiskName = if ($_.PSObject.Properties.Match('FriendlyName').Count -gt 0) { $_.FriendlyName } else { 'Unknown' }
+                    $availableDiskSize = if ($_.PSObject.Properties.Match('Size').Count -gt 0) { "$([math]::Round($_.Size / 1GB, 2)) GB" } else { 'Unknown size' }
+                    "$availableDiskNumber ($availableDiskName, $availableDiskSize)"
+                }
+            )
+            $availableLocalDiskMessage = if ($availableLocalDiskDetails.Count -gt 0) { $availableLocalDiskDetails -join ', ' } else { 'None' }
+            throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DiskNumber '$DiskNumber' is not a valid local deployment disk. Valid DiskNumber values: $availableLocalDiskMessage"
+        }
+
+        $global:OSDCoreDevice.DeploymentDisk = $selectedDeploymentDisk
+    }
+    else {
+        $selectedDeploymentDisk = $localDisks | Select-Object -First 1
+        if ($selectedDeploymentDisk) {
+            $global:OSDCoreDevice.DeploymentDisk = $selectedDeploymentDisk
+        }
+    }
+
+    if ($global:OSDCoreDevice.DeploymentDisk) {
+        $deploymentDiskNumber = if ($global:OSDCoreDevice.DeploymentDisk.PSObject.Properties.Match('Number').Count -gt 0) {
+            $global:OSDCoreDevice.DeploymentDisk.Number
+        }
+        else {
+            $global:OSDCoreDevice.DeploymentDisk.DiskNumber
+        }
+    }
+    #=================================================
+    # OSDCoreDevice Disks
+    if ($global:OSDCoreDevice.DeploymentDisk) {
+        $deploymentDiskName = if ($global:OSDCoreDevice.DeploymentDisk.PSObject.Properties.Match('FriendlyName').Count -gt 0) { $global:OSDCoreDevice.DeploymentDisk.FriendlyName } else { 'Unknown' }
+        $deploymentDiskSize = if ($global:OSDCoreDevice.DeploymentDisk.PSObject.Properties.Match('Size').Count -gt 0) { "$([math]::Round($global:OSDCoreDevice.DeploymentDisk.Size / 1GB, 2)) GB" } else { 'Unknown size' }
+        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] OSDCloud will be deployed to Deployment Disk $deploymentDiskNumber ($deploymentDiskName) with size $deploymentDiskSize."
+
+        $otherLocalDisks = @($global:OSDCoreDevice.LocalDisk | Where-Object {
+                $localDiskNumber = if ($_.PSObject.Properties.Match('Number').Count -gt 0) { $_.Number } else { $_.DiskNumber }
+                $localDiskNumber -ne $deploymentDiskNumber
+            })
+        foreach ($localDisk in $otherLocalDisks) {
+            $localDiskNumber = if ($localDisk.PSObject.Properties.Match('Number').Count -gt 0) { $localDisk.Number } else { $localDisk.DiskNumber }
+            $localDiskName = if ($localDisk.PSObject.Properties.Match('FriendlyName').Count -gt 0) { $localDisk.FriendlyName } else { 'Unknown' }
+            $localDiskSize = if ($localDisk.PSObject.Properties.Match('Size').Count -gt 0) { "$([math]::Round($localDisk.Size / 1GB, 2)) GB" } else { 'Unknown size' }
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Local Disk $localDiskNumber ($localDiskName) with size $localDiskSize was not selected for deployment."
+        }
+    }
+    else {
+        throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to determine Deployment Disk. Please check your system configuration."
+    }
     #=================================================
     # OSDCoreDriverPacks
     Initialize-ModuleCoreDriverPacks -OSDManufacturer $OSDManufacturer
@@ -607,29 +673,11 @@ function Initialize-DeployOSDCloud {
         [string]$OperatingSystemObject.Url
     }
     #=================================================
-    # Get-DeploymentDiskObject
-    $DeploymentDiskObject = Get-DeploymentDiskObject
-
-    # Make sure Get-DeploymentDiskObject returns a single object
-    if (-not $DeploymentDiskObject) {
-        throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDCloud requires at least one Local Disk, but no compatible Local Disk was found."
-    }
-    # Warn if multiple disks found and inform which disk will be used
-    # Include the Friendly Name of the disk for clarity
-    # Include the size in GB for clarity
-    if (@($DeploymentDiskObject).Count -gt 1) {
-        Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Multiple Local Disks were found. OSDCloud will default to DiskNumber: $($DeploymentDiskObject[0].DiskNumber)"
-        $DeploymentDiskObject | ForEach-Object {
-            Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DiskNumber: $($_.DiskNumber), FriendlyName: $($_.FriendlyName), Size(GB): $([math]::Round($_.Size / 1GB, 2))"
-        }
-    }
-    # Limit to the first disk found
-    $DeploymentDiskObject = $DeploymentDiskObject | Select-Object -First 1
-    #=================================================
     # Main
     $global:OSDCloudDeploy = $null
     $global:OSDCloudDeploy = [ordered]@{
-        DeploymentDiskObject   = $DeploymentDiskObject
+        DeploymentDisk         = $global:OSDCoreDevice.DeploymentDisk
+        DeploymentDiskNumber   = [System.UInt32]$deploymentDiskNumber
         DriverFolderName       = $null
         DriverFolderNames      = @()
         DriverFolderPath       = $null
@@ -667,9 +715,11 @@ function Initialize-DeployOSDCloud {
     # OSDCloud Env override layer
     # Apply the pre-assembled overrides onto $global:OSDCloudDeploy so they take effect
     # everywhere.
+    <#
     if (Get-Command -Name 'Set-OSDCloudEnvOverride' -ErrorAction SilentlyContinue) {
         Set-OSDCloudEnvOverride -Target $global:OSDCloudDeploy -ResolveOperatingSystem -AddMissingKeys
     }
+    #>
     $global:OSDCloudDeploy | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'OSDCloudDeploy.xml') -Force
     #=================================================
 }
