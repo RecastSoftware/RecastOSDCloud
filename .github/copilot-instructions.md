@@ -66,7 +66,7 @@ Functions are procedural and single-call, not pipeline-aware. Skip the blocks un
 ### Global state
 
 `Initialize-*` functions populate `$global:OSDCloud*` variables; `Invoke-*` and `Get-*` functions read them.
-Key globals: `$global:OSDCoreDevice`, `$global:OSDCloudDeploy`, `$global:OSDCloudWorkflowTasks`, `$global:OSDCloudWorkflowInvoke`, `$global:Architecture`, `$global:IsWinPE`, `$global:IsVM`, `$global:IsOnBattery`.
+Key globals: `$global:OSDCoreDevice`, `$global:OSDCloudDeploy`, `$global:OSDCloudWorkflowTasks`, `$global:OSDCloudWorkflowInvoke`, `$global:IsWinPE`, `$global:IsVM`.
 Document any new global variables added.
 
 ### Naming

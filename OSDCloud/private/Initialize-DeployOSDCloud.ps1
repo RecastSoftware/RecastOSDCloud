@@ -114,6 +114,14 @@ function Initialize-DeployOSDCloud {
         $null
     }
     #=================================================
+    # OSDCoreDevice
+    if (-not ($global:OSDCoreDevice)) {
+        Initialize-OSDCoreDevice
+    }
+    #=================================================
+    # OSDCoreCache
+    Initialize-OSDCoreCache
+    #=================================================
     # Initialize Architecture
     # Resolve the effective architecture once and normalize aliases.
     $processorArchitecture = if (-not [string]::IsNullOrWhiteSpace($OSArchitecture)) {
@@ -136,14 +144,6 @@ function Initialize-DeployOSDCloud {
     # Keep the function parameter aligned to the effective value used downstream.
     $OSArchitecture = $processorArchitecture
     #=================================================
-    # OSDCoreDevice
-    if (-not ($global:OSDCoreDevice)) {
-        Initialize-OSDCoreDevice
-    }
-    #=================================================
-    # OSDCoreCache
-    Initialize-OSDCoreCache
-    #=================================================
     # OSDCoreDevice Manufacturer, Model, Product overrides
     if ($OSDManufacturer -and -not [string]::IsNullOrWhiteSpace($OSDManufacturer)) {
         $global:OSDCoreDevice.OSDManufacturer = $OSDManufacturer
@@ -160,7 +160,7 @@ function Initialize-DeployOSDCloud {
     $OSDModel = $global:OSDCoreDevice.OSDModel
     $OSDProduct = $global:OSDCoreDevice.OSDProduct
     #=================================================
-    # OSDCoreDevice Deployment Disk
+    # OSDCloudDeploy.DeploymentDisk
     $localDisks = @($global:OSDCoreDevice.LocalDisk)
     if ($PSBoundParameters.ContainsKey('DiskNumber')) {
         $selectedDeploymentDisk = $localDisks |
@@ -183,33 +183,33 @@ function Initialize-DeployOSDCloud {
             throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DiskNumber '$DiskNumber' is not a valid local deployment disk. Valid DiskNumber values: $availableLocalDiskMessage"
         }
 
-        $global:OSDCoreDevice.DeploymentDisk = $selectedDeploymentDisk
+        $tempDeploymentDisk = $selectedDeploymentDisk
     }
     else {
         $selectedDeploymentDisk = $localDisks | Select-Object -First 1
         if ($selectedDeploymentDisk) {
-            $global:OSDCoreDevice.DeploymentDisk = $selectedDeploymentDisk
+            $tempDeploymentDisk = $selectedDeploymentDisk
         }
     }
 
-    if ($global:OSDCoreDevice.DeploymentDisk) {
-        $deploymentDiskNumber = if ($global:OSDCoreDevice.DeploymentDisk.PSObject.Properties.Match('Number').Count -gt 0) {
-            $global:OSDCoreDevice.DeploymentDisk.Number
+    if ($tempDeploymentDisk) {
+        $tempDeploymentDiskNumber = if ($tempDeploymentDisk.PSObject.Properties.Match('Number').Count -gt 0) {
+            $tempDeploymentDisk.Number
         }
         else {
-            $global:OSDCoreDevice.DeploymentDisk.DiskNumber
+            $tempDeploymentDisk.DiskNumber
         }
     }
     #=================================================
     # OSDCoreDevice Disks
-    if ($global:OSDCoreDevice.DeploymentDisk) {
-        $deploymentDiskName = if ($global:OSDCoreDevice.DeploymentDisk.PSObject.Properties.Match('FriendlyName').Count -gt 0) { $global:OSDCoreDevice.DeploymentDisk.FriendlyName } else { 'Unknown' }
-        $deploymentDiskSize = if ($global:OSDCoreDevice.DeploymentDisk.PSObject.Properties.Match('Size').Count -gt 0) { "$([math]::Round($global:OSDCoreDevice.DeploymentDisk.Size / 1GB, 2)) GB" } else { 'Unknown size' }
-        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] DiskNumber is automatically set to $deploymentDiskNumber [$deploymentDiskName] with size $deploymentDiskSize."
+    if ($tempDeploymentDisk) {
+        $deploymentDiskName = if ($tempDeploymentDisk.PSObject.Properties.Match('FriendlyName').Count -gt 0) { $tempDeploymentDisk.FriendlyName } else { 'Unknown' }
+        $deploymentDiskSize = if ($tempDeploymentDisk.PSObject.Properties.Match('Size').Count -gt 0) { "$([math]::Round($tempDeploymentDisk.Size / 1GB, 2)) GB" } else { 'Unknown size' }
+        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] DiskNumber is automatically set to $tempDeploymentDiskNumber [$deploymentDiskName] with size $deploymentDiskSize."
 
         $otherLocalDisks = @($global:OSDCoreDevice.LocalDisk | Where-Object {
                 $localDiskNumber = if ($_.PSObject.Properties.Match('Number').Count -gt 0) { $_.Number } else { $_.DiskNumber }
-                $localDiskNumber -ne $deploymentDiskNumber
+                $localDiskNumber -ne $tempDeploymentDiskNumber
             })
         foreach ($localDisk in $otherLocalDisks) {
             $localDiskNumber = if ($localDisk.PSObject.Properties.Match('Number').Count -gt 0) { $localDisk.Number } else { $localDisk.DiskNumber }
@@ -676,8 +676,8 @@ function Initialize-DeployOSDCloud {
     # Main
     $global:OSDCloudDeploy = $null
     $global:OSDCloudDeploy = [pscustomobject][ordered]@{
-        DeploymentDisk         = $global:OSDCoreDevice.DeploymentDisk
-        DeploymentDiskNumber   = [System.UInt32]$deploymentDiskNumber
+        DeploymentDisk         = $tempDeploymentDisk
+        DeploymentDiskNumber   = [System.UInt32]$tempDeploymentDiskNumber
         DriverFolderName       = $null
         DriverFolderNames      = @()
         DriverFolderPath       = $null

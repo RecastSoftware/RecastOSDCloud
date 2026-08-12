@@ -3,7 +3,7 @@
 Validates that OSDCloud detected a local deployment disk.
 
 .DESCRIPTION
-Checks $global:OSDCoreDevice.LocalDisk before destructive preinstall steps run.
+Checks $global:OSDCloudDeploy.DeploymentDisk before destructive preinstall steps run.
 When a fixed local disk is detected, the step writes an informational success
 message and allows the workflow to continue. When no fixed local disk is detected,
 the step warns that WinPE may require additional storage, SCSI, or RAID drivers,
@@ -27,7 +27,7 @@ function step-test-targetdisk {
     $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    if ($global:OSDCoreDevice.LocalDisk) {
+    if ($global:OSDCloudDeploy.DeploymentDisk) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Fixed Disk is valid. OK."
     }
     else {

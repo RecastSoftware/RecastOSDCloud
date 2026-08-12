@@ -678,7 +678,6 @@ function Initialize-OSDCoreDevice {
 
     $global:OSDCoreDevice = $null
     $global:OSDCoreDevice = [ordered]@{
-        aiOSLanguageCode         = $aiOSLanguageCode
         OSDManufacturer          = $reportedOSDManufacturer
         OSDModel                 = $reportedOSDModel
         OSDProduct               = $reportedOSDProduct
@@ -729,6 +728,7 @@ function Initialize-OSDCoreDevice {
         USBPartition             = $USBPartition
         USBVolume                = $USBVolume
         UUID                     = $classWin32ComputerSystemProduct.UUID
+        aiOSLanguageCode         = $aiOSLanguageCode
     }
     $global:OSDCoreDevice | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'OSDCoreDevice.xml') -Force
     $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File "$LogsPath\OSDCoreDevice.json" -Force -Encoding utf8

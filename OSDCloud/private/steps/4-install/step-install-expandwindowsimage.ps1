@@ -42,7 +42,7 @@ function step-install-expandwindowsimage {
     $global:OSDCloudWorkflowInvoke.ParamsExpandWindowsImage = $Params
     #=================================================
     # Expand WindowsImage
-    if ($IsWinPE -eq $true) {
+    if ($global:OSDCoreDevice.IsWinPE -eq $true) {
         try {
             Expand-WindowsImage @Params | Out-Null
         }
