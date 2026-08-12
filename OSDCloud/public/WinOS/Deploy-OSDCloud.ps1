@@ -33,6 +33,10 @@ function Deploy-OSDCloud {
         The full OS profile name used to resolve the Env file path. Defaults to 'default'.
         Ignored in WinPE.
 
+    .PARAMETER DiskNumber
+        Specifies the local disk number to use for deployment. The disk number must
+        exist in the local disk inventory detected by OSDCloud.
+
     .PARAMETER SkipWorkflowVerification
         Skips the custom-workflow warning prompt and continues immediately.
 
@@ -63,6 +67,11 @@ function Deploy-OSDCloud {
         Launches the OSDCloud graphical UX using the 'Lab' profile Env path.
 
     .EXAMPLE
+        Deploy-OSDCloud -CLI -DiskNumber 1
+
+        Runs the default OSDCloud workflow immediately and deploys to local disk 1.
+
+    .EXAMPLE
         Deploy-OSDCloud -WorkflowName 'latest' -SkipWorkflowVerification
 
         Runs with a non-default workflow without showing the verification prompt.
@@ -89,6 +98,10 @@ function Deploy-OSDCloud {
 
         [System.Management.Automation.SwitchParameter]
         $CLI,
+
+        [Parameter(Mandatory = $false, HelpMessage = 'Optional local disk number to use as the deployment target.')]
+        [System.UInt32]
+        $DiskNumber,
 
         [Parameter(Mandatory = $false)]
         [System.Management.Automation.SwitchParameter]

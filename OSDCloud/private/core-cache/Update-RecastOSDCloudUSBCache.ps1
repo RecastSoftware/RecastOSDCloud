@@ -381,11 +381,11 @@ function Update-RecastOSDCloudUSBCache {
                 if ($actualDriverPackHashMD5 -ne $expectedDriverPackHashMD5.Trim()) {
                     throw "[$(Get-Date -format s)] DriverPack MD5 hash mismatch for $($OSDCoreDriverPackCacheObject.FullName). Expected $($expectedDriverPackHashMD5.Trim()), found $actualDriverPackHashMD5."
                 }
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack is saved in cache and MD5 hash verified."
+                Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] DriverPack is saved in cache and MD5 hash verified."
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($OSDCoreDriverPackCacheObject.FullName)"
             }
             else {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack is saved in cache."
+                Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] DriverPack is saved in cache."
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($OSDCoreDriverPackCacheObject.FullName)"
             }
         }

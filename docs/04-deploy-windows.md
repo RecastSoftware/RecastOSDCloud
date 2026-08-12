@@ -98,6 +98,15 @@ To skip the UX entirely (scripted runs):
 Deploy-OSDCloud -CLI
 ```
 
+On devices with multiple local disks, specify the deployment target explicitly:
+
+```powershell
+Deploy-OSDCloud -CLI -DiskNumber 1
+```
+
+The disk number must be one of the local deployment disks detected by OSDCloud.
+USB, virtual, offline, and otherwise unsupported disks are not valid targets.
+
 ### 4. The 40-step workflow runs
 
 Phases run in order:

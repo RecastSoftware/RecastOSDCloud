@@ -14,7 +14,7 @@ Starts an OSDCloud operating system deployment.
 
 ```
 Deploy-OSDCloud [[-WorkflowName] <String>] [-CLI] [-Force] [-ProfileName <String>]
- [-ProgressAction <ActionPreference>] [-OperatingSystem <String>] [-OSEdition <String>]
+ [-DiskNumber <UInt32>] [-ProgressAction <ActionPreference>] [-OperatingSystem <String>] [-OSEdition <String>]
  [-OSActivation <String>] [-OSLanguageCode <String>] [-Task <String>] [<CommonParameters>]
 ```
 
@@ -75,6 +75,13 @@ Deploy-OSDCloud -ProfileName 'Lab'
 ```
 
 Launches the OSDCloud graphical UX using the 'Lab' profile Env path.
+
+### EXAMPLE 6
+```
+Deploy-OSDCloud -CLI -DiskNumber 1
+```
+
+Runs the default OSDCloud workflow immediately and deploys to local disk 1.
 
 ## PARAMETERS
 
@@ -139,6 +146,23 @@ Aliases:
 Required: False
 Position: Named
 Default value: Default
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DiskNumber
+Specifies the local disk number to use for deployment.
+The value must match a local disk detected by OSDCloud.
+USB, virtual, offline, and otherwise unsupported disks are not valid deployment targets.
+
+```yaml
+Type: UInt32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -249,4 +273,3 @@ Runtime parameters are provided by Get-OSDCloudWorkflowRuntimeParameter.
 ## RELATED LINKS
 
 [https://github.com/OSDeploy/OSDCloud/blob/main/PRIVACY.md](https://github.com/OSDeploy/OSDCloud/blob/main/PRIVACY.md)
-

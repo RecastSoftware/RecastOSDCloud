@@ -43,6 +43,15 @@ function Initialize-OSDCoreDevice {
         - Updates global state in $global:OSDCoreDevice.
 
         Changelog:
+        - 2026-08-12 | pending | Move DeploymentDisk selection to deployment initialization.
+            Removed deployment disk target selection from device inventory so
+            Initialize-DeployOSDCloud selects the deployment disk from LocalDisk.
+        - 2026-08-11 | pending | Populate local disk inventory in OSDCoreDevice.
+            Assigned filtered online local disk, partition, and volume objects before
+            exporting the device snapshot.
+        - 2026-08-11 | pending | Populate USB disk inventory in OSDCoreDevice.
+            Assigned filtered online USB disk objects to USBDisk before exporting
+            the device snapshot.
         - 2026-08-06 | pending | Export OSDCoreDevice CLIXML to TEMP.
             Added Export-Clixml output to $env:TEMP\OSDCoreDevice.xml so
             callers and support workflows can consume a typed device snapshot.
@@ -553,19 +562,25 @@ function Initialize-OSDCoreDevice {
     }
     #=================================================
     # Disk Information
-    # Include only USB disks that are online and available.
+    # Include only disks that are online and available.
     $GetDisk = Get-Disk |
     Where-Object {
-        $_.BusType -eq 'USB' -and
         $_.IsOffline -eq $false -and
         $_.OperationalStatus -eq 'Online'
     } |
     Sort-Object DiskNumber |
     Select-Object -Property *
 
+    $USBDisk = $GetDisk | Where-Object { $_.BusType -eq 'USB' }
+    $LocalDisk = $GetDisk | Where-Object { $_.BusType -notin 'File Backed Virtual', 'MAX', 'Microsoft Reserved', 'USB', 'Virtual' }
+
     $usbDiskNumbers = [System.Collections.Generic.HashSet[int]]::new()
-    foreach ($disk in $GetDisk) {
+    foreach ($disk in $USBDisk) {
         [void]$usbDiskNumbers.Add([int]$disk.DiskNumber)
+    }
+    $localDiskNumbers = [System.Collections.Generic.HashSet[int]]::new()
+    foreach ($disk in $LocalDisk) {
+        [void]$localDiskNumbers.Add([int]$disk.DiskNumber)
     }
 
     # Partition Information
@@ -574,12 +589,16 @@ function Initialize-OSDCoreDevice {
     Select-Object -Property *, @{
         Name       = 'IsUSB'
         Expression = { $usbDiskNumbers.Contains([int]$_.DiskNumber) }
+    }, @{
+        Name       = 'IsLocal'
+        Expression = { $localDiskNumbers.Contains([int]$_.DiskNumber) }
     }
     # USB Partitions
-    $USBPartitions = $GetPartition | Where-Object { $_.IsUSB -eq $true }
+    $USBPartition = $GetPartition | Where-Object { $_.IsUSB -eq $true }
+    $LocalPartition = $GetPartition | Where-Object { $_.IsLocal -eq $true }
 
-    # USBVolumes
-    $usbDriveLetters = $USBPartitions |
+    # USBVolume
+    $usbDriveLetters = $USBPartition |
     ForEach-Object { $_.AccessPaths } |
     Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
     ForEach-Object {
@@ -589,9 +608,30 @@ function Initialize-OSDCoreDevice {
     } |
     Sort-Object -Unique
 
-    $USBVolumes = @()
+    $USBVolume = $null
     if ($usbDriveLetters) {
-        $USBVolumes = Get-Volume -DriveLetter $usbDriveLetters -ErrorAction SilentlyContinue |
+        $USBVolume = Get-Volume -DriveLetter $usbDriveLetters -ErrorAction SilentlyContinue |
+        Sort-Object DriveLetter -Unique
+    }
+    $USBCache = $null
+    if ($USBVolume) {
+        $USBCache = $USBVolume | Where-Object { $_.FileSystem -eq 'NTFS' } | Select-Object -First 1
+    }
+
+    # LocalVolume
+    $localDriveLetters = $LocalPartition |
+    ForEach-Object { $_.AccessPaths } |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+    ForEach-Object {
+        if ($_ -match '^(?<DriveLetter>[A-Z]):\\$') {
+            $Matches.DriveLetter
+        }
+    } |
+    Sort-Object -Unique
+
+    $LocalVolume = $null
+    if ($localDriveLetters) {
+        $LocalVolume = Get-Volume -DriveLetter $localDriveLetters -ErrorAction SilentlyContinue |
         Sort-Object DriveLetter -Unique
     }
     #=================================================
@@ -654,6 +694,9 @@ function Initialize-OSDCoreDevice {
         IsUEFI                   = [System.Boolean]$IsUEFI
         KeyboardLayout           = $KeyboardLayout
         KeyboardName             = $KeyboardName
+        LocalDisk                = $LocalDisk
+        LocalPartition           = $LocalPartition
+        LocalVolume              = $LocalVolume
         NetGateways              = $NetGateways
         NetIPAddress             = $NetIPAddress
         NetMacAddress            = $NetMacAddress
@@ -670,8 +713,10 @@ function Initialize-OSDCoreDevice {
         TpmManufacturerIdTxt     = $DeviceTpmManufacturerIdTxt
         TpmManufacturerVersion   = $DeviceTpmManufacturerVersion
         TpmSpecVersion           = $DeviceTpmSpecVersion
-        USBPartitions            = $USBPartitions
-        USBVolumes               = $USBVolumes
+        USBCache                 = $USBCache
+        USBDisk                  = $USBDisk
+        USBPartition             = $USBPartition
+        USBVolume                = $USBVolume
         UUID                     = $classWin32ComputerSystemProduct.UUID
     }
     $global:OSDCoreDevice | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'OSDCoreDevice.xml') -Force
