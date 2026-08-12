@@ -43,6 +43,9 @@ function Initialize-OSDCoreDevice {
         - Updates global state in $global:OSDCoreDevice.
 
         Changelog:
+        - 2026-08-12 | pending | Infer aiOSLanguageCode from keyboard layout.
+            Used Convert-KeyboardLayoutToLanguageCode with the detected KeyboardLayout
+            to populate aiOSLanguageCode in the OSDCoreDevice snapshot.
         - 2026-08-12 | pending | Move DeploymentDisk selection to deployment initialization.
             Removed deployment disk target selection from device inventory so
             Initialize-DeployOSDCloud selects the deployment disk from LocalDisk.
@@ -180,6 +183,13 @@ function Initialize-OSDCoreDevice {
         $classWin32Keyboard = $null
         $KeyboardLayout = $null
         $KeyboardName = $null
+    }
+
+    if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction SilentlyContinue) {
+        $aiOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
+    }
+    else {
+        $aiOSLanguageCode = 'en-us'
     }
     #=================================================
     # Win32_NetworkAdapter
@@ -668,6 +678,7 @@ function Initialize-OSDCoreDevice {
 
     $global:OSDCoreDevice = $null
     $global:OSDCoreDevice = [ordered]@{
+        aiOSLanguageCode         = $aiOSLanguageCode
         OSDManufacturer          = $reportedOSDManufacturer
         OSDModel                 = $reportedOSDModel
         OSDProduct               = $reportedOSDProduct

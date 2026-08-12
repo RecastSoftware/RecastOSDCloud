@@ -675,7 +675,7 @@ function Initialize-DeployOSDCloud {
     #=================================================
     # Main
     $global:OSDCloudDeploy = $null
-    $global:OSDCloudDeploy = [ordered]@{
+    $global:OSDCloudDeploy = [pscustomobject][ordered]@{
         DeploymentDisk         = $global:OSDCoreDevice.DeploymentDisk
         DeploymentDiskNumber   = [System.UInt32]$deploymentDiskNumber
         DriverFolderName       = $null

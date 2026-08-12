@@ -37,6 +37,10 @@ function Deploy-OSDCloud {
         Specifies the local disk number to use for deployment. The disk number must
         exist in the local disk inventory detected by OSDCloud.
 
+    .PARAMETER KeyboardLayout
+        Overrides the detected keyboard layout value used to infer OSLanguageCode
+        when OSLanguageCode is not explicitly provided.
+
     .PARAMETER SkipWorkflowVerification
         Skips the custom-workflow warning prompt and continues immediately.
 
@@ -156,7 +160,12 @@ function Deploy-OSDCloud {
         [ValidateNotNullOrEmpty()]
         [ValidateSet('amd64', 'arm64')]
         [System.String]
-        $OSArchitecture = $env:PROCESSOR_ARCHITECTURE
+        $OSArchitecture = $env:PROCESSOR_ARCHITECTURE,
+
+        [Parameter(Mandatory = $false, HelpMessage = 'Optional keyboard layout value used to infer OSLanguageCode.')]
+        [ValidateNotNullOrEmpty()]
+        [System.String]
+        $KeyboardLayout
     )
 
     dynamicparam {
@@ -225,10 +234,30 @@ function Deploy-OSDCloud {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud Workflow: default"
         }
         #=================================================
+        # Automatically determine default OSLanguageCode from the detected keyboard layout if not explicitly provided.
+        $resolvedOSLanguageCode = if ($PSBoundParameters.ContainsKey('OSLanguageCode')) {
+            [System.String]$PSBoundParameters['OSLanguageCode']
+        }
+        else {
+            $null
+        }
+
+        if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
+            $languageKeyboardLayout = if ($PSBoundParameters.ContainsKey('KeyboardLayout')) { $KeyboardLayout } else { $global:OSDCoreDevice.KeyboardLayout }
+            if ($languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
+                $resolvedOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $languageKeyboardLayout -FallbackLanguageCode 'en-US'
+                Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] OSLanguageCode is automatically set to $resolvedOSLanguageCode [KeyboardLayout $languageKeyboardLayout]."
+            }
+            else {
+                $resolvedOSLanguageCode = 'en-US'
+            }
+        }
+        #=================================================
         # Start Initialization of OSDCloud Deployment
         $initializeOSDCloudDeployParameters = @{
             EnvParameters   = $envParameters
             OSArchitecture  = $OSArchitecture
+            OSLanguageCode  = $resolvedOSLanguageCode
             OSDManufacturer = $OSDManufacturer
             OSDModel        = $OSDModel
             OSDProduct      = $OSDProduct
