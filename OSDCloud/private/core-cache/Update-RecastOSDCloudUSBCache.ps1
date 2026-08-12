@@ -280,7 +280,7 @@ function Update-RecastOSDCloudUSBCache {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem is ready at $($osdCoreOperatingSystemCacheContent.FullName)."
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OperatingSystem is not available offline in cache."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] OperatingSystem is not available in the offline cache."
 
             # Do not offer a download when the catalog URL cannot be reached.
             if (-not $OSDCoreOperatingSystemCloudObjectUrlReachable) {
@@ -390,7 +390,7 @@ function Update-RecastOSDCloudUSBCache {
             }
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] DriverPack is not available offline in cache."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] DriverPack is not available in the offline cache."
 
             # Do not offer a download when the driver pack URL cannot be reached.
             if (-not $OSDCoreDriverPackCloudObjectUrlReachable) {

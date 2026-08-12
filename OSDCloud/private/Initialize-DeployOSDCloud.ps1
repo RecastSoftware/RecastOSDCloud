@@ -205,7 +205,7 @@ function Initialize-DeployOSDCloud {
     if ($global:OSDCoreDevice.DeploymentDisk) {
         $deploymentDiskName = if ($global:OSDCoreDevice.DeploymentDisk.PSObject.Properties.Match('FriendlyName').Count -gt 0) { $global:OSDCoreDevice.DeploymentDisk.FriendlyName } else { 'Unknown' }
         $deploymentDiskSize = if ($global:OSDCoreDevice.DeploymentDisk.PSObject.Properties.Match('Size').Count -gt 0) { "$([math]::Round($global:OSDCoreDevice.DeploymentDisk.Size / 1GB, 2)) GB" } else { 'Unknown size' }
-        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] OSDCloud will be deployed to Deployment Disk $deploymentDiskNumber ($deploymentDiskName) with size $deploymentDiskSize."
+        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] DiskNumber is automatically set to $deploymentDiskNumber [$deploymentDiskName] with size $deploymentDiskSize."
 
         $otherLocalDisks = @($global:OSDCoreDevice.LocalDisk | Where-Object {
                 $localDiskNumber = if ($_.PSObject.Properties.Match('Number').Count -gt 0) { $_.Number } else { $_.DiskNumber }
@@ -215,7 +215,7 @@ function Initialize-DeployOSDCloud {
             $localDiskNumber = if ($localDisk.PSObject.Properties.Match('Number').Count -gt 0) { $localDisk.Number } else { $localDisk.DiskNumber }
             $localDiskName = if ($localDisk.PSObject.Properties.Match('FriendlyName').Count -gt 0) { $localDisk.FriendlyName } else { 'Unknown' }
             $localDiskSize = if ($localDisk.PSObject.Properties.Match('Size').Count -gt 0) { "$([math]::Round($localDisk.Size / 1GB, 2)) GB" } else { 'Unknown size' }
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Local Disk $localDiskNumber ($localDiskName) with size $localDiskSize was not selected for deployment."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DiskNumber $localDiskNumber [$localDiskName] with size $localDiskSize was not selected for deployment."
         }
     }
     else {
@@ -280,7 +280,7 @@ function Initialize-DeployOSDCloud {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($OSDCoreDriverPackCacheObject.FullName)"
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] DriverPack is not available offline in cache."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] DriverPack is not available in the offline cache."
             $OSDCoreDriverPackCacheObject = $null
         }
         $global:OSDCoreDriverPackCloudObject | Format-List | Out-Host
@@ -540,7 +540,7 @@ function Initialize-DeployOSDCloud {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($OSDCoreOperatingSystemCacheObject.FullName)"
         }
         else {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OperatingSystem is not available offline in cache."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OperatingSystem is not available in the offline cache."
         }
         # Build a display object that supports both OSD and OSDCloud property shapes.
         $selectedOperatingSystemName = if ($global:OSDCoreOperatingSystemCloudObject.Id) { $global:OSDCoreOperatingSystemCloudObject.Id } else { $global:OSDCoreOperatingSystemCloudObject.Name }

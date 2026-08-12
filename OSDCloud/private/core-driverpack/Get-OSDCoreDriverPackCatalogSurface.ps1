@@ -165,7 +165,7 @@ function Get-OSDCoreDriverPackCatalogSurface {
         # Probe existing target URLs first; only scrape UpdatePage when the current URL is unreachable.
         $uniqueUpdatePages = @()
         if (-not $skipLiveUpdates) {
-            Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] [INFO] Updating OSDCloud DriverPack Catalog."
+            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] DriverPack catalogs are being updated in real-time."
             $targetItems = @(
                 $JsonCatalogContent | Where-Object {
                     $_.UpdatePage -and ((-not $escapedOsdProduct) -or ($_.SystemId -match $escapedOsdProduct))

@@ -288,8 +288,8 @@ function Initialize-OSDCoreDevice {
             Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] [NOT SUPPORTED] Intune Autopilot is not supported on this device."
         }
         else {
-            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] TPM 2.0 is supported on this device."
-            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Intune Autopilot is supported on this device."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] TPM 2.0 is supported on this device."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Intune Autopilot is supported on this device."
             $IsAutopilotSpec = $true
             $IsTpmSpec = $true
         }
@@ -305,7 +305,7 @@ function Initialize-OSDCoreDevice {
         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] This system may not support UEFI or Secure Boot."
     }
     if ($SecureBootStatus -eq $true) {
-        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Secure Boot is enabled on this device."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Secure Boot is enabled on this device."
 
         if (Get-Command -Name Get-SecureBootUEFI -ErrorAction SilentlyContinue) {
             try {
@@ -331,14 +331,14 @@ function Initialize-OSDCoreDevice {
                     }
                     $WinUEFIca2023 = $dbText -match 'Windows UEFI CA 2023'
                     if ($WinUEFIca2023) {
-                        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Windows UEFI CA 2023 is present."
+                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Windows UEFI CA 2023 is present."
                     }
                     else {
                         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Windows UEFI CA 2023 is not present."
                     }
                     $MsUEFIca2023 = $dbText -match 'Microsoft UEFI CA 2023'
                     if ($MsUEFIca2023) {
-                        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Microsoft UEFI CA 2023 is present."
+                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft UEFI CA 2023 is present."
                     }
                     else {
                         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Microsoft UEFI CA 2023 is not present."
@@ -350,7 +350,7 @@ function Initialize-OSDCoreDevice {
                     }
                     $MsKEKca2023 = $kekText -match 'Microsoft Corporation KEK 2K CA 2023'
                     if ($MsKEKca2023) {
-                        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Microsoft Corporation KEK 2K CA 2023 is present."
+                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Corporation KEK 2K CA 2023 is present."
                     }
                     else {
                         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Microsoft Corporation KEK 2K CA 2023 is not present."

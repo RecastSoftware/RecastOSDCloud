@@ -146,7 +146,7 @@ function Sync-OSDCoreDateTime {
                 }
             }
             else {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System clock is synchronized within threshold ($($result.DifferenceMinutes) minutes difference)."
+                Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] System clock is synchronized within threshold ($($result.DifferenceMinutes) minutes difference)."
             }
         }
 
