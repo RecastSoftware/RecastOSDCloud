@@ -18,17 +18,22 @@ All notable changes to this project will be documented in this file.
   - `Resolve-OSDCloudWorkflowOSActivation`
   - `Test-OSDCloudWorkflowSettingsOS`
 - Added deployment hardware override support for workflow-driven operating system selection constraints.
-- Added repository documentation pages `docs/about_osdcorecache.md` and `docs/about_osdcoredevice.md`.
+- Added deployment and device state snapshot exports for the revised deployment initialization flow.
+- Added module driver pack catalog export support for temporary XML snapshots.
+- Added repository documentation pages `docs/about_osdcorecache.md`, `docs/about_osdcoredevice.md`, and `docs/about_winpestartup.md`.
 - Added the `osdcore-operating-system-cloud-object` Copilot skill for core operating system object mapping and maintenance.
 
 ### Changed
 
+- Module version bumped to `26.8.10.1`.
 - Refactored deployment initialization by replacing `Initialize-OSDCloudDeploy` usage with `Initialize-DeployOSDCloud` across deployment entry points (`Deploy-OSDCloud`, `Deploy-OSDCloudCLI`, and `Deploy-OSDCloudGUI`).
 - Renamed module catalog initializer functions to align naming and intent:
   - `Get-ModuleCoreDriverPacks` -> `Initialize-ModuleCoreDriverPacks`
   - `Get-ModuleCoreOperatingSystems` -> `Initialize-ModuleCoreOperatingSystems`
 - Centralized and reorganized cache handling by moving cache helpers from `private/core-device/` to `private/core-cache/` and improving USB cache object refresh behavior.
+- Improved deployment startup behavior by continuing after initialization, removing unreachable initialization code, using resolved operating system cloud objects, and warning when custom workflow settings are supplied.
 - Improved core operating system and driver pack selection reliability by validating cloud/cache objects, normalizing schema handling, and supporting file-path based operating system URL checks.
+- Improved cache, operating system URL, device identity, and catalog initialization status logging for clearer troubleshooting.
 - Improved workflow operating system resolution and parameter flow by centralizing OS settings selection and activation resolution logic.
 - Updated workflow and task execution scripts with standardized informational logging markers and aligned step/test behavior for target disk, driver pack, and Windows image validation.
 - Updated WinPE startup components, including Wi-Fi and USB drive-letter initialization paths, to align with the revised deployment/core orchestration flow.
