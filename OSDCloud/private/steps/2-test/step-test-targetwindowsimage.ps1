@@ -5,8 +5,7 @@ function step-test-targetwindowsimage {
         $LaunchMethod = $global:OSDCloudWorkflowInvoke.LaunchMethod
     )
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     # Is there a local image file already selected?
@@ -61,8 +60,7 @@ function step-test-targetwindowsimage {
     Start-Sleep -Seconds 86400
     Exit
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }
 

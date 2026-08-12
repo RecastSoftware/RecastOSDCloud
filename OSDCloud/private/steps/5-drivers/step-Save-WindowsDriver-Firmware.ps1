@@ -2,8 +2,7 @@ function step-Save-WindowsDriver-Firmware {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     if ($global:OSDCloudDeploy.SkipFirmwareUpdate -eq $true) {
@@ -61,7 +60,6 @@ function step-Save-WindowsDriver-Firmware {
 
     Save-MicrosoftUpdateCatalogDriver -DestinationDirectory $DestinationDirectory -HardwareID $SystemFirmwareHardwareId
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

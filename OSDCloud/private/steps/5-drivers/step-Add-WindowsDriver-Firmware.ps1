@@ -2,8 +2,7 @@ function step-Add-WindowsDriver-Firmware {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     if ($global:OSDCloudDeploy.SkipFirmwareUpdate -eq $true) {
@@ -22,7 +21,6 @@ function step-Add-WindowsDriver-Firmware {
         Add-WindowsDriver -Path "C:\" -Driver "$DriverPath" -Recurse -ForceUnsigned -LogPath "$LogPath\dism-add-windowsdriver-firmware.log" -ErrorAction SilentlyContinue
     }
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

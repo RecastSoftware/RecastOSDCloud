@@ -4,8 +4,7 @@ function step-install-downloadwindowsimage {
         $OperatingSystemObject = $global:OSDCloudWorkflowInvoke.OperatingSystemObject
     )
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     # Is there an OperatingSystem Object?
@@ -187,7 +186,6 @@ function step-install-downloadwindowsimage {
         }
     }
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

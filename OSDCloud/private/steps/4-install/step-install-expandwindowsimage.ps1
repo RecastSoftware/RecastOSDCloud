@@ -2,8 +2,7 @@ function step-install-expandwindowsimage {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     #region Main
@@ -68,7 +67,6 @@ function step-install-expandwindowsimage {
         Remove-Item @Params | Out-Null
     }
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

@@ -7,8 +7,7 @@ function step-Save-WindowsDriver-DriverPack {
         $DriverPackObject = $global:OSDCloudWorkflowInvoke.DriverPackObject
     )
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     # Is DriverPackName set to None?

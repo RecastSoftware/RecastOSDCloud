@@ -4,8 +4,7 @@ function step-powershell-savemodule {
         $Name = $Step.parameters.name
     )
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     #region Main
@@ -29,7 +28,6 @@ function step-powershell-savemodule {
         Write-Warning "[$(Get-Date -format s)] Unable to Save-Module $Name to $PowerShellSavePath\Modules"
     }
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }
