@@ -1,3 +1,29 @@
+<#
+.SYNOPSIS
+Displays the startup banner for an OSDCloud workflow task.
+
+.DESCRIPTION
+Writes the selected workflow task name to the host, gives the user five seconds
+to cancel with Ctrl+C, and then allows the workflow executor to continue to the
+next step. Task JSON files pass the root task name through the WorkflowTaskName
+parameter so the banner matches the selected workflow task.
+
+.PARAMETER WorkflowTaskName
+Display name of the workflow task being started. The value should match the name
+field at the root of the workflow task JSON file.
+
+.EXAMPLE
+step-initialize-osdcloudworkflowtask -WorkflowTaskName 'OSDCloud'
+
+Displays the OSDCloud task startup message and waits five seconds before the
+workflow continues.
+
+.NOTES
+Internal workflow step used by OSDCloud deployment tasks.
+
+.OUTPUTS
+None. This function does not return objects.
+#>
 function step-initialize-osdcloudworkflowtask {
     [CmdletBinding()]
     param (
@@ -5,21 +31,13 @@ function step-initialize-osdcloudworkflowtask {
         [string]$WorkflowTaskName = "OSDCloud Workflow"
     )
     #=================================================
-    # Start the step
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
-
-    # Get the configuration of the step
-    $Step = $global:OSDCloudCurrentStep
+    $Error.Clear()
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    #region Main
-
     # Display delay message to user
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Starting $WorkflowTaskName in 5 seconds..."
     Write-Host -ForegroundColor DarkGray "Press Ctrl+C to exit OSDCloud"
     Start-Sleep -Seconds 5
-    
-    #endregion
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================

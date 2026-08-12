@@ -3,8 +3,8 @@ function step-postaction-removeosdcloudlogs {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     # Stop Transcript at this point as this file is locked and will cause issues with cleanup
     $null = Stop-Transcript -ErrorAction SilentlyContinue
 

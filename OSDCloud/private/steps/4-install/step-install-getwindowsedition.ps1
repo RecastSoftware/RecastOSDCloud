@@ -3,7 +3,6 @@ function step-install-getwindowsedition {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
     try {
         $WindowsEdition = (Get-WindowsEdition -Path 'C:\' -ErrorAction Stop | Out-String).Trim()

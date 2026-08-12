@@ -5,7 +5,6 @@ function step-install-downloadwindowsimage {
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
     # Is there an OperatingSystem Object?
     if (-not ($OperatingSystemObject)) {
@@ -83,7 +82,7 @@ function step-install-downloadwindowsimage {
     $MatchingFiles = Get-PSDrive -PSProvider FileSystem | ForEach-Object {
         Get-ChildItem "$($_.Name):\OSDCloud\OS\" -Include "$FileName" -File -Recurse -Force -ErrorAction Ignore
     }
-    
+
     if ($MatchingFiles) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystemObject is available offline. OK."
         $IsOffline = $true
@@ -115,7 +114,7 @@ function step-install-downloadwindowsimage {
     # Is there a USB drive available?
     $USBDrive = Get-DeviceUSBVolume | Where-Object { ($_.FileSystemLabel -match "OSDCloud|USB-DATA") } | `
                 Where-Object { $_.SizeGB -ge 16 } | Where-Object { $_.SizeRemainingGB -ge 10 } | Select-Object -First 1
-    
+
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($OperatingSystemObject.FilePath)"
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] FileName: $FileName"
 

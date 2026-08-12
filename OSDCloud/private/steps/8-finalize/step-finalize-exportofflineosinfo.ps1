@@ -3,8 +3,8 @@ function step-finalize-exportofflineosinfo {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     #region Main
     $StepLogPath = "C:\Windows\Temp\osdcloud-logs"
 

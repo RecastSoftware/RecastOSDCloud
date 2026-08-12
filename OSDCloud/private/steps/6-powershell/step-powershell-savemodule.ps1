@@ -5,8 +5,8 @@ function step-powershell-savemodule {
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     #region Main
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO]"
     $PowerShellSavePath = 'C:\Program Files\WindowsPowerShell'

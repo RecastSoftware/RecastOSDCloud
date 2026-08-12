@@ -41,18 +41,16 @@ function step-install-getwindowsimageindex {
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
-    #region Do we have a WindowsImage to test?
+    # Do we have a WindowsImage to test?
     if ($null -eq $ImagePath) {
         Write-Warning "[$(Get-Date -format s)] WindowsImage does not have an ImagePath."
         Write-Warning 'Press Ctrl+C to exit OSDCloud'
         Start-Sleep -Seconds 86400
         exit
     }
-    #endregion
     #=================================================
-    #region Does the Path exist?
+    # Does the Path exist?
     if (-not (Test-Path $ImagePath)) {
         Write-Warning "[$(Get-Date -format s)] WindowsImage does not exist at the ImagePath."
         Write-Warning $ImagePath
@@ -60,9 +58,8 @@ function step-install-getwindowsimageindex {
         Start-Sleep -Seconds 86400
         exit
     }
-    #endregion
     #=================================================
-    #region Does Get-WindowsImage work?
+    # Does Get-WindowsImage work?
     try {
         $WindowsImage = Get-WindowsImage -ImagePath $ImagePath -ErrorAction Stop
     }
@@ -73,9 +70,8 @@ function step-install-getwindowsimageindex {
         Start-Sleep -Seconds 86400
         exit
     }
-    #endregion
     #=================================================
-    #region Is there only one ImageIndex?
+    # Is there only one ImageIndex?
     $WindowsImageCount = ($WindowsImage).Count
 
     if ($WindowsImageCount -eq 1) {
@@ -83,17 +79,15 @@ function step-install-getwindowsimageindex {
         $global:OSDCloudWorkflowInvoke.WindowsImageIndex = 1
         return
     }
-    #endregion
     #=================================================
-    #region Get the ImageIndex of the ImageName
+    # Get the ImageIndex of the ImageName
     if ($ImageName) {
         $ImageIndex = ($WindowsImage | Where-Object { $_.ImageName -eq $ImageName }).ImageIndex
         $global:OSDCloudWorkflowInvoke.WindowsImageIndex = $ImageIndex
         return
     }
-    #endregion
     #=================================================
-    #region Get the ImageIndex of the EditionId
+    # Get the ImageIndex of the EditionId
     if ($EditionId) {
         $MatchingWindowsImage = $WindowsImage | `
             ForEach-Object { Get-WindowsImage -ImagePath $ImagePath -Index $_.ImageIndex } | `
@@ -106,26 +100,24 @@ function step-install-getwindowsimageindex {
             return
         }
     }
-    #endregion
     #=================================================
-    #region Unable to determine which ImageIndex to apply, so prompt the user to select the ImageIndex
+    # Unable to determine which ImageIndex to apply, so prompt the user to select the ImageIndex
     Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] Select the WindowsImage to expand"
     $SelectWindowsImage = $WindowsImage | Where-Object { $_.ImageSize -gt 3000000000 }
 
     if ($SelectWindowsImage) {
         $SelectWindowsImage | Select-Object -Property ImageIndex, ImageName | Format-Table | Out-Host
-    
+
         do {
             $SelectReadHost = Read-Host -Prompt 'Select an WindowsImage to expand by ImageIndex [Number]'
         }
         until (((($SelectReadHost -ge 0) -and ($SelectReadHost -in $SelectWindowsImage.ImageIndex))))
-    
+
         $global:OSDCloudWorkflowInvoke.WindowsImageIndex = $SelectReadHost
         return
     }
-    #endregion
     #=================================================
-    #region Everything we tried failed, so exit OSDCloud
+    # Everything we tried failed, so exit OSDCloud
     Write-Warning "[$(Get-Date -format s)] Unable to determine the ImageIndex to apply."
     Write-Warning 'Press Ctrl+C to exit OSDCloud'
     Start-Sleep -Seconds 86400

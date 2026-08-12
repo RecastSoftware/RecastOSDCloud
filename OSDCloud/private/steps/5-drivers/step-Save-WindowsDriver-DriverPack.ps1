@@ -8,8 +8,8 @@ function step-Save-WindowsDriver-DriverPack {
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     # Is DriverPackName set to None?
     if ($DriverPackName -eq 'None') {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPackName is set to None. OK."

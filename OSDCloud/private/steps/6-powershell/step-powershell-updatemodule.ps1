@@ -3,8 +3,8 @@ function step-powershell-updatemodule {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     # Is it reachable online?
     try {
         $WebRequest = Invoke-WebRequest -Uri 'https://www.powershellgallery.com' -UseBasicParsing -Method Head

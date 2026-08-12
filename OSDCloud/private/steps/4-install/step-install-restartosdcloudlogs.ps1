@@ -3,9 +3,7 @@ function step-install-restartosdcloudlogs {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
-    #region Main
     $LogsPath = "C:\Windows\Temp\osdcloud-logs"
 
     $Params = @{
@@ -23,7 +21,6 @@ function step-install-restartosdcloudlogs {
     $TranscriptFullName = Join-Path $LogsPath "transcript-$((Get-Date).ToString('yyyy-MM-dd-HHmmss')).log"
 
     $null = Start-Transcript -Path $TranscriptFullName -ErrorAction SilentlyContinue
-    #endregion
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================

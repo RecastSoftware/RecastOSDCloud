@@ -3,8 +3,8 @@ function step-Add-WindowsDriver-DriverPack {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     $LogPath = "C:\Windows\Temp\osdcloud-logs"
 
     $DriverPath = "C:\Windows\Temp\osdcloud-driverpack-expand"

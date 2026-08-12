@@ -3,9 +3,7 @@ function step-preinstall-removeusbdriveletter {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
-    #region Main
     <#
         https://docs.microsoft.com/en-us/powershell/module/storage/remove-partitionaccesspath
         Partition Access Paths are being removed from USB Drive Letters

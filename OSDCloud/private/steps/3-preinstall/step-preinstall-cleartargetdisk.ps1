@@ -7,9 +7,7 @@ function step-preinstall-cleartargetdisk {
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
-    #region Main
     if ($global:OSDCloudDeploy.Force -eq $true) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Force was specified. Clear-Disk confirmation prompts are disabled"
         $Confirm = $false
@@ -22,7 +20,6 @@ function step-preinstall-cleartargetdisk {
     }
 
     Clear-DeviceLocalDisk -Force -NoResults -Confirm:$Confirm -ErrorAction Stop
-    #endregion
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================

@@ -3,9 +3,7 @@ function step-install-removewindowsimage {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
-    #region Main
     if (Test-Path "C:\OSDCloud") {
         try {
             Remove-Item -Path "C:\OSDCloud" -Recurse -Force -ErrorAction Stop | Out-Null
@@ -19,7 +17,6 @@ function step-install-removewindowsimage {
             $Error.Clear()
         }
     }
-    #endregion
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================

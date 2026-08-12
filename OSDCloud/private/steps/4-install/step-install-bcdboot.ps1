@@ -3,9 +3,7 @@ function step-install-bcdboot {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
-    #region Main
     $LogPath = "C:\Windows\Temp\osdcloud-logs"
 
     # https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/bcdboot-command-line-options-techref-di?view=windows-11
@@ -23,7 +21,6 @@ function step-install-bcdboot {
         $BCDBootOutput | Out-File -FilePath "$LogPath\bcdboot.txt" -Force
     }
     Pop-Location
-    #endregion
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================

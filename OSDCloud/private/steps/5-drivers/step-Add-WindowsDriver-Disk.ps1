@@ -31,6 +31,7 @@ function step-Add-WindowsDriver-Disk {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
+    #=================================================
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     $LogPath = "C:\Windows\Temp\osdcloud-logs"

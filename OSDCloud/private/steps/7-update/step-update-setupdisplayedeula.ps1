@@ -3,8 +3,8 @@ function step-update-setupdisplayedeula {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     #region Main
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Updating the OOBE SetupDisplayedEula value in the registry. OK."
     $null = reg load HKLM\TempSOFTWARE "C:\Windows\System32\Config\SOFTWARE"

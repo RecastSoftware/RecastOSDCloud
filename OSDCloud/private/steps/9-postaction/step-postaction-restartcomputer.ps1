@@ -3,8 +3,8 @@ function step-postaction-restartcomputer {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     #region Main
     if ($global:OSDCloudWorkflowInvoke.WinpeRestart) {
         Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] Device will restart in 30 seconds"

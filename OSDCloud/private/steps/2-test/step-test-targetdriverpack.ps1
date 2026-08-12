@@ -1,3 +1,38 @@
+<#
+.SYNOPSIS
+Validates driver pack availability for an OSDCloud workflow task.
+
+.DESCRIPTION
+Checks the selected driver pack before driver download and injection steps run.
+The step treats DriverPackName values of None and Microsoft Update Catalog as
+valid bypass states. When a driver pack object is present, it validates that the
+object has a Url, then checks whether that URL responds online or whether the
+matching driver pack file is already available under OSDCloud\DriverPacks on a
+local file system drive.
+
+If the driver pack cannot be validated online or offline, the workflow continues
+without a driver pack by clearing the driver pack values in the deployment state
+and workflow invocation snapshot.
+
+.PARAMETER DriverPackName
+Name of the selected driver pack. Defaults to
+$global:OSDCloudWorkflowInvoke.DriverPackName.
+
+.PARAMETER DriverPackObject
+Driver pack metadata object used for URL and file-name validation. Defaults to
+$global:OSDCloudWorkflowInvoke.DriverPackObject.
+
+.EXAMPLE
+step-test-targetdriverpack
+
+Validates the driver pack configured in the workflow invocation snapshot.
+
+.NOTES
+Internal workflow step used by OSDCloud deployment tasks.
+
+.OUTPUTS
+None. This function does not return objects.
+#>
 function step-test-targetdriverpack {
     [CmdletBinding()]
     param (
@@ -7,8 +42,8 @@ function step-test-targetdriverpack {
         $DriverPackObject = $global:OSDCloudWorkflowInvoke.DriverPackObject
     )
     #=================================================
+    $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
     # Is DriverPackName set to None?
     if ($DriverPackName -eq 'None') {

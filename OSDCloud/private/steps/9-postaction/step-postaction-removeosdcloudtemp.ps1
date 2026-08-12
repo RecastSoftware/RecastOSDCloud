@@ -3,8 +3,8 @@ function step-postaction-removeosdcloudtemp {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
+    $Step = $global:OSDCloudCurrentStep
     $Path = 'C:\Windows\Temp\osdcloud'
 
     if (Test-Path $Path) {

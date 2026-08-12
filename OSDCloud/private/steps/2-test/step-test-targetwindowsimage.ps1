@@ -1,3 +1,33 @@
+<#
+.SYNOPSIS
+Validates Windows image availability for an OSDCloud workflow task.
+
+.DESCRIPTION
+Checks that the selected Windows image can be used before download and install
+steps run. The step first accepts an existing local image selected in
+$global:OSDCloudDeploy.LocalImageFileInfo. If no local image is available, it
+validates $global:OSDCloudWorkflowInvoke.OperatingSystemObject.FilePath by
+checking whether the URL responds online or whether the matching image file is
+already available under OSDCloud\OS on a local file system drive.
+
+When the Windows image cannot be validated online or offline, the step waits so
+the user can cancel the deployment before exiting.
+
+.PARAMETER LaunchMethod
+Reserved for launch-method specific validation. Defaults to
+$global:OSDCloudWorkflowInvoke.LaunchMethod.
+
+.EXAMPLE
+step-test-targetwindowsimage
+
+Validates the Windows image configured in the workflow invocation snapshot.
+
+.NOTES
+Internal workflow step used by OSDCloud deployment tasks.
+
+.OUTPUTS
+None. This function does not return objects.
+#>
 function step-test-targetwindowsimage {
     [CmdletBinding()]
     param (
@@ -5,8 +35,8 @@ function step-test-targetwindowsimage {
         $LaunchMethod = $global:OSDCloudWorkflowInvoke.LaunchMethod
     )
     #=================================================
+    $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
     # Is there a local image file already selected?
     if ($global:OSDCloudDeploy.LocalImageFileInfo) {
@@ -20,7 +50,7 @@ function step-test-targetwindowsimage {
     #=================================================
     # Is there an Operating System ImageFile URL?
     if (-not ($global:OSDCloudWorkflowInvoke.OperatingSystemObject.FilePath)) {
-        Write-Warning "[$(Get-Date -format s)] OperatingSystemObject does not have a Url to validate."
+        Write-Warning "[$(Get-Date -format s)] OperatingSystemObject does not have a FilePath to validate."
         Write-Warning 'Press Ctrl+C to exit OSDCloud'
         Start-Sleep -Seconds 86400
         exit

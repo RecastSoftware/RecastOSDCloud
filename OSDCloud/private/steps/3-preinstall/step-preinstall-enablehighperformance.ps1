@@ -3,7 +3,6 @@ function step-preinstall-enablehighperformance {
     param ()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
     if ($global:OSDCoreDevice.IsOnBattery -eq $true) {
         $classWin32Battery = (Get-CimInstance -ClassName Win32_Battery -ErrorAction SilentlyContinue | Select-Object -Property *)

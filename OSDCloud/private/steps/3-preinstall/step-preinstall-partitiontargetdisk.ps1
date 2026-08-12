@@ -12,9 +12,7 @@ function step-preinstall-partitiontargetdisk {
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $Step = $global:OSDCloudCurrentStep
     #=================================================
-    #region Main
     # Mental Math
     $RecoveryPartition = $true
     if ($IsVM -eq $true) { $RecoveryPartition = $false }
@@ -42,14 +40,13 @@ function step-preinstall-partitiontargetdisk {
     }
     Start-Sleep -Seconds 5
 
-    # Make sure that there is a PSDrive 
+    # Make sure that there is a PSDrive
     if (!(Get-PSDrive -Name 'C')) {
         Write-Warning "[$(Get-Date -format s)] Failed to create a PSDrive FileSystem at C:\."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Press Ctrl+C to exit OSDCloud"
         Start-Sleep -Seconds 86400
         exit
     }
-    #endregion
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
