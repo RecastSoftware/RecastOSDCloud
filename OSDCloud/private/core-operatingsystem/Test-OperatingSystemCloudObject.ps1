@@ -1,4 +1,4 @@
-function Test-OSDCoreOperatingSystemCloudObject {
+function Test-OperatingSystemCloudObject {
     <#
     .SYNOPSIS
     Tests whether an OSDCore operating system object is available online and ready to downloaded.
@@ -18,12 +18,12 @@ function Test-OSDCoreOperatingSystemCloudObject {
     FilePath and OSD uses Url.
 
     .EXAMPLE
-    Test-OSDCoreOperatingSystemCloudObject
+    Test-OperatingSystemCloudObject
     Tests the resolved FilePath/Url property on
     $global:OSDCoreOperatingSystemCloudObject.
 
     .EXAMPLE
-    Test-OSDCoreOperatingSystemCloudObject -OperatingSystemCloudObject $global:OSDCoreOperatingSystemCloudObject
+    Test-OperatingSystemCloudObject -OperatingSystemCloudObject $global:OSDCoreOperatingSystemCloudObject
     Tests the resolved FilePath/Url property on the supplied operating system
     object.
 

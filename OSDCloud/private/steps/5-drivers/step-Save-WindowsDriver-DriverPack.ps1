@@ -4,7 +4,7 @@ function step-Save-WindowsDriver-DriverPack {
         [System.String]
         $DriverPackName = $global:OSDCloudWorkflowInvoke.DriverPackName,
 
-        $DriverPackObject = $global:OSDCloudWorkflowInvoke.DriverPackObject
+        $DriverPackCloudObject = $global:OSDCloudWorkflowInvoke.DriverPackCloudObject
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
@@ -23,14 +23,14 @@ function step-Save-WindowsDriver-DriverPack {
     }
     #=================================================
     # Is there a DriverPack Object?
-    if (-not ($DriverPackObject)) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPackObject is not set. OK."
+    if (-not ($DriverPackCloudObject)) {
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPackCloudObject is not set. OK."
         return
     }
     #=================================================
     # Is there a URL?
-    if (-not $($DriverPackObject.Url)) {
-        Write-Warning "[$(Get-Date -format s)] DriverPackObject does not have a Url to validate."
+    if (-not $($DriverPackCloudObject.Url)) {
+        Write-Warning "[$(Get-Date -format s)] DriverPackCloudObject does not have a Url to validate."
         Write-Warning 'Press Ctrl+C to exit OSDCloud'
         Start-Sleep -Seconds 86400
         exit
@@ -39,7 +39,7 @@ function step-Save-WindowsDriver-DriverPack {
     # Is it reachable online?
     $IsOnline = $false
     try {
-        $WebRequest = Invoke-WebRequest -Uri $DriverPackObject.Url -UseBasicParsing -Method Head
+        $WebRequest = Invoke-WebRequest -Uri $DriverPackCloudObject.Url -UseBasicParsing -Method Head
         if ($WebRequest.StatusCode -eq 200) {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack URL returned a 200 status code. OK."
             $IsOnline = $true
@@ -51,7 +51,7 @@ function step-Save-WindowsDriver-DriverPack {
     #=================================================
     # Does the file exist on a Drive?
     $IsOffline = $false
-    $FileName = $DriverPackObject.FileName
+    $FileName = $DriverPackCloudObject.FileName
     $MatchingFiles = @()
     $MatchingFiles = Get-PSDrive -PSProvider FileSystem | ForEach-Object {
         Get-ChildItem "$($_.Name):\OSDCloud\DriverPacks\" -Include "$FileName" -File -Recurse -Force -ErrorAction Ignore
@@ -73,11 +73,11 @@ function step-Save-WindowsDriver-DriverPack {
     #=================================================
     # Variables
     $LogPath = "C:\Windows\Temp\osdcloud-logs"
-    $Manufacturer = $DriverPackObject.Manufacturer
+    $Manufacturer = $DriverPackCloudObject.Manufacturer
     $ScriptsPath = "C:\Windows\Setup\Scripts"
     $SetupCompleteCmd = "$ScriptsPath\SetupComplete.cmd"
     $SetupSpecializeCmd = "C:\Windows\Temp\osdcloud\SetupSpecialize.cmd"
-    $Url = $DriverPackObject.Url
+    $Url = $DriverPackCloudObject.Url
     #=================================================
     # Create Download Directory
     $DownloadPath = "C:\Windows\Temp\osdcloud-driverpack-download"
@@ -95,7 +95,7 @@ function step-Save-WindowsDriver-DriverPack {
     $USBDrive = Get-DeviceUSBVolume | Where-Object { ($_.FileSystemLabel -match "OSDCloud|USB-DATA") } | `
                 Where-Object { $_.SizeGB -ge 16 } | Where-Object { $_.SizeRemainingGB -ge 10 } | Select-Object -First 1
 
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($DriverPackObject.Url)"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($DriverPackCloudObject.Url)"
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] FileName: $FileName"
 
     if ($USBDrive) {
@@ -105,7 +105,7 @@ function step-Save-WindowsDriver-DriverPack {
         if (-not (Test-Path $USBDownloadPath)) {
             $null = New-Item -Path $USBDownloadPath -ItemType Directory -Force
         }
-        $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $DriverPackObject.Url -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
+        $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
 
         if ($SaveWebFile) {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Copying Offline DriverPack to $DownloadPath"
@@ -116,7 +116,7 @@ function step-Save-WindowsDriver-DriverPack {
     else {
         # $SaveWebFile is a FileInfo Object, not a path
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DownloadPath: $DownloadPath"
-        $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $DriverPackObject.Url -DestinationDirectory $DownloadPath -ErrorAction Stop
+        $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $DownloadPath -ErrorAction Stop
         $FileInfo = $SaveWebFile
     }
     #=================================================
@@ -128,7 +128,7 @@ function step-Save-WindowsDriver-DriverPack {
         return
     }
     # Store this as a FileInfo Object
-    $DriverPackObject | ConvertTo-Json | Out-File "$($OutFileObject.FullName).json" -Encoding ascii -Width 2000 -Force
+    $DriverPackCloudObject | ConvertTo-Json | Out-File "$($OutFileObject.FullName).json" -Encoding ascii -Width 2000 -Force
     #=================================================
     # Expand the DriverPack
     $DownloadedFile = $OutFileObject.FullName
@@ -238,7 +238,7 @@ function step-Save-WindowsDriver-DriverPack {
     #=================================================
     #   Lenovo
     #=================================================
-    if (($OutFileObject.Extension -eq '.exe') -and ($DriverPackObject.Manufacturer -match 'Lenovo')) {
+    if (($OutFileObject.Extension -eq '.exe') -and ($DriverPackCloudObject.Manufacturer -match 'Lenovo')) {
         if (-not (Test-Path $ScriptsPath)) {
             New-Item -Path $ScriptsPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null
         }

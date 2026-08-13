@@ -207,11 +207,6 @@ function Deploy-OSDCloud {
         }
         $global:OSDCoreDevice | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'OSDCoreDevice.xml') -Force
         #=================================================
-        # Refactor variables for deployment workflow initialization
-        $OSDManufacturer = $global:OSDCoreDevice.OSDManufacturer
-        $OSDModel = $global:OSDCoreDevice.OSDModel
-        $OSDProduct = $global:OSDCoreDevice.OSDProduct
-        #=================================================
         # Workflow Verification and Warning
         if ($WorkflowName -ne 'default' -and -not $SkipWorkflowVerification.IsPresent) {
             Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow: $WorkflowName"
@@ -258,9 +253,9 @@ function Deploy-OSDCloud {
             EnvParameters   = $envParameters
             OSArchitecture  = $OSArchitecture
             OSLanguageCode  = $resolvedOSLanguageCode
-            OSDManufacturer = $OSDManufacturer
-            OSDModel        = $OSDModel
-            OSDProduct      = $OSDProduct
+            OSDManufacturer = $global:OSDCoreDevice.OSDManufacturer
+            OSDModel        = $global:OSDCoreDevice.OSDModel
+            OSDProduct      = $global:OSDCoreDevice.OSDProduct
             ProfileName     = $ProfileName
             WorkflowName    = $WorkflowName
         }

@@ -179,12 +179,12 @@ function Deploy-OSDCloudCLI {
             throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSEdition '$selectedOSEdition' is not valid for workflow '$WorkflowName'. Valid values: $($validOSEditions -join ', ')"
         }
 
-        $workflowTaskValues = [array]($global:OSDCloudDeploy.Flows | Select-Object -ExpandProperty Name)
+        $workflowTaskValues = [array]($global:OSDCloudDeploy.WorkflowTasks | Select-Object -ExpandProperty Name)
         if ($selectedTask -notin $workflowTaskValues) {
             throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Task '$selectedTask' is not valid for workflow '$WorkflowName'. Valid values: $($workflowTaskValues -join ', ')"
         }
 
-        $workflowTaskObject = $global:OSDCloudDeploy.Flows | Where-Object { $_.Name -eq $selectedTask } | Select-Object -First 1
+        $workflowTaskObject = $global:OSDCloudDeploy.WorkflowTasks | Where-Object { $_.Name -eq $selectedTask } | Select-Object -First 1
 
         $operatingSystemObject = $global:OSDCoreOperatingSystems |
         Where-Object { $_.OperatingSystem -eq $selectedOperatingSystem } |

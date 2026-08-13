@@ -7,33 +7,20 @@ param()
 #================================================
 Add-Type -AssemblyName PresentationCore, PresentationFramework, WindowsBase
 #================================================
-# Variables
-$deviceBiosReleaseDate = $global:OSDCoreDevice.BiosReleaseDate
-$deviceBiosVersion = $global:OSDCoreDevice.BiosVersion
-$deviceOSDManufacturer = $global:OSDCoreDevice.OSDManufacturer
-$deviceOSDModel = $global:OSDCoreDevice.OSDModel
-$deviceOSDProduct = $global:OSDCoreDevice.OSDProduct
-$deviceComputerSystemSKU = $global:OSDCoreDevice.ComputerSystemSKU
-$deviceIsAutopilotSpec = $global:OSDCoreDevice.IsAutopilotSpec
-$deviceIsTpmSpec = $global:OSDCoreDevice.IsTpmSpec
-$deviceSerialNumber = $global:OSDCoreDevice.SerialNumber
-$deviceUUID = $global:OSDCoreDevice.UUID
-$deviceHardwareHash = $global:OSDCoreDevice.HardwareHash
-$getOSDCloudModuleVersion = Get-OSDCloudModuleVersion
-#================================================
 # XAML
+# Load the WPF layout from the companion XAML file so this script can wire data
+# and event handlers without embedding UI markup in PowerShell.
 $xamlfile = Get-Item -Path "$PSScriptRoot\MainWindow.xaml"
 $xaml = Get-Content $xamlfile.FullName
-
 $stringReader = [System.IO.StringReader]::new($xaml)
 $xmlReader = [System.Xml.XmlReader]::Create($stringReader)
 $window = [Windows.Markup.XamlReader]::Load($xmlReader)
 #================================================
 # XAML - Window Title
 $deviceTitleParts = @()
-
-if (-not [string]::IsNullOrWhiteSpace($getOSDCloudModuleVersion)) {
-	$deviceTitleParts += $getOSDCloudModuleVersion
+$OSDCloudModuleVersion = Get-OSDCloudModuleVersion
+if (-not [string]::IsNullOrWhiteSpace($OSDCloudModuleVersion)) {
+	$deviceTitleParts += $OSDCloudModuleVersion
 }
 if ($deviceTitleParts.Count -gt 0) {
 	$window.Title = "OSDCloud version $($deviceTitleParts -join ' - ')"
@@ -46,6 +33,8 @@ if ($logoImage) {
 }
 #================================================
 # Menu Items
+# Resolve named controls once and attach event handlers for tools that are useful
+# during WinPE deployment troubleshooting.
 $RunCmdPrompt = $window.FindName("RunCmdPrompt")
 $RunPowerShell = $window.FindName("RunPowerShell")
 $RunPwsh = $window.FindName("RunPwsh")
@@ -72,6 +61,8 @@ $RunPowerShell.Add_Click({
 	})
 
 if ($RunPwsh) {
+	# PowerShell 7 is optional in the environment, so only show the menu item when
+	# pwsh.exe can be resolved on the current path.
 	$pwshCommand = Get-Command -Name 'pwsh.exe' -ErrorAction SilentlyContinue
 	if ($pwshCommand) {
 		$script:PwshPath = $pwshCommand.Source
@@ -114,7 +105,29 @@ function Add-NoLogsMenuEntry {
 	$noLogsItem.IsEnabled = $false
 	$MenuItem.Items.Add($noLogsItem) | Out-Null
 }
+function Set-ClipboardText {
+	param([string]$Text)
+	# Clipboard access can be temporarily locked by another process; retry briefly
+	# so click-to-copy still works in most interactive sessions.
+	$maxRetries = 5
+	for ($i = 0; $i -lt $maxRetries; $i++) {
+		try {
+			[System.Windows.Clipboard]::SetText($Text)
+			return
+		}
+		catch {
+			if ($i -lt ($maxRetries - 1)) {
+				Start-Sleep -Milliseconds 100
+			}
+			else {
+				Write-Warning "Failed to copy to clipboard: $_"
+			}
+		}
+	}
+}
 function Set-LogsMenuItems {
+	# Rebuild the log menu from the temp log folder, excluding WMI captures that
+	# have their own menu.
 	$LogsMenuItem.Items.Clear()
 
 	$logsRoot = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath 'osdcloud-logs'
@@ -137,8 +150,8 @@ function Set-LogsMenuItems {
 		$logMenuItem.Tag = $logFile.FullName
 
 		$logMenuItem.Add_Click({
-				param($sender, $args)
-				$logPath = [string]$sender.Tag
+				param($eventSender, $eventArgs)
+				$logPath = [string]$eventSender.Tag
 				if (-not (Test-Path -LiteralPath $logPath)) {
 					[System.Windows.MessageBox]::Show('Log file not found.', 'Open Log', 'OK', 'Warning') | Out-Null
 					return
@@ -157,6 +170,8 @@ function Set-LogsMenuItems {
 }
 Set-LogsMenuItems
 function Set-WMIMenuItems {
+	# WMI inventory files are separated from deployment logs to keep hardware data
+	# easy to inspect during troubleshooting.
 	$WMIMenuItem.Items.Clear()
 
 	$logsRoot = Join-Path -Path ([System.IO.Path]::GetTempPath()) -ChildPath 'osdcloud-logs'
@@ -179,8 +194,8 @@ function Set-WMIMenuItems {
 		$logMenuItem.Tag = $logFile.FullName
 
 		$logMenuItem.Add_Click({
-				param($sender, $args)
-				$logPath = [string]$sender.Tag
+				param($eventSender, $eventArgs)
+				$logPath = [string]$eventSender.Tag
 				if (-not (Test-Path -LiteralPath $logPath)) {
 					[System.Windows.MessageBox]::Show('Log file not found.', 'Open Log', 'OK', 'Warning') | Out-Null
 					return
@@ -201,7 +216,7 @@ Set-WMIMenuItems
 #================================================
 # TaskSequence
 $TaskSequenceCombo = $window.FindName("TaskSequenceCombo")
-$taskSequenceFlows = $global:OSDCloudDeploy.Flows.Name
+$taskSequenceFlows = $global:OSDCloudDeploy.WorkflowTasks.Name
 if ($null -eq $taskSequenceFlows) { $taskSequenceFlows = @() }
 $TaskSequenceCombo.ItemsSource = $taskSequenceFlows
 $TaskSequenceCombo.SelectedIndex = 0
@@ -212,17 +227,14 @@ $TaskSequenceCombo.Add_SelectionChanged({
 		}
 	})
 #================================================
-# GlobalVariable Configuration
-# Environment Configuration
-# Workflow Configuration
+# OperatingSystemValues
+# Prefer workflow-provided choices when present; otherwise derive selectable OS
+# names from the loaded operating system catalog.
 if ($global:OSDCloudDeploy.OperatingSystemValues) {
 	$OperatingSystemValues = $global:OSDCloudDeploy.OperatingSystemValues
-	Write-Verbose "[$(Get-Date -format s)] [MainWindow.ps1] OperatingSystemValues = $OperatingSystemValues"
 }
-# Catalog Configuration
 else {
 	$OperatingSystemValues = $global:OSDCoreOperatingSystems.OperatingSystem | Sort-Object -Unique | Sort-Object -Descending
-	Write-Verbose "[$(Get-Date -format s)] [MainWindow.ps1] Catalog OperatingSystemValues = $OperatingSystemValues"
 }
 $OperatingSystemCombo = $window.FindName("OperatingSystemCombo")
 $OperatingSystemCombo.ItemsSource = $OperatingSystemValues
@@ -337,9 +349,11 @@ else {
 # Workflow Configuration
 #================================================
 # Import the DriverPack Catalog
+# Build the driver pack picker from the module catalog, while keeping explicit
+# fallback choices for no driver pack or Microsoft Update Catalog lookup.
 $DriverPackCatalog = @('None', 'Microsoft Update Catalog')
-if ($global:OSDCloudDeploy.DriverPackValues) {
-	$DriverPackCatalog += $global:OSDCloudDeploy.DriverPackValues | ForEach-Object { $_.Name }
+if ($global:OSDCloudDeploy.ModuleCoreDriverPacks) {
+	$DriverPackCatalog += $global:OSDCloudDeploy.ModuleCoreDriverPacks | ForEach-Object { $_.Name }
 }
 $DriverPackCombo = $window.FindName("DriverPackCombo")
 $DriverPackCombo.ItemsSource = $DriverPackCatalog
@@ -350,62 +364,45 @@ else {
 	$DriverPackCombo.SelectedIndex = 0
 }
 #================================================
-# Other Settings
-$deviceBiosReleaseDateText = $window.FindName("deviceBiosReleaseDateText")
-$deviceBiosReleaseDateText.Text = $deviceBiosReleaseDate
-$deviceBiosVersionText = $window.FindName("deviceBiosVersionText")
-$deviceBiosVersionText.Text = $deviceBiosVersion
-$deviceOSDManufacturerText = $window.FindName("deviceOSDManufacturerText")
-$deviceOSDManufacturerText.Text = $deviceOSDManufacturer
-$deviceOSDModelText = $window.FindName("deviceOSDModelText")
-$deviceOSDModelText.Text = $deviceOSDModel
-$deviceOSDProductText = $window.FindName("deviceOSDProductText")
-$deviceOSDProductText.Text = $deviceOSDProduct
-$deviceComputerSystemSKUText = $window.FindName("deviceComputerSystemSKUText")
-$deviceComputerSystemSKUText.Text = $deviceComputerSystemSKU
-function Set-ClipboardText {
-	param([string]$Text)
-	$maxRetries = 5
-	for ($i = 0; $i -lt $maxRetries; $i++) {
-		try {
-			[System.Windows.Clipboard]::SetText($Text)
-			return
-		}
-		catch {
-			if ($i -lt ($maxRetries - 1)) {
-				Start-Sleep -Milliseconds 100
-			}
-			else {
-				Write-Warning "Failed to copy to clipboard: $_"
-			}
-		}
-	}
+# OSDCoreDevice
+$deviceTextBindings = @{
+	deviceBiosReleaseDateText   = 'BiosReleaseDate'
+	deviceBiosVersionText       = 'BiosVersion'
+	deviceComputerSystemSKUText = 'ComputerSystemSKU'
+	deviceIsAutopilotSpecText   = 'IsAutopilotSpec'
+	deviceIsTpmSpecText         = 'IsTpmSpec'
+	deviceOSDManufacturerText   = 'OSDManufacturer'
+	deviceOSDModelText          = 'OSDModel'
+	deviceOSDProductText        = 'OSDProduct'
+	deviceSerialNumberText      = 'SerialNumber'
+	deviceUUIDText              = 'UUID'
+}
+foreach ($deviceTextBinding in $deviceTextBindings.GetEnumerator()) {
+	$window.FindName($deviceTextBinding.Key).Text = $global:OSDCoreDevice.$($deviceTextBinding.Value)
 }
 
-$deviceSerialNumberText = $window.FindName("deviceSerialNumberText")
-$deviceSerialNumberText.Text = $deviceSerialNumber
-$deviceSerialNumberText.Add_MouseLeftButtonUp({
-		$serialNumberValue = [string]$deviceSerialNumberText.Text
-		if ([string]::IsNullOrWhiteSpace($serialNumberValue)) {
-			return
-		}
+function Add-ClipboardTextBlockHandler {
+	param(
+		[Parameter(Mandatory)]
+		[System.Windows.Controls.TextBlock]$TextBlock
+	)
 
-		Set-ClipboardText -Text $serialNumberValue
-	})
-$deviceIsAutopilotSpecText = $window.FindName("deviceIsAutopilotSpecText")
-$deviceIsAutopilotSpecText.Text = $deviceIsAutopilotSpec
-$deviceIsTpmSpecText = $window.FindName("deviceIsTpmSpecText")
-$deviceIsTpmSpecText.Text = $deviceIsTpmSpec
-$deviceUUIDText = $window.FindName("deviceUUIDText")
-$deviceUUIDText.Text = $deviceUUID
-$deviceUUIDText.Add_MouseLeftButtonUp({
-		$uuidValue = [string]$deviceUUIDText.Text
-		if ([string]::IsNullOrWhiteSpace($uuidValue)) {
-			return
-		}
+	$TextBlock.Add_MouseLeftButtonUp({
+			param($eventSender, $eventArgs)
+			$text = [string]$eventSender.Text
+			if ([string]::IsNullOrWhiteSpace($text)) {
+				return
+			}
 
-		Set-ClipboardText -Text $uuidValue
-	})
+			Set-ClipboardText -Text $text
+		})
+}
+#================================================
+# deviceSerialNumber
+Add-ClipboardTextBlockHandler -TextBlock $window.FindName("deviceSerialNumberText")
+#================================================
+# deviceHardwareHash
+$deviceHardwareHash = $global:OSDCoreDevice.HardwareHash
 $deviceHardwareHashLabelText = $window.FindName("deviceHardwareHashLabelText")
 $deviceHardwareHashText = $window.FindName("deviceHardwareHashText")
 if (-not [string]::IsNullOrWhiteSpace([string]$deviceHardwareHash)) {
@@ -416,15 +413,21 @@ if (-not [string]::IsNullOrWhiteSpace([string]$deviceHardwareHash)) {
 			Set-ClipboardText -Text ([string]$deviceHardwareHash)
 		})
 }
+#================================================
+# deviceUUID
+Add-ClipboardTextBlockHandler -TextBlock $window.FindName("deviceUUIDText")
+#================================================
 $SelectedOSLanguageText = $window.FindName("SelectedOSLanguageText")
 $SelectedIdText = $window.FindName("SelectedIdText")
 $SelectedFileNameText = $window.FindName("SelectedFileNameText")
 $DriverPackUrlText = $window.FindName("DriverPackUrlText")
-$DriverPackUrlText.Text = [string]$global:OSDCloudDeploy.DriverPackObject.Url
+$DriverPackUrlText.Text = [string]$global:OSDCloudDeploy.DriverPackCloudObject.Url
 $StartButton = $window.FindName("StartButton")
 $StartButton.IsEnabled = $false
 
 function Get-ComboValue {
+	# Normalize ComboBox selections so downstream filters can treat empty UI values
+	# as missing input instead of empty strings.
 	param(
 		[Parameter(Mandatory)]
 		[System.Windows.Controls.ComboBox]$ComboBox
@@ -442,11 +445,11 @@ function Get-ComboValue {
 
 	return $text
 }
-
 function Set-StartButtonState {
+	# Deployment can only proceed after the current picker state resolves to an OS
+	# catalog object.
 	$StartButton.IsEnabled = ($null -ne $global:OSDCloudDeploy.OperatingSystemObject)
 }
-
 function Update-SelectedDetails {
 	param(
 		[Parameter()]
@@ -472,9 +475,9 @@ function Update-SelectedDetails {
 	}
 	$SelectedFileNameText.Text = [string]$Item.FileName
 }
-
 function Update-OsResults {
-	# Keep filtering logic centralized so every control refreshes the same view.
+	# Keep catalog filtering centralized so every picker change refreshes the same
+	# selected OS object and detail summary.
 	$updateOperatingSystem = Get-ComboValue -ComboBox $OperatingSystemCombo
 	$updateOSEdition = Get-ComboValue -ComboBox $OSEditionCombo
 	$updateOSActivation = Get-ComboValue -ComboBox $OSActivationCombo
@@ -515,12 +518,13 @@ function Update-OsResults {
 
 	Set-StartButtonState
 }
-
 function Update-DriverPackResults {
+	# Persist the selected driver pack name and matching catalog object immediately
+	# so the final deployment state reflects the latest UI selection.
 	$selectedDriverPackName = Get-ComboValue -ComboBox $DriverPackCombo
 	$global:OSDCloudDeploy.DriverPackName = $selectedDriverPackName
-	$global:OSDCloudDeploy.DriverPackObject = $global:OSDCloudDeploy.DriverPackValues | Where-Object { $_.Name -eq $selectedDriverPackName }
-	$DriverPackUrlText.Text = [string]$global:OSDCloudDeploy.DriverPackObject.Url
+	$global:OSDCloudDeploy.DriverPackCloudObject = $global:OSDCloudDeploy.ModuleCoreDriverPacks | Where-Object { $_.Name -eq $selectedDriverPackName }
+	$DriverPackUrlText.Text = [string]$global:OSDCloudDeploy.DriverPackCloudObject.Url
 }
 $DriverPackCombo.Add_SelectionChanged({ Update-DriverPackResults })
 $OperatingSystemCombo.Add_SelectionChanged({ Update-OsResults })
@@ -548,37 +552,30 @@ $null = $window.ShowDialog()
 if ($script:SelectionConfirmed) {
 	#================================================
 	# Local Variables
+	# Convert the selected UI values into workflow and catalog objects that the
+	# deployment engine expects after the dialog closes.
 	$OSDCloudWorkflowTaskName = $TaskSequenceCombo.SelectedValue
-	$OSDCloudWorkflowTaskObject = $global:OSDCloudDeploy.Flows | Where-Object { $_.Name -eq $OSDCloudWorkflowTaskName } | Select-Object -First 1
+	$OSDCloudWorkflowTaskObject = $global:OSDCloudDeploy.WorkflowTasks | Where-Object { $_.Name -eq $OSDCloudWorkflowTaskName } | Select-Object -First 1
 	$OperatingSystemObject = $global:OSDCloudDeploy.OperatingSystemObject
 	$OSEditionId = $global:OSDCloudDeploy.OSEditionValues | Where-Object { $_.Edition -eq $OSEditionCombo.SelectedValue } | Select-Object -ExpandProperty EditionId
 	#================================================
 	# Global Variables
+	# Write the confirmed selection back to OSDCloudDeploy so the next deployment
+	# phase can download the image and run the selected workflow task.
+	# $global:OSDCloudDeploy.DriverPackName = $DriverPackName
+	# $global:OSDCloudDeploy.DriverPackCloudObject = $DriverPackCloudObject
 	$global:OSDCloudDeploy.WorkflowTaskName = $OSDCloudWorkflowTaskName
 	$global:OSDCloudDeploy.WorkflowTaskObject = $OSDCloudWorkflowTaskObject
-	# $global:OSDCloudDeploy.DriverPackName = $DriverPackName
-	# $global:OSDCloudDeploy.DriverPackObject = $DriverPackObject
-	# DriverPackValues
-	# Flows
-	# Function
 	$global:OSDCloudDeploy.ImageFileName = $OperatingSystemObject.FileName
 	$global:OSDCloudDeploy.ImageFileUrl = $OperatingSystemObject.FilePath
-	# LaunchMethod
-	# Module
 	$global:OSDCloudDeploy.OperatingSystemObject = $OperatingSystemObject
 	$global:OSDCloudDeploy.OperatingSystem = $OperatingSystemObject.OSName
 	$global:OSDCloudDeploy.OSActivation = $OperatingSystemObject.OSActivation
-	# OSActivationValues
-	# OSArchitecture
 	$global:OSDCloudDeploy.OSBuild = $OperatingSystemObject.OSBuild
-	# OSBuildVersion
 	$global:OSDCloudDeploy.OSEdition = Get-ComboValue -ComboBox $OSEditionCombo
 	$global:OSDCloudDeploy.OSEditionId = $OSEditionId
-	# OSEditionValues
 	$global:OSDCloudDeploy.OSLanguageCode = $OperatingSystemObject.OSLanguageCode
-	# OSLanguageValues
 	$global:OSDCloudDeploy.OperatingSystem = $OperatingSystemObject.OperatingSystem
-	# OperatingSystemValues
 	$global:OSDCloudDeploy.OSVersion = $OperatingSystemObject.OSVersion
 	$global:OSDCloudDeploy.TimeStart = (Get-Date)
 	$global:OSDCloudDeploy.LocalImageFileInfo = $LocalImageFileInfo
@@ -589,5 +586,6 @@ if ($script:SelectionConfirmed) {
 	if (-not (Test-Path -Path $LogsPath)) {
 		New-Item -Path $LogsPath -ItemType Directory -Force | Out-Null
 	}
+	# Persist the resolved deployment state for post-run troubleshooting.
 	$global:OSDCloudDeploy | ConvertTo-Json | Out-File -FilePath "$LogsPath\OSDCloudDeploy.json" -Encoding utf8 -Width 2000 -Force -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
 }

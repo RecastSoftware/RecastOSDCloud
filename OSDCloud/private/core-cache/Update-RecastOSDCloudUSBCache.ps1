@@ -243,7 +243,7 @@ function Update-RecastOSDCloudUSBCache {
         $tempOSDCoreOperatingSystemCloudObject | Out-Host
 
         # Confirm the selected operating system download URL before offering cache download work.
-        $OSDCoreOperatingSystemCloudObjectUrlReachable = Test-OSDCoreOperatingSystemCloudObject -OperatingSystemCloudObject $global:OSDCoreOperatingSystemCloudObject
+        $OSDCoreOperatingSystemCloudObjectUrlReachable = Test-OperatingSystemCloudObject -OperatingSystemCloudObject $global:OSDCoreOperatingSystemCloudObject
         if ($OSDCoreOperatingSystemCloudObjectUrlReachable) {
             Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] OperatingSystem is available online and ready to downloaded."
         }
