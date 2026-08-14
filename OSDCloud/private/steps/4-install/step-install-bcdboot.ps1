@@ -10,7 +10,7 @@ function step-install-bcdboot {
     # https://support.microsoft.com/en-us/topic/how-to-manage-the-windows-boot-manager-revocations-for-secure-boot-changes-associated-with-cve-2023-24932-41a975df-beb2-40c1-99a3-b3ff139f832d
 
     Push-Location -Path "C:\Windows\System32"
-    if ($global:OSDCloudDeploy.OSBuild -lt 26200) {
+    if ($global:OSDCloudWorkflowInvoke.OSBuild -lt 26200) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] C:\Windows\System32\bcdboot.exe C:\Windows /c /v"
         $BCDBootOutput = & C:\Windows\System32\bcdboot.exe C:\Windows /c /v
         $BCDBootOutput | Out-File -FilePath "$LogPath\bcdboot.txt" -Force

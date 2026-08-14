@@ -102,9 +102,11 @@ function step-test-targetdriverpack {
     # DriverPack does not exist
     Write-Warning "[$(Get-Date -format s)] Unable to validate if the DriverPack is reachable online or offline."
     Write-Warning "[$(Get-Date -format s)] OSDCloud will continue without a DriverPack. Clearing variables."
+    $global:OSDCloudDeploy.DriverPackCacheObject = $null
     $global:OSDCloudDeploy.DriverPackCloudObject = $null
     $global:OSDCloudDeploy.DriverPackName = 'None'
     if ($global:OSDCloudWorkflowInvoke) {
+        $global:OSDCloudWorkflowInvoke.DriverPackCacheObject = $null
         $global:OSDCloudWorkflowInvoke.DriverPackCloudObject = $null
         $global:OSDCloudWorkflowInvoke.DriverPackName = 'None'
     }

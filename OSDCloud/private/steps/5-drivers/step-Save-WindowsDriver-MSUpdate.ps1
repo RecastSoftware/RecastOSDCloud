@@ -6,7 +6,7 @@ function step-Save-WindowsDriver-MSUpdate {
     #=================================================
     $Step = $global:OSDCloudCurrentStep
     # Step Variables
-    $DriverPackName = $global:OSDCloudDeploy.DriverPackName
+    $DriverPackName = $global:OSDCloudWorkflowInvoke.DriverPackName
     #=================================================
     # Exclusions
     if ($PSVersionTable.PSVersion.Major -ne 5) {

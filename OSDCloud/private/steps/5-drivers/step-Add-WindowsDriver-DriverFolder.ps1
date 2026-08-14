@@ -10,11 +10,9 @@ selected removable media changes drive letters, the step re-resolves each saved
 driver folder by scanning current file system drives for the same relative path.
 
 .PARAMETER DriverFolderPath
-Path(s) to folders that contain driver INF files and subfolders. When omitted, values
-are read from $global:OSDCloudWorkflowInvoke.DriverFolderPaths and then
-$global:OSDCloudWorkflowInvoke.DriverFolderPath for backward compatibility. Legacy
-absolute paths are re-resolved by their OSDCloud\Drivers relative suffix when the
-original drive letter is no longer valid.
+Path(s) to folders that contain driver INF files and subfolders. Absolute paths are
+re-resolved by their OSDCloud\Drivers relative suffix when the original drive letter
+is no longer valid.
 
 .EXAMPLE
 step-Add-WindowsDriver-DriverFolder -DriverFolderPath 'D:\DriverPack'
@@ -28,7 +26,7 @@ function step-Add-WindowsDriver-DriverFolder {
     [CmdletBinding()]
     param (
         [System.String[]]
-        $DriverFolderPath = @($global:OSDCloudWorkflowInvoke.DriverFolderPaths)
+        $DriverFolderPath
     )
     #=================================================
     $startMessage = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
@@ -186,12 +184,6 @@ function step-Add-WindowsDriver-DriverFolder {
         return $null
     }
 
-    if (-not $DriverFolderPath -or $DriverFolderPath.Count -eq 0) {
-        if (-not [string]::IsNullOrWhiteSpace([string]$global:OSDCloudWorkflowInvoke.DriverFolderPath)) {
-            $DriverFolderPath = @([string]$global:OSDCloudWorkflowInvoke.DriverFolderPath)
-        }
-    }
-
     $validDriverFolderPaths = @($DriverFolderPath | Where-Object {
             -not [string]::IsNullOrWhiteSpace([string]$_)
         } | Select-Object -Unique)
@@ -202,11 +194,6 @@ function step-Add-WindowsDriver-DriverFolder {
     }
 
     $selectionLookup = @{}
-    foreach ($selection in @($global:OSDCloudWorkflowInvoke.DriverFolderSelections)) {
-        if ($selection -and -not [string]::IsNullOrWhiteSpace([string]$selection.Path)) {
-            $selectionLookup[[string]$selection.Path] = $selection
-        }
-    }
 
     $driverFolderSelections = @($validDriverFolderPaths | ForEach-Object {
             $driverPath = [string]$_

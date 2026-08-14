@@ -143,7 +143,7 @@ function Deploy-OSDCloudCLI {
         if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction SilentlyContinue) {
             $envParameters = ConvertTo-OSDCloudEnvParameter -BoundParameters $PSBoundParameters
         }
-        Initialize-DeployOSDCloud -WorkflowName $WorkflowName -EnvParameters $envParameters -ProfileName $ProfileName
+        Initialize-DeployOSDCloud -WorkflowName $WorkflowName -EnvParameters $envParameters -Force:$Force.IsPresent -ProfileName $ProfileName
 
         $selectedTask = if ($null -ne $Task) { $Task } else { [System.String]$global:OSDCloudDeploy.WorkflowTaskName }
         $selectedOperatingSystem = if ($null -ne $OperatingSystem) { $OperatingSystem } else { [System.String]$global:OSDCloudDeploy.OperatingSystem }
@@ -186,13 +186,13 @@ function Deploy-OSDCloudCLI {
 
         $workflowTaskObject = $global:OSDCloudDeploy.WorkflowTasks | Where-Object { $_.Name -eq $selectedTask } | Select-Object -First 1
 
-        $operatingSystemObject = $global:OSDCoreOperatingSystems |
+        $operatingSystemCloudObject = $global:OSDCloudDeploy.CoreOperatingSystems |
         Where-Object { $_.OperatingSystem -eq $selectedOperatingSystem } |
         Where-Object { $_.OSActivation -eq $selectedOSActivation } |
         Where-Object { $_.OSLanguageCode -eq $selectedOSLanguageCode } |
         Select-Object -First 1
 
-        if (-not $operatingSystemObject) {
+        if (-not $operatingSystemCloudObject) {
             throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No Operating System object found for OperatingSystem '$selectedOperatingSystem' with OSActivation '$selectedOSActivation' and OSLanguageCode '$selectedOSLanguageCode'."
         }
 
@@ -202,13 +202,12 @@ function Deploy-OSDCloudCLI {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSLanguageCode: $selectedOSLanguageCode"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Task: $selectedTask"
 
-        $global:OSDCloudDeploy.OperatingSystem = $operatingSystemObject.OperatingSystem
-        $global:OSDCloudDeploy.OperatingSystemObject = $operatingSystemObject
-        $global:OSDCloudDeploy.OSBuild = $operatingSystemObject.OSBuild
-        $global:OSDCloudDeploy.OSBuildVersion = $operatingSystemObject.OSBuildVersion
-        $global:OSDCloudDeploy.OSVersion = $operatingSystemObject.OSVersion
-        $global:OSDCloudDeploy.ImageFileName = $operatingSystemObject.FileName
-        $global:OSDCloudDeploy.ImageFileUrl = $operatingSystemObject.FilePath
+        $global:OSDCloudDeploy.OperatingSystem = $operatingSystemCloudObject.OperatingSystem
+        $global:OSDCloudDeploy.OperatingSystemCloudObject = $operatingSystemCloudObject
+        $global:OSDCloudDeploy.OperatingSystemCacheObject = Get-OSDCoreOperatingSystemCacheObject -OperatingSystemCloudObject $operatingSystemCloudObject
+        $global:OSDCloudDeploy.OSBuild = $operatingSystemCloudObject.OSBuild
+        $global:OSDCloudDeploy.OSBuildVersion = $operatingSystemCloudObject.OSBuildVersion
+        $global:OSDCloudDeploy.OSVersion = $operatingSystemCloudObject.OSVersion
         $global:OSDCloudDeploy.OSEdition = $selectedOSEdition
         $global:OSDCloudDeploy.OSEditionId = $selectedOSEditionObject.EditionId
         $global:OSDCloudDeploy.OSActivation = $selectedOSActivation

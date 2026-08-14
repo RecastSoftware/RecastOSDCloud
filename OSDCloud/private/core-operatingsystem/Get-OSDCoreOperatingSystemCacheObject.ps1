@@ -4,7 +4,7 @@ function Get-OSDCoreOperatingSystemCacheObject {
     Gets the cached operating system content object for the selected OSDCore operating system.
 
     .DESCRIPTION
-    Searches OSDCore cache content for the first USB-backed ESD or WIM entry that matches the
+    Searches OSDCore cache content for the first ESD or WIM entry that matches the
     selected operating system object's FileName. Returns the matching cache content object when
     found, or $null when the operating system object, cache content, or matching cache item is missing.
 
@@ -59,6 +59,6 @@ function Get-OSDCoreOperatingSystemCacheObject {
             return $null
         }
 
-        $CacheContent | Where-Object { $_.Type -in @('ESD', 'WIM') -and $_.Name -eq $OperatingSystemFileName -and $_.USB } | Select-Object -First 1
+        $CacheContent | Where-Object { $_.Type -in @('ESD', 'WIM') -and $_.Name -eq $OperatingSystemFileName } | Select-Object -First 1
     }
 }

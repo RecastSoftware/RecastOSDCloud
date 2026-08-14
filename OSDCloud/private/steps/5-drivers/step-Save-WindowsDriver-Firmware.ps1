@@ -5,7 +5,7 @@ function step-Save-WindowsDriver-Firmware {
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     $Step = $global:OSDCloudCurrentStep
-    if ($global:OSDCloudDeploy.SkipFirmwareUpdate -eq $true) {
+    if ($global:OSDCloudWorkflowInvoke.SkipFirmwareUpdate -eq $true) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Firmware update steps were disabled by -SkipFirmwareUpdate. Skip."
         return
     }

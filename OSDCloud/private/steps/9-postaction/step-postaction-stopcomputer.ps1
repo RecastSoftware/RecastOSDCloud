@@ -4,9 +4,9 @@ function step-postaction-stopcomputer {
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    $Step = $global:OSDCloudCurrentStep
-    #region Main
-    if ($global:OSDCloudWorkflowInvoke.WinpeRestart) {
+    $currentStep = $global:OSDCloudCurrentStep
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Step: $($currentStep.name)"
+    if ($global:OSDCloudWorkflowInvoke.WinpeShutdown) {
         Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] Device will shut down in 30 seconds"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Press CTRL + C to cancel"
         #TODO EJECT ISO
@@ -14,7 +14,6 @@ function step-postaction-stopcomputer {
         Start-Sleep -Seconds 30
         Stop-Computer
     }
-    #endregion
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================

@@ -17,21 +17,46 @@ function Invoke-OSDCloudWorkflowTask {
     }
     #>
     #=================================================
+    $operatingSystemCloudObject = $global:OSDCloudDeploy.OperatingSystemCloudObject
+    $workflowSettingsUser = $global:OSDCloudWorkflowSettingsUser
+    if (-not $workflowSettingsUser -and (Get-Command -Name 'Initialize-OSDCloudWorkflowSettingsUser' -ErrorAction SilentlyContinue)) {
+        $settingsArchitecture = if ($global:OSDCloudDeploy.OSArchitecture -ieq 'arm64') { 'ARM64' } else { 'AMD64' }
+        Initialize-OSDCloudWorkflowSettingsUser -WorkflowName $global:OSDCloudDeploy.WorkflowName -Architecture $settingsArchitecture | Out-Null
+        $workflowSettingsUser = $global:OSDCloudWorkflowSettingsUser
+    }
     $global:OSDCloudWorkflowInvoke = $null
     $global:OSDCloudWorkflowInvoke = [ordered]@{
-        DriverPackName            = $global:OSDCloudDeploy.DriverPackName
-        DriverPackCloudObject          = $global:OSDCloudDeploy.DriverPackCloudObject
-        # DriverFolderName          = $global:OSDCloudDeploy.DriverFolderName
-        # DriverFolderNames         = $global:OSDCloudDeploy.DriverFolderNames
-        # DriverFolderPath          = $global:OSDCloudDeploy.DriverFolderPath
-        # DriverFolderPaths         = $global:OSDCloudDeploy.DriverFolderPaths
-        # DriverFolderSelections    = $global:OSDCloudDeploy.DriverFolderSelections
-        LogsPath                  = "$env:TEMP\osdcloud-logs"
-        OperatingSystem           = $global:OSDCloudDeploy.OperatingSystem
-        OperatingSystemObject     = $global:OSDCloudDeploy.OperatingSystemObject
-        TimeEnd                   = $null
-        TimeSpan                  = $null
-        TimeStart                 = [datetime](Get-Date)
+        DeploymentDisk            = $global:OSDCloudDeploy.DeploymentDisk
+        DiskPartition             = [pscustomobject]@{
+            DiskNumber = $global:OSDCloudDeploy.DeploymentDiskNumber
+        }
+        FileInfoWindowsImage       = $null
+        DriverPackCacheObject      = $global:OSDCloudDeploy.DriverPackCacheObject
+        DriverPackName             = $global:OSDCloudDeploy.DriverPackName
+        DriverPackCloudObject      = $global:OSDCloudDeploy.DriverPackCloudObject
+        DriverPackCloudTest        = $global:OSDCloudDeploy.DriverPackCloudTest
+        Force                      = $global:OSDCloudDeploy.Force
+        LaunchMethod               = $global:OSDCloudDeploy.LaunchMethod
+        LogsPath                   = "$env:TEMP\osdcloud-logs"
+        OperatingSystem            = $global:OSDCloudDeploy.OperatingSystem
+        OperatingSystemCacheObject = $global:OSDCloudDeploy.OperatingSystemCacheObject
+        OperatingSystemCloudObject = $operatingSystemCloudObject
+        OperatingSystemCloudTest   = $global:OSDCloudDeploy.OperatingSystemCloudTest
+        OSBuild                    = $global:OSDCloudDeploy.OSBuild
+        OSEditionId                = $global:OSDCloudDeploy.OSEditionId
+        RecoveryPartition          = $workflowSettingsUser.RecoveryPartition
+        SkipFirmwareUpdate         = $global:OSDCloudDeploy.SkipFirmwareUpdate
+        TimeEnd                    = $null
+        TimeSpan                   = $null
+        TimeStart                  = [datetime](Get-Date)
+        ParamsExpandWindowsImage   = $null
+        USBPartitions              = $null
+        WindowsEdition             = $null
+        WindowsImage               = $null
+        WindowsImageIndex          = $null
+        WindowsImagePath           = $null
+        WinpeRestart               = [bool]$workflowSettingsUser.WinpeRestart
+        WinpeShutdown              = [bool]$workflowSettingsUser.WinpeShutdown
     }
     #=================================================
     #region OSDCloud Deployment Analytics
@@ -125,12 +150,12 @@ function Invoke-OSDCloudWorkflowTask {
         osdcloudWorkflowName       = [string]$global:OSDCloudDeploy.WorkflowName
         osdcloudWorkflowTaskName   = [string]$global:OSDCloudDeploy.WorkflowTaskName
         osdcloudDriverPackName     = [string]$global:OSDCloudDeploy.DriverPackName
-        osdcloudOSName             = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSName
-        osdcloudOSVersion          = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSVersion
-        osdcloudOSActivationStatus = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSActivation
-        osdcloudOSBuild            = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSBuild
-        osdcloudOSBuildVersion     = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSBuildVersion
-        osdcloudOSLanguageCode     = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSLanguageCode
+        osdcloudOSName             = [string]$operatingSystemCloudObject.OSName
+        osdcloudOSVersion          = [string]$operatingSystemCloudObject.OSVersion
+        osdcloudOSActivationStatus = [string]$operatingSystemCloudObject.OSActivation
+        osdcloudOSBuild            = [string]$operatingSystemCloudObject.OSBuild
+        osdcloudOSBuildVersion     = [string]$operatingSystemCloudObject.OSBuildVersion
+        osdcloudOSLanguageCode     = [string]$operatingSystemCloudObject.OSLanguageCode
         deploymentPhase            = [string]$deploymentPhase
     }
     $postApi = 'phc_2h7nQJCo41Hc5C64B2SkcEBZOvJ6mHr5xAHZyjPl3ZK'

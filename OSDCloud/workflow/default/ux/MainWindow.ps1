@@ -150,7 +150,7 @@ function Set-LogsMenuItems {
 		$logMenuItem.Tag = $logFile.FullName
 
 		$logMenuItem.Add_Click({
-				param($eventSender, $eventArgs)
+				$eventSender = $args[0]
 				$logPath = [string]$eventSender.Tag
 				if (-not (Test-Path -LiteralPath $logPath)) {
 					[System.Windows.MessageBox]::Show('Log file not found.', 'Open Log', 'OK', 'Warning') | Out-Null
@@ -194,7 +194,7 @@ function Set-WMIMenuItems {
 		$logMenuItem.Tag = $logFile.FullName
 
 		$logMenuItem.Add_Click({
-				param($eventSender, $eventArgs)
+				$eventSender = $args[0]
 				$logPath = [string]$eventSender.Tag
 				if (-not (Test-Path -LiteralPath $logPath)) {
 					[System.Windows.MessageBox]::Show('Log file not found.', 'Open Log', 'OK', 'Warning') | Out-Null
@@ -352,8 +352,8 @@ else {
 # Build the driver pack picker from the module catalog, while keeping explicit
 # fallback choices for no driver pack or Microsoft Update Catalog lookup.
 $DriverPackCatalog = @('None', 'Microsoft Update Catalog')
-if ($global:OSDCloudDeploy.ModuleCoreDriverPacks) {
-	$DriverPackCatalog += $global:OSDCloudDeploy.ModuleCoreDriverPacks | ForEach-Object { $_.Name }
+if ($global:OSDCloudDeploy.CoreDriverPacks) {
+	$DriverPackCatalog += $global:OSDCloudDeploy.CoreDriverPacks | ForEach-Object { $_.Name }
 }
 $DriverPackCombo = $window.FindName("DriverPackCombo")
 $DriverPackCombo.ItemsSource = $DriverPackCatalog
@@ -388,7 +388,7 @@ function Add-ClipboardTextBlockHandler {
 	)
 
 	$TextBlock.Add_MouseLeftButtonUp({
-			param($eventSender, $eventArgs)
+			$eventSender = $args[0]
 			$text = [string]$eventSender.Text
 			if ([string]::IsNullOrWhiteSpace($text)) {
 				return
@@ -448,7 +448,7 @@ function Get-ComboValue {
 function Set-StartButtonState {
 	# Deployment can only proceed after the current picker state resolves to an OS
 	# catalog object.
-	$StartButton.IsEnabled = ($null -ne $global:OSDCloudDeploy.OperatingSystemObject)
+	$StartButton.IsEnabled = ($null -ne $global:OSDCloudDeploy.OperatingSystemCloudObject)
 }
 function Update-SelectedDetails {
 	param(
@@ -488,16 +488,17 @@ function Update-OsResults {
 	Write-Verbose "[$(Get-Date -format s)] [MainWindow.ps1] updateOSActivation = $updateOSActivation"
 	Write-Verbose "[$(Get-Date -format s)] [MainWindow.ps1] updateOSLanguageCode = $updateOSLanguageCode"
 
-	$global:OSDCloudDeploy.OperatingSystemObject = $global:OSDCoreOperatingSystems | `
+	$global:OSDCloudDeploy.OperatingSystemCloudObject = $global:OSDCloudDeploy.CoreOperatingSystems | `
 		Where-Object { $_.OperatingSystem -match $updateOperatingSystem } | `
 		Where-Object { $_.OSActivation -eq $updateOSActivation } | `
 		Where-Object { $_.OSLanguageCode -eq $updateOSLanguageCode } | Select-Object -First 1
 
-	if (-not $global:OSDCloudDeploy.OperatingSystemObject) {
+	if (-not $global:OSDCloudDeploy.OperatingSystemCloudObject) {
 		throw "No Operating System found for OperatingSystem: $updateOperatingSystem, OSActivation: $updateOSActivation, OSLanguageCode: $updateOSLanguageCode. Please check your OSDCloud OperatingSystems."
 	}
 
-	$script:SelectedImage = $global:OSDCloudDeploy.OperatingSystemObject
+	$global:OSDCloudDeploy.OperatingSystemCacheObject = Get-OSDCoreOperatingSystemCacheObject -OperatingSystemCloudObject $global:OSDCloudDeploy.OperatingSystemCloudObject
+	$script:SelectedImage = $global:OSDCloudDeploy.OperatingSystemCloudObject
 
 	if ($updateOSEdition -match 'Home') {
 		$OSActivationCombo.SelectedValue = 'Retail'
@@ -523,7 +524,8 @@ function Update-DriverPackResults {
 	# so the final deployment state reflects the latest UI selection.
 	$selectedDriverPackName = Get-ComboValue -ComboBox $DriverPackCombo
 	$global:OSDCloudDeploy.DriverPackName = $selectedDriverPackName
-	$global:OSDCloudDeploy.DriverPackCloudObject = $global:OSDCloudDeploy.ModuleCoreDriverPacks | Where-Object { $_.Name -eq $selectedDriverPackName }
+	$global:OSDCloudDeploy.DriverPackCloudObject = $global:OSDCloudDeploy.CoreDriverPacks | Where-Object { $_.Name -eq $selectedDriverPackName }
+	$global:OSDCloudDeploy.DriverPackCacheObject = Get-OSDCoreDriverPackCacheObject -DriverPackCloudObject $global:OSDCloudDeploy.DriverPackCloudObject
 	$DriverPackUrlText.Text = [string]$global:OSDCloudDeploy.DriverPackCloudObject.Url
 }
 $DriverPackCombo.Add_SelectionChanged({ Update-DriverPackResults })
@@ -556,7 +558,7 @@ if ($script:SelectionConfirmed) {
 	# deployment engine expects after the dialog closes.
 	$OSDCloudWorkflowTaskName = $TaskSequenceCombo.SelectedValue
 	$OSDCloudWorkflowTaskObject = $global:OSDCloudDeploy.WorkflowTasks | Where-Object { $_.Name -eq $OSDCloudWorkflowTaskName } | Select-Object -First 1
-	$OperatingSystemObject = $global:OSDCloudDeploy.OperatingSystemObject
+	$OperatingSystemCloudObject = $global:OSDCloudDeploy.OperatingSystemCloudObject
 	$OSEditionId = $global:OSDCloudDeploy.OSEditionValues | Where-Object { $_.Edition -eq $OSEditionCombo.SelectedValue } | Select-Object -ExpandProperty EditionId
 	#================================================
 	# Global Variables
@@ -566,21 +568,18 @@ if ($script:SelectionConfirmed) {
 	# $global:OSDCloudDeploy.DriverPackCloudObject = $DriverPackCloudObject
 	$global:OSDCloudDeploy.WorkflowTaskName = $OSDCloudWorkflowTaskName
 	$global:OSDCloudDeploy.WorkflowTaskObject = $OSDCloudWorkflowTaskObject
-	$global:OSDCloudDeploy.ImageFileName = $OperatingSystemObject.FileName
-	$global:OSDCloudDeploy.ImageFileUrl = $OperatingSystemObject.FilePath
-	$global:OSDCloudDeploy.OperatingSystemObject = $OperatingSystemObject
-	$global:OSDCloudDeploy.OperatingSystem = $OperatingSystemObject.OSName
-	$global:OSDCloudDeploy.OSActivation = $OperatingSystemObject.OSActivation
-	$global:OSDCloudDeploy.OSBuild = $OperatingSystemObject.OSBuild
+	$global:OSDCloudDeploy.OperatingSystemCloudObject = $OperatingSystemCloudObject
+	$global:OSDCloudDeploy.OperatingSystemCacheObject = Get-OSDCoreOperatingSystemCacheObject -OperatingSystemCloudObject $OperatingSystemCloudObject
+	$global:OSDCloudDeploy.DriverPackCacheObject = Get-OSDCoreDriverPackCacheObject -DriverPackCloudObject $global:OSDCloudDeploy.DriverPackCloudObject
+	$global:OSDCloudDeploy.OperatingSystem = $OperatingSystemCloudObject.OperatingSystem
+	$global:OSDCloudDeploy.OSActivation = $OperatingSystemCloudObject.OSActivation
+	$global:OSDCloudDeploy.OSBuild = $OperatingSystemCloudObject.OSBuild
+	$global:OSDCloudDeploy.OSBuildVersion = $OperatingSystemCloudObject.OSBuildVersion
 	$global:OSDCloudDeploy.OSEdition = Get-ComboValue -ComboBox $OSEditionCombo
 	$global:OSDCloudDeploy.OSEditionId = $OSEditionId
-	$global:OSDCloudDeploy.OSLanguageCode = $OperatingSystemObject.OSLanguageCode
-	$global:OSDCloudDeploy.OperatingSystem = $OperatingSystemObject.OperatingSystem
-	$global:OSDCloudDeploy.OSVersion = $OperatingSystemObject.OSVersion
+	$global:OSDCloudDeploy.OSLanguageCode = $OperatingSystemCloudObject.OSLanguageCode
+	$global:OSDCloudDeploy.OSVersion = $OperatingSystemCloudObject.OSVersion
 	$global:OSDCloudDeploy.TimeStart = (Get-Date)
-	$global:OSDCloudDeploy.LocalImageFileInfo = $LocalImageFileInfo
-	$global:OSDCloudDeploy.LocalImageFilePath = $LocalImageFilePath
-	$global:OSDCloudDeploy.LocalImageName = $LocalImageName
 
 	$LogsPath = "$env:TEMP\osdcloud-logs"
 	if (-not (Test-Path -Path $LogsPath)) {

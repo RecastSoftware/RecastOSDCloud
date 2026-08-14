@@ -5,10 +5,11 @@ Validates Windows image availability for an OSDCloud workflow task.
 .DESCRIPTION
 Checks that the selected Windows image can be used before download and install
 steps run. The step first accepts an existing local image selected in
-$global:OSDCloudDeploy.LocalImageFileInfo. If no local image is available, it
-validates $global:OSDCloudWorkflowInvoke.OperatingSystemObject.FilePath by
-checking whether the URL responds online or whether the matching image file is
-already available under OSDCloud\OS on a local file system drive.
+$global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject. If no cached image is
+available, it validates
+$global:OSDCloudWorkflowInvoke.OperatingSystemCloudObject.FilePath by checking
+whether the URL responds online or whether the matching image file is already
+available under OSDCloud\OS on a local file system drive.
 
 When the Windows image cannot be validated online or offline, the step waits so
 the user can cancel the deployment before exiting.
@@ -38,28 +39,35 @@ function step-test-targetwindowsimage {
     $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    # Is there a local image file already selected?
-    if ($global:OSDCloudDeploy.LocalImageFileInfo) {
-        $LocalImageFilePath = if ($global:OSDCloudDeploy.LocalImageFileInfo.FullName) { $global:OSDCloudDeploy.LocalImageFileInfo.FullName } else { [string]$global:OSDCloudDeploy.LocalImageFileInfo }
-        if (Test-Path -LiteralPath $LocalImageFilePath) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $LocalImageFilePath"
+    $OperatingSystemCloudObject = $global:OSDCloudWorkflowInvoke.OperatingSystemCloudObject
+    $OperatingSystemCacheObject = $global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject
+    $OperatingSystemFilePath = [string]$OperatingSystemCloudObject.FilePath
+    if ([string]::IsNullOrWhiteSpace($OperatingSystemFilePath)) {
+        $OperatingSystemFilePath = [string]$OperatingSystemCloudObject.Url
+    }
+    #=================================================
+    # Is there a cached image file already selected?
+    if ($OperatingSystemCacheObject) {
+        $OperatingSystemCachePath = if ($OperatingSystemCacheObject.FullName) { $OperatingSystemCacheObject.FullName } else { [string]$OperatingSystemCacheObject }
+        if (Test-Path -LiteralPath $OperatingSystemCachePath) {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $OperatingSystemCachePath"
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem is available offline. OK."
             return
         }
     }
     #=================================================
     # Is there an Operating System ImageFile URL?
-    if (-not ($global:OSDCloudWorkflowInvoke.OperatingSystemObject.FilePath)) {
-        Write-Warning "[$(Get-Date -format s)] OperatingSystemObject does not have a FilePath to validate."
+    if ([string]::IsNullOrWhiteSpace($OperatingSystemFilePath)) {
+        Write-Warning "[$(Get-Date -format s)] OperatingSystemCloudObject does not have a FilePath or Url to validate."
         Write-Warning 'Press Ctrl+C to exit OSDCloud'
         Start-Sleep -Seconds 86400
         exit
     }
     #=================================================
     # Is it reachable online?
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($global:OSDCloudWorkflowInvoke.OperatingSystemObject.FilePath)"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $OperatingSystemFilePath"
     try {
-        $WebRequest = Invoke-WebRequest -Uri $global:OSDCloudWorkflowInvoke.OperatingSystemObject.FilePath -UseBasicParsing -Method Head
+        $WebRequest = Invoke-WebRequest -Uri $OperatingSystemFilePath -UseBasicParsing -Method Head
         if ($WebRequest.StatusCode -eq 200) {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem URL returned a 200 status code. OK."
             return
@@ -70,7 +78,7 @@ function step-test-targetwindowsimage {
     }
     #=================================================
     # Does the file exist on a Drive?
-    $FileName = Split-Path $global:OSDCloudWorkflowInvoke.OperatingSystemObject.FilePath -Leaf
+    $FileName = if ($OperatingSystemCloudObject.FileName) { [string]$OperatingSystemCloudObject.FileName } else { Split-Path $OperatingSystemFilePath -Leaf }
     $MatchingFiles = @()
     $MatchingFiles = Get-PSDrive -PSProvider FileSystem | ForEach-Object {
         Get-ChildItem "$($_.Name):\OSDCloud\OS\" -Include "$FileName" -File -Recurse -Force -ErrorAction Ignore
@@ -98,26 +106,5 @@ function step-test-targetwindowsimage {
     if ($LaunchMethod) {
         #TODO This is not working for Core
         #$null = Install-Module -Name $global:OSDCloudWorkflowInvoke.LaunchMethod -Force -ErrorAction Ignore -WarningAction Ignore
-    }
-
-    if ($global:OSDCloudDeploy.LocalImageFileInfo) {
-        # Test if the file is on USB (example: check if path starts with a removable drive letter)
-        if (!(Test-Path $global:OSDCloudDeploy.LocalImageFileInfo)) {
-            Write-Warning "[$(Get-Date -format s)] OSDCloud failed to find the Operating System Local ImageFile Item"
-            Write-Warning $($global:OSDCloudDeploy.LocalImageFileInfo)
-            Write-Warning 'Press Ctrl+C to exit OSDCloud'
-            Start-Sleep -Seconds 86400
-            Exit
-        }
-    }
-
-    if ($global:OSDCloudWorkflowInvoke.LocalImageFileDestination) {
-        if (!(Test-Path $global:OSDCloudWorkflowInvoke.LocalImageFileDestination)) {
-            Write-Warning "[$(Get-Date -format s)] OSDCloud failed to find the Operating System Local ImageFile Destination"
-            Write-Warning $($global:OSDCloudWorkflowInvoke.LocalImageFileDestination)
-            Write-Warning 'Press Ctrl+C to exit OSDCloud'
-            Start-Sleep -Seconds 86400
-            Exit
-        }
     }
 #>

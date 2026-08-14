@@ -17,6 +17,10 @@ function Initialize-DeployOSDCloud {
         $EnvParameters,
 
         [Parameter(Mandatory = $false)]
+        [System.Management.Automation.SwitchParameter]
+        $Force,
+
+        [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
         [System.String]
         $ProfileName = 'default',
@@ -151,6 +155,7 @@ function Initialize-DeployOSDCloud {
         DriverPackCacheObject      = $null
         DriverPackCloudObject      = $null
         DriverPackCloudTest        = $false
+        Force                      = $Force.IsPresent
         Function                   = $($MyInvocation.MyCommand.Name)
         LaunchMethod               = 'OSDCloudWorkflow'
         Module                     = $($MyInvocation.MyCommand.Module.Name)
@@ -170,6 +175,7 @@ function Initialize-DeployOSDCloud {
         OSLanguageCode             = $null
         OSLanguageCodeValues       = $null
         OSVersion                  = $OSVersion
+        SkipFirmwareUpdate         = $false
         TimeStart                  = $null
         WorkflowName               = $WorkflowName
         WorkflowTaskName           = $null
