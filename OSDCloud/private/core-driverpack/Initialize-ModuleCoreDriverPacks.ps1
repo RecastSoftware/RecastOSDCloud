@@ -33,17 +33,64 @@ function Initialize-ModuleCoreDriverPacks {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $false)]
-        [ValidateNotNullOrEmpty()]
-        [System.String]$GenericDriverPackJson = (Join-Path $($MyInvocation.MyCommand.Module.ModuleBase) 'core\driverpacks\generic.json'),
-
         [System.String]$OSDManufacturer = $global:OSDCoreDevice.OSDManufacturer,
 
-        [System.String]$ProcessorArchitecture = $env:PROCESSOR_ARCHITECTURE
+        [System.String]$ProcessorArchitecture = $global:OSDCoreDevice.ProcessorArchitecture
     )
     #=================================================
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)] $OSDManufacturer $ProcessorArchitecture"
     #=================================================
+    [System.String]$GenericDriverPackJson = Join-Path $($MyInvocation.MyCommand.Module.ModuleBase) 'core\driverpacks\generic.json'
+
+    $shouldUpdateDriverPackCatalog = $false
+    $osdRegisteredValue = $null
+    if ($global:OSDCoreDevice) {
+        if ($global:OSDCoreDevice -is [System.Collections.IDictionary] -and $global:OSDCoreDevice.Contains('OSDRegistered')) {
+            $osdRegisteredValue = $global:OSDCoreDevice['OSDRegistered']
+            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDRegistered dictionary key detected with value '$osdRegisteredValue'."
+        }
+        elseif ($global:OSDCoreDevice.PSObject.Properties.Match('OSDRegistered').Count -gt 0) {
+            $osdRegisteredValue = $global:OSDCoreDevice.OSDRegistered
+            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDRegistered object property detected with value '$osdRegisteredValue'."
+        }
+        else {
+            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDRegistered was not found on OSDCoreDevice."
+        }
+
+        $shouldUpdateDriverPackCatalog = $osdRegisteredValue -eq $true
+    }
+    else {
+        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDCoreDevice is not initialized."
+    }
+
+    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] shouldUpdateDriverPackCatalog is '$shouldUpdateDriverPackCatalog'."
+
+    if ($shouldUpdateDriverPackCatalog) {
+        $updateDriverPackCatalog = switch ($OSDManufacturer) {
+            'Dell' { { Update-OSDCoreDriverPackCatalogDell -Confirm:$false } }
+            'HP' { { Update-OSDCoreDriverPackCatalogHP -Confirm:$false } }
+            'Lenovo' { { Update-OSDCoreDriverPackCatalogLenovo -Confirm:$false } }
+            'Microsoft' { { Update-OSDCoreDriverPackCatalogSurface -Confirm:$false } }
+            'Panasonic' { { Update-OSDCoreDriverPackCatalogPanasonic -Confirm:$false } }
+            default { $null }
+        }
+
+        if ($updateDriverPackCatalog) {
+            try {
+                Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Updating driver pack catalog for $OSDManufacturer."
+                & $updateDriverPackCatalog
+            }
+            catch {
+                Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to update driver pack catalog for $OSDManufacturer. Using bundled catalog. $($_.Exception.Message)"
+            }
+        }
+        else {
+            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No driver pack catalog updater is available for $OSDManufacturer."
+        }
+    }
+    else {
+        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Driver pack catalog update skipped because OSDRegistered is not true."
+    }
 
     # Load Generic driver pack catalog for fallback
     $GenericCatalog = Get-Content -Path $GenericDriverPackJson -Raw | ConvertFrom-Json
@@ -54,6 +101,7 @@ function Initialize-ModuleCoreDriverPacks {
             'HP' { Get-OSDCoreDriverPackCatalogHP }
             'Lenovo' { Get-OSDCoreDriverPackCatalogLenovo }
             'Microsoft' { Get-OSDCoreDriverPackCatalogSurface }
+            'Panasonic' { Get-OSDCoreDriverPackCatalogPanasonic }
             default { $GenericCatalog }
         }
     }

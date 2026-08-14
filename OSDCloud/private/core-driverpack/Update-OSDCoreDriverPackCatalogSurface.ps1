@@ -71,7 +71,7 @@ function Update-OSDCoreDriverPackCatalogSurface {
 
         $uniqueUpdatePages = @($jsonCatalogContent.UpdatePage | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
         if ($uniqueUpdatePages.Count -gt 0) {
-            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Updating Surface DriverPack catalog."
+            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast OSDCloud is updating the Microsoft Surface DriverPack catalog."
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Resolving $($uniqueUpdatePages.Count) unique UpdatePage URLs"
         }
 
