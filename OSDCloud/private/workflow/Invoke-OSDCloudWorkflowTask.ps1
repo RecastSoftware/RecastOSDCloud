@@ -99,9 +99,11 @@ function Invoke-OSDCloudWorkflowTask {
     }
     # UUID
     $deviceUUID = $global:OSDCoreDevice.UUID
-    # Convert the UUID to a hash value to protect user privacyand ensure a consistent identifier across events
-    $deviceUUIDHash = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
-    [string]$distinctId = $deviceUUIDHash
+    # Convert the UUID to a hash value to protect user privacy and ensure a consistent identifier across events
+    [string]$distinctId = $global:OSDCoreDevice.DeviceId
+    if ([string]::IsNullOrWhiteSpace($distinctId) -and -not [string]::IsNullOrWhiteSpace($deviceUUID)) {
+        $distinctId = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
+    }
     if ([string]::IsNullOrWhiteSpace($distinctId)) {
         $distinctId = [System.Guid]::NewGuid().ToString()
     }

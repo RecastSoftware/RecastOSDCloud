@@ -43,9 +43,12 @@ function Initialize-OSDCoreDevice {
         - Updates global state in $global:OSDCoreDevice.
 
         Changelog:
-        - 2026-08-12 | pending | Infer aiOSLanguageCode from keyboard layout.
+        - 2026-08-13 | pending | Add DeviceId and clear stale device snapshot files.
+            Removed existing OSDCoreDevice output files before collecting device state
+            and added DeviceId as a SHA256 hash of the device UUID.
+        - 2026-08-12 | pending | Infer AutoOSLanguageCode from keyboard layout.
             Used Convert-KeyboardLayoutToLanguageCode with the detected KeyboardLayout
-            to populate aiOSLanguageCode in the OSDCoreDevice snapshot.
+            to populate AutoOSLanguageCode in the OSDCoreDevice snapshot.
         - 2026-08-12 | pending | Move DeploymentDisk selection to deployment initialization.
             Removed deployment disk target selection from device inventory so
             Initialize-DeployOSDCloud selects the deployment disk from LocalDisk.
@@ -96,6 +99,12 @@ function Initialize-OSDCoreDevice {
     if (-not (Test-Path -Path $LogsPath)) {
         New-Item -Path $LogsPath -ItemType Directory -Force | Out-Null
     }
+
+    $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
+    $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
+    $OSDCoreDeviceLogClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
+    Remove-Item -Path $OSDCoreDeviceJsonPath, $OSDCoreDeviceLogClixmlPath -Force -ErrorAction SilentlyContinue
+    Remove-Item -Path $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
     #=================================================
     # Real Architecture
     $ProcessorArchitecture = $env:PROCESSOR_ARCHITECTURE
@@ -186,10 +195,10 @@ function Initialize-OSDCoreDevice {
     }
 
     if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction SilentlyContinue) {
-        $aiOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
+        $AutoOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
     }
     else {
-        $aiOSLanguageCode = 'en-us'
+        $AutoOSLanguageCode = 'en-us'
     }
     #=================================================
     # Win32_NetworkAdapter
@@ -427,18 +436,18 @@ function Initialize-OSDCoreDevice {
     [System.Boolean]$IsVM = ($vmDetectionSources -join ' ') -match $vmPattern
     #=================================================
     # ChassisType
-    $IsDesktop = $false
-    $IsLaptop = $false
-    $IsServer = $false
-    $IsSFF = $false
-    $IsTablet = $false
     $ComputerSystemType = $classWin32SystemEnclosure | ForEach-Object {
-        if ($_.ChassisTypes[0] -in "8", "9", "10", "11", "12", "14", "18", "21") { $IsLaptop = $true; "Laptop" }
-        if ($_.ChassisTypes[0] -in "3", "4", "5", "6", "7", "15", "16") { $IsDesktop = $true; "Desktop" }
-        if ($_.ChassisTypes[0] -in "23") { $IsServer = $true; "Server" }
-        if ($_.ChassisTypes[0] -in "34", "35", "36") { $IsSFF = $true; "Small Form Factor" }
-        if ($_.ChassisTypes[0] -in "13", "31", "32", "30") { $IsTablet = $true; "Tablet" }
+        if ($_.ChassisTypes[0] -in "8", "9", "10", "11", "12", "14", "18", "21") { "Laptop" }
+        if ($_.ChassisTypes[0] -in "3", "4", "5", "6", "7", "15", "16") { "Desktop" }
+        if ($_.ChassisTypes[0] -in "23") { "Server" }
+        if ($_.ChassisTypes[0] -in "34", "35", "36") { "Small Form Factor" }
+        if ($_.ChassisTypes[0] -in "13", "31", "32", "30") { "Tablet" }
     }
+    [System.Boolean]$IsDesktop = $ComputerSystemType -contains 'Desktop'
+    [System.Boolean]$IsLaptop = $ComputerSystemType -contains 'Laptop'
+    [System.Boolean]$IsServer = $ComputerSystemType -contains 'Server'
+    [System.Boolean]$IsSFF = $ComputerSystemType -contains 'Small Form Factor'
+    [System.Boolean]$IsTablet = $ComputerSystemType -contains 'Tablet'
     #=================================================
     # TotalPhysicalMemoryGB
     $TotalPhysicalMemoryGB = [math]::Round(
@@ -672,6 +681,11 @@ function Initialize-OSDCoreDevice {
     #=================================================
     #   Pass Variables to OSDCoreDevice
     #=================================================
+    $deviceUUID = [System.String]$classWin32ComputerSystemProduct.UUID
+    $UUIDHash = $null
+    if (-not [string]::IsNullOrWhiteSpace($deviceUUID)) {
+        $UUIDHash = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
+    }
     $reportedOSDManufacturer = if ([string]::IsNullOrWhiteSpace($OSDManufacturer)) { 'Unknown' } else { [System.String]$OSDManufacturer }
     $reportedOSDModel = if ([string]::IsNullOrWhiteSpace($OSDModel)) { 'Unknown' } else { [System.String]$OSDModel }
     $reportedOSDProduct = if ([string]::IsNullOrWhiteSpace($OSDProduct)) { 'Unknown' } else { [System.String]$OSDProduct }
@@ -681,12 +695,13 @@ function Initialize-OSDCoreDevice {
         OSDManufacturer          = $reportedOSDManufacturer
         OSDModel                 = $reportedOSDModel
         OSDProduct               = $reportedOSDProduct
-        ComputerName             = $classWin32ComputerSystem.Name
+        AutoOSLanguageCode       = $AutoOSLanguageCode
         BaseBoardProduct         = [System.String]$BaseBoardProduct
         BiosReleaseDate          = [System.String]$classWin32BIOS.ReleaseDate
         BiosVersion              = [System.String]$classWin32BIOS.SMBIOSBIOSVersion
         ComputerManufacturer     = [System.String]$ComputerManufacturer
         ComputerModel            = [System.String]$ComputerModel
+        ComputerName             = $classWin32ComputerSystem.Name
         ComputerSystemFamily     = [System.String]$ComputerSystemFamily
         ComputerSystemProduct    = [System.String]$ComputerSystemProduct
         ComputerSystemSKU        = [System.String]$ComputerSystemSKU
@@ -727,11 +742,11 @@ function Initialize-OSDCoreDevice {
         USBDisk                  = $USBDisk
         USBPartition             = $USBPartition
         USBVolume                = $USBVolume
-        UUID                     = $classWin32ComputerSystemProduct.UUID
-        aiOSLanguageCode         = $aiOSLanguageCode
+        UUID                     = $deviceUUID
+        UUIDHash                 = [System.String]$UUIDHash
     }
-    $global:OSDCoreDevice | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'OSDCoreDevice.xml') -Force
-    $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File "$LogsPath\OSDCoreDevice.json" -Force -Encoding utf8
+    $global:OSDCoreDevice | Export-Clixml -Path $OSDCoreDeviceClixmlPath -Force
+    $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File $OSDCoreDeviceJsonPath -Force -Encoding utf8
     #=================================================
     # OSDCloudLogs
     # Look for available drives (USB, mapped network drives, and local drives) with at least 1 GB of free space and write permissions for the current user to copy logs.
