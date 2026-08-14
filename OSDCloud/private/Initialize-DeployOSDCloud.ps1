@@ -37,11 +37,11 @@ function Initialize-DeployOSDCloud {
         [System.String]
         $OSDProduct,
 
-        [Parameter(Mandatory = $false, HelpMessage = 'Operating system architecture for deployment selection.')]
+        [Parameter(Mandatory = $false, HelpMessage = 'Mock/testing processor architecture override used for deployment selection.')]
         [ValidateNotNullOrEmpty()]
         [ValidateSet('amd64', 'arm64')]
         [System.String]
-        $OSArchitecture = $env:PROCESSOR_ARCHITECTURE,
+        $ProcessorArchitecture,
 
         [Parameter(Mandatory = $false, HelpMessage = 'Operating system name for deployment selection.')]
         [ValidateNotNullOrEmpty()]
@@ -107,11 +107,12 @@ function Initialize-DeployOSDCloud {
     Initialize-OSDCoreCache
     #=================================================
     #region OSArchitecture
-    # Resolve the effective architecture once and normalize aliases.
-    $processorArchitecture = if (-not [string]::IsNullOrWhiteSpace($OSArchitecture)) {
-        $OSArchitecture
+    if ($ProcessorArchitecture -and -not [string]::IsNullOrWhiteSpace($ProcessorArchitecture)) {
+        $global:OSDCoreDevice.ProcessorArchitecture = $ProcessorArchitecture
     }
-    elseif (-not [string]::IsNullOrWhiteSpace($global:OSDCoreDevice.ProcessorArchitecture)) {
+
+    # Resolve the effective architecture from OSDCoreDevice and normalize aliases.
+    $processorArchitecture = if (-not [string]::IsNullOrWhiteSpace($global:OSDCoreDevice.ProcessorArchitecture)) {
         $global:OSDCoreDevice.ProcessorArchitecture
     }
     else {
@@ -128,7 +129,7 @@ function Initialize-DeployOSDCloud {
     #endregion
     #=================================================
     # CoreDriverPacks
-    Initialize-ModuleCoreDriverPacks -OSDManufacturer $OSDManufacturer
+    Initialize-ModuleCoreDriverPacks -OSDManufacturer $OSDManufacturer -ProcessorArchitecture $processorArchitecture
     #=================================================
     # CoreOperatingSystems
     $ModuleName = $($MyInvocation.MyCommand.Module.Name)
@@ -358,7 +359,7 @@ function Initialize-DeployOSDCloud {
             Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] DriverPack is not available in the offline cache."
             $DriverPackCacheObject = $null
         }
-        $DriverPackCloudObject | Format-List | Out-Host
+        # $DriverPackCloudObject | Format-List | Out-Host
     }
     else {
         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCoreDriverPackCloudObject is not set."

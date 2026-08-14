@@ -41,6 +41,12 @@ function Deploy-OSDCloud {
         Overrides the detected keyboard layout value used to infer OSLanguageCode
         when OSLanguageCode is not explicitly provided.
 
+    .PARAMETER ProcessorArchitecture
+        Mock/testing processor architecture override used to validate ARM64 workflow
+        behavior on AMD64 devices. When supplied, overrides
+        OSDCoreDevice.ProcessorArchitecture before deployment OSArchitecture is
+        derived.
+
     .PARAMETER SkipWorkflowVerification
         Skips the custom-workflow warning prompt and continues immediately.
 
@@ -156,11 +162,11 @@ function Deploy-OSDCloud {
         [System.String]
         $OSDProduct,
 
-        [Parameter(Mandatory = $false, HelpMessage = 'Operating system architecture for deployment selection.')]
+        [Parameter(Mandatory = $false, HelpMessage = 'Mock/testing processor architecture override used for deployment selection.')]
         [ValidateNotNullOrEmpty()]
         [ValidateSet('amd64', 'arm64')]
         [System.String]
-        $OSArchitecture = $env:PROCESSOR_ARCHITECTURE,
+        $ProcessorArchitecture,
 
         [Parameter(Mandatory = $false, HelpMessage = 'Optional keyboard layout value used to infer OSLanguageCode.')]
         [ValidateNotNullOrEmpty()]
@@ -171,7 +177,14 @@ function Deploy-OSDCloud {
     dynamicparam {
         $moduleBase = $($MyInvocation.MyCommand.Module.ModuleBase)
         $resolvedWorkflowName = if ($PSBoundParameters.ContainsKey('WorkflowName')) { [System.String]$PSBoundParameters['WorkflowName'] } else { 'default' }
-        return Get-OSDCloudWorkflowRuntimeParameter -WorkflowName $resolvedWorkflowName -ModuleBase $moduleBase
+        $workflowRuntimeParameter = @{
+            ModuleBase    = $moduleBase
+            WorkflowName  = $resolvedWorkflowName
+        }
+        if ($PSBoundParameters.ContainsKey('ProcessorArchitecture')) {
+            $workflowRuntimeParameter['ProcessorArchitecture'] = [System.String]$PSBoundParameters['ProcessorArchitecture']
+        }
+        return Get-OSDCloudWorkflowRuntimeParameter @workflowRuntimeParameter
     }
 
     end {
@@ -185,27 +198,6 @@ function Deploy-OSDCloud {
         Write-Host -ForegroundColor DarkCyan 'By using OSDCloud, you consent to the collection of analytic data as outlined in the privacy policy:'
         Write-Host -ForegroundColor DarkGray 'https://github.com/OSDeploy/OSDCloud/blob/main/PRIVACY.md'
         Write-Host
-        #=================================================
-        # Initialize Device and Deployment Objects
-        Initialize-OSDCoreDevice
-
-        # Populate variables from environment and profile settings, and apply any parameter overrides.
-        $envParameters = @{}
-        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction SilentlyContinue) {
-            $envParameters = ConvertTo-OSDCloudEnvParameter -BoundParameters $PSBoundParameters
-        }
-        #=================================================
-        # OSDCoreDevice Manufacturer, Model, Product overrides
-        if ($OSDManufacturer -and -not [string]::IsNullOrWhiteSpace($OSDManufacturer)) {
-            $global:OSDCoreDevice.OSDManufacturer = $OSDManufacturer
-        }
-        if ($OSDModel -and -not [string]::IsNullOrWhiteSpace($OSDModel)) {
-            $global:OSDCoreDevice.OSDModel = $OSDModel
-        }
-        if ($OSDProduct -and -not [string]::IsNullOrWhiteSpace($OSDProduct)) {
-            $global:OSDCoreDevice.OSDProduct = $OSDProduct
-        }
-        $global:OSDCoreDevice | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'OSDCoreDevice.xml') -Force
         #=================================================
         # Workflow Verification and Warning
         if ($WorkflowName -ne 'default' -and -not $SkipWorkflowVerification.IsPresent) {
@@ -229,6 +221,44 @@ function Deploy-OSDCloud {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud Workflow: default"
         }
         #=================================================
+        # Populate variables from environment and profile settings, and apply any parameter overrides.
+        $envParameters = @{}
+        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction SilentlyContinue) {
+            $envParameters = ConvertTo-OSDCloudEnvParameter -BoundParameters $PSBoundParameters
+        }
+        #=================================================
+        # Set the osdcloud-logs Path
+        $LogsPath = "$env:TEMP\osdcloud-logs"
+        if (-not (Test-Path -Path $LogsPath)) {
+            New-Item -Path $LogsPath -ItemType Directory -Force | Out-Null
+        }
+        #=================================================
+        # Initialize OSDCoreDevice
+        Initialize-OSDCoreDevice
+        #=================================================
+        # OSDCoreDevice Manufacturer, Model, Product overrides
+        if ($OSDManufacturer -and -not [string]::IsNullOrWhiteSpace($OSDManufacturer)) {
+            $global:OSDCoreDevice.OSDManufacturer = $OSDManufacturer
+        }
+        if ($OSDModel -and -not [string]::IsNullOrWhiteSpace($OSDModel)) {
+            $global:OSDCoreDevice.OSDModel = $OSDModel
+        }
+        if ($OSDProduct -and -not [string]::IsNullOrWhiteSpace($OSDProduct)) {
+            $global:OSDCoreDevice.OSDProduct = $OSDProduct
+        }
+        if ($ProcessorArchitecture -and -not [string]::IsNullOrWhiteSpace($ProcessorArchitecture)) {
+            $global:OSDCoreDevice.ProcessorArchitecture = $ProcessorArchitecture
+        }
+        #=================================================
+        # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
+        $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
+        Remove-Item -Path $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
+        $global:OSDCoreDevice | Export-Clixml -Path $OSDCoreDeviceClixmlPath -Force
+
+        $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
+        Remove-Item -Path $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
+        $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File $OSDCoreDeviceJsonPath -Force -Encoding utf8
+        #=================================================
         # Automatically determine default OSLanguageCode from the detected keyboard layout if not explicitly provided.
         $resolvedOSLanguageCode = if ($PSBoundParameters.ContainsKey('OSLanguageCode')) {
             [System.String]$PSBoundParameters['OSLanguageCode']
@@ -239,25 +269,36 @@ function Deploy-OSDCloud {
 
         if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
             $languageKeyboardLayout = if ($PSBoundParameters.ContainsKey('KeyboardLayout')) { $KeyboardLayout } else { $global:OSDCoreDevice.KeyboardLayout }
-            if ($languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
+            $osdRegistered = $false
+            if ($global:OSDCoreDevice -is [System.Collections.IDictionary] -and $global:OSDCoreDevice.Contains('OSDRegistered')) {
+                $osdRegistered = $global:OSDCoreDevice['OSDRegistered'] -eq $true
+            }
+            elseif ($global:OSDCoreDevice -and $global:OSDCoreDevice.PSObject.Properties.Match('OSDRegistered').Count -gt 0) {
+                $osdRegistered = $global:OSDCoreDevice.OSDRegistered -eq $true
+            }
+
+            if ($osdRegistered -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
                 $resolvedOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $languageKeyboardLayout -FallbackLanguageCode 'en-US'
-                Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] OSLanguageCode is automatically set to $resolvedOSLanguageCode [KeyboardLayout $languageKeyboardLayout]."
+                Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast OSDCloud has set the OSLanguageCode to $resolvedOSLanguageCode based on the KeyboardLayout [$languageKeyboardLayout]."
             }
             else {
                 $resolvedOSLanguageCode = 'en-US'
+                if (-not $osdRegistered) {
+                    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping OSLanguageCode keyboard conversion because OSDCloud is not registered."
+                }
             }
         }
         #=================================================
         # Start Initialization of OSDCloud Deployment
         $initializeOSDCloudDeployParameters = @{
-            EnvParameters   = $envParameters
-            OSArchitecture  = $OSArchitecture
-            OSLanguageCode  = $resolvedOSLanguageCode
-            OSDManufacturer = $global:OSDCoreDevice.OSDManufacturer
-            OSDModel        = $global:OSDCoreDevice.OSDModel
-            OSDProduct      = $global:OSDCoreDevice.OSDProduct
-            ProfileName     = $ProfileName
-            WorkflowName    = $WorkflowName
+            EnvParameters         = $envParameters
+            OSLanguageCode        = $resolvedOSLanguageCode
+            OSDManufacturer       = $global:OSDCoreDevice.OSDManufacturer
+            OSDModel              = $global:OSDCoreDevice.OSDModel
+            OSDProduct            = $global:OSDCoreDevice.OSDProduct
+            ProcessorArchitecture = $global:OSDCoreDevice.ProcessorArchitecture
+            ProfileName           = $ProfileName
+            WorkflowName          = $WorkflowName
         }
         $initializeOSDCloudDeployCommand = Get-Command -Name 'Initialize-DeployOSDCloud' -ErrorAction SilentlyContinue
         if ($initializeOSDCloudDeployCommand) {

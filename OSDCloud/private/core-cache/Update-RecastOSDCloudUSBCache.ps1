@@ -182,11 +182,22 @@ function Update-RecastOSDCloudUSBCache {
 
     # Automatically determine default OSLanguageCode from the detected keyboard layout if not explicitly provided.
     if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
-        if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction SilentlyContinue) {
+        $osdRegistered = $false
+        if ($global:OSDCoreDevice -is [System.Collections.IDictionary] -and $global:OSDCoreDevice.Contains('OSDRegistered')) {
+            $osdRegistered = $global:OSDCoreDevice['OSDRegistered'] -eq $true
+        }
+        elseif ($global:OSDCoreDevice -and $global:OSDCoreDevice.PSObject.Properties.Match('OSDRegistered').Count -gt 0) {
+            $osdRegistered = $global:OSDCoreDevice.OSDRegistered -eq $true
+        }
+
+        if ($osdRegistered -and (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction SilentlyContinue)) {
             $OSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $global:OSDCoreDevice.KeyboardLayout -FallbackLanguageCode 'en-US'
         }
         else {
             $OSLanguageCode = 'en-US'
+            if (-not $osdRegistered) {
+                Write-Verbose -Message ('[{0}] [{1}] Skipping OSLanguageCode keyboard conversion because OSDCloud is not registered.' -f (Get-Date -format s), $MyInvocation.MyCommand.Name)
+            }
         }
     }
 

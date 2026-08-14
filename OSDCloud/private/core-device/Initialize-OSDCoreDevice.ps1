@@ -5,11 +5,19 @@ function Initialize-OSDCoreDevice {
 
     .DESCRIPTION
         Initialize-OSDCoreDevice collects local hardware, firmware, TPM, keyboard,
-        and network information from CIM, environment variables, and UEFI checks.
-        It creates diagnostic artifacts in $env:TEMP\osdcloud-logs, normalizes key
-        identity values such as manufacturer/model/product, and builds
-        $global:OSDCoreDevice as an ordered property bag used by deployment and
-        workflow orchestration functions.
+        disk, USB cache, and network information from CIM, environment variables,
+        and UEFI checks. It creates diagnostic artifacts in
+        $env:TEMP\osdcloud-logs, clears stale OSDCoreDevice snapshot files before
+        collection, normalizes key identity values such as
+        manufacturer/model/product, and builds $global:OSDCoreDevice as an
+        ordered property bag used by deployment and workflow orchestration
+        functions.
+
+        OSDCloud environment values can override the reported OSD manufacturer,
+        model, product, OS architecture, and processor architecture. The device
+        snapshot includes the raw SMBIOS UUID and OSDCloudId, a SHA256 hash used by
+        downstream telemetry callers when a stable privacy-preserving identifier
+        is needed.
 
         The function is intended for internal module initialization and is called
         before workflow execution so downstream steps can rely on a consistent
@@ -19,7 +27,8 @@ function Initialize-OSDCoreDevice {
     Initialize-OSDCoreDevice
 
         Collects current device metadata, creates or updates
-        $global:OSDCoreDevice, and writes log artifacts for troubleshooting.
+        $global:OSDCoreDevice, removes stale device snapshot files, and writes
+        current log artifacts for troubleshooting.
 
 
     .EXAMPLE
@@ -38,14 +47,23 @@ function Initialize-OSDCoreDevice {
         Side effects:
         - Clears the current PowerShell error collection.
         - Attempts to sync date/time (best effort) through Sync-OSDCoreDateTime.
-        - Writes diagnostic logs to $env:TEMP\osdcloud-logs.
+                - Removes stale OSDCoreDevice.xml and OSDCoreDevice.json files from
+                    $env:TEMP\osdcloud-logs before collecting a new snapshot.
+                - Writes diagnostic logs and current device snapshots to
+                    $env:TEMP\osdcloud-logs.
         - Attempts to stage logs in an OSDCloudLogs destination when available.
         - Updates global state in $global:OSDCoreDevice.
 
         Changelog:
-        - 2026-08-13 | pending | Add DeviceId and clear stale device snapshot files.
+        - 2026-08-13 | pending | Add OSDRegistered email validation state.
+            Added regex validation for OSDeployEmail and expose OSDRegistered in
+            OSDCoreDevice.
+        - 2026-08-13 | pending | Add OSDeploy identity and license properties.
+            Added nullable OSDeployId, OSDeployEmail, and OSDeployLicense values
+            from WinPE environment variables or local license discovery.
+        - 2026-08-13 | pending | Add OSDCloudId and clear stale device snapshot files.
             Removed existing OSDCoreDevice output files before collecting device state
-            and added DeviceId as a SHA256 hash of the device UUID.
+            and added OSDCloudId as a SHA256 hash of the device UUID.
         - 2026-08-12 | pending | Infer AutoOSLanguageCode from keyboard layout.
             Used Convert-KeyboardLayoutToLanguageCode with the detected KeyboardLayout
             to populate AutoOSLanguageCode in the OSDCoreDevice snapshot.
@@ -99,12 +117,6 @@ function Initialize-OSDCoreDevice {
     if (-not (Test-Path -Path $LogsPath)) {
         New-Item -Path $LogsPath -ItemType Directory -Force | Out-Null
     }
-
-    $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
-    $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
-    $OSDCoreDeviceLogClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
-    Remove-Item -Path $OSDCoreDeviceJsonPath, $OSDCoreDeviceLogClixmlPath -Force -ErrorAction SilentlyContinue
-    Remove-Item -Path $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
     #=================================================
     # Real Architecture
     $ProcessorArchitecture = $env:PROCESSOR_ARCHITECTURE
@@ -194,12 +206,7 @@ function Initialize-OSDCoreDevice {
         $KeyboardName = $null
     }
 
-    if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction SilentlyContinue) {
-        $AutoOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
-    }
-    else {
-        $AutoOSLanguageCode = 'en-us'
-    }
+    $AutoOSLanguageCode = 'en-us'
     #=================================================
     # Win32_NetworkAdapter
     $classWin32NetworkAdapter = Get-CimInstance -ClassName Win32_NetworkAdapter | Select-Object -Property *
@@ -682,10 +689,54 @@ function Initialize-OSDCoreDevice {
     #   Pass Variables to OSDCoreDevice
     #=================================================
     $deviceUUID = [System.String]$classWin32ComputerSystemProduct.UUID
-    $UUIDHash = $null
+    $OSDCloudId = $null
     if (-not [string]::IsNullOrWhiteSpace($deviceUUID)) {
-        $UUIDHash = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
+        $OSDCloudId = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
     }
+    $OSDeployId = $null
+    $OSDeployEmail = $null
+    $OSDeployLicense = $null
+
+    if (-not [string]::IsNullOrWhiteSpace($env:OSDEPLOY_ID)) {
+        $OSDeployId = [System.String]$env:OSDEPLOY_ID
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($OSDCloudId)) {
+        $OSDeployId = $OSDCloudId
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($env:OSDEPLOY_EMAIL)) {
+        $OSDeployEmail = [System.String]$env:OSDEPLOY_EMAIL
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:OSDEPLOY_LICENSE)) {
+        $OSDeployLicense = [System.String]$env:OSDEPLOY_LICENSE
+    }
+
+    if (([string]::IsNullOrWhiteSpace($OSDeployEmail) -or [string]::IsNullOrWhiteSpace($OSDeployLicense)) -and (Get-Command -Name 'Get-OSDeployCoreLicense' -ErrorAction SilentlyContinue)) {
+        try {
+            $OSDeployCoreLicense = Get-OSDeployCoreLicense -Verbose:$false -ErrorAction SilentlyContinue
+            if ([string]::IsNullOrWhiteSpace($OSDeployEmail) -and -not [string]::IsNullOrWhiteSpace($OSDeployCoreLicense.Email)) {
+                $OSDeployEmail = [System.String]$OSDeployCoreLicense.Email
+            }
+            if ([string]::IsNullOrWhiteSpace($OSDeployLicense) -and -not [string]::IsNullOrWhiteSpace($OSDeployCoreLicense.LicenseGuid)) {
+                $OSDeployLicense = [System.String]$OSDeployCoreLicense.LicenseGuid
+            }
+        }
+        catch {}
+    }
+
+    $OSDeployEmailPattern = '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$'
+    [System.Boolean]$OSDRegistered = -not [string]::IsNullOrWhiteSpace($OSDeployEmail) -and $OSDeployEmail -match $OSDeployEmailPattern
+
+    if ($OSDRegistered) {
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered to $OSDeployEmail"
+        if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction SilentlyContinue) {
+            $AutoOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
+        }
+    }
+    else {
+        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping AutoOSLanguageCode keyboard conversion because OSDCloud is not registered."
+    }
+
     $reportedOSDManufacturer = if ([string]::IsNullOrWhiteSpace($OSDManufacturer)) { 'Unknown' } else { [System.String]$OSDManufacturer }
     $reportedOSDModel = if ([string]::IsNullOrWhiteSpace($OSDModel)) { 'Unknown' } else { [System.String]$OSDModel }
     $reportedOSDProduct = if ([string]::IsNullOrWhiteSpace($OSDProduct)) { 'Unknown' } else { [System.String]$OSDProduct }
@@ -743,9 +794,20 @@ function Initialize-OSDCoreDevice {
         USBPartition             = $USBPartition
         USBVolume                = $USBVolume
         UUID                     = $deviceUUID
-        UUIDHash                 = [System.String]$UUIDHash
+        OSDCloudId               = [System.String]$OSDCloudId
+        OSDeployId               = $OSDeployId
+        OSDeployEmail            = $OSDeployEmail
+        OSDeployLicense          = $OSDeployLicense
+        OSDRegistered            = $OSDRegistered
     }
+    #=================================================
+    # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
+    $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
+    Remove-Item -Path $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
     $global:OSDCoreDevice | Export-Clixml -Path $OSDCoreDeviceClixmlPath -Force
+
+    $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
+    Remove-Item -Path $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
     $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File $OSDCoreDeviceJsonPath -Force -Encoding utf8
     #=================================================
     # OSDCloudLogs

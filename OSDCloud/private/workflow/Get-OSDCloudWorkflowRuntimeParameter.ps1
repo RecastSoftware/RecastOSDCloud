@@ -21,6 +21,10 @@ function Get-OSDCloudWorkflowRuntimeParameter {
         The OSDCloud module base path. Typically $($MyInvocation.MyCommand.Module.ModuleBase) from
         the calling cmdlet.
 
+    .PARAMETER ProcessorArchitecture
+        Optional mock/testing processor architecture used to select architecture-specific workflow
+        operating system settings before the deployment initializes OSDCoreDevice.
+
     .EXAMPLE
         Get-OSDCloudWorkflowRuntimeParameter -WorkflowName 'cli' -ModuleBase $moduleBase
 
@@ -41,14 +45,35 @@ function Get-OSDCloudWorkflowRuntimeParameter {
 
         [Parameter(Mandatory = $true)]
         [System.String]
-        $ModuleBase
+        $ModuleBase,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('amd64', 'arm64')]
+        [System.String]
+        $ProcessorArchitecture
     )
 
     $workflowRootPath = Join-Path -Path $ModuleBase -ChildPath 'workflow'
     $workflowPath = Join-Path -Path $workflowRootPath -ChildPath $WorkflowName
     $tasksPath = Join-Path -Path $workflowPath -ChildPath 'tasks'
 
-    $osSettingsFileObject = Get-OSDCloudWorkflowSettingsOSFile -WorkflowName $WorkflowName -Architecture $env:PROCESSOR_ARCHITECTURE -Path $workflowRootPath
+    $workflowProcessorArchitecture = if (-not [string]::IsNullOrWhiteSpace($ProcessorArchitecture)) {
+        $ProcessorArchitecture
+    }
+    elseif ($global:OSDCoreDevice -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreDevice.ProcessorArchitecture)) {
+        $global:OSDCoreDevice.ProcessorArchitecture
+    }
+    else {
+        $env:PROCESSOR_ARCHITECTURE
+    }
+
+    switch -Regex ($workflowProcessorArchitecture) {
+        '^(amd64|x64)$' { $workflowProcessorArchitecture = 'amd64'; break }
+        '^arm64$' { $workflowProcessorArchitecture = 'arm64'; break }
+        default { $workflowProcessorArchitecture = 'amd64' }
+    }
+
+    $osSettingsFileObject = Get-OSDCloudWorkflowSettingsOSFile -WorkflowName $WorkflowName -Architecture $workflowProcessorArchitecture -Path $workflowRootPath
     $osJsonPath = $osSettingsFileObject.FullName
 
     $operatingSystemValues = @()
