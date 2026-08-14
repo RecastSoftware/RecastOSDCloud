@@ -52,7 +52,11 @@ function Update-OSDCoreDriverPackCatalogHP {
     $tempCatalogPackagePath = Join-Path -Path $env:TEMP -ChildPath 'HPClientDriverPackCatalog.cab'
     $tempCatalogPath = Join-Path -Path $env:TEMP -ChildPath 'osdcloud-driverpack-hp.xml'
 
-    Remove-Item -Path $tempCatalogPackagePath, $tempCatalogPath -Force -ErrorAction SilentlyContinue
+    foreach ($tempPath in @($tempCatalogPackagePath, $tempCatalogPath)) {
+        if (Test-Path -LiteralPath $tempPath) {
+            Remove-Item -LiteralPath $tempPath -Force -ErrorAction SilentlyContinue
+        }
+    }
 
     try {
         Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast OSDCloud is updating the HP DriverPack catalog."

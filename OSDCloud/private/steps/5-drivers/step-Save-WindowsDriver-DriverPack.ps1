@@ -136,6 +136,16 @@ function step-Save-WindowsDriver-DriverPack {
     if (-not (Test-Path "$ExpandPath")) {
         New-Item $ExpandPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null
     }
+    $removeExistingPath = {
+        param (
+            [System.String]
+            $Path
+        )
+
+        if (Test-Path -LiteralPath $Path) {
+            Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack: $DownloadedFile"
     #=================================================
     #   Cab
@@ -148,13 +158,13 @@ function step-Save-WindowsDriver-DriverPack {
         Add-WindowsDriver -Path "C:\" -Driver $ExpandPath -Recurse -ForceUnsigned -LogPath "$LogPath\dism-add-windowsdriver-driverpack.log" -ErrorAction SilentlyContinue | Out-Null
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing C:\Windows\Temp\osdcloud-driverpack-download"
-        Remove-Item -Path "C:\Windows\Temp\osdcloud-driverpack-download" -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path "C:\Windows\Temp\osdcloud-driverpack-download"
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing $ExpandPath"
-        Remove-Item -Path $ExpandPath -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path $ExpandPath
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing C:\Drivers"
-        Remove-Item -Path "C:\Drivers" -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path "C:\Drivers"
         return
     }
     #=================================================
@@ -168,13 +178,13 @@ function step-Save-WindowsDriver-DriverPack {
         Add-WindowsDriver -Path "C:\" -Driver $ExpandPath -Recurse -ForceUnsigned -LogPath "$LogPath\dism-add-windowsdriver-driverpack.log" -ErrorAction SilentlyContinue | Out-Null
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing C:\Windows\Temp\osdcloud-driverpack-download"
-        Remove-Item -Path "C:\Windows\Temp\osdcloud-driverpack-download" -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path "C:\Windows\Temp\osdcloud-driverpack-download"
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing $ExpandPath"
-        Remove-Item -Path $ExpandPath -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path $ExpandPath
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing C:\Drivers"
-        Remove-Item -Path "C:\Drivers" -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path "C:\Drivers"
         return
     }
     #=================================================
@@ -192,13 +202,13 @@ function step-Save-WindowsDriver-DriverPack {
         Add-WindowsDriver -Path "C:\" -Driver $ExpandPath -Recurse -ForceUnsigned -LogPath "$LogPath\dism-add-windowsdriver-driverpack.log" -ErrorAction SilentlyContinue | Out-Null
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing C:\Windows\Temp\osdcloud-driverpack-download"
-        Remove-Item -Path "C:\Windows\Temp\osdcloud-driverpack-download" -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path "C:\Windows\Temp\osdcloud-driverpack-download"
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing $ExpandPath"
-        Remove-Item -Path $ExpandPath -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path $ExpandPath
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing C:\Drivers"
-        Remove-Item -Path "C:\Drivers" -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path "C:\Drivers"
         return
     }
     #=================================================
@@ -218,20 +228,20 @@ function step-Save-WindowsDriver-DriverPack {
             Add-WindowsDriver -Path "C:\" -Driver $ExpandPath -Recurse -ForceUnsigned -LogPath "$LogPath\dism-add-windowsdriver-driverpack.log" -ErrorAction SilentlyContinue | Out-Null
 
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing C:\Windows\Temp\osdcloud-driverpack-download"
-            Remove-Item -Path "C:\Windows\Temp\osdcloud-driverpack-download" -Recurse -Force -ErrorAction SilentlyContinue
+            & $removeExistingPath -Path "C:\Windows\Temp\osdcloud-driverpack-download"
 
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing $ExpandPath"
-            Remove-Item -Path $ExpandPath -Recurse -Force -ErrorAction SilentlyContinue
+            & $removeExistingPath -Path $ExpandPath
 
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing C:\Drivers"
-            Remove-Item -Path "C:\Drivers" -Recurse -Force -ErrorAction SilentlyContinue
+            & $removeExistingPath -Path "C:\Drivers"
         }
         else {
             Write-Warning "[$(Get-Date -format s)] 7zip 7za.exe needs to be added to WinPE to expand HP DriverPacks"
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] HP DriverPack is saved at $DownloadedFile"
 
-            Remove-Item -Path $ExpandPath -Recurse -Force -ErrorAction SilentlyContinue
-            Remove-Item -Path "C:\Drivers" -Recurse -Force -ErrorAction SilentlyContinue
+            & $removeExistingPath -Path $ExpandPath
+            & $removeExistingPath -Path "C:\Drivers"
         }
         return
     }
@@ -257,7 +267,7 @@ rd /s /q C:\Windows\Temp\osdcloud-driverpack-download
 :: ========================================================
 "@
         $Content | Out-File -FilePath $SetupCompleteCmd -Append -Encoding ascii -Width 2000 -Force
-        Remove-Item -Path $ExpandPath -Recurse -Force -ErrorAction SilentlyContinue
+    & $removeExistingPath -Path $ExpandPath
         return
 
         <#
@@ -300,7 +310,7 @@ rd /s /q C:\Windows\Temp\osdcloud-driverpack-download
             $null = Start-Process -FilePath 'dism.exe' -ArgumentList $ArgumentList -Wait -NoNewWindow
         }
 
-        Remove-Item -Path $ExpandPath -Recurse -Force -ErrorAction SilentlyContinue
+        & $removeExistingPath -Path $ExpandPath
         return
         #>
     }
@@ -322,8 +332,8 @@ rd /s /q C:\Windows\Temp\osdcloud-driverpack-download
 :: ========================================================
 "@
         $Content | Out-File -FilePath $SetupCompleteCmd -Append -Encoding ascii -Width 2000 -Force
-        Remove-Item -Path $ExpandPath -Recurse -Force -ErrorAction SilentlyContinue
-        Remove-Item -Path "C:\Drivers" -Recurse -Force -ErrorAction SilentlyContinue
+    & $removeExistingPath -Path $ExpandPath
+    & $removeExistingPath -Path "C:\Drivers"
         return
     }
     #=================================================

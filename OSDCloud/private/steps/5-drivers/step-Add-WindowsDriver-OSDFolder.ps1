@@ -44,7 +44,9 @@ function step-Add-WindowsDriver-OSDFolder {
                     Add-WindowsDriver -Path $OfflinePath -Driver $expandPath -Recurse -ForceUnsigned `
                         -LogPath "$LogPath\dism-add-windowsdriver-osdfolder.log" `
                         -ErrorAction SilentlyContinue | Out-Null
-                    Remove-Item -Path $expandPath -Recurse -Force -ErrorAction SilentlyContinue
+                    if (Test-Path -LiteralPath $expandPath) {
+                        Remove-Item -LiteralPath $expandPath -Recurse -Force -ErrorAction SilentlyContinue
+                    }
                 }
                 # PS1
                 $matchedScripts = Get-ChildItem -Path $parentPath -File -Filter "*.ps1" -ErrorAction SilentlyContinue |
@@ -80,7 +82,9 @@ function step-Add-WindowsDriver-OSDFolder {
                     Add-WindowsDriver -Path $OfflinePath -Driver $expandPath -Recurse -ForceUnsigned `
                         -LogPath "$LogPath\dism-add-windowsdriver-osdfolder.log" `
                         -ErrorAction SilentlyContinue | Out-Null
-                    Remove-Item -Path $expandPath -Recurse -Force -ErrorAction SilentlyContinue
+                    if (Test-Path -LiteralPath $expandPath) {
+                        Remove-Item -LiteralPath $expandPath -Recurse -Force -ErrorAction SilentlyContinue
+                    }
                 }
                 # PS1
                 $matchedScripts = Get-ChildItem -Path $parentPath -File -Filter "*.ps1" -ErrorAction SilentlyContinue |
@@ -116,7 +120,9 @@ function step-Add-WindowsDriver-OSDFolder {
                     Add-WindowsDriver -Path $OfflinePath -Driver $expandPath -Recurse -ForceUnsigned `
                         -LogPath "$LogPath\dism-add-windowsdriver-osdfolder.log" `
                         -ErrorAction SilentlyContinue | Out-Null
-                    Remove-Item -Path $expandPath -Recurse -Force -ErrorAction SilentlyContinue
+                    if (Test-Path -LiteralPath $expandPath) {
+                        Remove-Item -LiteralPath $expandPath -Recurse -Force -ErrorAction SilentlyContinue
+                    }
                 }
                 # PS1
                 $matchedScripts = Get-ChildItem -Path $parentPath -File -Filter "*.ps1" -ErrorAction SilentlyContinue |

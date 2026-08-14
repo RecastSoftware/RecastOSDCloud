@@ -140,7 +140,7 @@ function Deploy-OSDCloudCLI {
         # Initialize-DeployOSDCloud.
         $WorkflowName = 'cli'
         $envParameters = @{}
-        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction SilentlyContinue) {
+        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction Ignore) {
             $envParameters = ConvertTo-OSDCloudEnvParameter -BoundParameters $PSBoundParameters
         }
         Initialize-DeployOSDCloud -WorkflowName $WorkflowName -EnvParameters $envParameters -Force:$Force.IsPresent -ProfileName $ProfileName

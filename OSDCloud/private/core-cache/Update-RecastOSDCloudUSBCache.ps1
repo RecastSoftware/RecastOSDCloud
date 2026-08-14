@@ -131,7 +131,7 @@ function Update-RecastOSDCloudUSBCache {
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)] $ModuleVersion"
     #=================================================
     # Dependency guard: OSDCloud relies on curl.exe for downloads.
-    if (-not (Get-Command -Name 'curl.exe' -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command -Name 'curl.exe' -ErrorAction Ignore)) {
         throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDCloud requires 'curl.exe' which is not available on this system. Please ensure curl.exe is available in the system PATH."
     }
     #=================================================
@@ -190,7 +190,7 @@ function Update-RecastOSDCloudUSBCache {
             $osdRegistered = $global:OSDCoreDevice.OSDRegistered -eq $true
         }
 
-        if ($osdRegistered -and (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction SilentlyContinue)) {
+        if ($osdRegistered -and (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction Ignore)) {
             $OSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $global:OSDCoreDevice.KeyboardLayout -FallbackLanguageCode 'en-US'
         }
         else {

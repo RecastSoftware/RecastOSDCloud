@@ -45,7 +45,9 @@ function Update-OSDCoreDriverPackCatalogLenovo {
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
 
     $tempCatalogPath = Join-Path -Path $env:TEMP -ChildPath 'osdcloud-driverpack-lenovo.xml'
-    Remove-Item -Path $tempCatalogPath -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $tempCatalogPath) {
+        Remove-Item -LiteralPath $tempCatalogPath -Force -ErrorAction SilentlyContinue
+    }
 
     try {
         Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast OSDCloud is updating the Lenovo DriverPack catalog."

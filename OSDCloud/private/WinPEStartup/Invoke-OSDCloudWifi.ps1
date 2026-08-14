@@ -270,7 +270,9 @@ function Invoke-OSDCloudWifi {
                     Write-Warning $_
                     # to avoid infinite loop of tries
                     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing invalid Wi-Fi profile '$WifiProfile'"
-                    Remove-Item $WifiProfile -Force
+                    if (Test-Path -LiteralPath $WifiProfile) {
+                        Remove-Item -LiteralPath $WifiProfile -Force
+                    }
                     continue
                 }
             }

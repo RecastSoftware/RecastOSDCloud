@@ -102,7 +102,7 @@ function Invoke-OSDCloudDownloadFile {
         elseif (([System.Net.WebRequest]::DefaultWebProxy).Address) {
             $UseWebClient = $true
         }
-        elseif (-not (Get-Command -Name 'curl.exe' -ErrorAction SilentlyContinue)) {
+        elseif (-not (Get-Command -Name 'curl.exe' -ErrorAction Ignore)) {
             $UseWebClient = $true
         }
 

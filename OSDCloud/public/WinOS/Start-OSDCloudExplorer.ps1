@@ -881,7 +881,7 @@ $listView.add_DoubleClick({
             }
             elseif ($extension -eq '.log' -and $fileInfo.Length -le 5MB) {
                 # .log files under 5 MB → prefer CMTrace, fall back to notepad
-                $cmTrace = Get-Command -Name 'cmtrace.exe' -ErrorAction SilentlyContinue
+                $cmTrace = Get-Command -Name 'cmtrace.exe' -ErrorAction Ignore
                 if ($null -ne $cmTrace) {
                     Start-Process -FilePath $cmTrace.Source -ArgumentList $targetPath
                 }

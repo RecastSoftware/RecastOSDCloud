@@ -223,7 +223,7 @@ function Deploy-OSDCloud {
         #=================================================
         # Populate variables from environment and profile settings, and apply any parameter overrides.
         $envParameters = @{}
-        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction SilentlyContinue) {
+        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction Ignore) {
             $envParameters = ConvertTo-OSDCloudEnvParameter -BoundParameters $PSBoundParameters
         }
         #=================================================
@@ -252,11 +252,15 @@ function Deploy-OSDCloud {
         #=================================================
         # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
         $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
-        Remove-Item -Path $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $OSDCoreDeviceClixmlPath) {
+            Remove-Item -LiteralPath $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
+        }
         $global:OSDCoreDevice | Export-Clixml -Path $OSDCoreDeviceClixmlPath -Force
 
         $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
-        Remove-Item -Path $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $OSDCoreDeviceJsonPath) {
+            Remove-Item -LiteralPath $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
+        }
         $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File $OSDCoreDeviceJsonPath -Force -Encoding utf8
         #=================================================
         # Automatically determine default OSLanguageCode from the detected keyboard layout if not explicitly provided.
@@ -300,7 +304,7 @@ function Deploy-OSDCloud {
             ProfileName           = $ProfileName
             WorkflowName          = $WorkflowName
         }
-        $initializeOSDCloudDeployCommand = Get-Command -Name 'Initialize-DeployOSDCloud' -ErrorAction SilentlyContinue
+        $initializeOSDCloudDeployCommand = Get-Command -Name 'Initialize-DeployOSDCloud' -ErrorAction Ignore
         if ($initializeOSDCloudDeployCommand) {
             $excludedCommonParameterNames = @(
                 'Verbose',

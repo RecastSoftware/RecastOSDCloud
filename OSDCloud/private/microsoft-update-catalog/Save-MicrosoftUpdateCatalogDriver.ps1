@@ -159,7 +159,9 @@ function Save-MicrosoftUpdateCatalogDriver {
                                         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Expanding to $ExpandedLocalFolder"
                                         expand.exe "$($WindowsUpdateDriverFile.FullName)" -F:* "$ExpandedLocalFolder" | Out-Null
                                         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing $($WindowsUpdateDriverFile.FullName)"
-                                        Remove-Item $($WindowsUpdateDriverFile.FullName) -Force -ErrorAction SilentlyContinue | Out-Null
+                                        if (Test-Path -LiteralPath $WindowsUpdateDriverFile.FullName) {
+                                            Remove-Item -LiteralPath $WindowsUpdateDriverFile.FullName -Force -ErrorAction SilentlyContinue | Out-Null
+                                        }
                                     }
                                     else {
                                         Write-Verbose "[$(Get-Date -format s)] Could not find a Driver for this HardwareID"
@@ -255,7 +257,9 @@ function Save-MicrosoftUpdateCatalogDriver {
                                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Expanding to $ExpandedLocalFolder"
                                 expand.exe "$($WindowsUpdateDriverFile.FullName)" -F:* "$ExpandedLocalFolder" | Out-Null
                                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing $($WindowsUpdateDriverFile.FullName)"
-                                Remove-Item $($WindowsUpdateDriverFile.FullName) -Force -ErrorAction SilentlyContinue | Out-Null
+                                if (Test-Path -LiteralPath $WindowsUpdateDriverFile.FullName) {
+                                    Remove-Item -LiteralPath $WindowsUpdateDriverFile.FullName -Force -ErrorAction SilentlyContinue | Out-Null
+                                }
                             }
                             else {
                                 Write-Verbose "[$(Get-Date -format s)] Could not find a Driver for this HardwareID"

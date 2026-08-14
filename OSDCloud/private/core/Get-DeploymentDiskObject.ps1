@@ -105,7 +105,7 @@ function Get-DeploymentDiskObject {
     )
     #=================================================
     # Test Get-PhysicalDisk and throw if not available
-    if (-not (Get-Command -Name 'Get-PhysicalDisk' -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command -Name 'Get-PhysicalDisk' -ErrorAction Ignore)) {
         throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Get-DeploymentDiskObject requires 'Get-PhysicalDisk' which is not available on this system"
     }
     #=================================================

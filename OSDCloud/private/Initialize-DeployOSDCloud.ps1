@@ -82,14 +82,14 @@ function Initialize-DeployOSDCloud {
     # Assemble $global:OSDCloudEnv early so initial property resolution can consume
     # values from the selected profile and parameter overrides.
     <#
-    if (Get-Command -Name 'Initialize-OSDCloudEnv' -ErrorAction SilentlyContinue) {
+    if (Get-Command -Name 'Initialize-OSDCloudEnv' -ErrorAction Ignore) {
         Initialize-OSDCloudEnv -Parameters $EnvParameters -ProfileName $ProfileName | Out-Null
     }
     #>
     #=================================================
     # Dependencies
     # Make sure curl.exe is present and throw if not
-    if (-not (Get-Command -Name 'curl.exe' -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command -Name 'curl.exe' -ErrorAction Ignore)) {
         throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDCloud requires 'curl.exe' which is not available on this system. Please ensure curl.exe is available in the system PATH."
     }
     # Preserve caller-specified OS values so they can be applied after workflow defaults are loaded.
@@ -683,7 +683,7 @@ function Initialize-DeployOSDCloud {
     # Apply the pre-assembled overrides onto $global:OSDCloudDeploy so they take effect
     # everywhere.
     <#
-    if (Get-Command -Name 'Set-OSDCloudEnvOverride' -ErrorAction SilentlyContinue) {
+    if (Get-Command -Name 'Set-OSDCloudEnvOverride' -ErrorAction Ignore) {
         Set-OSDCloudEnvOverride -Target $global:OSDCloudDeploy -ResolveOperatingSystem -AddMissingKeys
     }
     #>

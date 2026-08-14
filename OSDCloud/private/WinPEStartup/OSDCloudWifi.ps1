@@ -197,7 +197,9 @@ function Set-OSDCloudWifi() {
         Copy-Item $WlanConfig -Destination $OutFile
     }
     $result = Netsh WLAN add profile filename=$WlanConfig
-    Remove-Item $WlanConfig -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $WlanConfig) {
+        Remove-Item -LiteralPath $WlanConfig -ErrorAction SilentlyContinue
+    }
     if ($result -notmatch "is added on interface") {
         throw "There was en error when setting up Wi-Fi $WLanName connection profile. Error was $result"
     }

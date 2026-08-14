@@ -63,7 +63,7 @@ $RunPowerShell.Add_Click({
 if ($RunPwsh) {
 	# PowerShell 7 is optional in the environment, so only show the menu item when
 	# pwsh.exe can be resolved on the current path.
-	$pwshCommand = Get-Command -Name 'pwsh.exe' -ErrorAction SilentlyContinue
+	$pwshCommand = Get-Command -Name 'pwsh.exe' -ErrorAction Ignore
 	if ($pwshCommand) {
 		$script:PwshPath = $pwshCommand.Source
 		$RunPwsh.Visibility = [System.Windows.Visibility]::Visible

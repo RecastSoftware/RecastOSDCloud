@@ -333,7 +333,7 @@ function Initialize-OSDCoreDevice {
     if ($SecureBootStatus -eq $true) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Secure Boot is enabled on this device."
 
-        if (Get-Command -Name Get-SecureBootUEFI -ErrorAction SilentlyContinue) {
+        if (Get-Command -Name Get-SecureBootUEFI -ErrorAction Ignore) {
             try {
                 $dbVariable = Get-SecureBootUEFI -Name DB -ErrorAction Stop
                 $kekVariable = Get-SecureBootUEFI -Name KEK -ErrorAction Stop
@@ -468,7 +468,7 @@ function Initialize-OSDCoreDevice {
     #=================================================
     # OA3Tool for Hardware Hash (Autopilot)
     $HardwareHash = $null
-    if (Get-Command 'oa3tool.exe' -ErrorAction SilentlyContinue) {
+    if (Get-Command 'oa3tool.exe' -ErrorAction Ignore) {
         $oa3cfg = @"
 <OA3>
     <FileBased>
@@ -711,7 +711,7 @@ function Initialize-OSDCoreDevice {
         $OSDeployLicense = [System.String]$env:OSDEPLOY_LICENSE
     }
 
-    if (([string]::IsNullOrWhiteSpace($OSDeployEmail) -or [string]::IsNullOrWhiteSpace($OSDeployLicense)) -and (Get-Command -Name 'Get-OSDeployCoreLicense' -ErrorAction SilentlyContinue)) {
+    if (([string]::IsNullOrWhiteSpace($OSDeployEmail) -or [string]::IsNullOrWhiteSpace($OSDeployLicense)) -and (Get-Command -Name 'Get-OSDeployCoreLicense' -ErrorAction Ignore)) {
         try {
             $OSDeployCoreLicense = Get-OSDeployCoreLicense -Verbose:$false -ErrorAction SilentlyContinue
             if ([string]::IsNullOrWhiteSpace($OSDeployEmail) -and -not [string]::IsNullOrWhiteSpace($OSDeployCoreLicense.Email)) {
@@ -729,7 +729,7 @@ function Initialize-OSDCoreDevice {
 
     if ($OSDRegistered) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered to $OSDeployEmail"
-        if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction SilentlyContinue) {
+        if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction Ignore) {
             $AutoOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
         }
     }
@@ -803,11 +803,15 @@ function Initialize-OSDCoreDevice {
     #=================================================
     # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
     $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
-    Remove-Item -Path $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $OSDCoreDeviceClixmlPath) {
+        Remove-Item -LiteralPath $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
+    }
     $global:OSDCoreDevice | Export-Clixml -Path $OSDCoreDeviceClixmlPath -Force
 
     $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
-    Remove-Item -Path $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $OSDCoreDeviceJsonPath) {
+        Remove-Item -LiteralPath $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
+    }
     $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File $OSDCoreDeviceJsonPath -Force -Encoding utf8
     #=================================================
     # OSDCloudLogs

@@ -12,14 +12,14 @@ function Invoke-OSDCloudWorkflowTask {
     # overrides win over any changes made by the workflow UI, and so the snapshot below
     # inherits the final values.
     <#
-    if ($global:OSDCloudEnv -and (Get-Command -Name 'Set-OSDCloudEnvOverride' -ErrorAction SilentlyContinue)) {
+    if ($global:OSDCloudEnv -and (Get-Command -Name 'Set-OSDCloudEnvOverride' -ErrorAction Ignore)) {
         Set-OSDCloudEnvOverride -Target $global:OSDCloudDeploy -ResolveOperatingSystem -AddMissingKeys
     }
     #>
     #=================================================
     $operatingSystemCloudObject = $global:OSDCloudDeploy.OperatingSystemCloudObject
     $workflowSettingsUser = $global:OSDCloudWorkflowSettingsUser
-    if (-not $workflowSettingsUser -and (Get-Command -Name 'Initialize-OSDCloudWorkflowSettingsUser' -ErrorAction SilentlyContinue)) {
+    if (-not $workflowSettingsUser -and (Get-Command -Name 'Initialize-OSDCloudWorkflowSettingsUser' -ErrorAction Ignore)) {
         $settingsArchitecture = if ($global:OSDCloudDeploy.OSArchitecture -ieq 'arm64') { 'ARM64' } else { 'AMD64' }
         Initialize-OSDCloudWorkflowSettingsUser -WorkflowName $global:OSDCloudDeploy.WorkflowName -Architecture $settingsArchitecture | Out-Null
         $workflowSettingsUser = $global:OSDCloudWorkflowSettingsUser
@@ -199,7 +199,7 @@ function Invoke-OSDCloudWorkflowTask {
                 if (($command -is [string]) -and ($command.Contains(" "))) {
                     $commandline = $command
                 }
-                elseif (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
+                elseif (-not (Get-Command $command -ErrorAction Ignore)) {
                     Write-Host -ForegroundColor DarkRed "[$(Get-Date -format s)] [Step command does not exist] $($step.command)"
                     continue
                 }

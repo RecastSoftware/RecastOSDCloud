@@ -148,11 +148,11 @@ function Set-OSDCoreOperatingSystemCloudObject {
         $catalogProvider = 'Get-OSDCloudCoreOperatingSystems'
         $catalogShape = 'OSDCloud'
     }
-    elseif (Get-Command -Name 'Get-OSDCloudCoreOperatingSystems' -ErrorAction SilentlyContinue) {
+    elseif (Get-Command -Name 'Get-OSDCloudCoreOperatingSystems' -ErrorAction Ignore) {
         $catalogProvider = 'Get-OSDCloudCoreOperatingSystems'
         $catalogShape = 'OSDCloud'
     }
-    elseif (Get-Command -Name 'Get-OSDCoreOperatingSystems' -ErrorAction SilentlyContinue) {
+    elseif (Get-Command -Name 'Get-OSDCoreOperatingSystems' -ErrorAction Ignore) {
         $catalogProvider = 'Get-OSDCoreOperatingSystems'
         $catalogShape = 'OSD'
     }

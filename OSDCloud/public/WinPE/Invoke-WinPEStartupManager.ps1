@@ -92,7 +92,7 @@ function Invoke-WinPEStartupManager {
             }
             else {
                 # osk.exe is not present in all versions of WinPE, so check for it before trying to launch it
-                if (Get-Command -Name 'osk.exe' -ErrorAction SilentlyContinue) {
+                if (Get-Command -Name 'osk.exe' -ErrorAction Ignore) {
                     Write-Host "OSDCloud OSK: Keyboard not detected. Launching On-Screen Keyboard."
                     Start-Process -FilePath 'osk.exe' -WindowStyle Minimized
                 }
