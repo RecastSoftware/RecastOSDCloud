@@ -16,6 +16,10 @@ function Initialize-ModuleCoreDriverPacks {
     The operating system architecture. Defaults to the value from $global:OSDCoreDevice.ProcessorArchitecture.
     Typically 'amd64' or 'arm64'.
 
+    .PARAMETER OSDProduct
+    The device product value. Defaults to the value from $global:OSDCoreDevice.OSDProduct.
+    Used to scope Microsoft Surface catalog updates to the current device.
+
     .OUTPUTS
     PSCustomObject
     Array of driver pack objects containing driver information for the specified manufacturer and architecture.
@@ -35,7 +39,9 @@ function Initialize-ModuleCoreDriverPacks {
     param (
         [System.String]$OSDManufacturer = $global:OSDCoreDevice.OSDManufacturer,
 
-        [System.String]$ProcessorArchitecture = $global:OSDCoreDevice.ProcessorArchitecture
+        [System.String]$ProcessorArchitecture = $global:OSDCoreDevice.ProcessorArchitecture,
+
+        [System.String]$OSDProduct = $global:OSDCoreDevice.OSDProduct
     )
     #=================================================
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)] $OSDManufacturer $ProcessorArchitecture"
@@ -70,7 +76,7 @@ function Initialize-ModuleCoreDriverPacks {
             'Dell' { { Update-OSDCoreDriverPackCatalogDell -Confirm:$false } }
             'HP' { { Update-OSDCoreDriverPackCatalogHP -Confirm:$false } }
             'Lenovo' { { Update-OSDCoreDriverPackCatalogLenovo -Confirm:$false } }
-            'Microsoft' { { Update-OSDCoreDriverPackCatalogSurface -Confirm:$false } }
+            'Microsoft' { { Update-OSDCoreDriverPackCatalogSurface -OSDProduct $OSDProduct -Confirm:$false } }
             'Panasonic' { { Update-OSDCoreDriverPackCatalogPanasonic -Confirm:$false } }
             default { $null }
         }
@@ -113,6 +119,7 @@ function Initialize-ModuleCoreDriverPacks {
     }
 
     #$DriverPackValues | Where-Object { $_.OSArchitecture -eq $ProcessorArchitecture }
+    # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: ModuleCoreDriverPacks"
     $global:ModuleCoreDriverPacks = $DriverPackValues | Where-Object { $_.OSArchitecture -eq $ProcessorArchitecture }
     $global:ModuleCoreDriverPacks | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'ModuleCoreDriverPacks.xml') -Force
 }

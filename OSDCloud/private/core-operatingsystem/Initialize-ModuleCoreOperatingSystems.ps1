@@ -40,7 +40,7 @@ function Initialize-ModuleCoreOperatingSystems {
     [OutputType([pscustomobject[]])]
     param ()
     #=================================================
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)]"
+    # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)]"
     #=================================================
     $ErrorActionPreference = 'Stop'
     $records = @()
@@ -124,4 +124,5 @@ function Initialize-ModuleCoreOperatingSystems {
         $global:ModuleCoreOperatingSystems = $mctRecords
     }
     $global:ModuleCoreOperatingSystems | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'ModuleCoreOperatingSystems.xml') -Force
+    # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: ModuleCoreOperatingSystems"
 }

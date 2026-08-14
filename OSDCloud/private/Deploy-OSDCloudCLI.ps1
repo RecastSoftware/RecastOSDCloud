@@ -186,7 +186,7 @@ function Deploy-OSDCloudCLI {
 
         $workflowTaskObject = $global:OSDCloudDeploy.WorkflowTasks | Where-Object { $_.Name -eq $selectedTask } | Select-Object -First 1
 
-        $operatingSystemCloudObject = $global:OSDCloudDeploy.CoreOperatingSystems |
+        $operatingSystemCloudObject = $global:OSDCoreOperatingSystems |
         Where-Object { $_.OperatingSystem -eq $selectedOperatingSystem } |
         Where-Object { $_.OSActivation -eq $selectedOSActivation } |
         Where-Object { $_.OSLanguageCode -eq $selectedOSLanguageCode } |

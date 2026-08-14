@@ -130,16 +130,20 @@ function Initialize-DeployOSDCloud {
     #=================================================
     # CoreDriverPacks
     Initialize-ModuleCoreDriverPacks -OSDManufacturer $OSDManufacturer -ProcessorArchitecture $processorArchitecture
+    $global:OSDCoreDriverPacks = $global:ModuleCoreDriverPacks | Where-Object { $_.OSArchitecture -eq $processorArchitecture }
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreDriverPacks"
     #=================================================
     # CoreOperatingSystems
     $ModuleName = $($MyInvocation.MyCommand.Module.Name)
     if ($ModuleName -eq 'OSD') {
         $global:OSDCoreOperatingSystems = Get-OSDCoreOperatingSystems |
         Where-Object { $_.Architecture -match $processorArchitecture }
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreOperatingSystems"
     }
     elseif ($ModuleName -eq 'OSDCloud') {
         $global:OSDCoreOperatingSystems = Get-OSDCloudCoreOperatingSystems |
         Where-Object { $_.OSArchitecture -match $processorArchitecture }
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreOperatingSystems"
     }
     else {
         throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to load core operating systems provider command."
@@ -148,8 +152,8 @@ function Initialize-DeployOSDCloud {
     # OSDCloudDeploy
     $global:OSDCloudDeploy = $null
     $global:OSDCloudDeploy = [pscustomobject][ordered]@{
-        CoreDriverPacks            = [array]$global:ModuleCoreDriverPacks
-        CoreOperatingSystems       = $global:OSDCoreOperatingSystems
+        #CoreDriverPacks            = [array]$global:ModuleCoreDriverPacks
+        #CoreOperatingSystems       = $global:OSDCoreOperatingSystems
         DeploymentDisk             = $null
         DeploymentDiskNumber       = $null
         DriverPackName             = $null
@@ -382,19 +386,19 @@ function Initialize-DeployOSDCloud {
     $allowedOSEditions = @($allowedOSEditionObjects | ForEach-Object { [string]$_.Edition } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     $allowedOSLanguageCodes = @($global:OSDCloudWorkflowSettingsOS.OSLanguageCode.values | Where-Object { -not [string]::IsNullOrWhiteSpace([string]$_) })
 
-    $global:OSDCloudDeploy.CoreOperatingSystems = @(
-        $global:OSDCloudDeploy.CoreOperatingSystems | Where-Object {
+    $global:OSDCoreOperatingSystems = @(
+        $global:OSDCoreOperatingSystems | Where-Object {
             ($allowedOperatingSystems.Count -eq 0 -or $allowedOperatingSystems -contains [string]$_.OperatingSystem) -and
             ($allowedOSActivations.Count -eq 0 -or $allowedOSActivations -contains [string]$_.OSActivation) -and
             ($allowedOSLanguageCodes.Count -eq 0 -or $allowedOSLanguageCodes -contains [string]$_.OSLanguageCode)
         }
     )
 
-    if (-not $global:OSDCloudDeploy.CoreOperatingSystems) {
+    if (-not $global:OSDCoreOperatingSystems) {
         throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No Operating Systems remain after applying workflow OS filters. Check workflow/$WorkflowName/ui/os.json values for OperatingSystem, OSActivation, and OSLanguageCode."
     }
 
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Filtered CoreOperatingSystems Count: $(@($global:OSDCloudDeploy.CoreOperatingSystems).Count)"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Filtered OSDCoreOperatingSystems Count: $(@($global:OSDCoreOperatingSystems).Count)"
     #=================================================
     # $OperatingSystemCloudObject
     <#
@@ -469,7 +473,7 @@ function Initialize-DeployOSDCloud {
         }; Descending                   = $true
     }
 
-    $OperatingSystemCloudObject = $global:OSDCloudDeploy.CoreOperatingSystems |
+    $OperatingSystemCloudObject = $global:OSDCoreOperatingSystems |
     Where-Object {
         ([string]$_.OperatingSystem -ieq $preferredOperatingSystem) -and
         ([string]$_.OSActivation -ieq $preferredOSActivation) -and
@@ -480,7 +484,7 @@ function Initialize-DeployOSDCloud {
 
     if (-not $OperatingSystemCloudObject) {
         Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No exact operating system match was found for OperatingSystem '$preferredOperatingSystem', OSActivation '$preferredOSActivation', and OSLanguageCode '$preferredOSLanguageCode'. Falling back to the first available filtered catalog entry."
-        $OperatingSystemCloudObject = $global:OSDCloudDeploy.CoreOperatingSystems |
+        $OperatingSystemCloudObject = $global:OSDCoreOperatingSystems |
         Sort-Object -Property $operatingSystemBuildVersionSort |
         Select-Object -First 1
     }
@@ -688,5 +692,6 @@ function Initialize-DeployOSDCloud {
     }
     #>
     $global:OSDCloudDeploy | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'OSDCloudDeploy.xml') -Force
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCloudDeploy"
     #=================================================
 }

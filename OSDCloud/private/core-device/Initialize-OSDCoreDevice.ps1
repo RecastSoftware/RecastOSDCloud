@@ -103,7 +103,7 @@ function Initialize-OSDCoreDevice {
     param ()
     #=================================================
     $Error.Clear()
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)]"
+    # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)]"
     #=================================================
     try {
         Sync-OSDCoreDateTime -ThresholdMinutes 5 -Force -ErrorAction Stop
@@ -800,6 +800,7 @@ function Initialize-OSDCoreDevice {
         OSDeployLicense          = $OSDeployLicense
         OSDRegistered            = $OSDRegistered
     }
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreDevice"
     #=================================================
     # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
     $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'

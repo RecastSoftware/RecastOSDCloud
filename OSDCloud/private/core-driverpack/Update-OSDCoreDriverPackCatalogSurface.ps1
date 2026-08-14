@@ -11,6 +11,9 @@ function Update-OSDCoreDriverPackCatalogSurface {
     .PARAMETER LocalDriverPackCatalog
         Path to the local Surface catalog JSON file to update.
 
+    .PARAMETER OSDProduct
+        Limits live catalog updates to entries whose SystemId matches this device product value.
+
     .PARAMETER PassThru
         Returns Surface driver pack catalog objects after updating the local catalog.
 
@@ -37,6 +40,9 @@ function Update-OSDCoreDriverPackCatalogSurface {
         [string]$LocalDriverPackCatalog = (Join-Path $($MyInvocation.MyCommand.Module.ModuleBase) 'core\driverpacks\surface.json'),
 
         [Parameter(Mandatory = $false)]
+        [string]$OSDProduct,
+
+        [Parameter(Mandatory = $false)]
         [switch]$PassThru
     )
 
@@ -50,7 +56,11 @@ function Update-OSDCoreDriverPackCatalogSurface {
 
     $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
     $msiPattern = 'https://download\.microsoft\.com/download/[^"''<>\s]+\.msi'
-    $datePattern = 'Date Published[^:]*:[^\d]*(\d{1,2}/\d{1,2}/\d{4})'
+    $datePatterns = @(
+        '"detailsSection_file_date"\s*:\s*"(\d{1,2}/\d{1,2}/\d{4})"',
+        '"datePublished"\s*:\s*"(\d{1,2}/\d{1,2}/\d{4})',
+        '(?is)Date Published.{0,500}?(\d{1,2}/\d{1,2}/\d{4})'
+    )
     $updatePageCache = @{}
     $networkCalls = 0
     $fallbackCalls = 0
@@ -71,14 +81,50 @@ function Update-OSDCoreDriverPackCatalogSurface {
         $catalogVersion = Get-Date -Format yy.MM.dd
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Building Surface driver pack catalog (CatalogVersion: $catalogVersion)"
 
-        $uniqueUpdatePages = @($jsonCatalogContent.UpdatePage | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
+        $matchesOSDProduct = {
+            param (
+                [Parameter(Mandatory = $true)]
+                $Item
+            )
+
+            if ([string]::IsNullOrWhiteSpace($OSDProduct)) {
+                return $true
+            }
+
+            foreach ($systemId in @($Item.SystemId)) {
+                if ([string]::Equals([string]$systemId, $OSDProduct, [System.StringComparison]::OrdinalIgnoreCase)) {
+                    return $true
+                }
+            }
+
+            return $false
+        }
+
+        $targetCatalogContent = if ([string]::IsNullOrWhiteSpace($OSDProduct)) {
+            @($jsonCatalogContent)
+        }
+        else {
+            @($jsonCatalogContent | Where-Object { & $matchesOSDProduct -Item $_ })
+        }
+
+        if ([string]::IsNullOrWhiteSpace($OSDProduct)) {
+            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Updating all Surface driver pack entries."
+        }
+        else {
+            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast OSDCloud is updating the Surface DriverPack catalog for $OSDProduct."
+            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Updating Surface driver pack entries matching OSDProduct '$OSDProduct'. Matched $($targetCatalogContent.Count) entries."
+            if ($targetCatalogContent.Count -eq 0) {
+                # Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No Surface driver pack catalog entries match OSDProduct '$OSDProduct'. Skipping live update checks."
+            }
+        }
+
+        $uniqueUpdatePages = @($targetCatalogContent.UpdatePage | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Sort-Object -Unique)
         if ($uniqueUpdatePages.Count -gt 0) {
-            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast OSDCloud is updating the Microsoft Surface DriverPack catalog."
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Resolving $($uniqueUpdatePages.Count) unique UpdatePage URLs"
         }
 
         foreach ($updatePage in $uniqueUpdatePages) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading $updatePage"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Refreshing DriverPacks at $updatePage"
             $networkCalls++
             try {
                 $response = Invoke-WebRequest -Uri $updatePage -UseBasicParsing -UserAgent $userAgent -MaximumRedirection 5 -ErrorAction Stop
@@ -115,15 +161,21 @@ function Update-OSDCoreDriverPackCatalogSurface {
 
                     $newDate = $null
                     $now = [datetime]::UtcNow
-                    foreach ($match in [regex]::Matches($html, $datePattern)) {
-                        try {
-                            $parsed = [datetime]::ParseExact($match.Groups[1].Value, 'M/d/yyyy', $null)
-                            if ($parsed.Year -ge 2015 -and $parsed -le $now.AddMonths(3)) {
-                                $newDate = $parsed.ToString('yy.MM.dd')
-                                break
+                    foreach ($datePattern in $datePatterns) {
+                        foreach ($match in [regex]::Matches($html, $datePattern)) {
+                            try {
+                                $parsed = [datetime]::ParseExact($match.Groups[1].Value, 'M/d/yyyy', $null)
+                                if ($parsed.Year -ge 2015 -and $parsed -le $now.AddMonths(3)) {
+                                    $newDate = $parsed.ToString('yy.MM.dd')
+                                    break
+                                }
                             }
+                            catch { }
                         }
-                        catch { }
+
+                        if ($newDate) {
+                            break
+                        }
                     }
 
                     $updatePageCache[$updatePage] = @{
@@ -145,11 +197,17 @@ function Update-OSDCoreDriverPackCatalogSurface {
         }
 
         $results = foreach ($item in $jsonCatalogContent) {
+            $isUpdateTarget = & $matchesOSDProduct -Item $item
+            $itemCatalogVersion = $item.CatalogVersion
             $releaseDate = $item.ReleaseDate
             $fileName = $item.FileName
             $url = $item.Url
 
-            if ($item.UpdatePage -and $updatePageCache.ContainsKey($item.UpdatePage)) {
+            if ($isUpdateTarget) {
+                $itemCatalogVersion = $catalogVersion
+            }
+
+            if ($isUpdateTarget -and $item.UpdatePage -and $updatePageCache.ContainsKey($item.UpdatePage)) {
                 $cached = $updatePageCache[$item.UpdatePage]
                 if (-not $cached.Error) {
                     $fileName = $cached.FileName
@@ -160,11 +218,14 @@ function Update-OSDCoreDriverPackCatalogSurface {
                 }
             }
 
-            $baseName = $item.Name -replace '\s*\[.*?\]$', ''
-            $displayName = "$baseName [$releaseDate]"
+            $displayName = $item.Name
+            if ($isUpdateTarget) {
+                $baseName = $item.Name -replace '\s*\[.*?\]$', ''
+                $displayName = "$baseName [$releaseDate]"
+            }
 
             $objectProperties = [Ordered]@{
-                CatalogVersion  = $catalogVersion
+                CatalogVersion  = $itemCatalogVersion
                 ReleaseDate     = $releaseDate
                 Name            = $displayName
                 Manufacturer    = $item.Manufacturer

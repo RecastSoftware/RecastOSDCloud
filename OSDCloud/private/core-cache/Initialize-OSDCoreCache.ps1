@@ -25,10 +25,11 @@ function Initialize-OSDCoreCache {
     [CmdletBinding()]
     param ()
     #=================================================
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)]"
+    # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)]"
     #=================================================
     $global:OSDCoreCache = @()
     $global:OSDCoreCache = Get-OSDCoreCacheContent
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreCache"
     #=================================================
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================

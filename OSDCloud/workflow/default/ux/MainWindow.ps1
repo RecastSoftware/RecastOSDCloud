@@ -352,8 +352,8 @@ else {
 # Build the driver pack picker from the module catalog, while keeping explicit
 # fallback choices for no driver pack or Microsoft Update Catalog lookup.
 $DriverPackCatalog = @('None', 'Microsoft Update Catalog')
-if ($global:OSDCloudDeploy.CoreDriverPacks) {
-	$DriverPackCatalog += $global:OSDCloudDeploy.CoreDriverPacks | ForEach-Object { $_.Name }
+if ($global:OSDCoreDriverPacks) {
+	$DriverPackCatalog += $global:OSDCoreDriverPacks | ForEach-Object { $_.Name }
 }
 $DriverPackCombo = $window.FindName("DriverPackCombo")
 $DriverPackCombo.ItemsSource = $DriverPackCatalog
@@ -488,7 +488,7 @@ function Update-OsResults {
 	Write-Verbose "[$(Get-Date -format s)] [MainWindow.ps1] updateOSActivation = $updateOSActivation"
 	Write-Verbose "[$(Get-Date -format s)] [MainWindow.ps1] updateOSLanguageCode = $updateOSLanguageCode"
 
-	$global:OSDCloudDeploy.OperatingSystemCloudObject = $global:OSDCloudDeploy.CoreOperatingSystems | `
+	$global:OSDCloudDeploy.OperatingSystemCloudObject = $global:OSDCoreOperatingSystems | `
 		Where-Object { $_.OperatingSystem -match $updateOperatingSystem } | `
 		Where-Object { $_.OSActivation -eq $updateOSActivation } | `
 		Where-Object { $_.OSLanguageCode -eq $updateOSLanguageCode } | Select-Object -First 1
@@ -524,7 +524,7 @@ function Update-DriverPackResults {
 	# so the final deployment state reflects the latest UI selection.
 	$selectedDriverPackName = Get-ComboValue -ComboBox $DriverPackCombo
 	$global:OSDCloudDeploy.DriverPackName = $selectedDriverPackName
-	$global:OSDCloudDeploy.DriverPackCloudObject = $global:OSDCloudDeploy.CoreDriverPacks | Where-Object { $_.Name -eq $selectedDriverPackName }
+	$global:OSDCloudDeploy.DriverPackCloudObject = $global:OSDCoreDriverPacks | Where-Object { $_.Name -eq $selectedDriverPackName }
 	$global:OSDCloudDeploy.DriverPackCacheObject = Get-OSDCoreDriverPackCacheObject -DriverPackCloudObject $global:OSDCloudDeploy.DriverPackCloudObject
 	$DriverPackUrlText.Text = [string]$global:OSDCloudDeploy.DriverPackCloudObject.Url
 }
