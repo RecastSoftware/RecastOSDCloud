@@ -38,6 +38,9 @@ function step-install-getwindowsimageindex {
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] ImagePath: $ImagePath"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] EditionId: $EditionId; ImageName: $ImageName"
+
     # Do we have a WindowsImage to test?
     if ($null -eq $ImagePath) {
         Write-Warning "[$(Get-Date -format s)] WindowsImage does not have an ImagePath."
@@ -57,6 +60,7 @@ function step-install-getwindowsimageindex {
     #=================================================
     # Does Get-WindowsImage work?
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Running Get-WindowsImage against $ImagePath."
         $WindowsImage = Get-WindowsImage -ImagePath $ImagePath -ErrorAction Stop
     }
     catch {
@@ -69,10 +73,12 @@ function step-install-getwindowsimageindex {
     #=================================================
     # Is there only one ImageIndex?
     $WindowsImageCount = ($WindowsImage).Count
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] WindowsImageCount: $WindowsImageCount"
 
     if ($WindowsImageCount -eq 1) {
         # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud only found a single ImageIndex to expand"
         $global:OSDCloudWorkflowInvoke.WindowsImageIndex = 1
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Single image found; WindowsImageIndex set to 1."
         return
     }
     #=================================================
@@ -80,11 +86,13 @@ function step-install-getwindowsimageindex {
     if ($ImageName) {
         $ImageIndex = ($WindowsImage | Where-Object { $_.ImageName -eq $ImageName }).ImageIndex
         $global:OSDCloudWorkflowInvoke.WindowsImageIndex = $ImageIndex
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] ImageName match set WindowsImageIndex to $ImageIndex."
         return
     }
     #=================================================
     # Get the ImageIndex of the EditionId
     if ($EditionId) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Searching Windows image indexes for EditionId $EditionId."
         $MatchingWindowsImage = $WindowsImage | `
             ForEach-Object { Get-WindowsImage -ImagePath $ImagePath -Index $_.ImageIndex } | `
             Where-Object { $_.EditionId -eq $EditionId }
@@ -92,6 +100,7 @@ function step-install-getwindowsimageindex {
         if ($MatchingWindowsImage -and $MatchingWindowsImage.Count -eq 1) {
             $global:OSDCloudWorkflowInvoke.WindowsImage = $MatchingWindowsImage
             $global:OSDCloudWorkflowInvoke.WindowsImageIndex = $MatchingWindowsImage.ImageIndex
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] EditionId match set WindowsImageIndex to $($global:OSDCloudWorkflowInvoke.WindowsImageIndex)."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] EditionId $EditionId found at ImageIndex $($global:OSDCloudWorkflowInvoke.WindowsImageIndex)"
             return
         }
@@ -102,6 +111,7 @@ function step-install-getwindowsimageindex {
     $SelectWindowsImage = $WindowsImage | Where-Object { $_.ImageSize -gt 3000000000 }
 
     if ($SelectWindowsImage) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Prompting user to select from $(@($SelectWindowsImage).Count) image indexes."
         $SelectWindowsImage | Select-Object -Property ImageIndex, ImageName | Format-Table | Out-Host
 
         do {
@@ -110,6 +120,7 @@ function step-install-getwindowsimageindex {
         until (((($SelectReadHost -ge 0) -and ($SelectReadHost -in $SelectWindowsImage.ImageIndex))))
 
         $global:OSDCloudWorkflowInvoke.WindowsImageIndex = $SelectReadHost
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] User selected WindowsImageIndex $SelectReadHost."
         return
     }
     #=================================================

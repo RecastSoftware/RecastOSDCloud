@@ -27,10 +27,14 @@ function step-test-targetdisk {
     $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DeploymentDisk: $($global:OSDCloudWorkflowInvoke.DeploymentDisk | Out-String)"
+
     if ($global:OSDCloudWorkflowInvoke.DeploymentDisk) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DeploymentDisk was detected. Continuing."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Fixed Disk is valid. OK."
     }
     else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DeploymentDisk was not detected. Stopping workflow for user intervention."
         Write-Warning "[$(Get-Date -format s)] Unable to detect a Fixed Disk."
         Write-Warning "[$(Get-Date -format s)] WinPE may need additional Disk, SCSI or Raid Drivers."
         Write-Warning 'Press Ctrl+C to exit OSDCloud'

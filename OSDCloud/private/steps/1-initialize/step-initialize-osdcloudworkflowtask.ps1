@@ -34,9 +34,12 @@ function step-initialize-osdcloudworkflowtask {
     $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] WorkflowTaskName: $WorkflowTaskName"
+
     # Display delay message to user
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Starting $WorkflowTaskName in 5 seconds..."
     Write-Host -ForegroundColor DarkGray "Press Ctrl+C to exit OSDCloud"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Waiting 5 seconds before workflow continues."
     Start-Sleep -Seconds 5
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"

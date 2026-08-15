@@ -45,11 +45,16 @@ function step-test-targetwindowsimage {
     if ([string]::IsNullOrWhiteSpace($OperatingSystemFilePath)) {
         $OperatingSystemFilePath = [string]$OperatingSystemCloudObject.Url
     }
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LaunchMethod: $LaunchMethod"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OperatingSystemFilePath: $OperatingSystemFilePath"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OperatingSystemCacheObject: $OperatingSystemCacheObject"
     #=================================================
     # Is there a cached image file already selected?
     if ($OperatingSystemCacheObject) {
         $OperatingSystemCachePath = if ($OperatingSystemCacheObject.FullName) { $OperatingSystemCacheObject.FullName } else { [string]$OperatingSystemCacheObject }
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Testing selected cache path: $OperatingSystemCachePath"
         if (Test-Path -LiteralPath $OperatingSystemCachePath) {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Cached Windows image was found."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $OperatingSystemCachePath"
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem is available offline. OK."
             return
@@ -67,8 +72,10 @@ function step-test-targetwindowsimage {
     # Is it reachable online?
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $OperatingSystemFilePath"
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Testing OperatingSystem URL with HEAD request."
         $WebRequest = Invoke-WebRequest -Uri $OperatingSystemFilePath -UseBasicParsing -Method Head
         if ($WebRequest.StatusCode -eq 200) {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OperatingSystem URL is reachable online."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem URL returned a 200 status code. OK."
             return
         }
@@ -79,11 +86,13 @@ function step-test-targetwindowsimage {
     #=================================================
     # Does the file exist on a Drive?
     $FileName = if ($OperatingSystemCloudObject.FileName) { [string]$OperatingSystemCloudObject.FileName } else { Split-Path $OperatingSystemFilePath -Leaf }
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Searching local drives for OperatingSystem file: $FileName"
     $MatchingFiles = @()
     $MatchingFiles = Get-PSDrive -PSProvider FileSystem | ForEach-Object {
         Get-ChildItem "$($_.Name):\OSDCloud\OS\" -Include "$FileName" -File -Recurse -Force -ErrorAction Ignore
     }
     if ($MatchingFiles) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Offline OperatingSystem matches found: $(@($MatchingFiles).Count)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($MatchingFiles[0].FullName)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem is available offline. OK."
         return

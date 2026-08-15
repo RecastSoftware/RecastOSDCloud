@@ -37,6 +37,7 @@ function step-Add-WindowsDriver-DriverFolder {
     $offlinePath = 'C:\'
     $dismLogPath = Join-Path -Path $logPath -ChildPath 'dism-add-windowsdriver-driverfolder.log'
     $volumeMetadataCache = @{}
+    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverFolderPath count: $(@($DriverFolderPath).Count); LogPath: $logPath; OfflinePath: $offlinePath"
 
     function Get-DriveRootFromPath {
         param(
@@ -152,11 +153,13 @@ function step-Add-WindowsDriver-DriverFolder {
         )
 
         if (-not $candidatePaths -or $candidatePaths.Count -eq 0) {
+            Write-Verbose "[$(Get-Date -format s)] No current drives contain relative driver folder path $relativePath"
             Write-Warning "[$(Get-Date -format s)] DriverFolderPath was not found: $originalPath"
             return $null
         }
 
         if ($candidatePaths.Count -eq 1) {
+            Write-Verbose "[$(Get-Date -format s)] Resolved driver folder candidate: $($candidatePaths[0])"
             return $candidatePaths[0]
         }
 
@@ -233,6 +236,7 @@ function step-Add-WindowsDriver-DriverFolder {
     }
 
     if (-not (Test-Path -LiteralPath $logPath)) {
+        Write-Verbose "[$(Get-Date -format s)] Creating driver folder DISM log path: $logPath"
         New-Item -ItemType Directory -Path $logPath -Force | Out-Null
     }
 

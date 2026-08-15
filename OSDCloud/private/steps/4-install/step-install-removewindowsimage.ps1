@@ -6,6 +6,7 @@ function step-install-removewindowsimage {
     #=================================================
     if (Test-Path "C:\OSDCloud") {
         try {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Removing temporary Windows image directory: C:\OSDCloud"
             Remove-Item -Path "C:\OSDCloud" -Recurse -Force -ErrorAction Stop | Out-Null
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removed C:\OSDCloud"
         }
@@ -16,6 +17,9 @@ function step-install-removewindowsimage {
         finally {
             $Error.Clear()
         }
+    }
+    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] C:\OSDCloud was not found. Nothing to remove."
     }
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"

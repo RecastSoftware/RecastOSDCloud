@@ -19,6 +19,8 @@ function step-install-downloadwindowsimage {
         $OperatingSystemFilePath = [string]$OperatingSystemCloudObject.Url
     }
     $OperatingSystemFileName = if ($OperatingSystemCloudObject.FileName) { [string]$OperatingSystemCloudObject.FileName } else { Split-Path $OperatingSystemFilePath -Leaf }
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OperatingSystemFilePath: $OperatingSystemFilePath"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OperatingSystemFileName: $OperatingSystemFileName"
     #=================================================
     # Is there a FilePath?
     if ([string]::IsNullOrWhiteSpace($OperatingSystemFilePath)) {
@@ -31,9 +33,11 @@ function step-install-downloadwindowsimage {
     # Use the selected cache object when initialization found an offline image.
     if ($global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject) {
         $OperatingSystemCachePath = if ($global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject.FullName) { $global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject.FullName } else { [string]$global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject }
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Testing selected OperatingSystem cache path: $OperatingSystemCachePath"
         if (Test-Path -LiteralPath $OperatingSystemCachePath) {
             $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage = Get-Item -LiteralPath $OperatingSystemCachePath
             $global:OSDCloudWorkflowInvoke.WindowsImagePath = $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage.FullName
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using cached Windows image: $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] WindowsImagePath:  $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
             return
         }
@@ -42,8 +46,10 @@ function step-install-downloadwindowsimage {
     # Is it reachable online?
     $IsOnline = $false
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Testing OperatingSystem download URL with HEAD request."
         $WebRequest = Invoke-WebRequest -Uri $OperatingSystemFilePath -UseBasicParsing -Method Head
         if ($WebRequest.StatusCode -eq 200) {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OperatingSystem download URL is reachable online."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystemCloudObject FilePath returned a 200 status code. OK."
             $IsOnline = $true
         }
@@ -55,12 +61,14 @@ function step-install-downloadwindowsimage {
     # Does the file exist on a Drive?
     $IsOffline = $false
     $FileName = $OperatingSystemFileName
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Searching local drives for OperatingSystem file: $FileName"
     $MatchingFiles = @()
     $MatchingFiles = Get-PSDrive -PSProvider FileSystem | ForEach-Object {
         Get-ChildItem "$($_.Name):\OSDCloud\OS\" -Include "$FileName" -File -Recurse -Force -ErrorAction Ignore
     }
 
     if ($MatchingFiles) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Offline OperatingSystem matches found: $(@($MatchingFiles).Count)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystemCloudObject is available offline. OK."
         $FileInfo = $MatchingFiles | Select-Object -First 1
         $IsOffline = $true
@@ -79,6 +87,7 @@ function step-install-downloadwindowsimage {
     if ($FileInfo) {
         $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage = $FileInfo
         $global:OSDCloudWorkflowInvoke.WindowsImagePath = $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage.FullName
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using offline Windows image: $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] WindowsImagePath:  $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
         return
     }
@@ -92,6 +101,7 @@ function step-install-downloadwindowsimage {
         Path        = $DownloadPath
     }
     if (!(Test-Path $ItemParams.Path -ErrorAction SilentlyContinue)) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating download path: $($ItemParams.Path)"
         New-Item @ItemParams | Out-Null
     }
     #=================================================
@@ -104,14 +114,18 @@ function step-install-downloadwindowsimage {
 
     if ($USBDrive) {
         $USBDownloadPath = "$($USBDrive.DriveLetter):\OSDCloud\OS\$($OperatingSystemCloudObject.OperatingSystem)"
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] USB cache drive selected: $($USBDrive.DriveLetter); USBDownloadPath: $USBDownloadPath"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DownloadPath: $USBDownloadPath"
 
         if (-not (Test-Path $USBDownloadPath)) {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating USB download path: $USBDownloadPath"
             $null = New-Item -Path $USBDownloadPath -ItemType Directory -Force
         }
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading Windows image to USB cache."
         $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
 
         if ($SaveWebFile) {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Copying cached Windows image from $($SaveWebFile.FullName) to $DownloadPath."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Copy Offline OS to $DownloadPath"
             $null = Copy-Item -Path $SaveWebFile.FullName -Destination $DownloadPath -Force
             $FileInfo = Get-Item "$DownloadPath\$($SaveWebFile.Name)"
@@ -120,6 +134,7 @@ function step-install-downloadwindowsimage {
     else {
         # $SaveWebFile is a FileInfo Object, not a path
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DownloadPath: $DownloadPath"
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading Windows image directly to $DownloadPath."
         $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory $DownloadPath -ErrorAction Stop
         $FileInfo = $SaveWebFile
     }
@@ -135,10 +150,12 @@ function step-install-downloadwindowsimage {
     # Store this as a FileInfo Object
     $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage = $FileInfo
     $global:OSDCloudWorkflowInvoke.WindowsImagePath = $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage.FullName
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloaded Windows image path: $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] WindowsImagePath:  $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
     #=================================================
     # Check the File Hash
     if ($OperatingSystemCloudObject.Sha1) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Validating SHA1 hash for $($FileInfo.FullName)."
         $FileHash = (Get-FileHash -Path $FileInfo.FullName -Algorithm SHA1).Hash
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Verified ESD SHA1: $($OperatingSystemCloudObject.Sha1)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloaded ESD SHA1: $FileHash"
@@ -154,6 +171,7 @@ function step-install-downloadwindowsimage {
         }
     }
     if ($OperatingSystemCloudObject.Sha256) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Validating SHA256 hash for $($FileInfo.FullName)."
         $FileHash = (Get-FileHash -Path $FileInfo.FullName -Algorithm SHA256).Hash
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Verified ESD SHA256: $($OperatingSystemCloudObject.Sha256)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloaded ESD SHA256: $FileHash"

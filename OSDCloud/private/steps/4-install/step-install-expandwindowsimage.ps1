@@ -14,12 +14,16 @@ function step-install-expandwindowsimage {
         Path        = 'C:\OSDCloud\Temp'
     }
     if (-not (Test-Path $Params.Path -ErrorAction SilentlyContinue)) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating scratch directory: $($Params.Path)"
         New-Item @Params | Out-Null
     }
     #=================================================
     # Build the Params
     $windowsImagePath = [string]$global:OSDCloudWorkflowInvoke.WindowsImagePath
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] WindowsImagePath: $windowsImagePath"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] WindowsImageIndex: $($global:OSDCloudWorkflowInvoke.WindowsImageIndex)"
     if ($windowsImagePath -match '\.swm$') {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Split WIM/SWM image detected. Building Expand-WindowsImage parameters with SplitImageFilePattern."
         #TODO - Add support for multiple SWM files
         $Params = @{
             ApplyPath             = 'C:\'
@@ -31,6 +35,7 @@ function step-install-expandwindowsimage {
         }
     }
     else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Standard Windows image detected. Building Expand-WindowsImage parameters with ImageIndex."
         $Params = @{
             ApplyPath        = 'C:\'
             ErrorAction      = 'Stop'
@@ -45,6 +50,7 @@ function step-install-expandwindowsimage {
     # Expand WindowsImage
     if ($global:OSDCoreDevice.IsWinPE -eq $true) {
         try {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Running Expand-WindowsImage with parameters: $($Params | Out-String)"
             Expand-WindowsImage @Params | Out-Null
         }
         catch {
@@ -55,6 +61,9 @@ function step-install-expandwindowsimage {
             exit
         }
     }
+    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Device is not WinPE; skipping Expand-WindowsImage execution."
+    }
     #=================================================
     # Remove OS after expanding the image
     $Params = @{
@@ -63,6 +72,7 @@ function step-install-expandwindowsimage {
         Path        = 'C:\OSDCloud\Temp'
     }
     if (Test-Path $Params.Path -ErrorAction SilentlyContinue) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Removing scratch directory: $($Params.Path)"
         Remove-Item @Params | Out-Null
     }
     #=================================================

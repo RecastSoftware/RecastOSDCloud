@@ -31,9 +31,12 @@ function step-initialize-osdcloudlogs {
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     $LogsPath = "$env:TEMP\osdcloud-logs"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LogsPath: $LogsPath"
+
     $null = New-Item -Path $LogsPath -ItemType Directory -Force -ErrorAction SilentlyContinue
 
     $TranscriptFullName = Join-Path $LogsPath "transcript-$((Get-Date).ToString('yyyy-MM-dd-HHmmss')).log"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Starting transcript: $TranscriptFullName"
     if (-not (Start-Transcript -Path $TranscriptFullName -ErrorAction SilentlyContinue)) {
         Write-Warning "[$(Get-Date -format s)] Failed to start transcript at $TranscriptFullName"
     }

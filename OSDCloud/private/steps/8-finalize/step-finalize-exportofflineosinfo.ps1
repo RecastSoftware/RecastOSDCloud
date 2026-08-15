@@ -7,15 +7,18 @@ function step-finalize-exportofflineosinfo {
     $Step = $global:OSDCloudCurrentStep
     #region Main
     $StepLogPath = "C:\Windows\Temp\osdcloud-logs"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] StepLogPath: $StepLogPath"
 
     #Grab Build from WinPE, as 24H2 has issues with some of these commands:
     $CurrentOSInfo = Get-Item -Path 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion'
     $CurrentOSBuild = $($CurrentOSInfo.GetValue('CurrentBuild'))
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Current WinPE OS build: $CurrentOSBuild"
 
     #=================================================
     #Get-AppxProvisionedPackage
     $StepLogFile = (Join-Path $StepLogPath 'Get-AppxProvisionedPackage.txt')
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Exporting Get-AppxProvisionedPackage report to $StepLogFile."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Get-AppxProvisionedPackage.txt"
         $Report = Get-AppxProvisionedPackage -Path C:\ -ErrorAction Stop
         if ($Report) {
@@ -30,6 +33,7 @@ function step-finalize-exportofflineosinfo {
     #Get-WindowsCapability
     $StepLogFile = (Join-Path $StepLogPath 'Get-WindowsCapability.txt')
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Exporting Get-WindowsCapability report to $StepLogFile."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Get-WindowsCapability.txt"
         $Report = Get-WindowsCapability -Path C:\ -ErrorAction Stop
         if ($Report) {
@@ -44,6 +48,7 @@ function step-finalize-exportofflineosinfo {
     #Get-WindowsEdition
     $StepLogFile = (Join-Path $StepLogPath 'Get-WindowsEdition.txt')
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Exporting Get-WindowsEdition report to $StepLogFile."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Get-WindowsEdition.txt"
         $Report = Get-WindowsEdition -Path C:\ -ErrorAction Stop
         if ($Report) {
@@ -58,6 +63,7 @@ function step-finalize-exportofflineosinfo {
     #Get-WindowsOptionalFeature
     $StepLogFile = (Join-Path $StepLogPath 'Get-WindowsOptionalFeature.txt')
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Exporting Get-WindowsOptionalFeature report to $StepLogFile."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Get-WindowsOptionalFeature.txt"
         $Report = Get-WindowsOptionalFeature -Path C:\ -ErrorAction Stop
         if ($Report) {
@@ -72,6 +78,7 @@ function step-finalize-exportofflineosinfo {
     #Get-WindowsPackage
     $StepLogFile = (Join-Path $StepLogPath 'Get-WindowsPackage.txt')
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Exporting Get-WindowsPackage report to $StepLogFile."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Get-WindowsPackage.txt"
         $Report = Get-WindowsPackage -Path C:\ -ErrorAction Stop
         if ($Report) {

@@ -45,20 +45,26 @@ function step-test-targetdriverpack {
     $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackName: $DriverPackName"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackCloudObject.Url: $($DriverPackCloudObject.Url)"
+
     # Is DriverPackName set to None?
     if ($DriverPackName -eq 'None') {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackName bypass is None."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPackName is set to None. OK."
         return
     }
     #=================================================
     # Is DriverPackName set to Microsoft Update Catalog?
     if ($DriverPackName -eq 'Microsoft Update Catalog') {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackName bypass is Microsoft Update Catalog."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPackName is set to Microsoft Update Catalog. OK."
         return
     }
     #=================================================
     # Is there a DriverPack Object?
     if (-not ($DriverPackCloudObject)) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackCloudObject was not provided."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPackCloudObject is not set. OK."
         return
     }
@@ -74,8 +80,10 @@ function step-test-targetdriverpack {
     # Is it reachable online?
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($DriverPackCloudObject.Url)"
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Testing DriverPack URL with HEAD request."
         $WebRequest = Invoke-WebRequest -Uri $DriverPackCloudObject.Url -UseBasicParsing -Method Head
         if ($WebRequest.StatusCode -eq 200) {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPack URL is reachable online."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack URL returned a 200 status code. OK."
             return
         }
@@ -86,11 +94,13 @@ function step-test-targetdriverpack {
     #=================================================
     # Does the file exist on a Drive?
     $FileName = Split-Path $DriverPackCloudObject.Url -Leaf
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Searching local drives for DriverPack file: $FileName"
     $MatchingFiles = @()
     $MatchingFiles = Get-PSDrive -PSProvider FileSystem | ForEach-Object {
         Get-ChildItem "$($_.Name):\OSDCloud\DriverPacks\" -Include "$FileName" -File -Recurse -Force -ErrorAction Ignore
     }
     if ($MatchingFiles) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Offline DriverPack matches found: $(@($MatchingFiles).Count)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($MatchingFiles[0].FullName)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DriverPack is available offline. OK."
         return
@@ -102,6 +112,7 @@ function step-test-targetdriverpack {
     # DriverPack does not exist
     Write-Warning "[$(Get-Date -format s)] Unable to validate if the DriverPack is reachable online or offline."
     Write-Warning "[$(Get-Date -format s)] OSDCloud will continue without a DriverPack. Clearing variables."
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Clearing driver pack values from deployment and workflow state."
     $global:OSDCloudDeploy.DriverPackCacheObject = $null
     $global:OSDCloudDeploy.DriverPackCloudObject = $null
     $global:OSDCloudDeploy.DriverPackName = 'None'

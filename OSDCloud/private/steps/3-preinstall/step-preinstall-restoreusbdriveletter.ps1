@@ -4,6 +4,8 @@ function step-preinstall-restoreusbdriveletter {
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] USB partition count: $(@($global:OSDCloudWorkflowInvoke.USBPartitions).Count)"
+
     if ($global:OSDCloudWorkflowInvoke.USBPartitions) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Restoring USB Drive Letters. OK."
         foreach ($Item in $global:OSDCloudWorkflowInvoke.USBPartitions) {
@@ -13,9 +15,13 @@ function step-preinstall-restoreusbdriveletter {
                 PartitionNumber   = $Item.PartitionNumber
                 ErrorAction       = 'SilentlyContinue'
             }
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Restoring drive letter on Disk $($Params.DiskNumber), Partition $($Params.PartitionNumber)."
             Add-PartitionAccessPath @Params
             Start-Sleep -Seconds 5
         }
+    }
+    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No saved USB partitions were found."
     }
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"

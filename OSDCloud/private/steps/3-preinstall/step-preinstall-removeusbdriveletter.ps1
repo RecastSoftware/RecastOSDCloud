@@ -12,6 +12,7 @@ function step-preinstall-removeusbdriveletter {
 
     # Store the USB Partitions
     $global:OSDCloudWorkflowInvoke.USBPartitions = Get-DeviceUSBPartition
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] USB partition count: $(@($global:OSDCloudWorkflowInvoke.USBPartitions).Count)"
 
     # Remove USB Drive Letters
     if ($global:OSDCloudWorkflowInvoke.USBPartitions) {
@@ -23,9 +24,13 @@ function step-preinstall-removeusbdriveletter {
                 PartitionNumber = $Item.PartitionNumber
                 ErrorAction     = 'SilentlyContinue'
             }
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Removing access path $($Params.AccessPath) from Disk $($Params.DiskNumber), Partition $($Params.PartitionNumber)."
             Remove-PartitionAccessPath @Params
             Start-Sleep -Seconds 3
         }
+    }
+    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No USB partitions were found."
     }
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"

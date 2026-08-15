@@ -10,15 +10,20 @@ function step-Export-WindowsDriver-OemWinPE {
     #=================================================
     # Output Path
     $OutputPath = "C:\Windows\Temp\osdcloud-drivers-winpe"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OutputPath: $OutputPath"
     if (-not (Test-Path -Path $OutputPath)) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating output path: $OutputPath"
         New-Item -ItemType Directory -Path $OutputPath -Force | Out-Null
     }
     $LogPath = "C:\Windows\Temp\osdcloud-logs"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LogPath: $LogPath"
     if (-not (Test-Path -Path $LogPath)) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating log path: $LogPath"
         New-Item -ItemType Directory -Path $LogPath -Force | Out-Null
     }
     #=================================================
     # Build the list of devices using pnputil.exe, as the /format xml switch is not supported in older versions of WinPE.
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Running pnputil.exe /enum-devices /connected"
     $output = & pnputil.exe /enum-devices /connected
     $devices = @()
     $currentDevice = @{}
@@ -44,6 +49,7 @@ function step-Export-WindowsDriver-OemWinPE {
         $devices += [PSCustomObject]$currentDevice
     }
     $PnputilDevices = $devices | Where-Object { $_.DriverName -match 'oem' } | Sort-Object DriverName -Unique | Sort-Object ClassName
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OEM pnputil device count: $(@($PnputilDevices).Count)"
 
     # Classes to Export
     $ExportClass = @(
@@ -104,18 +110,24 @@ function step-Export-WindowsDriver-OemWinPE {
             #=================================================
             # Export WinPE Drivers
             if ($ExportClass -notcontains $OemDriver.ClassName) {
+                Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping class $($OemDriver.ClassName) because it is not in ExportClass."
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($OemDriver.ClassName)] $ManufacturerName $($OemDriver.DeviceDescription)"
                 continue
             }
             Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [$($OemDriver.ClassName)] $ManufacturerName $($OemDriver.DeviceDescription)"
             $ExportPath = "$OutputPath\$($OemDriver.ClassName)\$($ManufacturerName) $($FolderName)"
             if (-not (Test-Path -Path $ExportPath)) {
+                Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating export path: $ExportPath"
                 New-Item -ItemType Directory -Path $ExportPath -Force | Out-Null
             }
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Exporting driver $($OemDriver.DriverName) to $ExportPath"
             $null = & pnputil.exe /export-driver $OemDriver.DriverName $ExportPath
             #=================================================
         }
         $PnputilDevices | Out-File -FilePath "$OutputPath\pnputil.txt" -Encoding utf8
+    }
+    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No OEM pnputil devices were found to export."
     }
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
