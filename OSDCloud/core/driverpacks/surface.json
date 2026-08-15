@@ -280,7 +280,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.08.07",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.03.05",
     "Name": "Surface Laptop 4 AMD [26.03.05]",
     "Manufacturer": "Microsoft",
@@ -289,15 +289,15 @@
       "Surface_Laptop_4_1952:1953",
       "Surface_Laptop_4_1958:1959"
     ],
-    "FileName": "SurfaceLaptop4_AMD_Win11_22631_26.070.3458.0.msi",
-    "Url": "https://download.microsoft.com/download/7ee743a7-aac6-4b0c-83bf-218070e93e39/SurfaceLaptop4_AMD_Win11_22631_26.070.3458.0.msi",
+    "FileName": "SurfaceLaptop4_AMD_Win11_22631_26.072.27963.0.msi",
+    "Url": "https://download.microsoft.com/download/7ee743a7-aac6-4b0c-83bf-218070e93e39/SurfaceLaptop4_AMD_Win11_22631_26.072.27963.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=102923"
   },
   {
-    "CatalogVersion": "26.08.07",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.27",
     "Name": "Surface Laptop 4 Intel [26.02.27]",
     "Manufacturer": "Microsoft",
@@ -314,7 +314,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=102924"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Laptop 5 [26.01.28]",
     "Manufacturer": "Microsoft",
@@ -333,7 +333,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=104679"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.13",
     "Name": "Surface Laptop 5G [26.02.13]",
     "Manufacturer": "Microsoft",
@@ -347,7 +347,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108347"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.03",
     "Name": "Surface Laptop 6 [26.02.03]",
     "Manufacturer": "Microsoft",
@@ -364,7 +364,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=105946"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.27",
     "Name": "Surface Laptop 7 ARM [26.02.27]",
     "Manufacturer": "Microsoft",
@@ -383,7 +383,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=106120"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.03.18",
     "Name": "Surface Laptop 7 Intel [26.03.18]",
     "Manufacturer": "Microsoft",
@@ -400,7 +400,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108014"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.06.19",
     "Name": "Surface Laptop 8 Intel [26.06.19]",
     "Manufacturer": "Microsoft",
@@ -419,7 +419,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108669"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.06.16",
     "Name": "Surface Laptop 8 Snapdragon [26.06.16]",
     "Manufacturer": "Microsoft",
@@ -456,35 +456,35 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Laptop Go 2 [26.01.28]",
     "Manufacturer": "Microsoft",
     "Model": "Surface Laptop Go 2",
     "SystemId": "Surface_Laptop_Go_2_2013",
-    "FileName": "SurfaceLaptopGo2_Win11_22631_26.051.9458.0.msi",
-    "Url": "https://download.microsoft.com/download/8ba2cbfd-02b1-42ba-b588-4aecd0e992aa/SurfaceLaptopGo2_Win11_22631_26.051.9458.0.msi",
+    "FileName": "SurfaceLaptopGo2_Win11_22631_26.072.22251.0.msi",
+    "Url": "https://download.microsoft.com/download/8ba2cbfd-02b1-42ba-b588-4aecd0e992aa/SurfaceLaptopGo2_Win11_22631_26.072.22251.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=104251"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.05",
     "Name": "Surface Laptop Go 3 [26.02.05]",
     "Manufacturer": "Microsoft",
     "Model": "Surface Laptop Go 3",
     "SystemId": "Surface_Laptop_Go_3_2013",
-    "FileName": "SurfaceLaptopGo3_Win11_22631_26.051.6828.0.msi",
-    "Url": "https://download.microsoft.com/download/cad99f30-7b1c-4ee5-a88b-71e729362b2b/SurfaceLaptopGo3_Win11_22631_26.051.6828.0.msi",
+    "FileName": "SurfaceLaptopGo3_Win11_22631_26.072.22278.0.msi",
+    "Url": "https://download.microsoft.com/download/cad99f30-7b1c-4ee5-a88b-71e729362b2b/SurfaceLaptopGo3_Win11_22631_26.072.22278.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=105608"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.24",
     "Name": "Surface Laptop 13in 1st Snapdragon [26.02.24]",
     "Manufacturer": "Microsoft",
@@ -501,7 +501,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108198"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.06.19",
     "Name": "Surface Laptop 13in 1st Intel [26.06.19]",
     "Manufacturer": "Microsoft",
@@ -515,7 +515,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108670"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.01.16",
     "Name": "Surface Laptop Studio [26.01.16]",
     "Manufacturer": "Microsoft",
@@ -529,7 +529,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=103505"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Laptop Studio 2 [26.01.28]",
     "Manufacturer": "Microsoft",
@@ -658,7 +658,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.01.16",
     "Name": "Surface Pro 7+ [26.01.16]",
     "Manufacturer": "Microsoft",
@@ -675,7 +675,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=102633"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.23",
     "Name": "Surface Pro 8 [26.02.23]",
     "Manufacturer": "Microsoft",
@@ -693,7 +693,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=103503"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.03.18",
     "Name": "Surface Pro 9 [26.03.18]",
     "Manufacturer": "Microsoft",
@@ -702,15 +702,15 @@
       "Surface_Pro_9_2038",
       "Surface_Pro_9_for_Business_2038"
     ],
-    "FileName": "SurfacePro9_Win11_22631_26.051.6816.0.msi",
-    "Url": "https://download.microsoft.com/download/9a27d0e5-cbce-4933-8fc6-ec5fe5315c69/SurfacePro9_Win11_22631_26.051.6816.0.msi",
+    "FileName": "SurfacePro9_Win11_22631_26.081.6553.0.msi",
+    "Url": "https://download.microsoft.com/download/9a27d0e5-cbce-4933-8fc6-ec5fe5315c69/SurfacePro9_Win11_22631_26.081.6553.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=104680"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "25.12.03",
     "Name": "Surface Pro 9 5G [25.12.03]",
     "Manufacturer": "Microsoft",
@@ -755,7 +755,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.23",
     "Name": "Surface Studio 2+ [26.02.23]",
     "Manufacturer": "Microsoft",
@@ -769,7 +769,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=104681"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.04.06",
     "Name": "Surface Pro 10 [26.04.06]",
     "Manufacturer": "Microsoft",
@@ -785,7 +785,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=105947"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.03.19",
     "Name": "Surface Pro 10 5G [26.03.19]",
     "Manufacturer": "Microsoft",
@@ -803,7 +803,7 @@
     "UpdatePage": "https://www.microsoft.com/en-us/download/details.aspx?id=106292"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.02.23",
     "Name": "Surface Pro 11 ARM64 [26.02.23]",
     "Manufacturer": "Microsoft",
@@ -824,7 +824,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=106119"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.03.12",
     "Name": "Surface Pro 11 Intel [26.03.12]",
     "Manufacturer": "Microsoft",
@@ -838,7 +838,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108013"
   },
   {
-    "CatalogVersion": "26.08.08",
+    "CatalogVersion": "26.08.15",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Pro Snapdragon 12-inch [26.01.28]",
     "Manufacturer": "Microsoft",
