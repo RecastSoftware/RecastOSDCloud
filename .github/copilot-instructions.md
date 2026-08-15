@@ -66,7 +66,7 @@ Functions are procedural and single-call, not pipeline-aware. Skip the blocks un
 ### Global state
 
 `Initialize-*` functions populate `$global:OSDCloud*` variables; `Invoke-*` and `Get-*` functions read them.
-Key globals: `$global:OSDCoreDevice`, `$global:OSDCloudDeploy`, `$global:OSDCloudWorkflowTasks`, `$global:OSDCloudWorkflowInvoke`, `$global:IsWinPE`, `$global:IsVM`.
+Key globals: `$global:OSDCoreDevice`, `$global:OSDCloudDeploy`, `$global:OSDCloudWorkflowTasks`, `$global:OSDCloudWorkflowInvoke`.
 Document any new global variables added.
 
 ### Naming
@@ -80,7 +80,7 @@ Document any new global variables added.
 
 ### WinPE-specific code
 
-- Guard WinPE-only logic with `$env:SystemDrive -eq 'X:'` or the `$global:IsWinPE` flag
+- Guard WinPE-only logic with `$env:SystemDrive -eq 'X:'` flag
 - Place WinPE-only exported functions in `public/WinPE/`
 
 ## Workflows

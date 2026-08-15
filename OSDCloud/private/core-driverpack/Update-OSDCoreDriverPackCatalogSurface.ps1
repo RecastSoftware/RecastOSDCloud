@@ -100,12 +100,12 @@ function Update-OSDCoreDriverPackCatalogSurface {
             return $false
         }
 
-        $targetCatalogContent = if ([string]::IsNullOrWhiteSpace($OSDProduct)) {
-            @($jsonCatalogContent)
-        }
-        else {
-            @($jsonCatalogContent | Where-Object { & $matchesOSDProduct -Item $_ })
-        }
+        $targetCatalogContent = @(if ([string]::IsNullOrWhiteSpace($OSDProduct)) {
+                $jsonCatalogContent
+            }
+            else {
+                $jsonCatalogContent | Where-Object { & $matchesOSDProduct -Item $_ }
+            })
 
         if ([string]::IsNullOrWhiteSpace($OSDProduct)) {
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Updating all Surface driver pack entries."

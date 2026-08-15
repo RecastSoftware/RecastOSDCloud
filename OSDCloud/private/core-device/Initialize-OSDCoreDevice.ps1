@@ -442,6 +442,12 @@ function Initialize-OSDCoreDevice {
     $vmPattern = '(?i)(virtual machine|vmware|hyper-v|hyperv|kvm|qemu|xen|virtualbox|bhyve|parallels|gce|google compute engine|amazon ec2|azure|bochs|openstack|ovirt|rhev|kubevirt|ahv|nutanix)'
     [System.Boolean]$IsVM = ($vmDetectionSources -join ' ') -match $vmPattern
     #=================================================
+    # IsWinPE
+    [System.Boolean]$IsWinPE = $false
+    if ($env:SystemDrive -eq 'X:') {
+        $IsWinPE = $true
+    }
+    #=================================================
     # ChassisType
     $ComputerSystemType = $classWin32SystemEnclosure | ForEach-Object {
         if ($_.ChassisTypes[0] -in "8", "9", "10", "11", "12", "14", "18", "21") { "Laptop" }
@@ -766,8 +772,9 @@ function Initialize-OSDCoreDevice {
         IsSFF                    = [System.Boolean]$IsSFF
         IsTablet                 = [System.Boolean]$IsTablet
         IsTpmSpec                = [System.Boolean]$IsTpmSpec
-        IsVM                     = [System.Boolean]$IsVM
         IsUEFI                   = [System.Boolean]$IsUEFI
+        IsVM                     = [System.Boolean]$IsVM
+        IsWinPE                  = [System.Boolean]$IsWinPE
         KeyboardLayout           = $KeyboardLayout
         KeyboardName             = $KeyboardName
         LocalDisk                = $LocalDisk

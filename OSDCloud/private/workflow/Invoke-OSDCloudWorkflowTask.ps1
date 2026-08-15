@@ -179,7 +179,7 @@ function Invoke-OSDCloudWorkflowTask {
             }
             #=================================================
             # Can we test this step in full Windows OS (not WinPE)?
-            if (($global:IsWinPE -ne $true) -and ($step.testinfullos -ne $true)) {
+            if (($env:SystemDrive -ne 'X:') -and ($step.testinfullos -ne $true)) {
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [Skip:FullOS] $($step.name)"
                 continue
             }
