@@ -50,7 +50,7 @@ function Update-OSDCoreDriverPackCatalogPanasonic {
     }
 
     try {
-        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast OSDCloud is updating the Panasonic DriverPack catalog."
+        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast: OSDCloud is updating the Panasonic DriverPack catalog."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading $OemDriverPackCatalog"
         $null = Invoke-WebRequest -Uri $OemDriverPackCatalog -OutFile $tempCatalogPath -UseBasicParsing -ErrorAction Stop
 

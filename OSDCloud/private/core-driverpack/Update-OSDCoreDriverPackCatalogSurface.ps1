@@ -111,7 +111,7 @@ function Update-OSDCoreDriverPackCatalogSurface {
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Updating all Surface driver pack entries."
         }
         else {
-            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast OSDCloud is updating the Surface DriverPack catalog for $OSDProduct."
+            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast: OSDCloud is updating the Surface DriverPack catalog for $OSDProduct."
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Updating Surface driver pack entries matching OSDProduct '$OSDProduct'. Matched $($targetCatalogContent.Count) entries."
             if ($targetCatalogContent.Count -eq 0) {
                 # Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No Surface driver pack catalog entries match OSDProduct '$OSDProduct'. Skipping live update checks."
