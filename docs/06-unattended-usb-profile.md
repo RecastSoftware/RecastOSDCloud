@@ -134,17 +134,17 @@ the device fetches and runs it.
 }
 ```
 
-The script can call `Deploy-OSDCloud -WorkflowName latest` or build its own
-flow — it has full access to the OSDCloud module.
+The script can call `Deploy-OSDCloud -CLI` or build its own flow — it has
+full access to the OSDCloud module.
 
-### Recipe — pilot channel + extra modules
+### Recipe — deployment options + extra modules
 
 ```jsonc
 {
   "InstallModule": ["OSD", "WindowsAutopilotIntune"],
   "InvokeMainCommand": [
     "Show-OSDCloudDeviceInfo",
-    "Deploy-OSDCloud -WorkflowName insiders"
+    "Deploy-OSDCloud -CLI -OperatingSystem 'Windows 11 24H2'"
   ]
 }
 ```

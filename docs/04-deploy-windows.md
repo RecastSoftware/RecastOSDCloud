@@ -143,5 +143,5 @@ Logs are written to `C:\Windows\Temp\osdcloud-logs\`. Start with
 
 ## Next
 
-- [Customize the deployment](05-customize-deployment.md) — pick a different OS, edition, or workflow channel.
+- [Customize the deployment](05-customize-deployment.md) — pick a different OS or edition, or change workflow settings.
 - [Run unattended with a USB profile](06-unattended-usb-profile.md) — remove the operator from the loop.

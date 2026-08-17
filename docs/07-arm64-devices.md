@@ -34,7 +34,7 @@ Build-OSDeployBoot -Name 'OSDCloud-arm64' -UseAdkWinPE -Architecture arm64
 
 `-UseAdkWinPE` is the most reliable source for ARM64 — the ADK provides a
 clean ARM64 `winpe.wim`. See
-[`../../RecastOSDeploy/docs/Build-OSDeployBoot.md`](../../RecastOSDeploy/docs/Build-OSDeployBoot.md)
+[`Build-OSDeployBoot`](https://github.com/OSDeploy/RecastOSDeploy/blob/main/OSDeploy/docs/Build-OSDeployBoot.md)
 for full parameter detail.
 
 ## How to boot an ARM64 device
