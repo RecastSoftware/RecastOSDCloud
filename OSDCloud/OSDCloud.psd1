@@ -8,7 +8,7 @@
 @{
     # --- Identity ---
     RootModule        = 'OSDCloud.psm1'
-    ModuleVersion     = '26.8.5.1'
+    ModuleVersion     = '26.8.18.1'
     CompatiblePSEditions = @('Core','Desktop')
     GUID              = '2fbd5c65-79c7-4561-9a2e-c4a4eebc89c7'
 
