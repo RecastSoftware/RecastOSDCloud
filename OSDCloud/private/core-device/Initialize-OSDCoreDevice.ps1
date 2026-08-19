@@ -56,10 +56,10 @@ function Initialize-OSDCoreDevice {
 
         Changelog:
         - 2026-08-13 | pending | Add OSDRegistered email validation state.
-            Added regex validation for idEmail and expose OSDRegistered in
+            Added regex validation for idLicenseEmail and expose OSDRegistered in
             OSDCoreDevice.
         - 2026-08-13 | pending | Add OSDeploy identity and license properties.
-            Added nullable idOSDeploySHA, idEmail, and idLicenseGuid values
+            Added nullable idOSDeploySHA, idLicenseEmail, and idLicenseGuid values
             from WinPE environment variables or local license discovery.
         - 2026-08-13 | pending | Add idOSDCloudSHA and clear stale device snapshot files.
             Removed existing OSDCoreDevice output files before collecting device state
@@ -700,7 +700,7 @@ function Initialize-OSDCoreDevice {
         $idOSDCloudSHA = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
     }
     $idOSDeploySHA = $null
-    $idEmail = $null
+    $idLicenseEmail = $null
     $idLicenseGuid = $null
 
     if (-not [string]::IsNullOrWhiteSpace($env:OSDEPLOY_ID)) {
@@ -711,17 +711,17 @@ function Initialize-OSDCoreDevice {
     }
 
     if (-not [string]::IsNullOrWhiteSpace($env:OSDEPLOY_EMAIL)) {
-        $idEmail = [System.String]$env:OSDEPLOY_EMAIL
+        $idLicenseEmail = [System.String]$env:OSDEPLOY_EMAIL
     }
     if (-not [string]::IsNullOrWhiteSpace($env:OSDEPLOY_LICENSE)) {
         $idLicenseGuid = [System.String]$env:OSDEPLOY_LICENSE
     }
 
-    if (([string]::IsNullOrWhiteSpace($idEmail) -or [string]::IsNullOrWhiteSpace($idLicenseGuid)) -and (Get-Command -Name 'Get-OSDeployCoreLicense' -ErrorAction Ignore)) {
+    if (([string]::IsNullOrWhiteSpace($idLicenseEmail) -or [string]::IsNullOrWhiteSpace($idLicenseGuid)) -and (Get-Command -Name 'Get-OSDeployCoreLicense' -ErrorAction Ignore)) {
         try {
             $OSDeployCoreLicense = Get-OSDeployCoreLicense -Verbose:$false -ErrorAction SilentlyContinue
-            if ([string]::IsNullOrWhiteSpace($idEmail) -and -not [string]::IsNullOrWhiteSpace($OSDeployCoreLicense.Email)) {
-                $idEmail = [System.String]$OSDeployCoreLicense.Email
+            if ([string]::IsNullOrWhiteSpace($idLicenseEmail) -and -not [string]::IsNullOrWhiteSpace($OSDeployCoreLicense.Email)) {
+                $idLicenseEmail = [System.String]$OSDeployCoreLicense.Email
             }
             if ([string]::IsNullOrWhiteSpace($idLicenseGuid) -and -not [string]::IsNullOrWhiteSpace($OSDeployCoreLicense.LicenseGuid)) {
                 $idLicenseGuid = [System.String]$OSDeployCoreLicense.LicenseGuid
@@ -730,11 +730,11 @@ function Initialize-OSDCoreDevice {
         catch {}
     }
 
-    $idEmailPattern = '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$'
-    [System.Boolean]$OSDRegistered = -not [string]::IsNullOrWhiteSpace($idEmail) -and $idEmail -match $idEmailPattern
+    $idLicenseEmailPattern = '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$'
+    [System.Boolean]$OSDRegistered = -not [string]::IsNullOrWhiteSpace($idLicenseEmail) -and $idLicenseEmail -match $idLicenseEmailPattern
 
     if ($OSDRegistered) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered to $idEmail"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered to $idLicenseEmail"
         if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction Ignore) {
             $AutoOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
         }
@@ -803,7 +803,7 @@ function Initialize-OSDCoreDevice {
         UUID                     = $deviceUUID
         idOSDCloudSHA            = [System.String]$idOSDCloudSHA #Device UUID SHA256
         idOSDeploySHA            = $idOSDeploySHA
-        idEmail                  = $idEmail
+        idLicenseEmail           = $idLicenseEmail
         idLicenseGuid            = $idLicenseGuid
         OSDRegistered            = $OSDRegistered
     }

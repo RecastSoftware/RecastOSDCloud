@@ -191,13 +191,14 @@ function Deploy-OSDCloud {
         #=================================================
         $ModuleVersion = $($MyInvocation.MyCommand.Module.Version)
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)] $ModuleVersion"
-
+        <#
         Write-Host -ForegroundColor DarkCyan 'OSDCloud collects analytic data during the deployment process to help improve the product and user experience.'
         Write-Host -ForegroundColor DarkCyan 'No personally identifiable information (PII) is collected, and all data is anonymized to protect user privacy.'
         Write-Host -ForegroundColor DarkCyan 'Collected data includes information about the deployment environment and system configuration.'
         Write-Host -ForegroundColor DarkCyan 'By using OSDCloud, you consent to the collection of analytic data as outlined in the privacy policy:'
         Write-Host -ForegroundColor DarkGray 'https://github.com/OSDeploy/OSDCloud/blob/main/PRIVACY.md'
         Write-Host
+        #>
         #=================================================
         # Workflow Verification and Warning
         if ($WorkflowName -ne 'default' -and -not $SkipWorkflowVerification.IsPresent) {
