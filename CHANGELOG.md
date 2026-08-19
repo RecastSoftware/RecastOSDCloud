@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.8.18.1 - August 18, 2026
+
+### Added
+
+- Added Windows 11 25H2 operating system catalog build `26200.9168`.
+
+### Changed
+
+- Module version bumped to `26.8.18.1`.
+
 ## 26.8.5.1 - August 5, 2026
 
 ### Added
