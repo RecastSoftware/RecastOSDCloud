@@ -1,4 +1,4 @@
-function Get-OSDeployCoreLicense {
+function Get-OSDCoreLicense {
 	<#
 	.SYNOPSIS
 	Returns a single Recast Core license object.
@@ -27,15 +27,15 @@ function Get-OSDeployCoreLicense {
 	license files are available.
 
 	.EXAMPLE
-	Get-OSDeployCoreLicense
+	Get-OSDCoreLicense
 	Returns a selected validated license object from ProgramData\Recast Software\Licenses.
 
 	.EXAMPLE
-	Get-OSDeployCoreLicense -Path 'D:\Licenses'
+	Get-OSDCoreLicense -Path 'D:\Licenses'
 	Returns a selected validated license object from a custom directory.
 
 	.EXAMPLE
-	Get-OSDeployCoreLicense -PreferredEmail 'david@segura.org'
+	Get-OSDCoreLicense -PreferredEmail 'david@segura.org'
 	Prefers a license with the specified email when available.
 
 	.LINK

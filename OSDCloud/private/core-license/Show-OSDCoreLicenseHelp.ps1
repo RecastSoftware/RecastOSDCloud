@@ -1,4 +1,4 @@
-function Show-OSDeployCoreLicenseHelp {
+function Show-OSDCoreLicenseHelp {
 	<#
 	.SYNOPSIS
 	Displays instructions for setting the Recast Core license for OSDCloud.
@@ -14,11 +14,11 @@ function Show-OSDeployCoreLicenseHelp {
 	a full Right Click Tools Community Edition installation.
 
 	.EXAMPLE
-	Show-OSDeployCoreLicenseHelp
+	Show-OSDCoreLicenseHelp
 	Displays the default setup steps and checks ProgramData\Recast Software\Licenses.
 
 	.EXAMPLE
-	Show-OSDeployCoreLicenseHelp -LicensePath 'D:\Licenses'
+	Show-OSDCoreLicenseHelp -LicensePath 'D:\Licenses'
 	Displays setup steps and checks a custom license directory.
 
 	.LINK

@@ -717,9 +717,9 @@ function Initialize-OSDCoreDevice {
         $idLicenseGuid = [System.String]$env:OSDEPLOY_LICENSE
     }
 
-    if (([string]::IsNullOrWhiteSpace($idLicenseEmail) -or [string]::IsNullOrWhiteSpace($idLicenseGuid)) -and (Get-Command -Name 'Get-OSDeployCoreLicense' -ErrorAction Ignore)) {
+    if (([string]::IsNullOrWhiteSpace($idLicenseEmail) -or [string]::IsNullOrWhiteSpace($idLicenseGuid)) -and (Get-Command -Name 'Get-OSDCoreLicense' -ErrorAction Ignore)) {
         try {
-            $OSDeployCoreLicense = Get-OSDeployCoreLicense -Verbose:$false -ErrorAction SilentlyContinue
+            $OSDeployCoreLicense = Get-OSDCoreLicense -Verbose:$false -ErrorAction SilentlyContinue
             if ([string]::IsNullOrWhiteSpace($idLicenseEmail) -and -not [string]::IsNullOrWhiteSpace($OSDeployCoreLicense.Email)) {
                 $idLicenseEmail = [System.String]$OSDeployCoreLicense.Email
             }
