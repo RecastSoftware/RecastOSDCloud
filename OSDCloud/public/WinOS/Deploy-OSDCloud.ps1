@@ -234,7 +234,8 @@ function Deploy-OSDCloud {
             New-Item -Path $LogsPath -ItemType Directory -Force | Out-Null
         }
         #=================================================
-        # Initialize OSDCoreDevice
+        # Initialize OSD
+        Initialize-OSDCoreLicense
         Initialize-OSDCoreDevice
         #=================================================
         # OSDCoreDevice Manufacturer, Model, Product overrides
@@ -274,21 +275,14 @@ function Deploy-OSDCloud {
 
         if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
             $languageKeyboardLayout = if ($PSBoundParameters.ContainsKey('KeyboardLayout')) { $KeyboardLayout } else { $global:OSDCoreDevice.KeyboardLayout }
-            $osdRegistered = $false
-            if ($global:OSDCoreDevice -is [System.Collections.IDictionary] -and $global:OSDCoreDevice.Contains('OSDRegistered')) {
-                $osdRegistered = $global:OSDCoreDevice['OSDRegistered'] -eq $true
-            }
-            elseif ($global:OSDCoreDevice -and $global:OSDCoreDevice.PSObject.Properties.Match('OSDRegistered').Count -gt 0) {
-                $osdRegistered = $global:OSDCoreDevice.OSDRegistered -eq $true
-            }
 
-            if ($osdRegistered -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
+            if ($global:OSDCoreLicense.IsRegistered -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
                 $resolvedOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $languageKeyboardLayout -FallbackLanguageCode 'en-US'
                 Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast: OSDCloud has set the OSLanguageCode to $resolvedOSLanguageCode based on the KeyboardLayout [$languageKeyboardLayout]."
             }
             else {
                 $resolvedOSLanguageCode = 'en-US'
-                if (-not $osdRegistered) {
+                if (-not $global:OSDCoreLicense.IsRegistered) {
                     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping OSLanguageCode keyboard conversion because OSDCloud is not registered."
                 }
             }

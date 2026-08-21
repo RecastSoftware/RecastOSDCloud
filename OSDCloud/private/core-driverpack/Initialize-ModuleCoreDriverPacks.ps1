@@ -48,26 +48,7 @@ function Initialize-ModuleCoreDriverPacks {
     #=================================================
     [System.String]$GenericDriverPackJson = Join-Path $($MyInvocation.MyCommand.Module.ModuleBase) 'core\driverpacks\generic.json'
 
-    $shouldUpdateDriverPackCatalog = $false
-    $osdRegisteredValue = $null
-    if ($global:OSDCoreDevice) {
-        if ($global:OSDCoreDevice -is [System.Collections.IDictionary] -and $global:OSDCoreDevice.Contains('OSDRegistered')) {
-            $osdRegisteredValue = $global:OSDCoreDevice['OSDRegistered']
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDRegistered dictionary key detected with value '$osdRegisteredValue'."
-        }
-        elseif ($global:OSDCoreDevice.PSObject.Properties.Match('OSDRegistered').Count -gt 0) {
-            $osdRegisteredValue = $global:OSDCoreDevice.OSDRegistered
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDRegistered object property detected with value '$osdRegisteredValue'."
-        }
-        else {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDRegistered was not found on OSDCoreDevice."
-        }
-
-        $shouldUpdateDriverPackCatalog = $osdRegisteredValue -eq $true
-    }
-    else {
-        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSDCoreDevice is not initialized."
-    }
+    $shouldUpdateDriverPackCatalog = $global:OSDCoreLicense.IsRegistered -eq $true
 
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] shouldUpdateDriverPackCatalog is '$shouldUpdateDriverPackCatalog'."
 
@@ -95,7 +76,7 @@ function Initialize-ModuleCoreDriverPacks {
         }
     }
     else {
-        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Driver pack catalog update skipped because OSDRegistered is not true."
+        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Driver pack catalog update skipped because OSDCoreLicense.IsRegistered is not true."
     }
 
     # Load Generic driver pack catalog for fallback
