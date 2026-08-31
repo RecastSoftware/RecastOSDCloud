@@ -55,7 +55,7 @@ function Initialize-WinPEStartupEnvironment {
 
     process {
         if ($skipExecution) { return }
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize WinPE Startup"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize WinPEStartup"
         # ── Shell Folders ───────────────────────────────────────────────
         $shellFolders = @(
             Join-Path -Path $systemDrive -ChildPath 'Program Files\WindowsPowerShell\Scripts'

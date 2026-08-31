@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Invokes a WinPE startup utility action by Id.
+    Invokes a WinPEStartup utility action by Id.
 
 .DESCRIPTION
-    Routes WinPE startup actions to the corresponding helper command.
+    Routes WinPEStartup actions to the corresponding helper command.
     Actions include on-screen keyboard handling, hardware and error display,
     network utilities, and module update operations.
 
@@ -55,7 +55,7 @@
     System.Void
 
 .NOTES
-    This function is intended for WinPE startup workflows.
+    This function is intended for WinPEStartup workflows.
     The UpdateModule action requires Value to be set to a module name.
 
 .LINK

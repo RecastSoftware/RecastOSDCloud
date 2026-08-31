@@ -17,7 +17,7 @@
     CompanyName       = 'Recast Software'
     Copyright         = '(c) 2026 Recast Software. All rights reserved.'
     Description          = @'
-PowerShell module for OSDCloud v2 deployment automation and WinPE Startup from recastsoftware.com.
+PowerShell module for OSDCloud v2 deployment automation and WinPEStartup from recastsoftware.com.
 Includes operating system, driver pack, and device provisioning workflows.
 '@
 

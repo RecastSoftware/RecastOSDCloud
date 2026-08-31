@@ -24,7 +24,7 @@
     System.Void
 
 .NOTES
-    This function is intended for WinPE startup workflows.
+    This function is intended for WinPEStartup workflows.
     Installation uses AllUsers scope, Force, and SkipPublisherCheck.
 #>
 function Update-WinPEStartupModule {

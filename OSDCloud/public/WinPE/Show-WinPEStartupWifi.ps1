@@ -17,7 +17,7 @@
     System.Void
 
 .NOTES
-    This function is intended for WinPE startup workflows.
+    This function is intended for WinPEStartup workflows.
     If required wireless components are missing, Wi-Fi start is skipped.
 #>
 function Show-WinPEStartupWifi {
@@ -25,7 +25,7 @@ function Show-WinPEStartupWifi {
     param ()
     #=================================================
     $Error.Clear()
-    $host.ui.RawUI.WindowTitle = "[$(Get-Date -format s)] OSDCloud - WinPE Startup Wi-Fi"
+    $host.ui.RawUI.WindowTitle = "[$(Get-Date -format s)] OSDCloud - WinPEStartup Wi-Fi"
     #=================================================
     # Test-OSDCloudInternetConnection
     if (Test-OSDCloudInternetConnection -Uri 'google.com') {

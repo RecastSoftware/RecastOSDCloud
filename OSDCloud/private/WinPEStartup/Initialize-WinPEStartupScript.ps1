@@ -17,7 +17,7 @@ function Initialize-WinPEStartupScript {
 
     .PARAMETER SubfolderPath
         The relative subfolder path to search for on each drive. Defaults
-        to 'WinPEStartup\Scripts'.
+        to 'WinPEStartup\scripts'.
 
     .PARAMETER FileName
         The file name pattern to match. Defaults to 'startnet.cmd'. Only .cmd
@@ -36,7 +36,7 @@ function Initialize-WinPEStartupScript {
     .EXAMPLE
         Initialize-WinPEStartupScript
 
-        Scans all drives for WinPEStartup\Scripts\startnet.cmd.
+        Scans all drives for WinPEStartup\scripts\startnet.cmd.
 
     .EXAMPLE
         Initialize-WinPEStartupScript -NoExit
@@ -62,7 +62,7 @@ function Initialize-WinPEStartupScript {
     param (
         [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [string]$SubfolderPath = 'WinPEStartup\Scripts',
+        [string]$SubfolderPath = 'WinPEStartup\scripts',
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]

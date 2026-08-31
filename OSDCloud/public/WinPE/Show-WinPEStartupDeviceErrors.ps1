@@ -11,7 +11,7 @@ function Show-WinPEStartupDeviceErrors {
     .EXAMPLE
         Show-WinPEStartupDeviceErrors
 
-        Displays detected device errors during WinPE startup.
+        Displays detected device errors during WinPEStartup.
 
     .OUTPUTS
         System.Void

@@ -4,7 +4,7 @@
 
 .DESCRIPTION
     Runs ipconfig /all to display network adapter and addressing details.
-    This function is typically used during WinPE startup troubleshooting.
+    This function is typically used during WinPEStartup troubleshooting.
 
 .EXAMPLE
     Show-WinPEStartupIpconfig
