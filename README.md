@@ -7,7 +7,7 @@ OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operatin
 ## Overview
 
 - Focused on Windows deployment workflows driven by PowerShell.
-- Supports WinPE startup helpers and deployment UX options.
+- Supports WinPEStartup helpers and deployment UX options.
 - Provides cmdlets for device info, Wi-Fi setup, and module updates in PE.
 
 ## Requirements
@@ -53,7 +53,7 @@ Deploy-OSDCloud
 
 | Cmdlet | Alias | Description |
 |---|---|---|
-| `Invoke-WinPEStartup` | — | Runs the full WinPE startup workflow. |
+| `Invoke-WinPEStartup` | — | Runs the full WinPEStartup workflow. |
 | `Invoke-WinPEStartupManager` | `Invoke-OSDCloudPEStartup` | Dispatches individual startup actions. |
 | `Show-WinPEStartupDevices` | `Show-PEStartupHardware` | Shows all PnP devices. |
 | `Show-WinPEStartupDeviceErrors` | `Show-PEStartupErrors` | Shows PnP devices with errors. |
@@ -89,7 +89,7 @@ Task-oriented guides for IT admins. Start at the [docs index](docs/README.md), o
 | [OSDCloud/docs/Show-OSDCloudDeviceInfo.md](OSDCloud/docs/Show-OSDCloudDeviceInfo.md) | `Show-OSDCloudDeviceInfo` |
 | [OSDCloud/docs/Start-OSDCloudExplorer.md](OSDCloud/docs/Start-OSDCloudExplorer.md) | `Start-OSDCloudExplorer` |
 
-WinPE startup cmdlets are currently documented through in-module help. In WinPE, run `Get-Help <CmdletName> -Detailed` for usage details.
+WinPEStartup cmdlets are currently documented through in-module help. In WinPE, run `Get-Help <CmdletName> -Detailed` for usage details.
 
 ### External links
 

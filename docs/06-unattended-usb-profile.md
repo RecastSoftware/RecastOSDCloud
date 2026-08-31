@@ -38,7 +38,7 @@ passed on the `Invoke-WinPEStartup` command line override both.
 Place a JSON file at:
 
 ```
-<USB drive>:\WinPEStartup\Profiles\<anything>.json
+<USB drive>:\WinPEStartup\profiles\<anything>.json
 ```
 
 Any partition on any drive connected at boot is scanned. The OSDCloud USB's
@@ -167,7 +167,7 @@ Empty `InvokeMainCommand` means startup runs but no deployment is triggered
 On any Windows machine with the module installed:
 
 ```powershell
-Get-Content '<USB>:\WinPEStartup\Profiles\mysite.json' -Raw |
+Get-Content '<USB>:\WinPEStartup\profiles\mysite.json' -Raw |
     ForEach-Object { $_ -replace '//[^\r\n]*','' -replace '/\*.*?\*/','' } |
     ConvertFrom-Json
 ```

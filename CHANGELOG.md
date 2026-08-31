@@ -36,7 +36,7 @@ All notable changes to this project will be documented in this file.
 - Improved cache, operating system URL, device identity, and catalog initialization status logging for clearer troubleshooting.
 - Improved workflow operating system resolution and parameter flow by centralizing OS settings selection and activation resolution logic.
 - Updated workflow and task execution scripts with standardized informational logging markers and aligned step/test behavior for target disk, driver pack, and Windows image validation.
-- Updated WinPE startup components, including Wi-Fi and USB drive-letter initialization paths, to align with the revised deployment/core orchestration flow.
+- Updated WinPEStartup components, including Wi-Fi and USB drive-letter initialization paths, to align with the revised deployment/core orchestration flow.
 - Updated Microsoft Update Catalog save helpers and related driver workflow step behavior to match revised validation and logging patterns.
 - Updated workflow UI `MainWindow` scripts across classic, default, dev, insiders, and vNext channels for consistency with the updated deployment flow.
 - Updated repository guidance in Copilot instruction assets and catalog update instructions.
@@ -101,7 +101,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added WinPE startup profiles for `Deploy-OSDCloud` and `Show-OSDCloudDeviceInfo`.
+- Added WinPEStartup profiles for `Deploy-OSDCloud` and `Show-OSDCloudDeviceInfo`.
 
 ### Changed
 
@@ -295,7 +295,7 @@ All notable changes to this project will be documented in this file.
     add `INPUTS`/`OUTPUTS`/`NOTES` sections, and cross-link related pages.
 - Conceptual guides in `docs/`:
   - `getting-started.md` — installation, quick start, and cmdlet overview.
-  - `winpe-startup.md` — WinPE startup sequence, script hooks, USB profiles,
+  - `winpe-startup.md` — WinPEStartup sequence, script hooks, USB profiles,
     and `InvokeXxxCommand` behaviour.
   - `psoptions.md` — two-layer `PSDefaultParameterValues` system with full
     key reference table and override examples.

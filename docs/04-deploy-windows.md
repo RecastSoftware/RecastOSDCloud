@@ -10,7 +10,7 @@ a freshly installed Windows 11 at the OOBE screen.
 
 OSDCloud splits the deployment into two halves:
 
-1. **WinPE startup** — `Invoke-WinPEStartup` brings the environment online
+1. **WinPEStartup** — `Invoke-WinPEStartup` brings the environment online
    (drivers, network, current module).
 2. **OS deployment** — `Deploy-OSDCloud` runs a 40-step workflow that
    installs Windows and injects drivers.

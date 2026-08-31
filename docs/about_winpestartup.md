@@ -17,7 +17,7 @@ At a high level, the startup flow does this:
 | Load drivers | Scans attached drives for `WinPEStartup\Drivers` and loads discovered `.inf` files with `drvload.exe`. | Allows storage, network, or input drivers to be supplied from USB without rebuilding the boot image. |
 | Copy files | Scans attached drives for `WinPEStartup\Files` and copies content into the WinPE RAM disk. | Makes helper files, tools, or configuration available at `X:\` for the current session. |
 | Initialize WinPE | Runs `wpeinit`, disables the firewall, updates boot info, normalizes USB drive letters, renews networking, and opens a minimized PowerShell session. | Establishes hardware, networking, and predictable removable-drive layout before later steps run. |
-| Select a profile | Scans `WinPEStartup\Profiles` on attached drives for JSON profiles. A single profile is selected automatically; multiple profiles are shown as a menu. | Lets one USB drive hold site, customer, or workflow-specific startup settings. |
+| Select a profile | Scans `WinPEStartup\profiles` on attached drives for JSON profiles. A single profile is selected automatically; multiple profiles are shown as a menu. | Lets one USB drive hold site, customer, or workflow-specific startup settings. |
 | Apply parameters | Merges defaults, profile values, and explicit caller parameters. Explicit caller parameters win. | Keeps the configuration flexible while preserving operator intent. |
 | Run startup actions | Optionally launches the on-screen keyboard, device views, Wi-Fi connection UI, IP configuration display, module updates, and startup/main/shutdown commands. | Handles the common things a technician needs immediately after WinPE starts. |
 
@@ -42,7 +42,7 @@ That order is deliberate. Drivers and copied files are available before the main
 
 ## Defaults and profiles
 
-WinPE startup configuration has two useful layers.
+WinPEStartup configuration has two useful layers.
 
 Module defaults are read from the OSDCloud PSDefaultParameterValues JSON file. Keys use the normal PowerShell default-parameter style, such as:
 
@@ -56,7 +56,7 @@ Module defaults are read from the OSDCloud PSDefaultParameterValues JSON file. K
 Startup profiles are JSON files under this layout on any attached drive:
 
 ```text
-H:\WinPEStartup\Profiles\BranchOffice.json
+H:\WinPEStartup\profiles\BranchOffice.json
 ```
 
 Profiles may use either prefixed keys, such as `Invoke-WinPEStartup:SkipWiFi`, or plain splat-style keys, such as `SkipWiFi`. That makes profiles easier to read while still supporting the same parameters.
@@ -101,7 +101,7 @@ The same USB drive can provide more than a boot image. With a `WinPEStartup` fol
 |---|---|
 | `WinPEStartup\Drivers` | Supplemental `.inf` drivers loaded into WinPE. |
 | `WinPEStartup\Files` | Files copied into the WinPE RAM disk. |
-| `WinPEStartup\Profiles` | JSON startup profiles selected at boot. |
+| `WinPEStartup\profiles` | JSON startup profiles selected at boot. |
 
 That lets a technician adapt one boot image to different sites or hardware without rebuilding the image every time.
 
