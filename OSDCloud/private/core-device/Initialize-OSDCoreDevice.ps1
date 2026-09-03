@@ -56,7 +56,7 @@ function Initialize-OSDCoreDevice {
 
         Changelog:
         - 2026-08-13 | pending | Add OSDeploy identity and license properties.
-            Added nullable idOSDeploy, idRecastEmail, and idRecastLicense values
+            Added nullable idOSDeployDevice, idRegisteredEmail, and idRegisteredLicense values
             from WinPE environment variables or local license discovery.
         - 2026-08-13 | pending | Add EndpointSHA and clear stale device snapshot files.
             Removed existing OSDCoreDevice output files before collecting device state
@@ -697,36 +697,36 @@ function Initialize-OSDCoreDevice {
         $EndpointSHA = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
     }
 
-    $idOSDeploy = $null
-    if (-not [string]::IsNullOrWhiteSpace($env:ID_OSDEPLOY)) {
-        $idOSDeploy = [System.String]$env:ID_OSDEPLOY
+    $idOSDeployDevice = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_OSDEPLOYDEVICE)) {
+        $idOSDeployDevice = [System.String]$env:ID_OSDEPLOYDEVICE
     }
 
-    $idOSDeployGuid = $null
-    if (-not [string]::IsNullOrWhiteSpace($env:ID_OSDEPLOYGUID)) {
-        $idOSDeployGuid = [System.String]$env:ID_OSDEPLOYGUID
+    $idOSDeployBuild = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_OSDEPLOYBUILD)) {
+        $idOSDeployBuild = [System.String]$env:ID_OSDEPLOYBUILD
     }
 
-    $idRecastEmail = $null
-    if (-not [string]::IsNullOrWhiteSpace($env:ID_RECASTEMAIL)) {
-        $idRecastEmail = [System.String]$env:ID_RECASTEMAIL
+    $idRegisteredEmail = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_REGISTEREDEMAIL)) {
+        $idRegisteredEmail = [System.String]$env:ID_REGISTEREDEMAIL
     }
 
-    $idRecastLicense = $null
-    if (-not [string]::IsNullOrWhiteSpace($env:ID_RECASTLICENSE)) {
-        $idRecastLicense = [System.String]$env:ID_RECASTLICENSE
+    $idRegisteredLicense = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_REGISTEREDLICENSE)) {
+        $idRegisteredLicense = [System.String]$env:ID_REGISTEREDLICENSE
     }
 
-    if ([string]::IsNullOrWhiteSpace($idRecastEmail) -or [string]::IsNullOrWhiteSpace($idRecastLicense)) {
+    if ([string]::IsNullOrWhiteSpace($idRegisteredEmail) -or [string]::IsNullOrWhiteSpace($idRegisteredLicense)) {
         try {
             if (-not $global:OSDCoreLicense.License) {
                 Initialize-OSDCoreLicense
             }
-            if ([string]::IsNullOrWhiteSpace($idRecastEmail) -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreLicense.License.Email)) {
-                $idRecastEmail = [System.String]$global:OSDCoreLicense.License.Email
+            if ([string]::IsNullOrWhiteSpace($idRegisteredEmail) -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreLicense.License.Email)) {
+                $idRegisteredEmail = [System.String]$global:OSDCoreLicense.License.Email
             }
-            if ([string]::IsNullOrWhiteSpace($idRecastLicense) -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreLicense.License.LicenseGuid)) {
-                $idRecastLicense = [System.String]$global:OSDCoreLicense.License.LicenseGuid
+            if ([string]::IsNullOrWhiteSpace($idRegisteredLicense) -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreLicense.License.LicenseGuid)) {
+                $idRegisteredLicense = [System.String]$global:OSDCoreLicense.License.LicenseGuid
             }
         }
         catch {}
@@ -736,7 +736,7 @@ function Initialize-OSDCoreDevice {
     #   OSLanguage
     #=================================================
     if ($global:OSDCoreLicense.IsRegistered) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered to $idRecastEmail"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered to $idRegisteredEmail"
         if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction Ignore) {
             $AutoOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
         }
@@ -804,10 +804,10 @@ function Initialize-OSDCoreDevice {
         USBVolume                = $USBVolume
         UUID                     = $deviceUUID
         EndpointSHA              = [System.String]$EndpointSHA #Device UUID SHA256
-        idOSDeploy               = $idOSDeploy
-        idOSDeployGuid           = $idOSDeployGuid
-        idRecastEmail            = $idRecastEmail
-        idRecastLicense          = $idRecastLicense
+        idOSDeployDevice         = $idOSDeployDevice
+        idOSDeployBuild          = $idOSDeployBuild
+        idRegisteredEmail        = $idRegisteredEmail
+        idRegisteredLicense      = $idRegisteredLicense
     }
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreDevice"
     #=================================================

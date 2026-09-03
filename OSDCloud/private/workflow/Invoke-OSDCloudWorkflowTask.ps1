@@ -159,6 +159,10 @@ function Invoke-OSDCloudWorkflowTask {
         osdcloudOSBuildVersion     = [string]$operatingSystemCloudObject.OSBuildVersion
         osdcloudOSLanguageCode     = [string]$operatingSystemCloudObject.OSLanguageCode
         deploymentPhase            = [string]$deploymentPhase
+        idOSDeployDevice           = [string]$global:OSDCoreDevice.idOSDeployDevice # OSDeploy Device Hash
+        idOSDeployBuild            = [string]$global:OSDCoreDevice.idOSDeployBuild # OSDeploy Boot GUID
+        idRegisteredEmail          = [string]$global:OSDCoreDevice.idRegisteredEmail
+        idRegisteredLicense        = [string]$global:OSDCoreDevice.idRegisteredLicense
     }
     $postApi = 'phc_2h7nQJCo41Hc5C64B2SkcEBZOvJ6mHr5xAHZyjPl3ZK'
     Send-EventDeployOSDCloud -EventName $eventName -ApiKey $postApi -DistinctId $distinctId -Properties $eventProperties

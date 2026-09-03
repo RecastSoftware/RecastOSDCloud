@@ -1,0 +1,9 @@
+{
+  "Invoke-WinPEStartup:InvokeMainCommand": [
+    "Show-OSDCloudDeviceInfo",
+    "Deploy-OSDCloud",
+    "Restart-Computer -Force"
+  ],
+  "Invoke-WinPEStartup:InvokeMainCommandNoExit": true,
+  "Invoke-WinPEStartup:InvokeMainCommandEA": "Continue"
+}
