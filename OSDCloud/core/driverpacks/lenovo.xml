@@ -3492,7 +3492,7 @@
    <Type>11W2</Type>
    <Type>11W1</Type>
   </Types>
-  <BIOS version="M3BKT38A_1.0.0.56" image="m3bk" date="2026-06-18" crc="dcb5fff726f0be32d2fb13454d9d9ca9b407b4a12240985a485ef4cc75f997be" md5="fd284e0cc9aac09c1b39f2f9331ba728">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3bjy38usa.exe</BIOS>
+  <BIOS version="M3AKT59A_1.0.0.89" image="m3ak" date="2026-06-18" crc="3799b87fa8c74a1a883b78709d35183fb7467e02b05dc432f5677a3b3d9aff39" md5="c3a48d8d12e4977ea0c3d89650704669">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3ajy59usa.exe</BIOS>
   <SCCM os="win10" version="1903" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
   <SCCM os="win10" version="1909" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
   <SCCM os="win10" version="2004" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
@@ -3521,7 +3521,7 @@
    <Type>11W5</Type>
    <Type>11W7</Type>
   </Types>
-  <BIOS version="M3BKT38A_1.0.0.56" image="m3bk" date="2026-06-18" crc="dcb5fff726f0be32d2fb13454d9d9ca9b407b4a12240985a485ef4cc75f997be" md5="fd284e0cc9aac09c1b39f2f9331ba728">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3bjy38usa.exe</BIOS>
+  <BIOS version="M3AKT59A_1.0.0.89" image="m3ak" date="2026-06-18" crc="3799b87fa8c74a1a883b78709d35183fb7467e02b05dc432f5677a3b3d9aff39" md5="c3a48d8d12e4977ea0c3d89650704669">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3ajy59usa.exe</BIOS>
   <SCCM os="win10" version="1903" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
   <SCCM os="win10" version="1909" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
   <SCCM os="win10" version="2004" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
@@ -3705,7 +3705,7 @@
    <Type>11JC</Type>
    <Type>11JD</Type>
   </Types>
-  <BIOS version="M3BKT38A_1.0.0.56" image="m3bk" date="2026-06-18" crc="dcb5fff726f0be32d2fb13454d9d9ca9b407b4a12240985a485ef4cc75f997be" md5="fd284e0cc9aac09c1b39f2f9331ba728">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3bjy38usa.exe</BIOS>
+  <BIOS version="M3AKT59A_1.0.0.89" image="m3ak" date="2026-06-18" crc="3799b87fa8c74a1a883b78709d35183fb7467e02b05dc432f5677a3b3d9aff39" md5="c3a48d8d12e4977ea0c3d89650704669">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3ajy59usa.exe</BIOS>
   <SCCM os="win10" version="1903" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
   <SCCM os="win10" version="1909" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
   <SCCM os="win10" version="2004" date="2024-12-12" crc="863e199b47a0647a600dd4be7ab81830f8aa0e89b879d54e3f0d131c554c5ffc" md5="36c5ec642bf8c478d12483028d00cad9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m75tsq_gen2_w1064_1903_1909_2004_202009.exe</SCCM>
@@ -3839,7 +3839,7 @@
    <Type>20XX</Type>
    <Type>20XW</Type>
   </Types>
-  <BIOS version="1.78" image="n32e" date="2026-08-17" crc="37197afcd9bf947a3c30e90fd1b3f5d16f66fd163015cdf71436c8fe11f3ace5" md5="ead135a7c1456800413402f10d4a20e9">https://download.lenovo.com/pccbbs/mobiles/n32uj36w.exe</BIOS>
+  <BIOS version="1.78" image="n32e" date="2026-08-24" crc="37197afcd9bf947a3c30e90fd1b3f5d16f66fd163015cdf71436c8fe11f3ace5" md5="ead135a7c1456800413402f10d4a20e9">https://download.lenovo.com/pccbbs/mobiles/n32uj36w.exe</BIOS>
   <SCCM os="win10" version="1909" date="2024-07-26" crc="e2c56fbad5b2689fbe6246dcfd68a72616a0c08d2dd915ed8a88802291cb89a2" md5="6a2ecdd9d562ec4a37abc4765265b7af">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt20xw-20xx-x1yoga_mt20xy-20y0_w1064_1909_202107.exe</SCCM>
   <SCCM os="win10" version="2004" date="2024-07-26" crc="c601c16d8bf97327ed30eebf17f4be131ce2da95b19594f398ad3af523dc40db" md5="126e374c950472e111d5f6eda06b2c1c">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt20xw-20xx-x1yoga_mt20xy-20y0_w1064_2004_202109.exe</SCCM>
   <SCCM os="win10" version="20H2" date="2024-07-26" crc="d6b9734649a14e4326772461872e6196c18813fb2e4259fe0ff80c4a06bb5a0d" md5="f04c27875bfd016b7e46b7b47cdc5a67">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt20xw-20xx-x1yoga_mt20xy-20y0_w1064_20h2_202209.exe</SCCM>
@@ -3861,7 +3861,7 @@
    <Type>20Y0</Type>
    <Type>20XY</Type>
   </Types>
-  <BIOS version="1.78" image="n32e" date="2026-08-17" crc="37197afcd9bf947a3c30e90fd1b3f5d16f66fd163015cdf71436c8fe11f3ace5" md5="ead135a7c1456800413402f10d4a20e9">https://download.lenovo.com/pccbbs/mobiles/n32uj36w.exe</BIOS>
+  <BIOS version="1.78" image="n32e" date="2026-08-24" crc="37197afcd9bf947a3c30e90fd1b3f5d16f66fd163015cdf71436c8fe11f3ace5" md5="ead135a7c1456800413402f10d4a20e9">https://download.lenovo.com/pccbbs/mobiles/n32uj36w.exe</BIOS>
   <SCCM os="win10" version="1909" date="2024-07-26" crc="e2c56fbad5b2689fbe6246dcfd68a72616a0c08d2dd915ed8a88802291cb89a2" md5="6a2ecdd9d562ec4a37abc4765265b7af">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt20xw-20xx-x1yoga_mt20xy-20y0_w1064_1909_202107.exe</SCCM>
   <SCCM os="win10" version="2004" date="2024-07-26" crc="c601c16d8bf97327ed30eebf17f4be131ce2da95b19594f398ad3af523dc40db" md5="126e374c950472e111d5f6eda06b2c1c">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt20xw-20xx-x1yoga_mt20xy-20y0_w1064_2004_202109.exe</SCCM>
   <SCCM os="win10" version="20H2" date="2024-07-26" crc="d6b9734649a14e4326772461872e6196c18813fb2e4259fe0ff80c4a06bb5a0d" md5="f04c27875bfd016b7e46b7b47cdc5a67">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt20xw-20xx-x1yoga_mt20xy-20y0_w1064_20h2_202209.exe</SCCM>
@@ -4177,7 +4177,7 @@
    <Type>11MY</Type>
    <Type>11N0</Type>
   </Types>
-  <BIOS version="M3JKT47A_1.71" image="m3jk" date="2026-08-20" crc="e1d91bed458892f36abeacfeea40d01c74d2ae344a82ebcfcbecc304abc51835" md5="0010ba429da310f7bad62e1efd67c996">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3jjy47usa.exe</BIOS>
+  <BIOS version="M3JKT47A_1.71" image="m3jk" date="2026-08-24" crc="e1d91bed458892f36abeacfeea40d01c74d2ae344a82ebcfcbecc304abc51835" md5="0010ba429da310f7bad62e1efd67c996">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3jjy47usa.exe</BIOS>
   <SCCM os="win10" version="1809" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
   <SCCM os="win10" version="1909" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
   <SCCM os="win10" version="2004" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
@@ -4222,7 +4222,7 @@
    <Type>30EF</Type>
    <Type>30EJ</Type>
   </Types>
-  <BIOS version="M3JKT47A_1.71" image="m3jk" date="2026-08-20" crc="e1d91bed458892f36abeacfeea40d01c74d2ae344a82ebcfcbecc304abc51835" md5="0010ba429da310f7bad62e1efd67c996">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3jjy47usa.exe</BIOS>
+  <BIOS version="M3JKT47A_1.71" image="m3jk" date="2026-08-24" crc="e1d91bed458892f36abeacfeea40d01c74d2ae344a82ebcfcbecc304abc51835" md5="0010ba429da310f7bad62e1efd67c996">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3jjy47usa.exe</BIOS>
   <SCCM os="win10" version="1809" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
   <SCCM os="win10" version="1909" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
   <SCCM os="win10" version="2004" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
@@ -4553,7 +4553,7 @@
    <Type>11MR</Type>
    <Type>11MQ</Type>
   </Types>
-  <BIOS version="M3JKT47A_1.71" image="m3jk" date="2026-08-20" crc="e1d91bed458892f36abeacfeea40d01c74d2ae344a82ebcfcbecc304abc51835" md5="0010ba429da310f7bad62e1efd67c996">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3jjy47usa.exe</BIOS>
+  <BIOS version="M3JKT47A_1.71" image="m3jk" date="2026-08-24" crc="e1d91bed458892f36abeacfeea40d01c74d2ae344a82ebcfcbecc304abc51835" md5="0010ba429da310f7bad62e1efd67c996">https://download.lenovo.com/pccbbs/thinkcentre_bios/m3jjy47usa.exe</BIOS>
   <SCCM os="win10" version="1809" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
   <SCCM os="win10" version="1909" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
   <SCCM os="win10" version="2004" date="2025-07-24" crc="fd3cb24f66fa5aceceb0cb4db8dd6a333565741fb5fd8ee9c5bdfe2bfcaeff4d" md5="045665fd8a5c7687e392f06c22045c81">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen2-m90tsq_gen2-p350tiny_w1064_1809_1909_2004_20h2_202111.exe</SCCM>
@@ -4642,7 +4642,7 @@
    <Type>12Q9</Type>
    <Type>12Q7</Type>
   </Types>
-  <BIOS version="M41KT64A_1.0.0.100" image="m41k" date="2026-08-12" crc="76b7cba31ec2640ecb25d2a90fd45c7b47782d5e7cd9cbb84aab216e843851d2" md5="9140ccc6f36a5c8c6ce6f895680f46f7">https://download.lenovo.com/pccbbs/thinkcentre_bios/m41jy64usa.exe</BIOS>
+  <BIOS version="M41KT64A_1.0.0.100" image="m41k" date="2026-08-21" crc="76b7cba31ec2640ecb25d2a90fd45c7b47782d5e7cd9cbb84aab216e843851d2" md5="9140ccc6f36a5c8c6ce6f895680f46f7">https://download.lenovo.com/pccbbs/thinkcentre_bios/m41jy64usa.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
@@ -4677,7 +4677,7 @@
    <Type>11V8</Type>
    <Type>11V7</Type>
   </Types>
-  <BIOS version="M41KT64A_1.0.0.100" image="m41k" date="2026-08-12" crc="76b7cba31ec2640ecb25d2a90fd45c7b47782d5e7cd9cbb84aab216e843851d2" md5="9140ccc6f36a5c8c6ce6f895680f46f7">https://download.lenovo.com/pccbbs/thinkcentre_bios/m41jy64usa.exe</BIOS>
+  <BIOS version="M41KT64A_1.0.0.100" image="m41k" date="2026-08-21" crc="76b7cba31ec2640ecb25d2a90fd45c7b47782d5e7cd9cbb84aab216e843851d2" md5="9140ccc6f36a5c8c6ce6f895680f46f7">https://download.lenovo.com/pccbbs/thinkcentre_bios/m41jy64usa.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
@@ -4800,7 +4800,7 @@
    <Type>21CC</Type>
    <Type>21CB</Type>
   </Types>
-  <BIOS version="1.56" image="n3ae" date="2026-08-17" crc="4702ea4b8417dc597642ea53cb19ef66674320cc80892b4cdd6a6e85b714a1a5" md5="7d9424a5b3d917128a42f04b9fa4c6d3">https://download.lenovo.com/pccbbs/mobiles/n3auj35w.exe</BIOS>
+  <BIOS version="1.56" image="n3ae" date="2026-09-02" crc="4702ea4b8417dc597642ea53cb19ef66674320cc80892b4cdd6a6e85b714a1a5" md5="7d9424a5b3d917128a42f04b9fa4c6d3">https://download.lenovo.com/pccbbs/mobiles/n3auj35w.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2025-12-24" crc="bc11df09ad8bdb9ad752cee8e2721b0a9e1725811e4eab025801e03e78ba730d" md5="4cc51dd4d9bad85c50e1f99ea86f75ad">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21cb-21cc-x1yoga_mt21cd-21ce_w1064_20h2_202212.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2025-12-24" crc="eca9a263d721a88f194f3314df1a0170e07ad3408fb24950d33440a6dde9cbb3" md5="d245481c22aba516f9cdf813d1187661">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21cb-21cc-x1yoga_mt21cd-21ce_w1064_21h1_202403.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2025-12-24" crc="785fba74322a4ebb69c82fece1521e4c9caf06439bb2ce8b243e7abcac53edbd" md5="7cde3d861b49ea7b26148791c8624695">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21cb-21cc-x1yoga_mt21cd-21ce_w1064_21h2_202403.exe</SCCM>
@@ -4820,7 +4820,7 @@
    <Type>21CD</Type>
    <Type>21CE</Type>
   </Types>
-  <BIOS version="1.56" image="n3ae" date="2026-08-17" crc="4702ea4b8417dc597642ea53cb19ef66674320cc80892b4cdd6a6e85b714a1a5" md5="7d9424a5b3d917128a42f04b9fa4c6d3">https://download.lenovo.com/pccbbs/mobiles/n3auj35w.exe</BIOS>
+  <BIOS version="1.56" image="n3ae" date="2026-09-02" crc="4702ea4b8417dc597642ea53cb19ef66674320cc80892b4cdd6a6e85b714a1a5" md5="7d9424a5b3d917128a42f04b9fa4c6d3">https://download.lenovo.com/pccbbs/mobiles/n3auj35w.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2025-12-24" crc="bc11df09ad8bdb9ad752cee8e2721b0a9e1725811e4eab025801e03e78ba730d" md5="4cc51dd4d9bad85c50e1f99ea86f75ad">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21cb-21cc-x1yoga_mt21cd-21ce_w1064_20h2_202212.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2025-12-24" crc="eca9a263d721a88f194f3314df1a0170e07ad3408fb24950d33440a6dde9cbb3" md5="d245481c22aba516f9cdf813d1187661">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21cb-21cc-x1yoga_mt21cd-21ce_w1064_21h1_202403.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2025-12-24" crc="785fba74322a4ebb69c82fece1521e4c9caf06439bb2ce8b243e7abcac53edbd" md5="7cde3d861b49ea7b26148791c8624695">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21cb-21cc-x1yoga_mt21cd-21ce_w1064_21h2_202403.exe</SCCM>
@@ -4873,7 +4873,7 @@
    <Type>12A3</Type>
    <Type>12A2</Type>
   </Types>
-  <BIOS version="M40KT63A_1.99" image="m40k" date="2026-05-08" crc="5ee28c04c3a55f9cdaa1cb344f6e61b4824142d960a2d1a2e958e55493301745" md5="65bf262eccb0bff29840b74b59739eb0">https://download.lenovo.com/pccbbs/thinkcentre_bios/m40jy63usa.exe</BIOS>
+  <BIOS version="M40KT64A_1.100" image="m40k" date="2026-08-27" crc="868c003c25a132d5d183e78c319840240ed3b392599e04ce33cccf77dc4e6c83" md5="823a5a8ea72a38649cae0b6aea2cd87e">https://download.lenovo.com/pccbbs/thinkcentre_bios/m40jy64usa.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
@@ -4900,7 +4900,7 @@
    <Type>12A1</Type>
    <Type>12A0</Type>
   </Types>
-  <BIOS version="M40KT63A_1.99" image="m40k" date="2026-05-08" crc="5ee28c04c3a55f9cdaa1cb344f6e61b4824142d960a2d1a2e958e55493301745" md5="65bf262eccb0bff29840b74b59739eb0">https://download.lenovo.com/pccbbs/thinkcentre_bios/m40jy63usa.exe</BIOS>
+  <BIOS version="M40KT64A_1.100" image="m40k" date="2026-08-27" crc="868c003c25a132d5d183e78c319840240ed3b392599e04ce33cccf77dc4e6c83" md5="823a5a8ea72a38649cae0b6aea2cd87e">https://download.lenovo.com/pccbbs/thinkcentre_bios/m40jy64usa.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
@@ -4963,7 +4963,7 @@
    <Type>11TW</Type>
    <Type>11TT</Type>
   </Types>
-  <BIOS version="M40KT63A_1.99" image="m40k" date="2026-05-08" crc="5ee28c04c3a55f9cdaa1cb344f6e61b4824142d960a2d1a2e958e55493301745" md5="65bf262eccb0bff29840b74b59739eb0">https://download.lenovo.com/pccbbs/thinkcentre_bios/m40jy63usa.exe</BIOS>
+  <BIOS version="M40KT64A_1.100" image="m40k" date="2026-08-27" crc="868c003c25a132d5d183e78c319840240ed3b392599e04ce33cccf77dc4e6c83" md5="823a5a8ea72a38649cae0b6aea2cd87e">https://download.lenovo.com/pccbbs/thinkcentre_bios/m40jy64usa.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
@@ -4986,7 +4986,7 @@
    <Type>11TU</Type>
    <Type>11TV</Type>
   </Types>
-  <BIOS version="M40KT63A_1.99" image="m40k" date="2026-05-08" crc="5ee28c04c3a55f9cdaa1cb344f6e61b4824142d960a2d1a2e958e55493301745" md5="65bf262eccb0bff29840b74b59739eb0">https://download.lenovo.com/pccbbs/thinkcentre_bios/m40jy63usa.exe</BIOS>
+  <BIOS version="M40KT64A_1.100" image="m40k" date="2026-08-27" crc="868c003c25a132d5d183e78c319840240ed3b392599e04ce33cccf77dc4e6c83" md5="823a5a8ea72a38649cae0b6aea2cd87e">https://download.lenovo.com/pccbbs/thinkcentre_bios/m40jy64usa.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2024-11-04" crc="24bee9143df6bdb7c4dce0d37f0e028006687230319b37e4a09cbef337ceee7a" md5="b24f9a2cfea0bbf363064677d91239e7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen3-m80tsq_gen3-m90tsq_gen3-p360tiny_w1064_20h2_21h1_21h2_202204.exe</SCCM>
@@ -5199,7 +5199,7 @@
    <Type>30FT</Type>
    <Type>30FV</Type>
   </Types>
-  <BIOS version="S0EKT64A_1.100" image="s0ek" date="2026-08-10" crc="c19f1581b71bf0f602edf04ebde91120565b9357cb89465c439ee7300674e3d8" md5="cba6bbbd7b7ebd074c475ce390060bf2">https://download.lenovo.com/pccbbs/thinkcentre_bios/s0ejy64usa.exe</BIOS>
+  <BIOS version="S0EKT64A_1.100" image="s0ek" date="2026-08-21" crc="c19f1581b71bf0f602edf04ebde91120565b9357cb89465c439ee7300674e3d8" md5="cba6bbbd7b7ebd074c475ce390060bf2">https://download.lenovo.com/pccbbs/thinkcentre_bios/s0ejy64usa.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2025-06-12" crc="33f4f11f4a8e4443b9f220b8cfe2c7e5817a96fb85c27620375dbb253c604a2d" md5="f1f73745d119415a6c0e454c7e7b4ac7">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p360_w1064_21h2_202208.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2025-06-12" crc="a9be93b3c9d1b20be311becc67a75bd0a72dcdbc3691eee6a755867885528756" md5="899a707830520d67dca09bed4ab825f9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p360_w1064_22h2_202505.exe</SCCM>
   <SCCM os="win11" version="21H2" date="2025-06-12" crc="543e998f2736775b2786510a451381be6ff3e5ffb645799f7ac91d97ea78dca9" md5="073976e2ca1a65b826fbfc2c2872d302">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p360_w11_21_202203.exe</SCCM>
@@ -5556,7 +5556,7 @@
   <HSA os="win10" version="21H1" date="2023-12-07" crc="a2783a9e60aa4db0e4cfd2e8012f9a06c987dbf6dc1af68bd951e66d4ae5e0a9" md5="552dec882c0a4140110779ff60e483c5">https://download.lenovo.com/pccbbs/mobiles/tp_x13-yoga-g3_x13-yoga-g3-lte_x13-yoga-g3-lte2_hsa_w10_21h1_202205.exe</HSA>
   <HSA os="win10" version="21H2" date="2023-12-07" crc="ef78debb99fe74e130e0c7caa2f67693a6584f21872154af879f2552dac39fa4" md5="56db1f30da134d56365c0c1bb235ea09">https://download.lenovo.com/pccbbs/mobiles/tp_x13-yoga-g3_x13-yoga-g3-lte_x13-yoga-g3-lte2_hsa_w10_21h2_202205.exe</HSA>
   <HSA os="win10" version="22H2" date="2023-12-07" crc="da1fb47d3edf3a773f9c2696732e978462c86dc9bf87077d1c1630b338896287" md5="6336e138fe6c8ed5ba0f439408fd1558">https://download.lenovo.com/pccbbs/mobiles/tp_x13-yoga-g3_x13-yoga-g3-lte_x13-yoga-g3-lte2_hsa_w10_22h2_202302.exe</HSA>
-  <HSA os="win11" version="22H2" date="2023-12-07" crc="eec045f7e7911bf27b430da6b9a1ae28e002b3cbf3a714507bdeffb216e031f6" md5="5fcf85e3195fde1206f40fe4ea6a395d">https://download.lenovo.com/pccbbs/mobiles/tp_x13-yoga-g3_x13-yoga-g3-lte_x13-yoga-g3-lte2_hsa_w11_21_202205.exe</HSA>
+  <HSA os="win11" version="22H2" date="2023-12-07" crc="1e6f37892860bc845f98437cb35d804a29a115374f4e03321962647ff9610fba" md5="a6a0b0200f124e676cccc5ed3c6d1747">https://download.lenovo.com/pccbbs/mobiles/tp_x13-yoga-g3_x13-yoga-g3-lte_x13-yoga-g3-lte2_hsa_w11_22h2_202310.exe</HSA>
  </Model>
  <Model name="ThinkStation P360 ULTRA" arch="AMD">
   <Types>
@@ -5607,7 +5607,7 @@
    <Type>21EM</Type>
    <Type>21EN</Type>
   </Types>
-  <BIOS version="BIOS1.31_ECFW1.17" image="n3ke" date="2026-06-29" crc="a79428086e58edddf37186857ea75c847716fcba241f3d4e8302acb73640f73a" md5="505cb59849224bc9f79a4603f78a0651">https://download.lenovo.com/pccbbs/mobiles/n3kuj17w.exe</BIOS>
+  <BIOS version="BIOS1.31_ECFW1.17" image="n3ke" date="2026-08-27" crc="a79428086e58edddf37186857ea75c847716fcba241f3d4e8302acb73640f73a" md5="505cb59849224bc9f79a4603f78a0651">https://download.lenovo.com/pccbbs/mobiles/n3kuj17w.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2026-02-16" crc="823db29c97dda8aa1d7a5336c75dbb687d65d8032bed7f130ae6f525d974b1d0" md5="221f0c715186a86922e8f5005240a7dc">https://download.lenovo.com/pccbbs/mobiles/tp_p15vgen3_amd_mt21em-21en_win10_20h2_202212.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2026-02-16" crc="42985991e447e359dd6eb5ace30f99c93e1512ac773fa6302981c111717d3fea" md5="bd34e9a58b5155f97fc7cd7834611498">https://download.lenovo.com/pccbbs/mobiles/tp_p15vgen3_amd_mt21em-21en_win10_21h1_21h2_202311.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2026-02-16" crc="42985991e447e359dd6eb5ace30f99c93e1512ac773fa6302981c111717d3fea" md5="bd34e9a58b5155f97fc7cd7834611498">https://download.lenovo.com/pccbbs/mobiles/tp_p15vgen3_amd_mt21em-21en_win10_21h1_21h2_202311.exe</SCCM>
@@ -5772,7 +5772,7 @@
    <Type>21H8</Type>
    <Type>21H7</Type>
   </Types>
-  <BIOS version="1.30" image="r25e" date="2026-07-16" crc="875dbeafecaed5498b3c0a6945326b048abc755836d9ab4efcb991f459209f7a" md5="5a7cda96a7e183811cb534c31ea3a9d8">https://download.lenovo.com/pccbbs/mobiles/r25uj22w.exe</BIOS>
+  <BIOS version="1.31" image="r25e" date="2026-09-02" crc="52b0d66a8a62c212d9b8224450abe629b4f350a43e80704e1a55203dab69621f" md5="2efa269625710aa1d39ec37ddde6c456">https://download.lenovo.com/pccbbs/mobiles/r25uj23w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2025-08-07" crc="07f8298f7ba42ee7f1008452fbb089876e901fef985c0e4813397d056a04f3ca" md5="b032dee91c30477f6e6495776c7f4321">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h5_mt21h6_l15_mt21h7_mt21h8_w10_21h2_202507.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2025-08-07" crc="81f09f7cdaaf498723cc6d1f1ce7d4b41246b4b4cd642f2416a6d0e71ce2b10d" md5="4662132e93e9b64945af9ef1ba0abdc4">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h5_mt21h6_l15_mt21h7_mt21h8_w10_22h2_202507.exe</SCCM>
   <SCCM os="win11" version="21H2" date="2025-08-07" crc="199f2cc107034f1ed542bec0ab8a396bee30a9feaa9f170f1d958fdfb8f4e481" md5="43c463755fa0c7af72dc0474b6867587">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h5_mt21h6_l15_mt21h7_mt21h8_w11_21h2_202401.exe</SCCM>
@@ -5789,7 +5789,7 @@
    <Type>21H1</Type>
    <Type>21H2</Type>
   </Types>
-  <BIOS version="1.37" image="r24e" date="2026-08-12" crc="910bd31a5b6c84422515b2c2402eb9bf51c35d4010322e42b9148e9b313a183f" md5="a6210ef4240cbcfc7ea335461b665e2f">https://download.lenovo.com/pccbbs/mobiles/r24uj23w.exe</BIOS>
+  <BIOS version="1.37" image="r24e" date="2026-08-26" crc="910bd31a5b6c84422515b2c2402eb9bf51c35d4010322e42b9148e9b313a183f" md5="a6210ef4240cbcfc7ea335461b665e2f">https://download.lenovo.com/pccbbs/mobiles/r24uj23w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-07" crc="edf0f85f980c9e94ae835955b80a31445a0f613833e3e9348ba9498cb7852f05" md5="7be27a0455ac6bd5c6a1c592609a0d32">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h1_mt21h2_l15_mt21h3_mt21h4_w10_21h2_202601.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-07" crc="1465fb2f4cf492c181d3ab407157b5c2c1122c1863a5c6b1be0ca694c22689cd" md5="bae18e962afb1eca50b82de97c11ab0a">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h1_mt21h2_l15_mt21h3_mt21h4_w10_22h2_202601.exe</SCCM>
   <SCCM os="win11" version="21H2" date="2026-07-07" crc="0aa833217f737884cff9f2151602b4ecded6da41c0b6f964e6bc4b27b1b62540" md5="94a21c048841dd333d8e99b723da4fe2">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h1_mt21h2_l15_mt21h3_mt21h4_w11_21h2_20240308.exe</SCCM>
@@ -5857,7 +5857,7 @@
    <Type>21H3</Type>
    <Type>21H4</Type>
   </Types>
-  <BIOS version="1.37" image="r24e" date="2026-08-12" crc="910bd31a5b6c84422515b2c2402eb9bf51c35d4010322e42b9148e9b313a183f" md5="a6210ef4240cbcfc7ea335461b665e2f">https://download.lenovo.com/pccbbs/mobiles/r24uj23w.exe</BIOS>
+  <BIOS version="1.37" image="r24e" date="2026-08-26" crc="910bd31a5b6c84422515b2c2402eb9bf51c35d4010322e42b9148e9b313a183f" md5="a6210ef4240cbcfc7ea335461b665e2f">https://download.lenovo.com/pccbbs/mobiles/r24uj23w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-07" crc="edf0f85f980c9e94ae835955b80a31445a0f613833e3e9348ba9498cb7852f05" md5="7be27a0455ac6bd5c6a1c592609a0d32">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h1_mt21h2_l15_mt21h3_mt21h4_w10_21h2_202601.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-07" crc="1465fb2f4cf492c181d3ab407157b5c2c1122c1863a5c6b1be0ca694c22689cd" md5="bae18e962afb1eca50b82de97c11ab0a">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h1_mt21h2_l15_mt21h3_mt21h4_w10_22h2_202601.exe</SCCM>
   <SCCM os="win11" version="21H2" date="2026-07-07" crc="0aa833217f737884cff9f2151602b4ecded6da41c0b6f964e6bc4b27b1b62540" md5="94a21c048841dd333d8e99b723da4fe2">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h1_mt21h2_l15_mt21h3_mt21h4_w11_21h2_20240308.exe</SCCM>
@@ -5956,7 +5956,7 @@
    <Type>21H6</Type>
    <Type>21H5</Type>
   </Types>
-  <BIOS version="1.30" image="r25e" date="2026-07-16" crc="875dbeafecaed5498b3c0a6945326b048abc755836d9ab4efcb991f459209f7a" md5="5a7cda96a7e183811cb534c31ea3a9d8">https://download.lenovo.com/pccbbs/mobiles/r25uj22w.exe</BIOS>
+  <BIOS version="1.31" image="r25e" date="2026-09-02" crc="52b0d66a8a62c212d9b8224450abe629b4f350a43e80704e1a55203dab69621f" md5="2efa269625710aa1d39ec37ddde6c456">https://download.lenovo.com/pccbbs/mobiles/r25uj23w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2025-08-07" crc="07f8298f7ba42ee7f1008452fbb089876e901fef985c0e4813397d056a04f3ca" md5="b032dee91c30477f6e6495776c7f4321">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h5_mt21h6_l15_mt21h7_mt21h8_w10_21h2_202507.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2025-08-07" crc="81f09f7cdaaf498723cc6d1f1ce7d4b41246b4b4cd642f2416a6d0e71ce2b10d" md5="4662132e93e9b64945af9ef1ba0abdc4">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h5_mt21h6_l15_mt21h7_mt21h8_w10_22h2_202507.exe</SCCM>
   <SCCM os="win11" version="21H2" date="2025-08-07" crc="199f2cc107034f1ed542bec0ab8a396bee30a9feaa9f170f1d958fdfb8f4e481" md5="43c463755fa0c7af72dc0474b6867587">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21h5_mt21h6_l15_mt21h7_mt21h8_w11_21h2_202401.exe</SCCM>
@@ -6275,7 +6275,7 @@
    <Type>12E6</Type>
    <Type>13FG</Type>
   </Types>
-  <BIOS version="M4VKT2DA_1.45" image="m4vk" date="2026-06-11" crc="d46126d345fe1e409328a57a60ccc2844356a67730dfce7daff8c3a40403f8fd" md5="8e41597393a7ae658092249b005368c9">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4vjy2dusa.exe</BIOS>
+  <BIOS version="M4VKT2EA_1.46" image="m4vk" date="2026-09-02" crc="b1718110034195ab23acc3b3aed381246d43859084f169e802ea4c09c5e16b0a" md5="1283244eaeedea69a813ae44e36fd09b">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4vjy2eusa.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2024-09-06" crc="78b695ce08eebd14b5703b6f26378eee1e8a5be482b6a4d7f03df2e1d3b7faa2" md5="b580f5cbfc69ada4d89153bb18daf063">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w11_22_202309.exe</SCCM>
@@ -6296,7 +6296,7 @@
    <Type>12FJ</Type>
    <Type>12DN</Type>
   </Types>
-  <BIOS version="M4TKT43A_1.0.0.67" image="m4tk" date="2026-06-16" crc="d2841b2c399bac46b33a82bee15936b46d0111023a68c6f776ee7fef19dc36a2" md5="b2f68fc27a38ae2d742f42d26673aed2">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4tjy43usa.exe</BIOS>
+  <BIOS version="M4TKT44A_1.0.0.68" image="m4tk" date="2026-08-27" crc="0e746ce6374a96e7c8e2c8bd1638e4e65fc5a6470a9a4a4619147a91c87806d9" md5="a660d57ec0821d01b9d38d6dd10be3ba">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4tjy44usa.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2024-09-06" crc="78b695ce08eebd14b5703b6f26378eee1e8a5be482b6a4d7f03df2e1d3b7faa2" md5="b580f5cbfc69ada4d89153bb18daf063">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w11_22_202309.exe</SCCM>
@@ -6317,7 +6317,7 @@
    <Type>12DL</Type>
    <Type>12FK</Type>
   </Types>
-  <BIOS version="M4TKT43A_1.0.0.67" image="m4tk" date="2026-06-16" crc="d2841b2c399bac46b33a82bee15936b46d0111023a68c6f776ee7fef19dc36a2" md5="b2f68fc27a38ae2d742f42d26673aed2">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4tjy43usa.exe</BIOS>
+  <BIOS version="M4TKT44A_1.0.0.68" image="m4tk" date="2026-08-27" crc="0e746ce6374a96e7c8e2c8bd1638e4e65fc5a6470a9a4a4619147a91c87806d9" md5="a660d57ec0821d01b9d38d6dd10be3ba">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4tjy44usa.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2024-09-06" crc="78b695ce08eebd14b5703b6f26378eee1e8a5be482b6a4d7f03df2e1d3b7faa2" md5="b580f5cbfc69ada4d89153bb18daf063">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w11_22_202309.exe</SCCM>
@@ -6457,7 +6457,7 @@
    <Type>12HR</Type>
    <Type>12HT</Type>
   </Types>
-  <BIOS version="M4SKT43A_1.0.0.67" image="m4sk" date="2026-07-08" crc="f6f2280d9bbd2355cb1fd54298abdd6d7d0982a7b8e410da8bfe0b1c674bfcbe" md5="72f3793e92323cbf4609aba8e5a2768a">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4sjy43usa.exe</BIOS>
+  <BIOS version="M4SKT44A_1.0.0.68" image="m4sk" date="2026-08-27" crc="6d9ae32d37d5889a292e3a7dccaed0c8d3bf81ec34525b4b7a9c1f64f2e4ae4d" md5="3bf8f5bb7165b7be1af50eda656e48f8">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4sjy44usa.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2024-09-06" crc="78b695ce08eebd14b5703b6f26378eee1e8a5be482b6a4d7f03df2e1d3b7faa2" md5="b580f5cbfc69ada4d89153bb18daf063">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w11_22_202309.exe</SCCM>
@@ -6474,7 +6474,7 @@
    <Type>12HK</Type>
    <Type>12HM</Type>
   </Types>
-  <BIOS version="M4SKT43A_1.0.0.67" image="m4sk" date="2026-07-08" crc="f6f2280d9bbd2355cb1fd54298abdd6d7d0982a7b8e410da8bfe0b1c674bfcbe" md5="72f3793e92323cbf4609aba8e5a2768a">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4sjy43usa.exe</BIOS>
+  <BIOS version="M4SKT44A_1.0.0.68" image="m4sk" date="2026-08-27" crc="6d9ae32d37d5889a292e3a7dccaed0c8d3bf81ec34525b4b7a9c1f64f2e4ae4d" md5="3bf8f5bb7165b7be1af50eda656e48f8">https://download.lenovo.com/pccbbs/thinkcentre_bios/m4sjy44usa.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2024-09-06" crc="2cfd411799b22da052543bba404ce2eb4b9f5bc8be995f5edeb07ab1373461bf" md5="4f374141e15239d7ccb0dde9c82cb947">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w1064_21h2_22h2_202305.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2024-09-06" crc="78b695ce08eebd14b5703b6f26378eee1e8a5be482b6a4d7f03df2e1d3b7faa2" md5="b580f5cbfc69ada4d89153bb18daf063">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen4-m80tsq_gen4-m90tsq_gen4-n50t_gen4_w11_22_202309.exe</SCCM>
@@ -6489,7 +6489,7 @@
    <Type>21F8</Type>
    <Type>21F9</Type>
   </Types>
-  <BIOS version="1.71" image="r2ee" date="2026-06-26" crc="60c80107d96d5c108fd2bc12a3e8bcac19f205ba4bc28884e94187da985993f6" md5="c06d115bc52c6a1ec70a663dd5dff28c">https://download.lenovo.com/pccbbs/mobiles/r2euj90d.exe</BIOS>
+  <BIOS version="1.71" image="r2ee" date="2026-09-02" crc="60c80107d96d5c108fd2bc12a3e8bcac19f205ba4bc28884e94187da985993f6" md5="c06d115bc52c6a1ec70a663dd5dff28c">https://download.lenovo.com/pccbbs/mobiles/r2euj90d.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-06-08" crc="1c4deabb8a788a87be62b3b6dedc217f5a00fac4b26de7eee0b2b0f93ec6ad28" md5="56b2400c69e411c52d39f732adbe7110">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen_4a_w1064_21h2_22h2_202605.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-06-08" crc="1c4deabb8a788a87be62b3b6dedc217f5a00fac4b26de7eee0b2b0f93ec6ad28" md5="56b2400c69e411c52d39f732adbe7110">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen_4a_w1064_21h2_22h2_202605.exe</SCCM>
   <SCCM os="win11" version="21H2" date="2026-06-08" crc="5fb00aaa70ae13b7c1949344952df79443cedb4d359132caaa95ed3b609b3b70" md5="2dda4f40a5d6cc7cc3b87e87083d91ea">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen_4a_w11_21_22_24_25_202605.exe</SCCM>
@@ -6653,7 +6653,7 @@
    <Type>21LW</Type>
    <Type>21LX</Type>
   </Types>
-  <BIOS version="1.19" image="n45e" date="2026-08-11" crc="e6ea8f7f6d9c9c0eb417f2f2626be5906cffb01fdb913bfdbc7182d67ece7ac7" md5="d87a657a4f30449265cc62ae7cb81cbd">https://download.lenovo.com/pccbbs/mobiles/n45uj12w.exe</BIOS>
+  <BIOS version="1.19" image="n45e" date="2026-08-26" crc="e6ea8f7f6d9c9c0eb417f2f2626be5906cffb01fdb913bfdbc7182d67ece7ac7" md5="d87a657a4f30449265cc62ae7cb81cbd">https://download.lenovo.com/pccbbs/mobiles/n45uj12w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-06" crc="a15f11b0211d53a7a8cbeee1548b32e3b59afb7f3ff1b751927b666d17a49370" md5="7925effa326795a65c8db17d8ec8b9c9">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen5_mt21lu-21lv-x13_2-in-1_gen5_mt21lw-21lx_w10_21h2_202606.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-06" crc="6e8f0de037eafa73b5c8431d82de1a9d2efee08fcd066436f507154af47520a0" md5="12b9178de1bd209fa74c37422dd40348">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen5_mt21lu-21lv-x13_2-in-1_gen5_mt21lw-21lx_w10_22h2_202606.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2026-07-06" crc="999bb0222a5d498be65b97691ff3a4a0b2928ba9cf07065005304f548f7a6327" md5="971e63acaa702fe900ea7c4640797fa3">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen5_mt21lu-21lv-x13_2-in-1_gen5_mt21lw-21lx_w11_22_202408.exe</SCCM>
@@ -6669,7 +6669,7 @@
    <Type>21LU</Type>
    <Type>21LV</Type>
   </Types>
-  <BIOS version="1.19" image="n45e" date="2026-08-11" crc="e6ea8f7f6d9c9c0eb417f2f2626be5906cffb01fdb913bfdbc7182d67ece7ac7" md5="d87a657a4f30449265cc62ae7cb81cbd">https://download.lenovo.com/pccbbs/mobiles/n45uj12w.exe</BIOS>
+  <BIOS version="1.19" image="n45e" date="2026-08-26" crc="e6ea8f7f6d9c9c0eb417f2f2626be5906cffb01fdb913bfdbc7182d67ece7ac7" md5="d87a657a4f30449265cc62ae7cb81cbd">https://download.lenovo.com/pccbbs/mobiles/n45uj12w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-06" crc="a15f11b0211d53a7a8cbeee1548b32e3b59afb7f3ff1b751927b666d17a49370" md5="7925effa326795a65c8db17d8ec8b9c9">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen5_mt21lu-21lv-x13_2-in-1_gen5_mt21lw-21lx_w10_21h2_202606.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-06" crc="6e8f0de037eafa73b5c8431d82de1a9d2efee08fcd066436f507154af47520a0" md5="12b9178de1bd209fa74c37422dd40348">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen5_mt21lu-21lv-x13_2-in-1_gen5_mt21lw-21lx_w10_22h2_202606.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2026-07-06" crc="999bb0222a5d498be65b97691ff3a4a0b2928ba9cf07065005304f548f7a6327" md5="971e63acaa702fe900ea7c4640797fa3">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen5_mt21lu-21lv-x13_2-in-1_gen5_mt21lw-21lx_w11_22_202408.exe</SCCM>
@@ -6745,7 +6745,7 @@
    <Type>21LM</Type>
    <Type>21LN</Type>
   </Types>
-  <BIOS version="1.25" image="r2ge" date="2026-08-11" crc="5dc8888562de8efcf510f3e0bf3e9e1a674dac3308335d31f8bf934cde1facec" md5="a3daeb77d25fcecc5314ed4046264178">https://download.lenovo.com/pccbbs/mobiles/r2guj15w.exe</BIOS>
+  <BIOS version="1.25" image="r2ge" date="2026-08-26" crc="5dc8888562de8efcf510f3e0bf3e9e1a674dac3308335d31f8bf934cde1facec" md5="a3daeb77d25fcecc5314ed4046264178">https://download.lenovo.com/pccbbs/mobiles/r2guj15w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-03" crc="f1862c29d998a59a12e2bf5abb095ea7c7c4abb2006df24556113cbcab765aed" md5="19f6c5a6ca73b1c78544b7c33fd1fb51">https://download.lenovo.com/pccbbs/mobiles/tp_l13-gen-5_s2-gen-9_l13-2-in-1-gen-5_intel_w10_21h2_202605.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-03" crc="e10229ccbadb11e45319112ad12a9d507e951135ef8e5ef4603bd5f5b124cef8" md5="d12b634598ed2d60a6eda732b1c68479">https://download.lenovo.com/pccbbs/mobiles/tp_l13-gen-5_s2-gen-9_l13-2-in-1-gen-5_intel_w10_22h2_202605.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2026-07-03" crc="b2ffc0ce1b241dc0423ea5de868e031ff52d31d8cc36ae624093bb748272575b" md5="0d153d0a5db027c47d995151d3705ca9">https://download.lenovo.com/pccbbs/mobiles/tp_l13-gen-5_s2-gen-9_l13-2-in-1-gen-5_intel_w11_22h2_202408.exe</SCCM>
@@ -6763,7 +6763,7 @@
    <Type>21LB</Type>
    <Type>21LC</Type>
   </Types>
-  <BIOS version="1.25" image="r2ge" date="2026-08-11" crc="5dc8888562de8efcf510f3e0bf3e9e1a674dac3308335d31f8bf934cde1facec" md5="a3daeb77d25fcecc5314ed4046264178">https://download.lenovo.com/pccbbs/mobiles/r2guj15w.exe</BIOS>
+  <BIOS version="1.25" image="r2ge" date="2026-08-26" crc="5dc8888562de8efcf510f3e0bf3e9e1a674dac3308335d31f8bf934cde1facec" md5="a3daeb77d25fcecc5314ed4046264178">https://download.lenovo.com/pccbbs/mobiles/r2guj15w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-03" crc="f1862c29d998a59a12e2bf5abb095ea7c7c4abb2006df24556113cbcab765aed" md5="19f6c5a6ca73b1c78544b7c33fd1fb51">https://download.lenovo.com/pccbbs/mobiles/tp_l13-gen-5_s2-gen-9_l13-2-in-1-gen-5_intel_w10_21h2_202605.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-03" crc="e10229ccbadb11e45319112ad12a9d507e951135ef8e5ef4603bd5f5b124cef8" md5="d12b634598ed2d60a6eda732b1c68479">https://download.lenovo.com/pccbbs/mobiles/tp_l13-gen-5_s2-gen-9_l13-2-in-1-gen-5_intel_w10_22h2_202605.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2026-07-03" crc="b2ffc0ce1b241dc0423ea5de868e031ff52d31d8cc36ae624093bb748272575b" md5="0d153d0a5db027c47d995151d3705ca9">https://download.lenovo.com/pccbbs/mobiles/tp_l13-gen-5_s2-gen-9_l13-2-in-1-gen-5_intel_w11_22h2_202408.exe</SCCM>
@@ -6855,7 +6855,7 @@
    <Type>21LT</Type>
    <Type>21LS</Type>
   </Types>
-  <BIOS version="1.17" image="n46e" date="2026-08-11" crc="7e810d5c80360542f83695d78ac87b41d4aa8d342a3957422529b157f4b2d316" md5="2c8f1f059d15f31c27d9930959670d2e">https://download.lenovo.com/pccbbs/mobiles/n46uj12w.exe</BIOS>
+  <BIOS version="1.17" image="n46e" date="2026-08-24" crc="7e810d5c80360542f83695d78ac87b41d4aa8d342a3957422529b157f4b2d316" md5="2c8f1f059d15f31c27d9930959670d2e">https://download.lenovo.com/pccbbs/mobiles/n46uj12w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-06" crc="686637d88a0542754605ff1c08baaa90b2feb636eebd89e042f8eea1b3c7c3cf" md5="5d196a5a02ed601e6f82456e730c03b8">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen5_21ls_21lt_w1064_21h2_202606.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-06" crc="2eafef36a073a3406e1a91ad8326fd0e6b4a18474d341d0976a1d93fc550e4d0" md5="c9927d295b278729ae0ce8993a8c9189">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen5_21ls_21lt_w1064_22h2_202606.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2026-07-06" crc="b80822ceaaae1e01d6f28fe8af34136becc5d9b8db5f79bc9f2bd8524da643bb" md5="67f9b022001366c8abffdbb2cf198317">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen5_21ls_21lt_w11_22_202408.exe</SCCM>
@@ -7028,7 +7028,7 @@
    <Type>21G3</Type>
    <Type>21G2</Type>
   </Types>
-  <BIOS version="1.28" image="r2de" date="2026-08-13" crc="a8b5d15ebb86637bfc47ed9b9c26b1ded4d75f5ba8d8677bc84a7b805df4deb0" md5="3ae5319a65a5fb782278d8228729e41e">https://download.lenovo.com/pccbbs/mobiles/r2duj18w.exe</BIOS>
+  <BIOS version="1.28" image="r2de" date="2026-08-24" crc="a8b5d15ebb86637bfc47ed9b9c26b1ded4d75f5ba8d8677bc84a7b805df4deb0" md5="3ae5319a65a5fb782278d8228729e41e">https://download.lenovo.com/pccbbs/mobiles/r2duj18w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-03" crc="55651e9ec1b536fa5ff12fddb75a27d53ff856b41fbeb53d04d573fb516fdbe1" md5="8d064ef7b72116e417af38ec9d7452a1">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg5_p16sg3_mt21g2_mt21g3_mt21ks_mt21kt_w10_21h2_202604.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-03" crc="858d6757bb2f942806297b0321639f9607035de0b45fad186dfc94474bc3eb58" md5="895a7943c1224ce42ecf10f126bae332">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg5_p16sg3_mt21g2_mt21g3_mt21ks_mt21kt_w10_22h2_202604.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2026-07-03" crc="10a2ff57b9c78797d906870015939d5489b349934ad9f607d01f9b44285eacf9" md5="dec6f0acf566787f5f77383d05b00190">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg5_p16sg3_mt21g2_mt21g3_mt21ks_mt21kt_w11_22h2_sccm_202407.exe</SCCM>
@@ -7050,7 +7050,7 @@
    <Type>21KT</Type>
    <Type>21KS</Type>
   </Types>
-  <BIOS version="1.28" image="r2de" date="2026-08-13" crc="a8b5d15ebb86637bfc47ed9b9c26b1ded4d75f5ba8d8677bc84a7b805df4deb0" md5="3ae5319a65a5fb782278d8228729e41e">https://download.lenovo.com/pccbbs/mobiles/r2duj18w.exe</BIOS>
+  <BIOS version="1.28" image="r2de" date="2026-08-24" crc="a8b5d15ebb86637bfc47ed9b9c26b1ded4d75f5ba8d8677bc84a7b805df4deb0" md5="3ae5319a65a5fb782278d8228729e41e">https://download.lenovo.com/pccbbs/mobiles/r2duj18w.exe</BIOS>
   <SCCM os="win10" version="21H2" date="2026-07-03" crc="55651e9ec1b536fa5ff12fddb75a27d53ff856b41fbeb53d04d573fb516fdbe1" md5="8d064ef7b72116e417af38ec9d7452a1">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg5_p16sg3_mt21g2_mt21g3_mt21ks_mt21kt_w10_21h2_202604.exe</SCCM>
   <SCCM os="win10" version="22H2" date="2026-07-03" crc="858d6757bb2f942806297b0321639f9607035de0b45fad186dfc94474bc3eb58" md5="895a7943c1224ce42ecf10f126bae332">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg5_p16sg3_mt21g2_mt21g3_mt21ks_mt21kt_w10_22h2_202604.exe</SCCM>
   <SCCM os="win11" version="22H2" date="2026-07-03" crc="10a2ff57b9c78797d906870015939d5489b349934ad9f607d01f9b44285eacf9" md5="dec6f0acf566787f5f77383d05b00190">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg5_p16sg3_mt21g2_mt21g3_mt21ks_mt21kt_w11_22h2_sccm_202407.exe</SCCM>
@@ -7124,7 +7124,7 @@
    <Type>13L1</Type>
    <Type>12TR</Type>
   </Types>
-  <BIOS version="M5HKT28A_1.40" image="m5hk" date="2026-08-10" crc="f41f77199eb098f933ced6f813990db7867b52153695be337ab11e1224b57b64" md5="945726921c483cc7a9bbb9b75310f2bd">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5hjy28usa.exe</BIOS>
+  <BIOS version="M5HKT28A_1.40" image="m5hk" date="2026-08-21" crc="f41f77199eb098f933ced6f813990db7867b52153695be337ab11e1224b57b64" md5="945726921c483cc7a9bbb9b75310f2bd">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5hjy28usa.exe</BIOS>
   <SCCM os="win10" version="22H2" date="2026-06-05" crc="fb21b1bd46b76d477bb9c3a8c4c97ef077dab9bfe8441fb8bc62cefd22904ed8" md5="6c1c558fe48755a95ceebdeac8b97ce6">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen5-m90tsq_gen5-n50t_gen5-n_ultra_w1064_22h2_202405.exe</SCCM>
   <SCCM os="win11" version="23H2" date="2026-06-05" crc="e11e58fbb644385693a33838e7d4fd27089527ed6337ddda6d4d2ab2a5c3ebbc" md5="f7c679b2c5f6fb553dd14119830207a9">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen5-m90tsq_gen5-n50t_gen5-n_ultra_w11_23_202404.exe</SCCM>
   <SCCM os="win11" version="24H2" date="2026-06-05" crc="a44803272d1652af95f0d71d480638c5445ae963c96769eb98d3e8071483cbc6" md5="5891362479e6ccb944820bebbe3292d5">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen5-m90tsq_gen5-n50t_gen5-n_ultra_w11_24_25_202604.exe</SCCM>
@@ -7229,9 +7229,9 @@
    <Type>21QA</Type>
   </Types>
   <BIOS version="1.24" image="n4de" date="2026-08-04" crc="bc6b85b2287ddb4c8198d8ea7ab1f44e1d5ddc8c421609b4ea9c64186e4693c0" md5="eda4441797451dbcc771ba15afef144b">https://download.lenovo.com/pccbbs/mobiles/n4duj14w.exe</BIOS>
-  <SCCM os="win11" version="23H2" date="2026-07-08" crc="bff045265a7b1644fed62729b1ad74f4f157df441cd5c5b4e04493998b65d816" md5="d5a108cc948af00568134083c7f5fc83">https://download.lenovo.com/pccbbs/mobiles/tp_x9-14_gen1_mt21qa-21qb_w11_23h2_202512.exe</SCCM>
-  <SCCM os="win11" version="24H2" date="2026-07-08" crc="c3e199839252177197d68decceb343401c94c2f5cc8666eacd7c2e63ceff974b" md5="686a3d6a55cb2dc4d3c19ff27e7ea130">https://download.lenovo.com/pccbbs/mobiles/tp_x9-14_gen1_mt21qa-21qb_w11_24h2_202606.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-07-08" crc="f78834c6bcd6d3f909896406a0e729a908e55fc8ae9710068a687aedeb7abeea" md5="d3ac08993140b4c4c5924e4b03279adf">https://download.lenovo.com/pccbbs/mobiles/tp_x9-14_gen1_mt21qa-21qb_w11_25h2_202606.exe</SCCM>
+  <SCCM os="win11" version="23H2" date="2026-09-02" crc="bff045265a7b1644fed62729b1ad74f4f157df441cd5c5b4e04493998b65d816" md5="d5a108cc948af00568134083c7f5fc83">https://download.lenovo.com/pccbbs/mobiles/tp_x9-14_gen1_mt21qa-21qb_w11_23h2_202512.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-09-02" crc="8510a4c5672e49b33cf46e8d5fcf82349910ab832875035b728e36e22d477f44" md5="33f18801b3f7a15f4c807e8c91eb82e8">https://download.lenovo.com/pccbbs/mobiles/tp_x9-14_gen1_mt21qa-21qb_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-09-02" crc="17dcef3822f640e2f4157c98fa6e7d818c4eff16318eb37309d6bc38146cb5b2" md5="11c7bb5c642b2c800b580682ccaae540">https://download.lenovo.com/pccbbs/mobiles/tp_x9-14_gen1_mt21qa-21qb_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="24H2" date="2025-01-27" crc="4b5fcfa63729be20f1c245ee0f547f4b292761466e4b2d7ca64819fa88f1f257" md5="d9e3f1aba33d234ff5f87418996a16da">https://download.lenovo.com/pccbbs/mobiles/tp_x9-14_Gen1_mt21qa-21qb_hsa_w11_24h2_202501.exe</HSA>
  </Model>
  <Model name="ThinkPad X9-15 Gen 1 Type 21Q6 21Q7" arch="Intel">
@@ -7239,7 +7239,7 @@
    <Type>21Q7</Type>
    <Type>21Q6</Type>
   </Types>
-  <BIOS version="1.21" image="n4ce" date="2026-08-12" crc="57e8f3a1c2dd46ddd71f3925729c58aac1d712021be6f5361b5b2318e450e661" md5="9c8a012886dc1522a50941160db2974d">https://download.lenovo.com/pccbbs/mobiles/n4cuj09w.exe</BIOS>
+  <BIOS version="1.21" image="n4ce" date="2026-08-24" crc="57e8f3a1c2dd46ddd71f3925729c58aac1d712021be6f5361b5b2318e450e661" md5="9c8a012886dc1522a50941160db2974d">https://download.lenovo.com/pccbbs/mobiles/n4cuj09w.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-04-21" crc="5edfd83aa5bc96f3a4f52b53fdc55721a00c3375a07d76933ea8067631360b92" md5="ba3cb8af0e56455095983049a6782287">https://download.lenovo.com/pccbbs/mobiles/tp_x9-15_gen1_mt21q6-21q7_w11_24h2_202512.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-04-21" crc="b2bb1797004ccee5570531fb29dc3d95ac72348fc32e61a6ceb6e39518085fe0" md5="d5f5bc121d5b388343e561a4ba45b142">https://download.lenovo.com/pccbbs/mobiles/tp_x9-15_gen1_mt21q6-21q7_w11_25h2_202603.exe</SCCM>
   <HSA os="win11" version="24H2" date="2025-01-22" crc="4531a70756b4b38c6ed06be002fae69dfeecd52958f63c7ab53790e0a30529b2" md5="6e1f5361d1a6ce4bc0e82324d6deaa7f">https://download.lenovo.com/pccbbs/mobiles/tp_x9-15_Gen1_mt21q6-21q7_hsa_w11_24h2_202501.exe</HSA>
@@ -7249,10 +7249,10 @@
    <Type>21QY</Type>
    <Type>21QX</Type>
   </Types>
-  <BIOS version="1.16" image="n4ie" date="2026-08-11" crc="f0f78209742807463488f3a48b1e516ca19e94a4340eee5395d88c3ea63033d2" md5="3fba79de0be7d788ab4ebd6b0e006285">https://download.lenovo.com/pccbbs/mobiles/n4iuj10w.exe</BIOS>
-  <SCCM os="win11" version="23H2" date="2026-07-06" crc="49aa8e895e347a90437a22bfa1420bdf07e40ee8154a2606bdd6da8717b86f49" md5="74d567b23291c1a28ec927e0b98d3833">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_21qx_21qy_w11_23_202512.exe</SCCM>
-  <SCCM os="win11" version="24H2" date="2026-07-06" crc="2abb3fcb3c41ff7daaa03ba84f133359cd3beedf828227366aa3c3e0a518716a" md5="0a69db1d42900070c463a14ae2e6edde">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_21qx_21qy_w11_24h2_202606.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-07-06" crc="ccd35e674a463bae55e6f899bd4a848737e7a3b2f911d0adf3635da94bac78cd" md5="58ac557ba3ff1cc37ad4c5f461558d6d">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_21qx_21qy_w11_25h2_202606.exe</SCCM>
+  <BIOS version="1.16" image="n4ie" date="2026-08-21" crc="f0f78209742807463488f3a48b1e516ca19e94a4340eee5395d88c3ea63033d2" md5="3fba79de0be7d788ab4ebd6b0e006285">https://download.lenovo.com/pccbbs/mobiles/n4iuj10w.exe</BIOS>
+  <SCCM os="win11" version="23H2" date="2026-08-28" crc="49aa8e895e347a90437a22bfa1420bdf07e40ee8154a2606bdd6da8717b86f49" md5="74d567b23291c1a28ec927e0b98d3833">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_21qx_21qy_w11_23_202512.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-28" crc="d48a2d7e014ac133dbec05ad414f50b67634e2db4dda61ee8cacc6a20af894b7" md5="a48c826c4abbbd52718794cfcbe628ac">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_21qx_21qy_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-28" crc="9834ca210bcecfdb547da41e676c901f9e0d43057ec1f207cfd029f18fc2696b" md5="f854febad18fecd78fdeaaaa78b34e53">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_21qx_21qy_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-03-18" crc="60367a9e538146bef5eb27cedfc4a95c308ea1b2bc30bac831e8602f8af9f2d8" md5="a6d20eb1e08fd25e6ab7007205f3a630">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_21qx_21qy_w11_24h2_hsa_202503.exe</HSA>
   <HSA os="win11" version="25H2" date="2026-03-18" crc="012498f6e4c5943a4aa4237930878b4a578441b12bc2412db30139284f74fa85" md5="a795d45f3bb69c33e08c929db0685c9c">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_21qx_21qy_w11_25h2_hsa_202602.exe</HSA>
  </Model>
@@ -7295,7 +7295,7 @@
   <Types>
    <Type>21UB</Type>
   </Types>
-  <BIOS version="1.14" image="r2ye" date="2026-08-12" crc="208effa5bb35f94dbc2e9d3debfdf6e731ff4ce823dc18f836379dae36dd0e61" md5="6673da03b06364e798cf20075498bb93">https://download.lenovo.com/pccbbs/mobiles/r2yuj25w.exe</BIOS>
+  <BIOS version="1.14" image="r2ye" date="2026-08-21" crc="208effa5bb35f94dbc2e9d3debfdf6e731ff4ce823dc18f836379dae36dd0e61" md5="6673da03b06364e798cf20075498bb93">https://download.lenovo.com/pccbbs/mobiles/r2yuj25w.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-07-14" crc="f017ddbcc195b5cec3dfcbe6b7ddea2c89b7922f15a4940f711483eedd03081f" md5="544e94cf1c826c095021a126775899eb">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_25h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-14" crc="f017ddbcc195b5cec3dfcbe6b7ddea2c89b7922f15a4940f711483eedd03081f" md5="544e94cf1c826c095021a126775899eb">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_25h2_202606.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-03-26" crc="fbbe5f56605c4b3ebbeab442f5a3980760927de1cb7fc0ffc1215ea4d8cea943" md5="4fd590e810b569d389aed4933dcfda7a">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_202602.exe</HSA>
@@ -7365,7 +7365,7 @@
    <Type>21TA</Type>
    <Type>21T9</Type>
   </Types>
-  <BIOS version="1.14" image="r2ye" date="2026-08-12" crc="208effa5bb35f94dbc2e9d3debfdf6e731ff4ce823dc18f836379dae36dd0e61" md5="6673da03b06364e798cf20075498bb93">https://download.lenovo.com/pccbbs/mobiles/r2yuj25w.exe</BIOS>
+  <BIOS version="1.14" image="r2ye" date="2026-08-21" crc="208effa5bb35f94dbc2e9d3debfdf6e731ff4ce823dc18f836379dae36dd0e61" md5="6673da03b06364e798cf20075498bb93">https://download.lenovo.com/pccbbs/mobiles/r2yuj25w.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-07-14" crc="f017ddbcc195b5cec3dfcbe6b7ddea2c89b7922f15a4940f711483eedd03081f" md5="544e94cf1c826c095021a126775899eb">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_25h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-14" crc="f017ddbcc195b5cec3dfcbe6b7ddea2c89b7922f15a4940f711483eedd03081f" md5="544e94cf1c826c095021a126775899eb">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_25h2_202606.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-03-26" crc="fbbe5f56605c4b3ebbeab442f5a3980760927de1cb7fc0ffc1215ea4d8cea943" md5="4fd590e810b569d389aed4933dcfda7a">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_202602.exe</HSA>
@@ -7376,7 +7376,7 @@
    <Type>21TG</Type>
    <Type>21TF</Type>
   </Types>
-  <BIOS version="1.14" image="r2ye" date="2026-08-12" crc="208effa5bb35f94dbc2e9d3debfdf6e731ff4ce823dc18f836379dae36dd0e61" md5="6673da03b06364e798cf20075498bb93">https://download.lenovo.com/pccbbs/mobiles/r2yuj25w.exe</BIOS>
+  <BIOS version="1.14" image="r2ye" date="2026-08-21" crc="208effa5bb35f94dbc2e9d3debfdf6e731ff4ce823dc18f836379dae36dd0e61" md5="6673da03b06364e798cf20075498bb93">https://download.lenovo.com/pccbbs/mobiles/r2yuj25w.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-07-14" crc="f017ddbcc195b5cec3dfcbe6b7ddea2c89b7922f15a4940f711483eedd03081f" md5="544e94cf1c826c095021a126775899eb">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_25h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-14" crc="f017ddbcc195b5cec3dfcbe6b7ddea2c89b7922f15a4940f711483eedd03081f" md5="544e94cf1c826c095021a126775899eb">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_25h2_202606.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-03-26" crc="fbbe5f56605c4b3ebbeab442f5a3980760927de1cb7fc0ffc1215ea4d8cea943" md5="4fd590e810b569d389aed4933dcfda7a">https://download.lenovo.com/pccbbs/mobiles/tp_e14_g7_e16_g3_l14p_g6_mt21t9-ta-tf-tg-ub_w11_24h2_202602.exe</HSA>
@@ -7435,7 +7435,7 @@
    <Type>21NX</Type>
    <Type>21NY</Type>
   </Types>
-  <BIOS version="1.18" image="n4me" date="2026-08-11" crc="3a56ab2d9f304e9c75850d0898e500ec2026d09f75d650d33c22d8e80ea6b103" md5="f2da0c10b265b9001f0460d06e0a833c">https://download.lenovo.com/pccbbs/mobiles/n4muj09w.exe</BIOS>
+  <BIOS version="1.18" image="n4me" date="2026-08-26" crc="3a56ab2d9f304e9c75850d0898e500ec2026d09f75d650d33c22d8e80ea6b103" md5="f2da0c10b265b9001f0460d06e0a833c">https://download.lenovo.com/pccbbs/mobiles/n4muj09w.exe</BIOS>
   <SCCM os="win11" version="23H2" date="2026-07-08" crc="a14612780db593a53b578b2bb80d54760bfe78b9b7ccff2b31e4cd3e466e1a39" md5="a3ce0697de556aea25a564bc3e427278">https://download.lenovo.com/pccbbs/mobiles/tp_x1_carbon_gen13_mt21nx_mt21ny_x1_2-in-1_gen10_mt21q0_mt21q1_w11_23h2_202512.exe</SCCM>
   <SCCM os="win11" version="24H2" date="2026-07-08" crc="43cef0734479dd3815d8b2036c75e73567019e2d5db73d382685911d1bb7922e" md5="5dd24d24b0adb912d05f7cfd6dd71eb7">https://download.lenovo.com/pccbbs/mobiles/tp_x1_carbon_gen13_mt21nx_mt21ny_x1_2-in-1_gen10_mt21q0_mt21q1_w11_24h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-08" crc="0045445db51a65b640059e0c9aef3ae0ba7afe846421918d69fb833ae8473128" md5="0dcbbf4060e22280b1adda78e4d29d4c">https://download.lenovo.com/pccbbs/mobiles/tp_x1_carbon_gen13_mt21nx_mt21ny_x1_2-in-1_gen10_mt21q0_mt21q1_w11_25h2_202606.exe</SCCM>
@@ -7460,7 +7460,7 @@
    <Type>21Q0</Type>
    <Type>21Q1</Type>
   </Types>
-  <BIOS version="1.18" image="n4me" date="2026-08-11" crc="3a56ab2d9f304e9c75850d0898e500ec2026d09f75d650d33c22d8e80ea6b103" md5="f2da0c10b265b9001f0460d06e0a833c">https://download.lenovo.com/pccbbs/mobiles/n4muj09w.exe</BIOS>
+  <BIOS version="1.18" image="n4me" date="2026-08-26" crc="3a56ab2d9f304e9c75850d0898e500ec2026d09f75d650d33c22d8e80ea6b103" md5="f2da0c10b265b9001f0460d06e0a833c">https://download.lenovo.com/pccbbs/mobiles/n4muj09w.exe</BIOS>
   <SCCM os="win11" version="23H2" date="2026-07-08" crc="a14612780db593a53b578b2bb80d54760bfe78b9b7ccff2b31e4cd3e466e1a39" md5="a3ce0697de556aea25a564bc3e427278">https://download.lenovo.com/pccbbs/mobiles/tp_x1_carbon_gen13_mt21nx_mt21ny_x1_2-in-1_gen10_mt21q0_mt21q1_w11_23h2_202512.exe</SCCM>
   <SCCM os="win11" version="24H2" date="2026-07-08" crc="43cef0734479dd3815d8b2036c75e73567019e2d5db73d382685911d1bb7922e" md5="5dd24d24b0adb912d05f7cfd6dd71eb7">https://download.lenovo.com/pccbbs/mobiles/tp_x1_carbon_gen13_mt21nx_mt21ny_x1_2-in-1_gen10_mt21q0_mt21q1_w11_24h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-08" crc="0045445db51a65b640059e0c9aef3ae0ba7afe846421918d69fb833ae8473128" md5="0dcbbf4060e22280b1adda78e4d29d4c">https://download.lenovo.com/pccbbs/mobiles/tp_x1_carbon_gen13_mt21nx_mt21ny_x1_2-in-1_gen10_mt21q0_mt21q1_w11_25h2_202606.exe</SCCM>
@@ -7540,7 +7540,7 @@
    <Type>21QH</Type>
    <Type>21QG</Type>
   </Types>
-  <BIOS version="1.15" image="n4he" date="2026-08-11" crc="aa37bf7ae9f070c6c5c5aee7bc9a9bb0c4e51c39d84abab0c5d0df41c03d329b" md5="db3577a42581f4be82928b21e50ad1c2">https://download.lenovo.com/pccbbs/mobiles/n4huj10w.exe</BIOS>
+  <BIOS version="1.15" image="n4he" date="2026-08-26" crc="aa37bf7ae9f070c6c5c5aee7bc9a9bb0c4e51c39d84abab0c5d0df41c03d329b" md5="db3577a42581f4be82928b21e50ad1c2">https://download.lenovo.com/pccbbs/mobiles/n4huj10w.exe</BIOS>
   <SCCM os="win11" version="23H2" date="2026-03-18" crc="79b10ca6ffac7187223de9738672dbd0f0614fe45895e209afa19efc6219cddb" md5="5cc94426492bb1e84dc7e91082cfac7c">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_mt21qg-21qh_w11_23h2_202512.exe</SCCM>
   <SCCM os="win11" version="24H2" date="2026-03-18" crc="df56631a49642289209949bcc3e7262e4e830f03221fccedc48d9629018b585f" md5="b3e6a4e424e1a3aaf453958ead7fb54a">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_mt21qg-21qh_w11_24h2_202602.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-03-18" crc="900cd174e51a030fa58cffad77c633f231366fd3c8b109d40cce9dcde53cb8fb" md5="189ed4e91a5838a21bf93d7b514cf94a">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_mt21qg-21qh_w11_25h2_202602.exe</SCCM>
@@ -7553,9 +7553,9 @@
    <Type>21QC</Type>
   </Types>
   <BIOS version="1.18" image="n4je" date="2026-08-11" crc="789d643b438fdde30a394d278352c91369b70976c2762a9a14655ac6106c027d" md5="c12474ab94adace875083f0800cb4c63">https://download.lenovo.com/pccbbs/mobiles/n4juj13w.exe</BIOS>
-  <SCCM os="win11" version="23H2" date="2026-07-06" crc="139cc2672349823534514ddddc84d1ec712ced7844dcd25e65c1c0399bc53ab6" md5="8f6b7727898c1ea136c27c705531eb53">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_23h2_202512.exe</SCCM>
-  <SCCM os="win11" version="24H2" date="2026-07-06" crc="9377298dd582643f667176daee3744bb989a73c2dd34bf13f6f8005a80027307" md5="45087f8f2f60bcbfd4d6f2b541c7066e">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_24h2_202606.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-07-06" crc="a05aa54a31293cd35e3188027e78e7bf68778450bda37daaa841049a6b6f35ca" md5="b9a565462b3aa0a115e5bbaf2e7c58e1">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_25h2_202606.exe</SCCM>
+  <SCCM os="win11" version="23H2" date="2026-09-02" crc="139cc2672349823534514ddddc84d1ec712ced7844dcd25e65c1c0399bc53ab6" md5="8f6b7727898c1ea136c27c705531eb53">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_23h2_202512.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-09-02" crc="b064c6c511a486bf0745ebd74a5dff8afeb0ffd6c6c3d2f77c2af556e79b5ed3" md5="6b22dd117ab366ca83017c968f14593d">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-09-02" crc="7ea02ddb946aa1c0fab14a03d03069e1cf8b984f8c2928d5dd44322d88171e1e" md5="636064c69d665fd7879a4c1c552da0fa">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="23H2" date="2026-03-18" crc="7c091cb189ebdb2b4be32344a4e2e441d18cb9df8747d3d72109779a80fff0e4" md5="304fabf4c69a8de82ba79c72ecfb2c54">https://download.lenovo.com/pccbbs/mobiles/tp_t14g6_t16g4_mt21qc-21qd_21qe_21qf_w11_24_hsa_202507.exe</HSA>
   <HSA os="win11" version="24H2" date="2026-03-18" crc="7c091cb189ebdb2b4be32344a4e2e441d18cb9df8747d3d72109779a80fff0e4" md5="304fabf4c69a8de82ba79c72ecfb2c54">https://download.lenovo.com/pccbbs/mobiles/tp_t14g6_t16g4_mt21qc-21qd_21qe_21qf_w11_24_hsa_202507.exe</HSA>
   <HSA os="win11" version="25H2" date="2026-03-18" crc="2dee6ada2c4404624f2a5e2eb72bd27f3b2f1f756e2d875fc2b29142cd414c5c" md5="1cc2d48e4140233b9171ec010f1517d2">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_hsa_w11_25h2_202602.exe</HSA>
@@ -7566,9 +7566,9 @@
    <Type>21QF</Type>
   </Types>
   <BIOS version="1.18" image="n4je" date="2026-08-11" crc="789d643b438fdde30a394d278352c91369b70976c2762a9a14655ac6106c027d" md5="c12474ab94adace875083f0800cb4c63">https://download.lenovo.com/pccbbs/mobiles/n4juj13w.exe</BIOS>
-  <SCCM os="win11" version="23H2" date="2026-07-06" crc="139cc2672349823534514ddddc84d1ec712ced7844dcd25e65c1c0399bc53ab6" md5="8f6b7727898c1ea136c27c705531eb53">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_23h2_202512.exe</SCCM>
-  <SCCM os="win11" version="24H2" date="2026-07-06" crc="9377298dd582643f667176daee3744bb989a73c2dd34bf13f6f8005a80027307" md5="45087f8f2f60bcbfd4d6f2b541c7066e">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_24h2_202606.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-07-06" crc="a05aa54a31293cd35e3188027e78e7bf68778450bda37daaa841049a6b6f35ca" md5="b9a565462b3aa0a115e5bbaf2e7c58e1">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_25h2_202606.exe</SCCM>
+  <SCCM os="win11" version="23H2" date="2026-09-02" crc="139cc2672349823534514ddddc84d1ec712ced7844dcd25e65c1c0399bc53ab6" md5="8f6b7727898c1ea136c27c705531eb53">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_23h2_202512.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-09-02" crc="b064c6c511a486bf0745ebd74a5dff8afeb0ffd6c6c3d2f77c2af556e79b5ed3" md5="6b22dd117ab366ca83017c968f14593d">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-09-02" crc="7ea02ddb946aa1c0fab14a03d03069e1cf8b984f8c2928d5dd44322d88171e1e" md5="636064c69d665fd7879a4c1c552da0fa">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="23H2" date="2026-03-18" crc="7c091cb189ebdb2b4be32344a4e2e441d18cb9df8747d3d72109779a80fff0e4" md5="304fabf4c69a8de82ba79c72ecfb2c54">https://download.lenovo.com/pccbbs/mobiles/tp_t14g6_t16g4_mt21qc-21qd_21qe_21qf_w11_24_hsa_202507.exe</HSA>
   <HSA os="win11" version="24H2" date="2026-03-18" crc="7c091cb189ebdb2b4be32344a4e2e441d18cb9df8747d3d72109779a80fff0e4" md5="304fabf4c69a8de82ba79c72ecfb2c54">https://download.lenovo.com/pccbbs/mobiles/tp_t14g6_t16g4_mt21qc-21qd_21qe_21qf_w11_24_hsa_202507.exe</HSA>
   <HSA os="win11" version="25H2" date="2026-03-18" crc="2dee6ada2c4404624f2a5e2eb72bd27f3b2f1f756e2d875fc2b29142cd414c5c" md5="1cc2d48e4140233b9171ec010f1517d2">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt_21qc-21qd_21qe_21qf_hsa_w11_25h2_202602.exe</HSA>
@@ -7605,7 +7605,7 @@
    <Type>13HH</Type>
    <Type>13HL</Type>
   </Types>
-  <BIOS version="M5QKT30A" image="m5qk" date="2026-08-17" crc="5761d559965435f290344afd6fae73fec863374d10b545f81886417bbd3e9ee3" md5="41f90bf79db7c38642dd2d7e0268efd5">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5qjy30usa.exe</BIOS>
+  <BIOS version="M5QKT30A" image="m5qk" date="2026-08-21" crc="5761d559965435f290344afd6fae73fec863374d10b545f81886417bbd3e9ee3" md5="41f90bf79db7c38642dd2d7e0268efd5">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5qjy30usa.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-04-30" crc="531a9074177f47380b7e3c57fb305753d28c2580c4fbebc7ec5be27c08c27a2d" md5="f3d213d237fb0877761cd73cbf45ccfd">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_w11_24_25_202604.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-04-30" crc="531a9074177f47380b7e3c57fb305753d28c2580c4fbebc7ec5be27c08c27a2d" md5="f3d213d237fb0877761cd73cbf45ccfd">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_w11_24_25_202604.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-04-30" crc="8c4c65a45f43c9b644841b189c3de6ee8896cb62bd6181bd0d13d211178da5bc" md5="29349fe57fc34af75b8ffe7c3f4b3b62">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_hsa_w11_24_25_202604.exe</HSA>
@@ -7616,7 +7616,7 @@
    <Type>21T0</Type>
    <Type>21T1</Type>
   </Types>
-  <BIOS version="1.24" image="r2ze" date="2026-07-14" crc="9980da8079ba124038f836f50c377b8ac7f99c2b40dd82618a233b496ef26c2c" md5="67c0cc4a0c6a13aa30e39a7858b37f95">https://download.lenovo.com/pccbbs/mobiles/r2zuj35w.exe</BIOS>
+  <BIOS version="1.27" image="r2ze" date="2026-09-02" crc="57473b0631f14d41967c6f132a7e99ed1111c904e6400728c43a0e29e52a32dc" md5="2c1b8c7acaf5959ea3c34e978b45b2d3">https://download.lenovo.com/pccbbs/mobiles/r2zuj38w.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-08-17" crc="96fb8886651daddd11b998ae2372b59b1444c5c64df302e62a4907103b0ae1e3" md5="caba9ae943e6f761c12569b45021915d">https://download.lenovo.com/pccbbs/mobiles/tp_e14gen7_e16gen3_21t0_21t1_21su_21st_amd_win11_202601.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-08-17" crc="2e9f2fc2cf0468ddd814375894553bb81d88c58ea7f7f6ef8729cf47f507fed5" md5="bb35dff3f0689e6d934cdb3b609d9fbf">https://download.lenovo.com/pccbbs/mobiles/tp_e14gen7_e16gen3_21t0_21t1_21su_21st_win11_24h2_25h2_202607.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-04-02" crc="967e545cf7dac2d434ff7524987e9a8b9490c4fe162925286e109e8c72fa49cd" md5="5a9d80f29fcb3cd495bcae58d13ff2d8">https://download.lenovo.com/pccbbs/mobiles/tp_e14gen7_e16gen3_amd_hsa_win11_202504.exe</HSA>
@@ -7627,7 +7627,7 @@
    <Type>21SU</Type>
    <Type>21ST</Type>
   </Types>
-  <BIOS version="1.24" image="r2ze" date="2026-07-14" crc="9980da8079ba124038f836f50c377b8ac7f99c2b40dd82618a233b496ef26c2c" md5="67c0cc4a0c6a13aa30e39a7858b37f95">https://download.lenovo.com/pccbbs/mobiles/r2zuj35w.exe</BIOS>
+  <BIOS version="1.27" image="r2ze" date="2026-09-02" crc="57473b0631f14d41967c6f132a7e99ed1111c904e6400728c43a0e29e52a32dc" md5="2c1b8c7acaf5959ea3c34e978b45b2d3">https://download.lenovo.com/pccbbs/mobiles/r2zuj38w.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-08-17" crc="96fb8886651daddd11b998ae2372b59b1444c5c64df302e62a4907103b0ae1e3" md5="caba9ae943e6f761c12569b45021915d">https://download.lenovo.com/pccbbs/mobiles/tp_e14gen7_e16gen3_21t0_21t1_21su_21st_amd_win11_202601.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-08-17" crc="2e9f2fc2cf0468ddd814375894553bb81d88c58ea7f7f6ef8729cf47f507fed5" md5="bb35dff3f0689e6d934cdb3b609d9fbf">https://download.lenovo.com/pccbbs/mobiles/tp_e14gen7_e16gen3_21t0_21t1_21su_21st_win11_24h2_25h2_202607.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-04-02" crc="967e545cf7dac2d434ff7524987e9a8b9490c4fe162925286e109e8c72fa49cd" md5="5a9d80f29fcb3cd495bcae58d13ff2d8">https://download.lenovo.com/pccbbs/mobiles/tp_e14gen7_e16gen3_amd_hsa_win11_202504.exe</HSA>
@@ -7672,10 +7672,10 @@
    <Type>21R3</Type>
    <Type>21R4</Type>
   </Types>
-  <BIOS version="1.13" image="n4ke" date="2026-08-11" crc="24e91937dad43bc86f9dfaef4cb94c1afe731562ef5be0d1c329f3b662e0209c" md5="a8739b1c254969ba79523840c18a5a25">https://download.lenovo.com/pccbbs/mobiles/n4kuj08w.exe</BIOS>
-  <SCCM os="win11" version="23H2" date="2026-07-06" crc="297503476088da3ecae61100e7200c75cecff4872f14f46ac2afb8c4a69110bd" md5="b820109f60199ecf5d5baab3f23c783a">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_23_202512.exe</SCCM>
-  <SCCM os="win11" version="24H2" date="2026-07-06" crc="19dc91932b9b3afd7d53f0ab1882d7e1195808b6d42bd11f3048277a30854bab" md5="86e5b0720233f2b07492ac4b7e3f37c9">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_24h2_202606.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-07-06" crc="236142a3250b8786d373f0ec8086def1bd62e913edabfb8f510803245ef2986d" md5="b0493e486df35e351fe7478b810b4ed1">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_25h2_202606.exe</SCCM>
+  <BIOS version="1.13" image="n4ke" date="2026-08-21" crc="24e91937dad43bc86f9dfaef4cb94c1afe731562ef5be0d1c329f3b662e0209c" md5="a8739b1c254969ba79523840c18a5a25">https://download.lenovo.com/pccbbs/mobiles/n4kuj08w.exe</BIOS>
+  <SCCM os="win11" version="23H2" date="2026-08-28" crc="297503476088da3ecae61100e7200c75cecff4872f14f46ac2afb8c4a69110bd" md5="b820109f60199ecf5d5baab3f23c783a">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_23_202512.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-28" crc="5b379f1fb4d21ef01ed5434b8eaeb348e98aaf4086ecb72ec77782b5e57d7f60" md5="5b78a4adb75ce09affa725ae2f2ca6a1">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-28" crc="53d84bbcac36d27f813ffbd5c4058933b2030d9b0a0f29f65c8cbbd9210c1151" md5="c05227310fa4aa175650d148dcfb69bc">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="23H2" date="2026-03-19" crc="529c5ba633d1cd1b492975349948acf29a2e4f2c9dde387410e0569a8e5cfda0" md5="14e6ad0e69741775341e4a2281076bb4">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_24h2_hsa_202505.exe</HSA>
   <HSA os="win11" version="24H2" date="2026-03-19" crc="529c5ba633d1cd1b492975349948acf29a2e4f2c9dde387410e0569a8e5cfda0" md5="14e6ad0e69741775341e4a2281076bb4">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_24h2_hsa_202505.exe</HSA>
   <HSA os="win11" version="25H2" date="2026-03-19" crc="af71b55dda14f78e207532d92afa6d8ab101dfc93577b1f343610d62ba6b8ce6" md5="3d0c0a7bdd2de34aeaca328dc6a9b75a">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_25h2_hsa_202602.exe</HSA>
@@ -7685,10 +7685,10 @@
    <Type>21R2</Type>
    <Type>21R1</Type>
   </Types>
-  <BIOS version="1.13" image="n4ke" date="2026-08-11" crc="24e91937dad43bc86f9dfaef4cb94c1afe731562ef5be0d1c329f3b662e0209c" md5="a8739b1c254969ba79523840c18a5a25">https://download.lenovo.com/pccbbs/mobiles/n4kuj08w.exe</BIOS>
-  <SCCM os="win11" version="23H2" date="2026-07-06" crc="297503476088da3ecae61100e7200c75cecff4872f14f46ac2afb8c4a69110bd" md5="b820109f60199ecf5d5baab3f23c783a">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_23_202512.exe</SCCM>
-  <SCCM os="win11" version="24H2" date="2026-07-06" crc="19dc91932b9b3afd7d53f0ab1882d7e1195808b6d42bd11f3048277a30854bab" md5="86e5b0720233f2b07492ac4b7e3f37c9">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_24h2_202606.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-07-06" crc="236142a3250b8786d373f0ec8086def1bd62e913edabfb8f510803245ef2986d" md5="b0493e486df35e351fe7478b810b4ed1">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_25h2_202606.exe</SCCM>
+  <BIOS version="1.13" image="n4ke" date="2026-08-21" crc="24e91937dad43bc86f9dfaef4cb94c1afe731562ef5be0d1c329f3b662e0209c" md5="a8739b1c254969ba79523840c18a5a25">https://download.lenovo.com/pccbbs/mobiles/n4kuj08w.exe</BIOS>
+  <SCCM os="win11" version="23H2" date="2026-08-28" crc="297503476088da3ecae61100e7200c75cecff4872f14f46ac2afb8c4a69110bd" md5="b820109f60199ecf5d5baab3f23c783a">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_23_202512.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-28" crc="5b379f1fb4d21ef01ed5434b8eaeb348e98aaf4086ecb72ec77782b5e57d7f60" md5="5b78a4adb75ce09affa725ae2f2ca6a1">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-28" crc="53d84bbcac36d27f813ffbd5c4058933b2030d9b0a0f29f65c8cbbd9210c1151" md5="c05227310fa4aa175650d148dcfb69bc">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="23H2" date="2026-03-19" crc="529c5ba633d1cd1b492975349948acf29a2e4f2c9dde387410e0569a8e5cfda0" md5="14e6ad0e69741775341e4a2281076bb4">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_24h2_hsa_202505.exe</HSA>
   <HSA os="win11" version="24H2" date="2026-03-19" crc="529c5ba633d1cd1b492975349948acf29a2e4f2c9dde387410e0569a8e5cfda0" md5="14e6ad0e69741775341e4a2281076bb4">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_24h2_hsa_202505.exe</HSA>
   <HSA os="win11" version="25H2" date="2026-03-19" crc="af71b55dda14f78e207532d92afa6d8ab101dfc93577b1f343610d62ba6b8ce6" md5="3d0c0a7bdd2de34aeaca328dc6a9b75a">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen6_mt21r1-21r2-t14s_2-in-1_gen1_mt21r3-21r4_w11_25h2_hsa_202602.exe</HSA>
@@ -7706,7 +7706,7 @@
    <Type>13AE</Type>
    <Type>13AF</Type>
   </Types>
-  <BIOS version="M5PKT35A_1.0.0.53" image="m5pk" date="2026-08-14" crc="5b32dd972e30f9bf250c173a94229a020ad1fc41ad30a3fbc8141cf46454ed3b" md5="70caab63e3da605036d8aa9027929961">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5pjy35usa.exe</BIOS>
+  <BIOS version="M5PKT36A_1.0.0.54" image="m5pk" date="2026-09-02" crc="7d6a3a02942d74f340ce863f2299671acbba781119ac8c8869a1a72dce7c3c13" md5="f16e5ff799841a40eb30d213a1306efa">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5pjy36usa.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-04-30" crc="531a9074177f47380b7e3c57fb305753d28c2580c4fbebc7ec5be27c08c27a2d" md5="f3d213d237fb0877761cd73cbf45ccfd">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_w11_24_25_202604.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-04-30" crc="531a9074177f47380b7e3c57fb305753d28c2580c4fbebc7ec5be27c08c27a2d" md5="f3d213d237fb0877761cd73cbf45ccfd">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_w11_24_25_202604.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-04-30" crc="8c4c65a45f43c9b644841b189c3de6ee8896cb62bd6181bd0d13d211178da5bc" md5="29349fe57fc34af75b8ffe7c3f4b3b62">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_hsa_w11_24_25_202604.exe</HSA>
@@ -7755,7 +7755,7 @@
    <Type>21S8</Type>
    <Type>21S9</Type>
   </Types>
-  <BIOS version="1.17" image="r2ue" date="2026-07-14" crc="c91105a0c9d78da2033252ef41f5745733dea6e89d1b524b6f381519a6f593d8" md5="4606d12dacd7c067333afff7f29dad79">https://download.lenovo.com/pccbbs/mobiles/r2uuj07w.exe</BIOS>
+  <BIOS version="1.17" image="r2ue" date="2026-08-26" crc="c91105a0c9d78da2033252ef41f5745733dea6e89d1b524b6f381519a6f593d8" md5="4606d12dacd7c067333afff7f29dad79">https://download.lenovo.com/pccbbs/mobiles/r2uuj07w.exe</BIOS>
   <SCCM os="win11" version="23H2" date="2026-07-08" crc="4101aaad47306fd4b4fa5e9b03855ec599c8215db3de8b048156b05fb0b65a8e" md5="8c424fb330b434b360fd0602954d5fc0">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21s8_mt21s9_l16_mt21sc_mt21sd_w11_23h2_202510.exe</SCCM>
   <SCCM os="win11" version="24H2" date="2026-07-08" crc="0d2c89ca94ef05bd590b3db1622ed39939f0ac117d9e2eb33e3e0b4f89b0f4de" md5="b276f46d3c74123486947a07f28846e4">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21s8_mt21s9_l16_mt21sc_mt21sd_w11_24h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-08" crc="e1c4ab21ea66bffd89375ecdcf6d28e012e8b123f68bb11105b5cbf0ad2c3f9b" md5="790dd5b4a3bb29fb4606b855b7a67539">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21s8_mt21s9_l16_mt21sc_mt21sd_w11_25h2_202606.exe</SCCM>
@@ -7767,7 +7767,7 @@
    <Type>21SD</Type>
    <Type>21SC</Type>
   </Types>
-  <BIOS version="1.17" image="r2ue" date="2026-07-14" crc="c91105a0c9d78da2033252ef41f5745733dea6e89d1b524b6f381519a6f593d8" md5="4606d12dacd7c067333afff7f29dad79">https://download.lenovo.com/pccbbs/mobiles/r2uuj07w.exe</BIOS>
+  <BIOS version="1.17" image="r2ue" date="2026-08-26" crc="c91105a0c9d78da2033252ef41f5745733dea6e89d1b524b6f381519a6f593d8" md5="4606d12dacd7c067333afff7f29dad79">https://download.lenovo.com/pccbbs/mobiles/r2uuj07w.exe</BIOS>
   <SCCM os="win11" version="23H2" date="2026-07-08" crc="4101aaad47306fd4b4fa5e9b03855ec599c8215db3de8b048156b05fb0b65a8e" md5="8c424fb330b434b360fd0602954d5fc0">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21s8_mt21s9_l16_mt21sc_mt21sd_w11_23h2_202510.exe</SCCM>
   <SCCM os="win11" version="24H2" date="2026-07-08" crc="0d2c89ca94ef05bd590b3db1622ed39939f0ac117d9e2eb33e3e0b4f89b0f4de" md5="b276f46d3c74123486947a07f28846e4">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21s8_mt21s9_l16_mt21sc_mt21sd_w11_24h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-08" crc="e1c4ab21ea66bffd89375ecdcf6d28e012e8b123f68bb11105b5cbf0ad2c3f9b" md5="790dd5b4a3bb29fb4606b855b7a67539">https://download.lenovo.com/pccbbs/mobiles/tp_l14_mt21s8_mt21s9_l16_mt21sc_mt21sd_w11_25h2_202606.exe</SCCM>
@@ -7813,7 +7813,7 @@
    <Type>21QW</Type>
    <Type>21QV</Type>
   </Types>
-  <BIOS version="1.26" image="r2we" date="2026-08-12" crc="edb533c9cd26864b1df7761709b8d2ff9361e712a47ef96a872e825b76a575be" md5="8fd053245b1234dcc7d49c028bcb6c5d">https://download.lenovo.com/pccbbs/mobiles/r2wuj11w.exe</BIOS>
+  <BIOS version="1.26" image="r2we" date="2026-08-24" crc="edb533c9cd26864b1df7761709b8d2ff9361e712a47ef96a872e825b76a575be" md5="8fd053245b1234dcc7d49c028bcb6c5d">https://download.lenovo.com/pccbbs/mobiles/r2wuj11w.exe</BIOS>
   <SCCM os="win11" version="23H2" date="2026-07-06" crc="26ff4bf93a7ea84131e2334c0551aec23ec49764b079a6a758ea7c75b0a1fa23" md5="436bb4ba8262a838db9734d4d0e94590">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg6_p16sg4_mt21qv_mt21qw_mt21qt_mt21qu_w11_23h2_202602.exe</SCCM>
   <SCCM os="win11" version="24H2" date="2026-07-06" crc="17f86b8ea2fb139b17adf705caddaab76db452351ff4215183ca6d9691bdec23" md5="18ce7bee25ac8899b0e90435c89bea33">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg6_p16sg4_mt21qv_mt21qw_mt21qt_mt21qu_w11_24h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-06" crc="50fe64f45a24f0735ef26aee674d617a8f01070b7c42d159f2901467e843e581" md5="7b35825db444bdca516d34ed43577e59">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg6_p16sg4_mt21qv_mt21qw_mt21qt_mt21qu_w11_25h2_202606.exe</SCCM>
@@ -7850,7 +7850,7 @@
    <Type>21QT</Type>
    <Type>21QU</Type>
   </Types>
-  <BIOS version="1.26" image="r2we" date="2026-08-12" crc="edb533c9cd26864b1df7761709b8d2ff9361e712a47ef96a872e825b76a575be" md5="8fd053245b1234dcc7d49c028bcb6c5d">https://download.lenovo.com/pccbbs/mobiles/r2wuj11w.exe</BIOS>
+  <BIOS version="1.26" image="r2we" date="2026-08-24" crc="edb533c9cd26864b1df7761709b8d2ff9361e712a47ef96a872e825b76a575be" md5="8fd053245b1234dcc7d49c028bcb6c5d">https://download.lenovo.com/pccbbs/mobiles/r2wuj11w.exe</BIOS>
   <SCCM os="win11" version="23H2" date="2026-07-06" crc="26ff4bf93a7ea84131e2334c0551aec23ec49764b079a6a758ea7c75b0a1fa23" md5="436bb4ba8262a838db9734d4d0e94590">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg6_p16sg4_mt21qv_mt21qw_mt21qt_mt21qu_w11_23h2_202602.exe</SCCM>
   <SCCM os="win11" version="24H2" date="2026-07-06" crc="17f86b8ea2fb139b17adf705caddaab76db452351ff4215183ca6d9691bdec23" md5="18ce7bee25ac8899b0e90435c89bea33">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg6_p16sg4_mt21qv_mt21qw_mt21qt_mt21qu_w11_24h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-06" crc="50fe64f45a24f0735ef26aee674d617a8f01070b7c42d159f2901467e843e581" md5="7b35825db444bdca516d34ed43577e59">https://download.lenovo.com/pccbbs/mobiles/tp_p14sg6_p16sg4_mt21qv_mt21qw_mt21qt_mt21qu_w11_25h2_202606.exe</SCCM>
@@ -7867,7 +7867,7 @@
    <Type>30K7</Type>
    <Type>30K6</Type>
   </Types>
-  <BIOS version="M5PKT35A_1.0.0.53" image="m5pk" date="2026-08-14" crc="5b32dd972e30f9bf250c173a94229a020ad1fc41ad30a3fbc8141cf46454ed3b" md5="70caab63e3da605036d8aa9027929961">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5pjy35usa.exe</BIOS>
+  <BIOS version="M5PKT36A_1.0.0.54" image="m5pk" date="2026-09-02" crc="7d6a3a02942d74f340ce863f2299671acbba781119ac8c8869a1a72dce7c3c13" md5="f16e5ff799841a40eb30d213a1306efa">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5pjy36usa.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-05-15" crc="43c7fb026107b65e1440f002bac9da158ed07b220fb00661abbab4ac05822425" md5="58a46bb765d09729f79bd2a14de3a4b1">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p3tiny_gen2_w11_24_25_202604.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-05-15" crc="43c7fb026107b65e1440f002bac9da158ed07b220fb00661abbab4ac05822425" md5="58a46bb765d09729f79bd2a14de3a4b1">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p3tiny_gen2_w11_24_25_202604.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-05-15" crc="63871bba92f3228a2755d42924a699a2ea23fd9b7ee3f8f28398f65e456fe2c8" md5="daec289fa5110df846b384d1369acc8f">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p3tiny_gen2_hsa_w11_24_25_202604.exe</HSA>
@@ -7908,8 +7908,8 @@
   </Types>
   <BIOS version="1.33" image="n4fe" date="2026-08-19" crc="c4a4092bfab91cde522649f5901bbf3b29f58a523e07f9f40ac0a8d5d80a8ec0" md5="b6ac15632f7db3026f3118765653d29b">https://download.lenovo.com/pccbbs/mobiles/n4fuj10w.exe</BIOS>
   <SCCM os="win11" version="23H2" date="2026-05-11" crc="a99af53894a8cbcec88f6ba5b3694f7c83d945ca99d2aa1feeba8877509459b2" md5="196869c2128a59d9fc464f193f71f377">https://download.lenovo.com/pccbbs/mobiles/tp_p16gen3_mt21rq-21rr_w1164_23h2_202509.exe</SCCM>
-  <SCCM os="win11" version="24H2" date="2026-07-13" crc="06931a3e28578225b29ed8d75c1845cce21c27ad53585d1adc86abbe2075eaa0" md5="e0e3e8dda07702bc87920c2413493f0a">https://download.lenovo.com/pccbbs/mobiles/tp_t16gg3_p16g3_mt21v5-21v6_mt21rq_21rr_w1164_24h2_202606.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-07-13" crc="10eed06229c1a7704c2acc82eba3c70f714bcece64a5d5def901d0a5572406ee" md5="5056a139cc5ee70977915d8984d6d40b">https://download.lenovo.com/pccbbs/mobiles/tp_t16gg3_p16g3_mt21v5-21v6_mt21rq_21rr_w1164_25h2_202606.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-09-02" crc="a55d26b0a0e727e9e3dc2f98bbed7136efe0b109b59bb3d63e6326c33ee89b5e" md5="6087d381301f7fc928c1e57caafdb9e0">https://download.lenovo.com/pccbbs/mobiles/tp_t16gg3_p16g3_mt21v5-21v6_mt21rq_21rr_w1164_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-09-02" crc="31c038e797cd687db5132da8fa48a3b357107089e8c5108b81f9399c77a5e5fd" md5="b54ba221c1e5ad36d60bd59ab57bddea">https://download.lenovo.com/pccbbs/mobiles/tp_t16gg3_p16g3_mt21v5-21v6_mt21rq_21rr_w1164_25h2_202608.exe</SCCM>
   <HSA os="win11" version="23H2" date="2025-12-19" crc="b5060fa97af7e123cf4909e855e124e7c3ddf494771bc1f3d895faddd9dcb236" md5="099253f1744a4f8da73606a55f4bb12b">https://download.lenovo.com/pccbbs/mobiles/tp_p16gen3_mt21rq-21rr_w1164_23h2_hsa_202509.exe</HSA>
   <HSA os="win11" version="24H2" date="2025-12-19" crc="b5060fa97af7e123cf4909e855e124e7c3ddf494771bc1f3d895faddd9dcb236" md5="099253f1744a4f8da73606a55f4bb12b">https://download.lenovo.com/pccbbs/mobiles/tp_p16gen3_mt21rq-21rr_w1164_hsa_202509.exe</HSA>
   <HSA os="win11" version="25H2" date="2025-12-19" crc="2dd15412395c05c98f32d0bba4237d24cd363c4b9fabe938eb8acf896a6cf7dd" md5="2ae94dcff18171c1220c6c33ed4ee14c">https://download.lenovo.com/pccbbs/mobiles/tp_p16gen3_mt21rq-21rr_w1164_hsa_202512.exe</HSA>
@@ -7959,8 +7959,8 @@
    <Type>21V6</Type>
   </Types>
   <BIOS version="1.33" image="n4fe" date="2026-08-19" crc="c4a4092bfab91cde522649f5901bbf3b29f58a523e07f9f40ac0a8d5d80a8ec0" md5="b6ac15632f7db3026f3118765653d29b">https://download.lenovo.com/pccbbs/mobiles/n4fuj10w.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-07-13" crc="06931a3e28578225b29ed8d75c1845cce21c27ad53585d1adc86abbe2075eaa0" md5="e0e3e8dda07702bc87920c2413493f0a">https://download.lenovo.com/pccbbs/mobiles/tp_t16gg3_p16g3_mt21v5-21v6_mt21rq_21rr_w1164_24h2_202606.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-07-13" crc="10eed06229c1a7704c2acc82eba3c70f714bcece64a5d5def901d0a5572406ee" md5="5056a139cc5ee70977915d8984d6d40b">https://download.lenovo.com/pccbbs/mobiles/tp_t16gg3_p16g3_mt21v5-21v6_mt21rq_21rr_w1164_25h2_202606.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-09-02" crc="a55d26b0a0e727e9e3dc2f98bbed7136efe0b109b59bb3d63e6326c33ee89b5e" md5="6087d381301f7fc928c1e57caafdb9e0">https://download.lenovo.com/pccbbs/mobiles/tp_t16gg3_p16g3_mt21v5-21v6_mt21rq_21rr_w1164_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-09-02" crc="31c038e797cd687db5132da8fa48a3b357107089e8c5108b81f9399c77a5e5fd" md5="b54ba221c1e5ad36d60bd59ab57bddea">https://download.lenovo.com/pccbbs/mobiles/tp_t16gg3_p16g3_mt21v5-21v6_mt21rq_21rr_w1164_25h2_202608.exe</SCCM>
   <HSA os="win11" version="24H2" date="2025-12-19" crc="236f9a78009c7616a78ad6c74bfe4e57489135bc89e5b56ec34ae06abe46b128" md5="190c2c15409172418a517e8ec466ce10">https://download.lenovo.com/pccbbs/mobiles/t16ggen3_mt21v5-21v6_w1164_hsa.exe</HSA>
   <HSA os="win11" version="25H2" date="2025-12-19" crc="236f9a78009c7616a78ad6c74bfe4e57489135bc89e5b56ec34ae06abe46b128" md5="190c2c15409172418a517e8ec466ce10">https://download.lenovo.com/pccbbs/mobiles/t16ggen3_mt21v5-21v6_w1164_hsa.exe</HSA>
  </Model>
@@ -7971,7 +7971,7 @@
    <Type>20YE</Type>
    <Type>20YD</Type>
   </Types>
-  <BIOS version="1.25" image="r1oe" date="2026-03-12" crc="552c575049ebc2b725a8f91203a2c8e6999947cff7ba493b58df3055279c7be5" md5="40eb128bb85f9c86e0240ad1bf352689">https://download.lenovo.com/pccbbs/mobiles/r1ouj46w.exe</BIOS>
+  <BIOS version="1.27" image="r1oe" date="2026-08-27" crc="2a5c54cd42c47c161b27f1e71cca905e977f567b9a43c559d703a4dfda95f480" md5="11711626f741134be0688f55a00bf5bf">https://download.lenovo.com/pccbbs/mobiles/r1ouj48w.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2024-11-05" crc="0d72757810218ddea5bf692226c1b2bda07ffc7e15806c38a3d51803443fa1c0" md5="6f8a4bdcd3c4131e0815b17dd08dc474">https://download.lenovo.com/pccbbs/mobiles/tp_e14_gen3_e15_gen3_w1064_21_22h2_202302.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2024-11-05" crc="0d72757810218ddea5bf692226c1b2bda07ffc7e15806c38a3d51803443fa1c0" md5="6f8a4bdcd3c4131e0815b17dd08dc474">https://download.lenovo.com/pccbbs/mobiles/tp_e14_gen3_e15_gen3_w1064_21_22h2_202302.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2024-11-05" crc="0d72757810218ddea5bf692226c1b2bda07ffc7e15806c38a3d51803443fa1c0" md5="6f8a4bdcd3c4131e0815b17dd08dc474">https://download.lenovo.com/pccbbs/mobiles/tp_e14_gen3_e15_gen3_w1064_21_22h2_202302.exe</SCCM>
@@ -7990,7 +7990,7 @@
    <Type>20YK</Type>
    <Type>20YH</Type>
   </Types>
-  <BIOS version="1.25" image="r1oe" date="2026-03-12" crc="552c575049ebc2b725a8f91203a2c8e6999947cff7ba493b58df3055279c7be5" md5="40eb128bb85f9c86e0240ad1bf352689">https://download.lenovo.com/pccbbs/mobiles/r1ouj46w.exe</BIOS>
+  <BIOS version="1.27" image="r1oe" date="2026-08-27" crc="2a5c54cd42c47c161b27f1e71cca905e977f567b9a43c559d703a4dfda95f480" md5="11711626f741134be0688f55a00bf5bf">https://download.lenovo.com/pccbbs/mobiles/r1ouj48w.exe</BIOS>
   <SCCM os="win10" version="20H2" date="2024-11-05" crc="0d72757810218ddea5bf692226c1b2bda07ffc7e15806c38a3d51803443fa1c0" md5="6f8a4bdcd3c4131e0815b17dd08dc474">https://download.lenovo.com/pccbbs/mobiles/tp_e14_gen3_e15_gen3_w1064_21_22h2_202302.exe</SCCM>
   <SCCM os="win10" version="21H1" date="2024-11-05" crc="0d72757810218ddea5bf692226c1b2bda07ffc7e15806c38a3d51803443fa1c0" md5="6f8a4bdcd3c4131e0815b17dd08dc474">https://download.lenovo.com/pccbbs/mobiles/tp_e14_gen3_e15_gen3_w1064_21_22h2_202302.exe</SCCM>
   <SCCM os="win10" version="21H2" date="2024-11-05" crc="0d72757810218ddea5bf692226c1b2bda07ffc7e15806c38a3d51803443fa1c0" md5="6f8a4bdcd3c4131e0815b17dd08dc474">https://download.lenovo.com/pccbbs/mobiles/tp_e14_gen3_e15_gen3_w1064_21_22h2_202302.exe</SCCM>
@@ -8007,7 +8007,7 @@
    <Type>22AW</Type>
    <Type>22AX</Type>
   </Types>
-  <BIOS version="1.15" image="n4he" date="2026-08-11" crc="aa37bf7ae9f070c6c5c5aee7bc9a9bb0c4e51c39d84abab0c5d0df41c03d329b" md5="db3577a42581f4be82928b21e50ad1c2">https://download.lenovo.com/pccbbs/mobiles/n4huj10w.exe</BIOS>
+  <BIOS version="1.15" image="n4he" date="2026-08-26" crc="aa37bf7ae9f070c6c5c5aee7bc9a9bb0c4e51c39d84abab0c5d0df41c03d329b" md5="db3577a42581f4be82928b21e50ad1c2">https://download.lenovo.com/pccbbs/mobiles/n4huj10w.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-07-06" crc="a1e8b36d6f5bb80b9fb5c840c0fda84228412645da2e6e7a6d5a9e76df00d85b" md5="c09cf970daaed73a1ac87bf6db2badf1">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt21qg_21qh_22aw_22ax_w11_24h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-06" crc="f787de5b93d3793addcf8dc47a4b1598a5961ab7ed29fe90ccbc66dea5ea78f9" md5="717b96d38073b7ca1133a253149992e7">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen6_t16_gen4_mt21qg_21qh_22aw_22ax_w11_25h2_202606.exe</SCCM>
   <HSA os="win11" version="25H2" date="2026-01-30" crc="d52129fcb2e43d53309f9cea1d6636f4d4779714ae9c6e12f00a79e210fbfd9c" md5="ec54d4fd4553c09089a69258188e7ab6">https://download.lenovo.com/pccbbs/mobiles/tp_t16_gen4_mt22aw-22ax_hsa_w11_25h2_202601.exe</HSA>
@@ -8041,10 +8041,10 @@
    <Type>30KC</Type>
   </Types>
   <BIOS version="S0KKT0CA" image="s0kk" date="2026-08-10" crc="bfc9e083fb8d0d515fb5571c037d32b1028bfc7fea7d8d3186faba7ce0d713e4" md5="2d3c3945f42a48bddb565792a5daaa89">https://download.lenovo.com/pccbbs/thinkcentre_bios/s0kjy0cusa.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-04-28" crc="56a82121c802369791f4a1b0ed563aa76451281658807aa93e3da1b58007a888" md5="fcce7b61199d29ded407dabec8fea6ea">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p5_gen2_w11_25h2_202601.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-04-28" crc="56a82121c802369791f4a1b0ed563aa76451281658807aa93e3da1b58007a888" md5="fcce7b61199d29ded407dabec8fea6ea">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p5_gen2_w11_25h2_202601.exe</SCCM>
-  <HSA os="win11" version="24H2" date="2026-04-28" crc="a2d15e9796d58f5ca2a5a6f3ccc722cc83b5ba0794aa97bd34e6c10d94cc0969" md5="95868204e501350fc219c21dafa268aa">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p5_gen2_hsa_w11_25h2_202601.exe</HSA>
-  <HSA os="win11" version="25H2" date="2026-04-28" crc="a2d15e9796d58f5ca2a5a6f3ccc722cc83b5ba0794aa97bd34e6c10d94cc0969" md5="95868204e501350fc219c21dafa268aa">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p5_gen2_hsa_w11_25h2_202601.exe</HSA>
+  <SCCM os="win11" version="24H2" date="2026-08-26" crc="bfa540eaff46ce2be721506b603d4d37c1d09ed3c109c2831a31ece30c26fa8d" md5="2894a197744c05f2d3a67bd1b75ac8bf">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p5_gen2_w11_25h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-26" crc="bfa540eaff46ce2be721506b603d4d37c1d09ed3c109c2831a31ece30c26fa8d" md5="2894a197744c05f2d3a67bd1b75ac8bf">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p5_gen2_w11_25h2_202608.exe</SCCM>
+  <HSA os="win11" version="24H2" date="2026-08-26" crc="e1c309a3816ec23fe4b6dceebab85efa6b0bb571fa7a189e9a861c3a5cb1fdfb" md5="2a0e405f551faf8419713118078421b1">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p5_gen2_hsa_w11_25h2_202608.exe</HSA>
+  <HSA os="win11" version="25H2" date="2026-08-26" crc="e1c309a3816ec23fe4b6dceebab85efa6b0bb571fa7a189e9a861c3a5cb1fdfb" md5="2a0e405f551faf8419713118078421b1">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p5_gen2_hsa_w11_25h2_202608.exe</HSA>
  </Model>
  <Model name="ThinkCentre M70Q Gen 6 Type 13HX" arch="Intel">
   <Types>
@@ -8059,7 +8059,7 @@
    <Type>13HL</Type>
    <Type>13HA</Type>
   </Types>
-  <BIOS version="M5QKT30A" image="m5qk" date="2026-08-17" crc="5761d559965435f290344afd6fae73fec863374d10b545f81886417bbd3e9ee3" md5="41f90bf79db7c38642dd2d7e0268efd5">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5qjy30usa.exe</BIOS>
+  <BIOS version="M5QKT30A" image="m5qk" date="2026-08-21" crc="5761d559965435f290344afd6fae73fec863374d10b545f81886417bbd3e9ee3" md5="41f90bf79db7c38642dd2d7e0268efd5">https://download.lenovo.com/pccbbs/thinkcentre_bios/m5qjy30usa.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-04-30" crc="531a9074177f47380b7e3c57fb305753d28c2580c4fbebc7ec5be27c08c27a2d" md5="f3d213d237fb0877761cd73cbf45ccfd">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_w11_24_25_202604.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-04-30" crc="531a9074177f47380b7e3c57fb305753d28c2580c4fbebc7ec5be27c08c27a2d" md5="f3d213d237fb0877761cd73cbf45ccfd">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_w11_24_25_202604.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-04-30" crc="8c4c65a45f43c9b644841b189c3de6ee8896cb62bd6181bd0d13d211178da5bc" md5="29349fe57fc34af75b8ffe7c3f4b3b62">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_m70tsq_gen6-m90tsq_gen6-n50t_gen6-n_ultra_gen2_hsa_w11_24_25_202604.exe</HSA>
@@ -8074,7 +8074,7 @@
    <Type>13LD</Type>
    <Type>13K4</Type>
   </Types>
-  <BIOS version="M6FKT2AA" image="m6fk" date="2026-08-20" crc="2712383787698d6b718effd13a4c9dd9b94aea653e23ff4ecc0150de96ceeae3" md5="2cc2adbdd330d82efcd1da41d993453b">https://download.lenovo.com/pccbbs/thinkcentre_bios/m6fjy2ausa.exe</BIOS>
+  <BIOS version="M6FKT2AA" image="m6fk" date="2026-08-26" crc="2712383787698d6b718effd13a4c9dd9b94aea653e23ff4ecc0150de96ceeae3" md5="2cc2adbdd330d82efcd1da41d993453b">https://download.lenovo.com/pccbbs/thinkcentre_bios/m6fjy2ausa.exe</BIOS>
   <SCCM os="win11" version="25H2" date="2026-03-31" crc="4b75e474e2cb0e27d3e8daef8802fbc3d4aaeb079f893e68d3fafb8e8454bb68" md5="1af2f9356e8916970683c8f2c38663a4">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_xt_w11_25_202603.exe</SCCM>
   <HSA os="win11" version="25H2" date="2026-03-31" crc="ed5e4a45770a39d847f65bd8d3b79c78f63510f0a47478ea4ab5f2aec74a1042" md5="8bb9e0a73b12670865b3b1d7f8ac247e">https://download.lenovo.com/pccbbs/thinkcentre_drivers/tc_xt_hsa_w11_25_202603.exe</HSA>
  </Model>
@@ -8084,8 +8084,8 @@
    <Type>21V8</Type>
   </Types>
   <BIOS version="1.21" image="n4oe" date="2026-08-07" crc="bcf19f3f2e88789fbb74711d21ee977bb6e98f16a828e43428b68c2b33bb51a6" md5="0000a97a74d8e029116cffa7a53c7500">https://download.lenovo.com/pccbbs/mobiles/n4ouj08w.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-08-03" crc="bcbf59343881a8af09ef205ae2617f3af21a171ebba5e4c3b28cf079ef1dacb6" md5="2a6ffe8febcfc2edd6507c9a13c19eed">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8-x1_2-in-1_mt21v9-21va_w11_24_202607.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-08-03" crc="426cd67253007ab6134016ffc77310fa84754f7111cc016138b34121609bcb29" md5="6e523273ae43e0a67650da5f8a99a821">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8-x1_2-in-1_mt21v9-21va_w11_25_202607.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-26" crc="8d61efed76f2517e175d7851641093a392098b601919fde20157074fa9d4a996" md5="1b4287979bd98e5423d710a66e2f1b7c">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8-x1_2-in-1_mt21v9-21va_w11_24_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-26" crc="5632cd5b3e99bb2178a9acc2fa32f3ec598627b8369ba9a64d626179155a8308" md5="6312deb8d698cf11d5f25e25935ae59c">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8-x1_2-in-1_mt21v9-21va_w11_25_202608.exe</SCCM>
   <HSA os="win11" version="25H2" date="2026-07-10" crc="6398ad3ab68da0d417bbcfe154b431e217805b22e13287f68cddd71d26b3c4f1" md5="d608b7e703ea88f676a9268c2103e604">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8_hsa_w11_25_202605.exe</HSA>
  </Model>
  <Model name="ThinkCentre X AIO" arch="Intel">
@@ -8103,8 +8103,8 @@
    <Type>21WN</Type>
   </Types>
   <BIOS version="1.07" image="n4te" date="2026-08-11" crc="d78f9f406aa55c731677e9afa1be7eba4a5b5cbdb80bc480760d0a0210968704" md5="6f723f438958b0ce03792158b5c386ce">https://download.lenovo.com/pccbbs/mobiles/n4tuj04w.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-05-18" crc="93cbb2359bf992b97eb3405a3ac76119ad3b551484d35459df2294ab44fab3fb" md5="84ed386bdb8495908b89eb581b1da57f">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_w11_24h2_202605.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-05-18" crc="d5242e0ed747ced8360a600220becaca2b293b1ef12debc6b100c6e5eae0d2f1" md5="43662c9227a6e9d25703f2e1a2be6e55">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_w11_25h2_202605.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-27" crc="6ceb71aaf061a077d0eb074bfa07e884ce9b5222821c1360e64de2d32ad88535" md5="ad83c009e940524087cc99cd7d4ba87d">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-27" crc="4d0bc71e1c95dcf36279d9e5e94750c3d48884b6c11c2fd1b95cfbbd3fc4ef30" md5="2fa2f1cfc98998105b0b26965e26f857">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-04-15" crc="83535bff5d552ad013231f64adf62776a270a189dd0fc4389add7948afd7c9a8" md5="1596935dbfe1a43bdb841ce150342c3d">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_hsa_w11_25h2_202603.exe</HSA>
  </Model>
  <Model name="ThinkPad T16 Gen 5 Type 21WT 21WU" arch="Intel">
@@ -8113,8 +8113,8 @@
    <Type>21WT</Type>
   </Types>
   <BIOS version="1.07" image="n4te" date="2026-08-11" crc="d78f9f406aa55c731677e9afa1be7eba4a5b5cbdb80bc480760d0a0210968704" md5="6f723f438958b0ce03792158b5c386ce">https://download.lenovo.com/pccbbs/mobiles/n4tuj04w.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-05-18" crc="93cbb2359bf992b97eb3405a3ac76119ad3b551484d35459df2294ab44fab3fb" md5="84ed386bdb8495908b89eb581b1da57f">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_w11_24h2_202605.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-05-18" crc="d5242e0ed747ced8360a600220becaca2b293b1ef12debc6b100c6e5eae0d2f1" md5="43662c9227a6e9d25703f2e1a2be6e55">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_w11_25h2_202605.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-27" crc="6ceb71aaf061a077d0eb074bfa07e884ce9b5222821c1360e64de2d32ad88535" md5="ad83c009e940524087cc99cd7d4ba87d">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-27" crc="4d0bc71e1c95dcf36279d9e5e94750c3d48884b6c11c2fd1b95cfbbd3fc4ef30" md5="2fa2f1cfc98998105b0b26965e26f857">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-04-15" crc="83535bff5d552ad013231f64adf62776a270a189dd0fc4389add7948afd7c9a8" md5="1596935dbfe1a43bdb841ce150342c3d">https://download.lenovo.com/pccbbs/mobiles/tp_t14_gen7_mt21wn-21wq-t16_gen5_mt21wt-21wu_hsa_w11_25h2_202603.exe</HSA>
  </Model>
  <Model name="ThinkPad X1 2 IN 1 Gen 11 Type 21V9 21VA" arch="Intel">
@@ -8123,8 +8123,8 @@
    <Type>21V9</Type>
   </Types>
   <BIOS version="1.21" image="n4oe" date="2026-08-07" crc="bcf19f3f2e88789fbb74711d21ee977bb6e98f16a828e43428b68c2b33bb51a6" md5="0000a97a74d8e029116cffa7a53c7500">https://download.lenovo.com/pccbbs/mobiles/n4ouj08w.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-08-03" crc="bcbf59343881a8af09ef205ae2617f3af21a171ebba5e4c3b28cf079ef1dacb6" md5="2a6ffe8febcfc2edd6507c9a13c19eed">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8-x1_2-in-1_mt21v9-21va_w11_24_202607.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-08-03" crc="426cd67253007ab6134016ffc77310fa84754f7111cc016138b34121609bcb29" md5="6e523273ae43e0a67650da5f8a99a821">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8-x1_2-in-1_mt21v9-21va_w11_25_202607.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-26" crc="8d61efed76f2517e175d7851641093a392098b601919fde20157074fa9d4a996" md5="1b4287979bd98e5423d710a66e2f1b7c">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8-x1_2-in-1_mt21v9-21va_w11_24_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-26" crc="5632cd5b3e99bb2178a9acc2fa32f3ec598627b8369ba9a64d626179155a8308" md5="6312deb8d698cf11d5f25e25935ae59c">https://download.lenovo.com/pccbbs/mobiles/tp_x1carbon_mt21v7-21v8-x1_2-in-1_mt21v9-21va_w11_25_202608.exe</SCCM>
   <HSA os="win11" version="25H2" date="2026-07-13" crc="3b9321d2a2c01c6b20af52b977882588cf576f14bfdb8de24b19daba9fe6b0b4" md5="37978236af498edfee0125c230c56ce3">https://download.lenovo.com/pccbbs/mobiles/tp_x1_2-in-1_mt21v9-21va_hsa_w11_25_202605.exe</HSA>
  </Model>
  <Model name="ThinkPad E14 Gen 8 Type 21Y6 21Y7" arch="Intel">
@@ -8202,9 +8202,9 @@
    <Type>21YH</Type>
    <Type>21YJ</Type>
   </Types>
-  <BIOS version="1.07" image="n4ve" date="2026-08-11" crc="59eb8b65a3df2f5dd2aa30d94d239dc9d9dc9fe0ea027572f190c9a9c369d38d" md5="d02e0dc2a879ab4ea416be2eccc3cf1d">https://download.lenovo.com/pccbbs/mobiles/n4vuj02w.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-05-29" crc="41812a0ea3894d628500bf9c82002d5a32b9a9ac201746349cb5eb5bd4c06374" md5="8e27adf1715672505ae4baa74dfd873b">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen7_intel_mt21yh-21yj_w11_24h2_202605.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-05-29" crc="b79a61ab0976a32c6c0dc6d2fd59e95a451d532784097083acfe457df815f762" md5="690668186645d530898f1c3d715e9867">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen7_intel_mt21yh-21yj_w11_25h2_202605.exe</SCCM>
+  <BIOS version="1.07" image="n4ve" date="2026-08-24" crc="59eb8b65a3df2f5dd2aa30d94d239dc9d9dc9fe0ea027572f190c9a9c369d38d" md5="d02e0dc2a879ab4ea416be2eccc3cf1d">https://download.lenovo.com/pccbbs/mobiles/n4vuj02w.exe</BIOS>
+  <SCCM os="win11" version="24H2" date="2026-08-27" crc="d1b6a86637c92aef1bd3dc742e5069cb42277faa222ab7e9c1432e9430114fca" md5="01e401e3537375c055f91582488f31cb">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen7_intel_mt21yh-21yj_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-27" crc="919e1538ee64383c1f3cc06d179511c31676fb44e5a9433186028b0f69ccebe6" md5="dd385ec202ed0967378c97f07ce6e6ad">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen7_intel_mt21yh-21yj_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-04-21" crc="08a3b8cbea40e93b5859eabc9e753a7fa1d7286bbf84601b51d474f26cf1eda6" md5="f249aa54e87713bec84da868932181e1">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen7_intel_mt21yh-21yj_hsa_w11_202604.exe</HSA>
   <HSA os="win11" version="25H2" date="2026-04-21" crc="08a3b8cbea40e93b5859eabc9e753a7fa1d7286bbf84601b51d474f26cf1eda6" md5="f249aa54e87713bec84da868932181e1">https://download.lenovo.com/pccbbs/mobiles/tp_x13_gen7_intel_mt21yh-21yj_hsa_w11_202604.exe</HSA>
  </Model>
@@ -8258,11 +8258,9 @@
    <Type>21YY</Type>
   </Types>
   <BIOS version="1.08" image="n4ue" date="2026-08-11" crc="5d0db0d71ff0f58d5fa366baaafa2c11bc177fc271f58d7f467026bd19e13556" md5="7b72c5739c0627076bea630c6b46c9cc">https://download.lenovo.com/pccbbs/mobiles/n4uuj03w.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-06-03" crc="5aa5b97a2489fc42b91fc892f9cc7c174bb5a1ee09606ebcfd9b57ff5b61f37d" md5="fa797c534982d14d8349b5c24cbea343">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_w11_24h2_202605.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-06-03" crc="ea22347cf087524779df32f3d9608c363c53c4ddcfb2b77b453b449a41647f2c" md5="fd97f6732a120f83e3326244e82a1b42">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_w11_25h2_202605.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-27" crc="3cf120cc7d45e01726f529fc6ce84e2a1d17a2d7f76b194c7084fdbf9bb7420b" md5="2642362c0950b6a8f999e130103e6de7">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-27" crc="3f40b381473a0fa79f0bd61bfeac70f8a2be7708b9ca6fbb8cc21509838d430d" md5="a1a3330be884bf8f697f7ddec648055b">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="25H2" date="2026-05-05" crc="176ba447c347f4e5c4a1d1013d9294a2ccdf7f36da88ac1653d963efbfc00dbf" md5="62d37e62ba727d8663846786015b6843">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_hsa_w11_25h2_202604.exe</HSA>
-  <GFX os="win11" version="24H2" brand="Intel" date="2026-06-03" crc="01bc360fcdf8101990db5b0fe9dc5307a6c174000598d9c7a545cdb72b440c5e" md5="40a0e014a354ad935a834700cce533f8">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_intelvideo_w11_24h2_202604.exe</GFX>
-  <GFX os="win11" version="25H2" brand="Intel" date="2026-06-03" crc="a22e62f34ac4d6628847ae90737348218f690d8d1eef4a259f5561ffd6d04d6f" md5="67ccc46cd27edfdefefdc53c2213dccf">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_intelvideo_w11_25h2_202605.exe</GFX>
  </Model>
  <Model name="ThinkPad T14S Gen 7 Type 21YU 21YV" arch="Intel">
   <Types>
@@ -8270,11 +8268,9 @@
    <Type>21YU</Type>
   </Types>
   <BIOS version="1.08" image="n4ue" date="2026-08-11" crc="5d0db0d71ff0f58d5fa366baaafa2c11bc177fc271f58d7f467026bd19e13556" md5="7b72c5739c0627076bea630c6b46c9cc">https://download.lenovo.com/pccbbs/mobiles/n4uuj03w.exe</BIOS>
-  <SCCM os="win11" version="24H2" date="2026-06-03" crc="5aa5b97a2489fc42b91fc892f9cc7c174bb5a1ee09606ebcfd9b57ff5b61f37d" md5="fa797c534982d14d8349b5c24cbea343">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_w11_24h2_202605.exe</SCCM>
-  <SCCM os="win11" version="25H2" date="2026-06-03" crc="ea22347cf087524779df32f3d9608c363c53c4ddcfb2b77b453b449a41647f2c" md5="fd97f6732a120f83e3326244e82a1b42">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_w11_25h2_202605.exe</SCCM>
+  <SCCM os="win11" version="24H2" date="2026-08-27" crc="3cf120cc7d45e01726f529fc6ce84e2a1d17a2d7f76b194c7084fdbf9bb7420b" md5="2642362c0950b6a8f999e130103e6de7">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_w11_24h2_202608.exe</SCCM>
+  <SCCM os="win11" version="25H2" date="2026-08-27" crc="3f40b381473a0fa79f0bd61bfeac70f8a2be7708b9ca6fbb8cc21509838d430d" md5="a1a3330be884bf8f697f7ddec648055b">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_w11_25h2_202608.exe</SCCM>
   <HSA os="win11" version="25H2" date="2026-05-05" crc="176ba447c347f4e5c4a1d1013d9294a2ccdf7f36da88ac1653d963efbfc00dbf" md5="62d37e62ba727d8663846786015b6843">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_hsa_w11_25h2_202604.exe</HSA>
-  <GFX os="win11" version="24H2" brand="Intel" date="2026-06-03" crc="01bc360fcdf8101990db5b0fe9dc5307a6c174000598d9c7a545cdb72b440c5e" md5="40a0e014a354ad935a834700cce533f8">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_intelvideo_w11_24h2_202604.exe</GFX>
-  <GFX os="win11" version="25H2" brand="Intel" date="2026-06-03" crc="a22e62f34ac4d6628847ae90737348218f690d8d1eef4a259f5561ffd6d04d6f" md5="67ccc46cd27edfdefefdc53c2213dccf">https://download.lenovo.com/pccbbs/mobiles/tp_t14s_gen7_mt21yu-21yv_t14s_2-in-1_gen2_mt21yy-22a0_intelvideo_w11_25h2_202605.exe</GFX>
  </Model>
  <Model name="ThinkPad T14S Gen 7 Type 21YW 21YX" arch="AMD">
   <Types>
@@ -8410,7 +8406,7 @@
    <Type>30KN</Type>
    <Type>30KQ</Type>
   </Types>
-  <BIOS version="S0PKT0CA" image="s0pk" date="2026-07-29" crc="c4b345a26448ec22af85a3476d8c6849111e59b34dbac189d2cee88c55076452" md5="69e30a5a2ec76b2abb4bbc70aee51229">https://download.lenovo.com/pccbbs/thinkcentre_bios/s0pjy0cusa.exe</BIOS>
+  <BIOS version="S0PKT0EA" image="s0pk" date="2026-09-02" crc="7b98b69f3efb7738bc246c3787b582d1f6955199a9859e2b3be12f75d35196e4" md5="5d6cdcf1567854c4e552598a9606a92b">https://download.lenovo.com/pccbbs/thinkcentre_bios/s0pjy0eusa.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-07-23" crc="309515e283c130b72ce5868a211987992c326500f3855ba41f50b2fcbece33ec" md5="085ea83addbd8c4ccf6244715121aba6">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p4_w11_24h2_202605.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-23" crc="40ee1207e7309c5ad5f46060a4bf9ec6b0e93f10b4037e720bab9a6023a91164" md5="08362adfdbd40246aee55c1acf567ec1">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p4_w11_25h2_202605.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-06-29" crc="5672a665f55448261b54d9e9f421ad5978f72a8914783f7bf1f7e93fbc882675" md5="0331b3f1c09ddc2f27d34b6530390167">https://download.lenovo.com/pccbbs/thinkcentre_drivers/ts_p4_hsa_w11_25h2_202605.exe</HSA>
@@ -8421,7 +8417,7 @@
    <Type>21U6</Type>
    <Type>21U7</Type>
   </Types>
-  <BIOS version="1.02" image="r3ie" date="2026-07-16" crc="81c34a6994d046b33c3ed0d86dbe2ed18d5db82157b1901e252eac0966d50561" md5="6802c8bb8826790f520ba950ac1dd8b5">https://download.lenovo.com/pccbbs/mobiles/r3iuj01w.exe</BIOS>
+  <BIOS version="1.06" image="r3ie" date="2026-08-27" crc="2c8e9ddb71ccf8a98f1d73ea2e41e4164f1c02f190545e1257acbb8a823237b6" md5="6fea00b03627946db2004369b9452781">https://download.lenovo.com/pccbbs/mobiles/r3iuj02w.exe</BIOS>
   <SCCM os="win11" version="24H2" date="2026-07-16" crc="0f8cb2ec3fc546f0de6078bf0f94f0041588ce2b40023a7b222a95690efb5909" md5="f78f48a53f60a333c8207814a9314e09">https://download.lenovo.com/pccbbs/mobiles/tp_x13_mt21u6_mt21u7_w11_24h2_202606.exe</SCCM>
   <SCCM os="win11" version="25H2" date="2026-07-16" crc="3c4e06bcbeb028aa8a6998b03d963cba89a96ac6bac985c4975ddb5bef25b06a" md5="6c44e51fb02200e5d556e21b8267ba26">https://download.lenovo.com/pccbbs/mobiles/tp_x13_mt21u6_mt21u7_w11_25h2_202606.exe</SCCM>
   <HSA os="win11" version="24H2" date="2026-07-16" crc="54d94b8af4520d9eb0306c9dd98ad54ce4f53abb54c021db372c1cd1522858e7" md5="f7d444df1919824c7aeb2d9a62d7d538">https://download.lenovo.com/pccbbs/mobiles/tp_x13_mt21u6_mt21u7_hsa_w11_24h2_202605.exe</HSA>
@@ -8434,4 +8430,4 @@
   <Tool name="Lenovo Update Retriever" sha256="56fe3209c1690b7554dc53847fdad9d4763628ef81a487d2ee22c21e622e481a" version="5.08.01.30">https://download.lenovo.com/pccbbs/thinkvantage_en/updateretriever_5.08.01.30.exe</Tool>
   <Tool name="Windows Utility To Read and Write Asset ID Information" sha256="71bb404d5df053e660062acbb86c4ca6dbc09f96e2b4c03841bd57079ccd1c5d" version="1.02">https://download.lenovo.com/pccbbs/mobiles/giaw03ww.exe</Tool>
  </ToolList>
-<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><DigestValue>Qx/ic6UVDAmMAjOPCLnOOfzrmjkxV3GV9fOvzbKUGj8=</DigestValue></Reference></SignedInfo><SignatureValue>tR78ozJduU9pgqs6Qf6jdt0DTE8HmxFEvmhbQaQFyf+fWrd/7CAQr2OtQoe6YzflD0gRRj6ja+pue88uBnCFu4dEn/3tpppUdIlcPnyNJ3tpubwD98yy40BDD3rxqVPasjSrgTACfzE8oK+rLWFKJofA7plU+Bh6qlan576xQWOg2lJkev0GPLhsHG6MS8t3hWWj4RYkgFotjeJvPLZfPUg4500Bi7dOeTXd5LapRfZcAmvNCah2eGwVozManNeksfBHjIy6LwQIiPyJWYiquuBFCNAA4JqZ7sryIfsNZQppKhDES8ntX8df5Gt6AZ/OLux/pxSw5d+KnpOwOxLWZTAMhKgl1PmZwDLurQi49xhjj9n2mQKs5p67vbzj6aURnWNK8VPYs6ODfBdo53WwiM/D5okYMalMQACzgb+MjuqTEty6j8ZiktsfzKE5SdFCxk9uHJ/lNd9Kg2nToWSmupsgCfo9xDGBM6cRxvamsxRN98aZMyqjX9szcJ4mMR+j6tbkInDfuGboyJVld90GW72dER1fQnyZd/EHQta30kzbNWgJsqq+jkhqkEHORkWVhFaW6ZdHO2wXKgZmGk90FzH1pRG8G1+Q99c48LSQjUWsieiTcoLhQOfW+tOu92FeZo23dO00ygocz/il5zhqukc5t4FtiMLayzvTx9Ztmj8=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>tVpyofJ2OaqjpsXa0fBwRM+Q5kuA+/W0l4h6uktx+bEuhfjQaxSJjmX3oHXdtx8qMoElC8eyPkPTxF8aeJ8r6wawBfzEKBpg0vGrQI4qfnUaAssw2DOUTitH/yZQy5YrZ8pezbh2afu14Tb577Z3P8Z8deCsAg+8ivg8351kAV6iPr/B+kssdle1AvEpWa0MVzuBBmQzpnyjQesfZ5fYxU1DBtlla9JCGpE3rr8sxxfFss/xIBvqcpEITF+VsjmL4ykSr7E52InGQ/l0LmytDfUkYsN2Fu4BxQkR1cBPOA/WlP2Kze5Zmbd+ujvUq99rRcvAFlZHa63yxDopSF3Q2yZ3lzR/Y+IPa5N32YNYdDfhu72YO6dlp5ZmsiVQ/0wnxMwzzZqj/i2MU0rmbdOFlRsIbCh6l6derzKNsowqoce9ygljRKaQAiVTNahEFtEL643RPBxHTjyxkM+j5kKB040s+uOewhT43G6F8MyePhRhuRFu2+cn5TQ7gS75qNFLzsuL6M3aMesAG8BRe08nsOSTFNN9qynOV/G56ipUpwYue7g9QC2EqDeDiGV4aB6juz6SsQMDPK90Gdj5vxR1Ef8ELEOvsbnKz9sIw8TNxQVPkuutUEc7o3ZTrmJiRqbMSjiiSusI0UMk9kLUb+k2V5N6Ihp1I9NPS0kY8r6cOjU=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509IssuerSerial><X509IssuerName>CN=DigiCert Trusted G4 Code Signing RSA4096 SHA384 2021 CA1, O="DigiCert, Inc.", C=US</X509IssuerName><X509SerialNumber>7290074165818260535661349442281740437</X509SerialNumber></X509IssuerSerial><X509SubjectName>CN=Lenovo, O=Lenovo, L=Morrisville, S=North Carolina, C=US</X509SubjectName><X509Certificate>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</X509Certificate></X509Data></KeyInfo><Object><SignatureProperties><SignatureProperty Target="#"><IssuerCertificate xmlns="namespaceURI">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</IssuerCertificate></SignatureProperty></SignatureProperties></Object></Signature></ModelList>
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" /><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" /><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" /></Transforms><DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256" /><DigestValue>g7RbOpujOu9SzBX/7Xk9+vV1mGuBinReT+93LSyfjw4=</DigestValue></Reference></SignedInfo><SignatureValue>nPa1Owdptlr6k5kxRITFnwlWSxGSnnPPfJK3z+k9yhoKttbcYvFK/WtlSr7PfOhDeWi254YlnHZCLC3f5MmjBl/Br4PmnpXzkHjspFrQTOSL6QrpjT0jqNCPHGYuI7RO3K8ObTDj60etRAAPISW+djNnOqn/xQUUgM6dd+zRE8IKhpbp3nVJfPY7pFYQn7pyfo6mj4yy023abr0Y2rkni3qrPgdz1Gisl1WlPFL/MhvHkJIZLcY8qdjBDfRo2WrymbjOXAPdrjP37pohHLP2CWWwy3sPQYFIoPWLRY7p92b7mvuGepcJFusTqaDxHEoFaiSykn0Q1uVZtA1uNZb+3i8tE/b06iyMibTJf9UlYO3SJv92xqIgxh5jdnR8HJNGbvVcfgLBZVS5Qo+eBMDjcrRIrQHHZEP1V0jmcjDcZvEX48rC8ykjk8ir8eQUzHVERAjndbPW2Qbde0fqmvzXoAKYqLy1iw6gvUCosKzldqEiAUiZUxcCe7yEZNtYP0ToQFiiZkEcF8F2mrrsYyaTqjW0vjdt1lTzUpVe7P688D8cB8MWZDFO7dzaMnaDcRlTmdc1MZaEULAVohuBF2iRtcNuCIxQOUFtAXw8+K1GwBIC6WcrtLFqitpxTrfwPlht8/UkOm482hgjC2boYyM3RN65HTjV5TdM9PUOA1aLAmc=</SignatureValue><KeyInfo><KeyValue><RSAKeyValue><Modulus>tVpyofJ2OaqjpsXa0fBwRM+Q5kuA+/W0l4h6uktx+bEuhfjQaxSJjmX3oHXdtx8qMoElC8eyPkPTxF8aeJ8r6wawBfzEKBpg0vGrQI4qfnUaAssw2DOUTitH/yZQy5YrZ8pezbh2afu14Tb577Z3P8Z8deCsAg+8ivg8351kAV6iPr/B+kssdle1AvEpWa0MVzuBBmQzpnyjQesfZ5fYxU1DBtlla9JCGpE3rr8sxxfFss/xIBvqcpEITF+VsjmL4ykSr7E52InGQ/l0LmytDfUkYsN2Fu4BxQkR1cBPOA/WlP2Kze5Zmbd+ujvUq99rRcvAFlZHa63yxDopSF3Q2yZ3lzR/Y+IPa5N32YNYdDfhu72YO6dlp5ZmsiVQ/0wnxMwzzZqj/i2MU0rmbdOFlRsIbCh6l6derzKNsowqoce9ygljRKaQAiVTNahEFtEL643RPBxHTjyxkM+j5kKB040s+uOewhT43G6F8MyePhRhuRFu2+cn5TQ7gS75qNFLzsuL6M3aMesAG8BRe08nsOSTFNN9qynOV/G56ipUpwYue7g9QC2EqDeDiGV4aB6juz6SsQMDPK90Gdj5vxR1Ef8ELEOvsbnKz9sIw8TNxQVPkuutUEc7o3ZTrmJiRqbMSjiiSusI0UMk9kLUb+k2V5N6Ihp1I9NPS0kY8r6cOjU=</Modulus><Exponent>AQAB</Exponent></RSAKeyValue></KeyValue><X509Data><X509IssuerSerial><X509IssuerName>CN=DigiCert Trusted G4 Code Signing RSA4096 SHA384 2021 CA1, O="DigiCert, Inc.", C=US</X509IssuerName><X509SerialNumber>7290074165818260535661349442281740437</X509SerialNumber></X509IssuerSerial><X509SubjectName>CN=Lenovo, O=Lenovo, L=Morrisville, S=North Carolina, C=US</X509SubjectName><X509Certificate>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</X509Certificate></X509Data></KeyInfo><Object><SignatureProperties><SignatureProperty Target="#"><IssuerCertificate xmlns="namespaceURI">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</IssuerCertificate></SignatureProperty></SignatureProperties></Object></Signature></ModelList>
