@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.9.8.1 - September 8, 2026
+
+### Added
+
+- Added deployment disk selection and expanded deployment disk validation.
+- Added OSDeploy license registration, license state management, and license help output.
+- Added verbose workflow step diagnostics for deployment troubleshooting.
+- Added WinPE startup profiles for restart and shutdown actions.
+- Added a WinPEStartup guide and updated deployment, troubleshooting, and unattended USB documentation.
+
+### Changed
+
+- Module version bumped to `26.9.8.1`.
+- Consolidated deployment, workflow, and device state objects used across deployment execution.
+- Improved operating system and driver pack cache object handling, including deployment catalog state scoping and registered catalog refresh behavior.
+- Preserved operating system language selections through deployment parameter resolution.
+- Improved device identity handling and hashed the device identifier used for telemetry.
+- Renamed device identity and license properties to use the current core naming conventions.
+- Refreshed WinPEStartup initialization, command execution, module update, Wi-Fi, USB, and device error handling paths.
+- Updated workflow step logging, status output, target disk checks, driver pack checks, and Windows image validation.
+- Refactored driver pack catalog retrieval and update functions across Dell, HP, Lenovo, Panasonic, and Surface catalogs.
+- Updated Windows 11 25H2 operating system catalog content to build `26200.9168`.
+- Refreshed Dell and HP driver pack catalogs and Surface driver pack URLs.
+- Updated deployment, feature, privacy, and workflow documentation and standardized Recast status messages.
+
+### Removed
+
+- Removed retired workflow assets and legacy workflow UI projects from unused channels.
+
 ## 26.8.10.1 - August 10, 2026
 
 ### Added
