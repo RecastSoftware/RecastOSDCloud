@@ -4,40 +4,41 @@
 
 You ran the default deployment from [guide 4](04-deploy-windows.md) and now
 need to change something — a different OS build, a different edition, a
-skipped step, or a different workflow channel.
+skipped step, or a custom workflow.
 
-## Why workflow channels exist
+## How workflows are organized
 
-A **workflow channel** is a folder under `OSDCloud/workflow/` that bundles:
+A workflow is a folder under `OSDCloud/workflow/` that bundles:
 
 - A task definition (which steps run, in what order, which are skipped).
 - Per-architecture OS / edition / language options shown in the UX.
 - UI configuration.
 
-Channels let the same module deploy with different policies — production
-versus pilot versus development — without rewriting code.
+The module currently supports the `default` workflow for public deployments.
+Its settings allow Windows 11 25H2, 24H2, and 23H2 and use the standard
+40-step task.
 
-## Available channels
+The module also contains a `cli` folder for the internal preview CLI
+implementation. It is not a supported GUI workflow or a replacement for
+`Deploy-OSDCloud -CLI`, which runs the selected workflow without the UX.
 
-| Channel | When to use it |
-|---|---|
-| `default` | Production. Windows 11 25H2 / 24H2 / 23H2. The standard 40-step task. |
-| `latest` | Same as `default` but tracks the newest OS catalog. |
-| `classic` | Legacy OSDCloud (OSD v1) compatibility flow. |
-| `insiders` | Insider Preview ESDs for testing. |
-| `dev-alpha`, `dev-beta`, `dev-device` | Module development channels — do not use in production. |
-| `legacy` | Historic baseline kept for reference. |
+## Custom workflows
 
-Select one with `-WorkflowName`:
+To use a custom workflow, add its folder under `OSDCloud/workflow/` with
+the same settings, task, and UI structure as `default`, then select it with
+`-WorkflowName`:
 
 ```powershell
-Deploy-OSDCloud -WorkflowName latest
+Deploy-OSDCloud -WorkflowName 'pilot'
 ```
+
+Non-default workflows display a warning. Use
+`-SkipWorkflowVerification` only after validating the custom workflow.
 
 ## Change OS, edition, or language
 
-These choices live in `workflow/<channel>/os-amd64.json` and
-`workflow/<channel>/os-arm64.json`. The UX reads them at runtime.
+These choices live in `workflow/<workflow>/os-amd64.json` and
+`workflow/<workflow>/os-arm64.json`. The UX reads them at runtime.
 
 ### Operator-driven (one-off)
 
@@ -45,7 +46,7 @@ Just pick a different option in the UX before clicking Start.
 
 ### Policy change (everyone gets it)
 
-Edit the JSON for the channel. For example, default the `default` channel
+Edit the JSON for the workflow. For example, default the `default` workflow
 to Enterprise + en-gb:
 
 ```jsonc
@@ -63,7 +64,7 @@ ARM64 has fewer editions (no N or Education variants) — see [guide 7](07-arm64
 
 ## Skip or enable individual steps
 
-Each step entry in `workflow/<channel>/tasks/osdcloud.json` has a `skip`
+Each step entry in `workflow/<workflow>/tasks/osdcloud.json` has a `skip`
 field. Toggle it without removing the step:
 
 ```jsonc
@@ -80,7 +81,7 @@ are silently skipped outside WinPE.
 
 ## The default workflow (40 steps)
 
-Phases and per-step notes for the `default` channel's `osdcloud.json` task.
+Phases and per-step notes for the `default` workflow's `osdcloud.json` task.
 Steps marked **Skipped** have `"skip": true` shipped from the catalog.
 
 ### Phase 1 — Validate
@@ -154,7 +155,7 @@ pre-cached on the deployed device — useful for Autopilot-adjacent scripts.
 ## Add a brand-new step
 
 1. Write the step function under `OSDCloud/private/steps/<phase>/step-<verb>-<noun>.ps1`.
-2. Add a JSON entry in `workflow/<channel>/tasks/osdcloud.json` referencing the function name as `command`.
+2. Add a JSON entry in `workflow/<workflow>/tasks/osdcloud.json` referencing the function name as `command`.
 3. Follow the schema in `.github/instructions/workflow-tasks.instructions.md`.
 
 ## Next

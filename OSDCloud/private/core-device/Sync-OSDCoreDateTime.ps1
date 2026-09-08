@@ -61,13 +61,13 @@ function Sync-OSDCoreDateTime {
 
     process {
         $result = [PSCustomObject]@{
-            LocalDateTime    = $null
-            InternetDateTime = $null
+            LocalDateTime     = $null
+            InternetDateTime  = $null
             DifferenceMinutes = $null
-            IsWinPE          = $env:SystemDrive -eq "X:"
-            ClockUpdated     = $false
-            Success          = $false
-            ErrorMessage     = $null
+            IsWinPE           = $env:SystemDrive -eq "X:"
+            ClockUpdated      = $false
+            Success           = $false
+            ErrorMessage      = $null
         }
 
         try {
@@ -118,16 +118,16 @@ function Sync-OSDCoreDateTime {
             $result.DifferenceMinutes = [math]::Round([math]::Abs(($result.InternetDateTime - $result.LocalDateTime).TotalMinutes))
 
             if ($result.DifferenceMinutes -gt $ThresholdMinutes) {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Time difference of $($result.DifferenceMinutes) minutes exceeds threshold of $ThresholdMinutes minutes"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Time difference of $($result.DifferenceMinutes) minutes exceeds threshold of $ThresholdMinutes minutes"
 
                 if ($result.IsWinPE) {
                     if ($Force) {
                         if ($PSCmdlet.ShouldProcess("System Clock", "Set to $($result.InternetDateTime)")) {
-                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Setting system clock to internet time"
+                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Setting system clock to internet time"
                             try {
                                 $null = Set-Date -Date $result.InternetDateTime -ErrorAction Stop
                                 $result.ClockUpdated = $true
-                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] System clock successfully updated"
+                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System clock successfully updated"
                             }
                             catch {
                                 $result.ErrorMessage = "Failed to set system clock: $($_.Exception.Message)"
@@ -146,7 +146,7 @@ function Sync-OSDCoreDateTime {
                 }
             }
             else {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] System clock is synchronized within threshold ($($result.DifferenceMinutes) minutes difference)"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System clock is synchronized within threshold ($($result.DifferenceMinutes) minutes difference)."
             }
         }
 

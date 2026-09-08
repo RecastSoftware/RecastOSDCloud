@@ -17,7 +17,7 @@
     System.Void
 
 .NOTES
-    This function is intended for WinPE startup workflows.
+    This function is intended for WinPEStartup workflows.
     If required wireless components are missing, Wi-Fi start is skipped.
 #>
 function Show-WinPEStartupWifi {
@@ -25,15 +25,15 @@ function Show-WinPEStartupWifi {
     param ()
     #=================================================
     $Error.Clear()
-    $host.ui.RawUI.WindowTitle = "[$(Get-Date -format s)] OSDCloud - WinPE Startup Wi-Fi"
+    $host.ui.RawUI.WindowTitle = "[$(Get-Date -format s)] OSDCloud - WinPEStartup Wi-Fi"
     #=================================================
     # Test-OSDCloudInternetConnection
     if (Test-OSDCloudInternetConnection -Uri 'google.com') {
-        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Ping google.com success. Device is already connected to the Internet"
+        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ping google.com success. Device is already connected to the Internet"
         $StartOSDCloudWifi = $false
     }
     else {
-        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Ping google.com failed. Will attempt to connect to a Wireless Network"
+        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ping google.com failed. Will attempt to connect to a Wireless Network"
         $StartOSDCloudWifi = $true
     }
     #=================================================
@@ -59,7 +59,7 @@ function Show-WinPEStartupWifi {
         }
 
         if (!$StartOSDCloudWifi) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Unable to enable Wireless Network due to missing components"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Unable to enable Wireless Network due to missing components"
             if ($MissingDlls.Count -gt 0) {
                 Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Missing DLL files: $($MissingDlls -join ', ')"
             }
@@ -98,17 +98,17 @@ function Show-WinPEStartupWifi {
 
         $IP = Test-Connection -ComputerName $(HOSTNAME) -Count 1 | Select-Object -ExpandProperty IPV4Address
         if ($null -eq $IP) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Network adapter error. This should not happen!"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Network adapter error. This should not happen!"
             Start-Sleep -Seconds 2
         }
         elseif ($IP.IPAddressToString.StartsWith('169.254') -or $IP.IPAddressToString.Equals('127.0.0.1')) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] IP address not yet assigned by DHCP. Trying to get a new DHCP lease."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] IP address not yet assigned by DHCP. Trying to get a new DHCP lease."
             ipconfig /release | Out-Null
             ipconfig /renew | Out-Null
             Start-Sleep -Seconds 2
         }
         else {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Network configuration renewed with IP: $($IP.IPAddressToString)"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Network configuration renewed with IP: $($IP.IPAddressToString)"
             Start-Sleep -Seconds 2
             break
         }

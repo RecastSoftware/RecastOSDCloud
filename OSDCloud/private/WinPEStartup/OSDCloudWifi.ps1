@@ -71,7 +71,7 @@ function Connect-OSDCloudWifiByXMLProfile {
     )
 
     $SSID = ([xml](Get-Content $wifiProfile)).WLANProfile.Name
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Connecting to $SSID"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Connecting to $SSID"
 
     # just for sure
     $null = Netsh WLAN delete profile "$SSID"
@@ -197,7 +197,9 @@ function Set-OSDCloudWifi() {
         Copy-Item $WlanConfig -Destination $OutFile
     }
     $result = Netsh WLAN add profile filename=$WlanConfig
-    Remove-Item $WlanConfig -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $WlanConfig) {
+        Remove-Item -LiteralPath $WlanConfig -ErrorAction SilentlyContinue
+    }
     if ($result -notmatch "is added on interface") {
         throw "There was en error when setting up Wi-Fi $WLanName connection profile. Error was $result"
     }

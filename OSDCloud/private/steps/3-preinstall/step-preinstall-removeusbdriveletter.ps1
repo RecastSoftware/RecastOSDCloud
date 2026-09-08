@@ -2,11 +2,8 @@ function step-preinstall-removeusbdriveletter {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
-    $Step = $global:OSDCloudCurrentStep
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    #region Main
     <#
         https://docs.microsoft.com/en-us/powershell/module/storage/remove-partitionaccesspath
         Partition Access Paths are being removed from USB Drive Letters
@@ -15,10 +12,11 @@ function step-preinstall-removeusbdriveletter {
 
     # Store the USB Partitions
     $global:OSDCloudWorkflowInvoke.USBPartitions = Get-DeviceUSBPartition
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] USB partition count: $(@($global:OSDCloudWorkflowInvoke.USBPartitions).Count)"
 
     # Remove USB Drive Letters
     if ($global:OSDCloudWorkflowInvoke.USBPartitions) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Removing USB Drive Letters. OK."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing USB Drive Letters. OK."
         foreach ($Item in $global:OSDCloudWorkflowInvoke.USBPartitions) {
             $Params = @{
                 AccessPath      = "$($Item.DriveLetter):"
@@ -26,12 +24,15 @@ function step-preinstall-removeusbdriveletter {
                 PartitionNumber = $Item.PartitionNumber
                 ErrorAction     = 'SilentlyContinue'
             }
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Removing access path $($Params.AccessPath) from Disk $($Params.DiskNumber), Partition $($Params.PartitionNumber)."
             Remove-PartitionAccessPath @Params
             Start-Sleep -Seconds 3
         }
     }
+    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No USB partitions were found."
+    }
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

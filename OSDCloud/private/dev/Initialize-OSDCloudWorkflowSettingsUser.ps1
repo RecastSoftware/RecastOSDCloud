@@ -57,7 +57,7 @@ function Initialize-OSDCloudWorkflowSettingsUser {
             break
         }
         else {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $useramd64Path"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $useramd64Path"
         }
         $OSDCloudWorkflowSettingsUserFile = $useramd64Path
     }
@@ -67,7 +67,7 @@ function Initialize-OSDCloudWorkflowSettingsUser {
             break
         }
         else {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $userarm64Path"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $userarm64Path"
         }
         $OSDCloudWorkflowSettingsUserFile = $userarm64Path
     }
@@ -90,7 +90,6 @@ function Initialize-OSDCloudWorkflowSettingsUser {
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Initialized OSDCloudWorkflowSettingsUser: $OSDCloudWorkflowSettingsUserFile"
     $global:OSDCloudWorkflowSettingsUser = $hashtable
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

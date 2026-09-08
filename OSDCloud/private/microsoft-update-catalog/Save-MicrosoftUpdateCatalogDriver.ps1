@@ -12,7 +12,7 @@ function Save-MicrosoftUpdateCatalogDriver {
     )
     #=================================================
     if (!($DestinationDirectory)) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Set the DestinationDirectory parameter to download the Drivers"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Set the DestinationDirectory parameter to download the Drivers"
     }
     else {
         if (!(Test-Path $DestinationDirectory)){
@@ -34,7 +34,7 @@ function Save-MicrosoftUpdateCatalogDriver {
     $SurfaceIDPattern = 'mshw0[0-1]([0-9]){2}'
 
     if (-not (Test-MicrosoftUpdateCatalog)) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Unable to reach Microsoft Update Catalog, exiting function"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Unable to reach Microsoft Update Catalog, exiting function"
         return
     }
 
@@ -128,38 +128,40 @@ function Save-MicrosoftUpdateCatalogDriver {
     
                         if ($WindowsUpdateDriver.Guid) {
                             Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] $($WindowsUpdateDriver.Title)"
-                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] UpdateID: $($WindowsUpdateDriver.Guid)"
-                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Last Updated $($WindowsUpdateDriver.LastUpdated) Version $($WindowsUpdateDriver.Version) Size: $($WindowsUpdateDriver.Size)"
+                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] UpdateID: $($WindowsUpdateDriver.Guid)"
+                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Last Updated $($WindowsUpdateDriver.LastUpdated) Version $($WindowsUpdateDriver.Version) Size: $($WindowsUpdateDriver.Size)"
 
                             if ($Item.Name -and $Item.PNPClass) {
-                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $($Item.PNPClass) $($Item.Name)"
+                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($Item.PNPClass) $($Item.Name)"
                             }
                             elseif ($Item.Name) {
-                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $($Item.Name)"
+                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($Item.Name)"
                             }
                             else {
-                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $($Item.DeviceID)"
+                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($Item.DeviceID)"
                             }
-                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] HardwareID: $FindHardwareID"
+                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] HardwareID: $FindHardwareID"
                             Write-Verbose "[$(Get-Date -format s)] SearchString: $SearchString"
 
                             if ($DestinationDirectory) {
                                 $ExpandedLocalFolder = Join-Path $DestinationDirectory "$($WindowsUpdateDriver.Guid)"
                                 if (Test-Path $ExpandedLocalFolder) {
-                                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Driver already expanded at $ExpandedLocalFolder"
+                                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Driver already expanded at $ExpandedLocalFolder"
                                 }
                                 else {
-                                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Downloading to $DestinationDirectory"
+                                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading to $DestinationDirectory"
                                     $WindowsUpdateDriverFile = Save-MicrosoftUpdateCatalogUpdate -Guid $WindowsUpdateDriver.Guid -DestinationDirectory $DestinationDirectory
                                     if ($WindowsUpdateDriverFile) {
                                         if (-not (Test-Path $ExpandedLocalFolder)) {
                                             # Destination folder must exist before expanding the cab file
                                             New-Item -Path $ExpandedLocalFolder -ItemType Directory -Force | Out-Null
                                         }
-                                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Expanding to $ExpandedLocalFolder"
+                                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Expanding to $ExpandedLocalFolder"
                                         expand.exe "$($WindowsUpdateDriverFile.FullName)" -F:* "$ExpandedLocalFolder" | Out-Null
-                                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Removing $($WindowsUpdateDriverFile.FullName)"
-                                        Remove-Item $($WindowsUpdateDriverFile.FullName) -Force -ErrorAction SilentlyContinue | Out-Null
+                                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing $($WindowsUpdateDriverFile.FullName)"
+                                        if (Test-Path -LiteralPath $WindowsUpdateDriverFile.FullName) {
+                                            Remove-Item -LiteralPath $WindowsUpdateDriverFile.FullName -Force -ErrorAction SilentlyContinue | Out-Null
+                                        }
                                     }
                                     else {
                                         Write-Verbose "[$(Get-Date -format s)] Could not find a Driver for this HardwareID"
@@ -234,28 +236,30 @@ function Save-MicrosoftUpdateCatalogDriver {
 
                 if ($WindowsUpdateDriver.Guid) {
                     Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] $($WindowsUpdateDriver.Title)"
-                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] UpdateID: $($WindowsUpdateDriver.Guid)"
-                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Last Updated $($WindowsUpdateDriver.LastUpdated) Version $($WindowsUpdateDriver.Version) Size: $($WindowsUpdateDriver.Size)"
-                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] HardwareID: $FindHardwareID"
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] UpdateID: $($WindowsUpdateDriver.Guid)"
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Last Updated $($WindowsUpdateDriver.LastUpdated) Version $($WindowsUpdateDriver.Version) Size: $($WindowsUpdateDriver.Size)"
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] HardwareID: $FindHardwareID"
                     Write-Verbose "[$(Get-Date -format s)] SearchString: $SearchString"
 
                     if ($DestinationDirectory) {
                         $ExpandedLocalFolder = Join-Path $DestinationDirectory "$($WindowsUpdateDriver.Guid)"
                         if (Test-Path $ExpandedLocalFolder) {
-                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Driver already expanded at $ExpandedLocalFolder"
+                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Driver already expanded at $ExpandedLocalFolder"
                         }
                         else {
-                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Downloading to $DestinationDirectory"
+                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Downloading to $DestinationDirectory"
                             $WindowsUpdateDriverFile = Save-MicrosoftUpdateCatalogUpdate -Guid $WindowsUpdateDriver.Guid -DestinationDirectory $DestinationDirectory
                             if ($WindowsUpdateDriverFile) {
                                 if (-not (Test-Path $ExpandedLocalFolder)) {
                                     # Destination folder must exist before expanding the cab file
                                     New-Item -Path $ExpandedLocalFolder -ItemType Directory -Force | Out-Null
                                 }
-                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Expanding to $ExpandedLocalFolder"
+                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Expanding to $ExpandedLocalFolder"
                                 expand.exe "$($WindowsUpdateDriverFile.FullName)" -F:* "$ExpandedLocalFolder" | Out-Null
-                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Removing $($WindowsUpdateDriverFile.FullName)"
-                                Remove-Item $($WindowsUpdateDriverFile.FullName) -Force -ErrorAction SilentlyContinue | Out-Null
+                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing $($WindowsUpdateDriverFile.FullName)"
+                                if (Test-Path -LiteralPath $WindowsUpdateDriverFile.FullName) {
+                                    Remove-Item -LiteralPath $WindowsUpdateDriverFile.FullName -Force -ErrorAction SilentlyContinue | Out-Null
+                                }
                             }
                             else {
                                 Write-Verbose "[$(Get-Date -format s)] Could not find a Driver for this HardwareID"

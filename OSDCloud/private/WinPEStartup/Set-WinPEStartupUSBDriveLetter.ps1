@@ -102,7 +102,7 @@ function Set-WinPEStartupUSBDriveLetter {
         }
 
         try {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] USB DriveLetter: $oldLetter -> $newLetter"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] USB DriveLetter: $oldLetter -> $newLetter"
             Set-Partition -DiskNumber $usbPartition.DiskNumber -PartitionNumber $usbPartition.PartitionNumber -NewDriveLetter $newLetter -ErrorAction Stop
             $resultCount += 1
         }

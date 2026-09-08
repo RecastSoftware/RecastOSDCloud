@@ -1,37 +1,106 @@
 function Initialize-OSDCoreDevice {
     <#
     .SYNOPSIS
-    Collects local hardware, firmware, TPM, and network details for OSDCloud.
+        Initializes the OSDCore device inventory and diagnostics context.
 
     .DESCRIPTION
-    Initialize-OSDCoreDevice gathers device information from CIM classes, firmware,
-    and environment data, then normalizes manufacturer/model/product values for
-    workflow use. It writes diagnostic logs to $env:TEMP\osdcloud-logs, attempts to
-    copy logs to an available OSDCloudLogs path, and populates
-    $global:OSDCoreDevice with an ordered property set used by downstream OSDCloud
-    deployment logic.
+        Initialize-OSDCoreDevice collects local hardware, firmware, TPM, keyboard,
+        disk, USB cache, and network information from CIM, environment variables,
+        and UEFI checks. It creates diagnostic artifacts in
+        $env:TEMP\osdcloud-logs, clears stale OSDCoreDevice snapshot files before
+        collection, normalizes key identity values such as
+        manufacturer/model/product, and builds $global:OSDCoreDevice as an
+        ordered property bag used by deployment and workflow orchestration
+        functions.
+
+        OSDCloud environment values can override the reported OSD manufacturer,
+        model, product, OS architecture, and processor architecture. The device
+        snapshot includes the raw SMBIOS UUID and EndpointSHA, a SHA256 hash used by
+        downstream telemetry callers when a stable privacy-preserving identifier
+        is needed.
+
+        The function is intended for internal module initialization and is called
+        before workflow execution so downstream steps can rely on a consistent
+        device state snapshot.
 
     .EXAMPLE
     Initialize-OSDCoreDevice
 
-    Collects current device metadata, creates or updates
-    $global:OSDCoreDevice, and writes log artifacts for troubleshooting.
+        Collects current device metadata, creates or updates
+        $global:OSDCoreDevice, removes stale device snapshot files, and writes
+        current log artifacts for troubleshooting.
+
+
+    .EXAMPLE
+    Initialize-OSDCoreDevice -Verbose
+
+        Runs initialization and emits additional details about discovered disks,
+        network adapters, keyboard selection, and support checks.
+
+    .INPUTS
+    None. You cannot pipe input to this function.
 
     .OUTPUTS
     None. This function does not emit pipeline output.
 
     .NOTES
-    Side effects:
-    - Clears the current PowerShell error collection.
-    - Updates date/time in WinPE when needed.
-    - Writes logs to $env:TEMP\osdcloud-logs.
-    - Sets $global:OSDCoreDevice.
+        Side effects:
+        - Clears the current PowerShell error collection.
+        - Attempts to sync date/time (best effort) through Sync-OSDCoreDateTime.
+                - Removes stale OSDCoreDevice.xml and OSDCoreDevice.json files from
+                    $env:TEMP\osdcloud-logs before collecting a new snapshot.
+                - Writes diagnostic logs and current device snapshots to
+                    $env:TEMP\osdcloud-logs.
+        - Attempts to stage logs in an OSDCloudLogs destination when available.
+        - Updates global state in $global:OSDCoreDevice.
+
+        Changelog:
+        - 2026-08-13 | pending | Add OSDeploy identity and license properties.
+            Added nullable idOSDeployDevice, idRegisteredEmail, and idRegisteredLicense values
+            from WinPE environment variables or local license discovery.
+        - 2026-08-13 | pending | Add EndpointSHA and clear stale device snapshot files.
+            Removed existing OSDCoreDevice output files before collecting device state
+            and added EndpointSHA as a SHA256 hash of the device UUID.
+        - 2026-08-12 | pending | Infer AutoOSLanguageCode from keyboard layout.
+            Used Convert-KeyboardLayoutToLanguageCode with the detected KeyboardLayout
+            to populate AutoOSLanguageCode in the OSDCoreDevice snapshot.
+        - 2026-08-12 | pending | Move DeploymentDisk selection to deployment initialization.
+            Removed deployment disk target selection from device inventory so
+            Initialize-DeployOSDCloud selects the deployment disk from LocalDisk.
+        - 2026-08-11 | pending | Populate local disk inventory in OSDCoreDevice.
+            Assigned filtered online local disk, partition, and volume objects before
+            exporting the device snapshot.
+        - 2026-08-11 | pending | Populate USB disk inventory in OSDCoreDevice.
+            Assigned filtered online USB disk objects to USBDisk before exporting
+            the device snapshot.
+        - 2026-08-06 | pending | Export OSDCoreDevice CLIXML to TEMP.
+            Added Export-Clixml output to $env:TEMP\OSDCoreDevice.xml so
+            callers and support workflows can consume a typed device snapshot.
+        - 2026-08-05 | pending | Report unknown values for empty identity fields.
+            Normalized OSDManufacturer, OSDModel, and OSDProduct values written
+            to OSDCoreDevice so null/whitespace values are emitted as Unknown.
+        - 2026-08-05 | pending | Resolve OS catalog provider selection overwrite.
+            Replaced unconditional dual assignment of OSDCoreOperatingSystems with
+            command-aware selection logic that uses the available provider function
+            and throws a descriptive error when neither provider is present.
+        - 2026-08-05 | ef3e4fb | Core catalog initialization wiring update.
+            Integrated initializer into the broader core startup path and aligned
+            device state dependencies for downstream catalog and workflow logic.
+        - 2026-08-04 | 538d747 | Initial OSDCoreDevice initializer introduced.
+            Added core CIM collection, log export pipeline, normalization helpers,
+            and baseline global property map for workflow consumers.
+
+        Maintainer guidance:
+        - Add a new changelog entry in this NOTES section for every functional
+            behavior change in this function.
+        - Keep entries in reverse chronological order using this format:
+            YYYY-MM-DD | <short-hash> | <summary>
     #>
     [CmdletBinding()]
     param ()
     #=================================================
     $Error.Clear()
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)]"
+    # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)]"
     #=================================================
     try {
         Sync-OSDCoreDateTime -ThresholdMinutes 5 -Force -ErrorAction Stop
@@ -133,6 +202,8 @@ function Initialize-OSDCoreDevice {
         $KeyboardLayout = $null
         $KeyboardName = $null
     }
+
+    $AutoOSLanguageCode = 'en-us'
     #=================================================
     # Win32_NetworkAdapter
     $classWin32NetworkAdapter = Get-CimInstance -ClassName Win32_NetworkAdapter | Select-Object -Property *
@@ -178,7 +249,7 @@ function Initialize-OSDCoreDevice {
     if ($SystemFirmwareDevice) {
         $GuidPattern = '\{?(([0-9a-f]){8}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){4}-([0-9a-f]){12})\}?'
         $SystemFirmwareResource = ($SystemFirmwareDevice.PNPDeviceID | Select-String -Pattern $GuidPattern -AllMatches | Select-Object -ExpandProperty Matches | Select-Object -ExpandProperty Value)
-        $SystemFirmwareHardwareId = $SystemFirmwareResource -replace '[{}]',''
+        $SystemFirmwareHardwareId = $SystemFirmwareResource -replace '[{}]', ''
     }
     else {
         $SystemFirmwareDevice = $null
@@ -240,8 +311,8 @@ function Initialize-OSDCoreDevice {
             Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] [NOT SUPPORTED] Intune Autopilot is not supported on this device."
         }
         else {
-            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [OK] TPM 2.0 is supported on this device."
-            Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [OK] Intune Autopilot is supported on this device."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] TPM 2.0 is supported on this device."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Intune Autopilot is supported on this device."
             $IsAutopilotSpec = $true
             $IsTpmSpec = $true
         }
@@ -253,13 +324,13 @@ function Initialize-OSDCoreDevice {
         $SecureBootStatus = Confirm-SecureBootUEFI
     }
     catch {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [UNAVAILABLE] Unable to access UEFI Secure Boot information."
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [UNAVAILABLE] This system may not support UEFI or Secure Boot."
+        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Unable to access UEFI Secure Boot information."
+        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] This system may not support UEFI or Secure Boot."
     }
     if ($SecureBootStatus -eq $true) {
-        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [OK] Secure Boot is enabled on this device."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Secure Boot is enabled on this device."
 
-        if (Get-Command -Name Get-SecureBootUEFI -ErrorAction SilentlyContinue) {
+        if (Get-Command -Name Get-SecureBootUEFI -ErrorAction Ignore) {
             try {
                 $dbVariable = Get-SecureBootUEFI -Name DB -ErrorAction Stop
                 $kekVariable = Get-SecureBootUEFI -Name KEK -ErrorAction Stop
@@ -283,14 +354,14 @@ function Initialize-OSDCoreDevice {
                     }
                     $WinUEFIca2023 = $dbText -match 'Windows UEFI CA 2023'
                     if ($WinUEFIca2023) {
-                        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [OK] Windows UEFI CA 2023 is present."
+                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Windows UEFI CA 2023 is present."
                     }
                     else {
                         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Windows UEFI CA 2023 is not present."
                     }
                     $MsUEFIca2023 = $dbText -match 'Microsoft UEFI CA 2023'
                     if ($MsUEFIca2023) {
-                        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [OK] Microsoft UEFI CA 2023 is present."
+                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft UEFI CA 2023 is present."
                     }
                     else {
                         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Microsoft UEFI CA 2023 is not present."
@@ -302,7 +373,7 @@ function Initialize-OSDCoreDevice {
                     }
                     $MsKEKca2023 = $kekText -match 'Microsoft Corporation KEK 2K CA 2023'
                     if ($MsKEKca2023) {
-                        Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [OK] Microsoft Corporation KEK 2K CA 2023 is present."
+                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Corporation KEK 2K CA 2023 is present."
                     }
                     else {
                         Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Microsoft Corporation KEK 2K CA 2023 is not present."
@@ -315,7 +386,7 @@ function Initialize-OSDCoreDevice {
         }
     }
     elseif ($SecureBootStatus -eq $false) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [FAIL] Secure Boot is not enabled."
+        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Secure Boot is not enabled."
     }
     #=================================================
     # Identify Serial Number with multiple fallback methods due to variability in how different manufacturers populate WMI classes
@@ -368,19 +439,25 @@ function Initialize-OSDCoreDevice {
     $vmPattern = '(?i)(virtual machine|vmware|hyper-v|hyperv|kvm|qemu|xen|virtualbox|bhyve|parallels|gce|google compute engine|amazon ec2|azure|bochs|openstack|ovirt|rhev|kubevirt|ahv|nutanix)'
     [System.Boolean]$IsVM = ($vmDetectionSources -join ' ') -match $vmPattern
     #=================================================
-    # ChassisType
-    $IsDesktop = $false
-    $IsLaptop = $false
-    $IsServer = $false
-    $IsSFF = $false
-    $IsTablet = $false
-    $ComputerSystemType = $classWin32SystemEnclosure | ForEach-Object {
-        if ($_.ChassisTypes[0] -in "8", "9", "10", "11", "12", "14", "18", "21") { $IsLaptop = $true; "Laptop" }
-        if ($_.ChassisTypes[0] -in "3", "4", "5", "6", "7", "15", "16") { $IsDesktop = $true; "Desktop" }
-        if ($_.ChassisTypes[0] -in "23") { $IsServer = $true; "Server" }
-        if ($_.ChassisTypes[0] -in "34", "35", "36") { $IsSFF = $true; "Small Form Factor" }
-        if ($_.ChassisTypes[0] -in "13", "31", "32", "30") { $IsTablet = $true; "Tablet" }
+    # IsWinPE
+    [System.Boolean]$IsWinPE = $false
+    if ($env:SystemDrive -eq 'X:') {
+        $IsWinPE = $true
     }
+    #=================================================
+    # ChassisType
+    $ComputerSystemType = $classWin32SystemEnclosure | ForEach-Object {
+        if ($_.ChassisTypes[0] -in "8", "9", "10", "11", "12", "14", "18", "21") { "Laptop" }
+        if ($_.ChassisTypes[0] -in "3", "4", "5", "6", "7", "15", "16") { "Desktop" }
+        if ($_.ChassisTypes[0] -in "23") { "Server" }
+        if ($_.ChassisTypes[0] -in "34", "35", "36") { "Small Form Factor" }
+        if ($_.ChassisTypes[0] -in "13", "31", "32", "30") { "Tablet" }
+    }
+    [System.Boolean]$IsDesktop = $ComputerSystemType -contains 'Desktop'
+    [System.Boolean]$IsLaptop = $ComputerSystemType -contains 'Laptop'
+    [System.Boolean]$IsServer = $ComputerSystemType -contains 'Server'
+    [System.Boolean]$IsSFF = $ComputerSystemType -contains 'Small Form Factor'
+    [System.Boolean]$IsTablet = $ComputerSystemType -contains 'Tablet'
     #=================================================
     # TotalPhysicalMemoryGB
     $TotalPhysicalMemoryGB = [math]::Round(
@@ -394,8 +471,8 @@ function Initialize-OSDCoreDevice {
     #=================================================
     # OA3Tool for Hardware Hash (Autopilot)
     $HardwareHash = $null
-    if (Get-Command 'oa3tool.exe' -ErrorAction SilentlyContinue) {
-    $oa3cfg = @"
+    if (Get-Command 'oa3tool.exe' -ErrorAction Ignore) {
+        $oa3cfg = @"
 <OA3>
     <FileBased>
         <InputKeyXMLFile>$env:TEMP\OA3_Input.xml</InputKeyXMLFile>
@@ -407,7 +484,7 @@ function Initialize-OSDCoreDevice {
 </OA3>
 "@
 
-    $oa3input = @"
+        $oa3input = @"
 <?xml version="1.0"?>
 <Key>
     <ProductKey>XXXXX-XXXXX-XXXXX-XXXXX-XXXXX</ProductKey>
@@ -514,46 +591,77 @@ function Initialize-OSDCoreDevice {
     }
     #=================================================
     # Disk Information
-    # Include only USB disks that are online and available.
+    # Include only disks that are online and available.
     $GetDisk = Get-Disk |
-        Where-Object {
-            $_.BusType -eq 'USB' -and
-            $_.IsOffline -eq $false -and
-            $_.OperationalStatus -eq 'Online'
-        } |
-        Sort-Object DiskNumber |
-        Select-Object -Property *
+    Where-Object {
+        $_.IsOffline -eq $false -and
+        $_.OperationalStatus -eq 'Online'
+    } |
+    Sort-Object DiskNumber |
+    Select-Object -Property *
+
+    $USBDisk = $GetDisk | Where-Object { $_.BusType -eq 'USB' }
+    $LocalDisk = $GetDisk | Where-Object { $_.BusType -notin 'File Backed Virtual', 'MAX', 'Microsoft Reserved', 'USB', 'Virtual' }
 
     $usbDiskNumbers = [System.Collections.Generic.HashSet[int]]::new()
-    foreach ($disk in $GetDisk) {
+    foreach ($disk in $USBDisk) {
         [void]$usbDiskNumbers.Add([int]$disk.DiskNumber)
+    }
+    $localDiskNumbers = [System.Collections.Generic.HashSet[int]]::new()
+    foreach ($disk in $LocalDisk) {
+        [void]$localDiskNumbers.Add([int]$disk.DiskNumber)
     }
 
     # Partition Information
     $GetPartition = Get-Partition |
-        Sort-Object DiskNumber, PartitionNumber |
-        Select-Object -Property *, @{
-            Name       = 'IsUSB'
-            Expression = { $usbDiskNumbers.Contains([int]$_.DiskNumber) }
-        }
+    Sort-Object DiskNumber, PartitionNumber |
+    Select-Object -Property *, @{
+        Name       = 'IsUSB'
+        Expression = { $usbDiskNumbers.Contains([int]$_.DiskNumber) }
+    }, @{
+        Name       = 'IsLocal'
+        Expression = { $localDiskNumbers.Contains([int]$_.DiskNumber) }
+    }
     # USB Partitions
-    $USBPartitions = $GetPartition | Where-Object { $_.IsUSB -eq $true }
+    $USBPartition = $GetPartition | Where-Object { $_.IsUSB -eq $true }
+    $LocalPartition = $GetPartition | Where-Object { $_.IsLocal -eq $true }
 
-    # USBVolumes
-    $usbDriveLetters = $USBPartitions |
-        ForEach-Object { $_.AccessPaths } |
-        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
-        ForEach-Object {
-            if ($_ -match '^(?<DriveLetter>[A-Z]):\\$') {
-                $Matches.DriveLetter
-            }
-        } |
-        Sort-Object -Unique
+    # USBVolume
+    $usbDriveLetters = $USBPartition |
+    ForEach-Object { $_.AccessPaths } |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+    ForEach-Object {
+        if ($_ -match '^(?<DriveLetter>[A-Z]):\\$') {
+            $Matches.DriveLetter
+        }
+    } |
+    Sort-Object -Unique
 
-    $USBVolumes = @()
+    $USBVolume = $null
     if ($usbDriveLetters) {
-        $USBVolumes = Get-Volume -DriveLetter $usbDriveLetters -ErrorAction SilentlyContinue |
-            Sort-Object DriveLetter -Unique
+        $USBVolume = Get-Volume -DriveLetter $usbDriveLetters -ErrorAction SilentlyContinue |
+        Sort-Object DriveLetter -Unique
+    }
+    $USBCache = $null
+    if ($USBVolume) {
+        $USBCache = $USBVolume | Where-Object { $_.FileSystem -eq 'NTFS' } | Select-Object -First 1
+    }
+
+    # LocalVolume
+    $localDriveLetters = $LocalPartition |
+    ForEach-Object { $_.AccessPaths } |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+    ForEach-Object {
+        if ($_ -match '^(?<DriveLetter>[A-Z]):\\$') {
+            $Matches.DriveLetter
+        }
+    } |
+    Sort-Object -Unique
+
+    $LocalVolume = $null
+    if ($localDriveLetters) {
+        $LocalVolume = Get-Volume -DriveLetter $localDriveLetters -ErrorAction SilentlyContinue |
+        Sort-Object DriveLetter -Unique
     }
     #=================================================
     #   OSDCloudEnv
@@ -581,68 +689,140 @@ function Initialize-OSDCoreDevice {
         }
     }
     #=================================================
-    #   Pass Variables to OSDCoreDevice
+    #   OSDeploy and Recast Registration Information
     #=================================================
+    $deviceUUID = [System.String]$classWin32ComputerSystemProduct.UUID
+    $EndpointSHA = $null
+    if (-not [string]::IsNullOrWhiteSpace($deviceUUID)) {
+        $EndpointSHA = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
+    }
+
+    $idOSDeployDevice = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_OSDEPLOYDEVICE)) {
+        $idOSDeployDevice = [System.String]$env:ID_OSDEPLOYDEVICE
+    }
+
+    $idOSDeployBoot = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_OSDEPLOYBOOT)) {
+        $idOSDeployBoot = [System.String]$env:ID_OSDEPLOYBOOT
+    }
+
+    $idRegisteredEmail = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_REGISTEREDEMAIL)) {
+        $idRegisteredEmail = [System.String]$env:ID_REGISTEREDEMAIL
+    }
+
+    $idRegisteredLicense = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_REGISTEREDLICENSE)) {
+        $idRegisteredLicense = [System.String]$env:ID_REGISTEREDLICENSE
+    }
+
+    if ([string]::IsNullOrWhiteSpace($idRegisteredEmail) -or [string]::IsNullOrWhiteSpace($idRegisteredLicense)) {
+        try {
+            if (-not $global:OSDCoreLicense.License) {
+                Initialize-OSDCoreLicense
+            }
+            if ([string]::IsNullOrWhiteSpace($idRegisteredEmail) -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreLicense.License.Email)) {
+                $idRegisteredEmail = [System.String]$global:OSDCoreLicense.License.Email
+            }
+            if ([string]::IsNullOrWhiteSpace($idRegisteredLicense) -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreLicense.License.LicenseGuid)) {
+                $idRegisteredLicense = [System.String]$global:OSDCoreLicense.License.LicenseGuid
+            }
+        }
+        catch {}
+    }
+
+    #=================================================
+    #   OSLanguage
+    #=================================================
+    if ($global:OSDCoreLicense.IsRegistered) {
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered to $idRegisteredEmail"
+        if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction Ignore) {
+            $AutoOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
+        }
+    }
+    else {
+        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping AutoOSLanguageCode keyboard conversion because OSDCloud is not registered."
+    }
+
+    $reportedOSDManufacturer = if ([string]::IsNullOrWhiteSpace($OSDManufacturer)) { 'Unknown' } else { [System.String]$OSDManufacturer }
+    $reportedOSDModel = if ([string]::IsNullOrWhiteSpace($OSDModel)) { 'Unknown' } else { [System.String]$OSDModel }
+    $reportedOSDProduct = if ([string]::IsNullOrWhiteSpace($OSDProduct)) { 'Unknown' } else { [System.String]$OSDProduct }
+
     $global:OSDCoreDevice = $null
     $global:OSDCoreDevice = [ordered]@{
-        OSDManufacturer           = [System.String]$OSDManufacturer
-        OSDModel                  = [System.String]$OSDModel
-        OSDProduct                = [System.String]$OSDProduct
-        ComputerName              = $classWin32ComputerSystem.Name
-        BaseBoardProduct          = [System.String]$BaseBoardProduct
-        BiosReleaseDate           = [System.String]$classWin32BIOS.ReleaseDate
-        BiosVersion               = [System.String]$classWin32BIOS.SMBIOSBIOSVersion
-        ComputerManufacturer      = [System.String]$ComputerManufacturer
-        ComputerModel             = [System.String]$ComputerModel
-        ComputerSystemFamily      = [System.String]$ComputerSystemFamily
-        ComputerSystemProduct     = [System.String]$ComputerSystemProduct
-        ComputerSystemSKU         = [System.String]$ComputerSystemSKU
-        ComputerSystemType        = [System.String]$ComputerSystemType
-        HardwareHash              = [System.String]$HardwareHash
-        IsAutopilotSpec           = [System.Boolean]$IsAutopilotSpec
-        IsDesktop                 = [System.Boolean]$IsDesktop
-        IsLaptop                  = [System.Boolean]$IsLaptop
-        IsOnBattery               = [System.Boolean]$IsOnBattery
-        IsServer                  = [System.Boolean]$IsServer
-        IsSFF                     = [System.Boolean]$IsSFF
-        IsTablet                  = [System.Boolean]$IsTablet
-        IsTpmSpec                 = [System.Boolean]$IsTpmSpec
-        IsVM                      = [System.Boolean]$IsVM
-        IsUEFI                    = [System.Boolean]$IsUEFI
-        KeyboardLayout            = $KeyboardLayout
-        KeyboardName              = $KeyboardName
-        NetGateways               = $NetGateways
-        NetIPAddress              = $NetIPAddress
-        NetMacAddress             = $NetMacAddress
-        OSArchitecture            = $OSArchitecture
-        OSVersion                 = $classWin32OperatingSystem.Version
-        ProcessorArchitecture     = $ProcessorArchitecture
-        SerialNumber              = $SerialNumber
-        SystemFirmwareHardwareId  = $SystemFirmwareHardwareId
-        TimeZone                  = $classWin32TimeZone.StandardName
-        TotalPhysicalMemoryGB     = $TotalPhysicalMemoryGB
-        TpmIsActivated            = $DeviceTpmIsActivated
-        TpmIsEnabled              = $DeviceTpmIsEnabled
-        TpmIsOwned                = $DeviceTpmIsOwned
-        TpmManufacturerIdTxt      = $DeviceTpmManufacturerIdTxt
-        TpmManufacturerVersion    = $DeviceTpmManufacturerVersion
-        TpmSpecVersion            = $DeviceTpmSpecVersion
-        USBPartitions             = $USBPartitions
-        USBVolumes                = $USBVolumes
-        UUID                      = $classWin32ComputerSystemProduct.UUID
+        OSDManufacturer          = $reportedOSDManufacturer
+        OSDModel                 = $reportedOSDModel
+        OSDProduct               = $reportedOSDProduct
+        AutoOSLanguageCode       = $AutoOSLanguageCode
+        BaseBoardProduct         = [System.String]$BaseBoardProduct
+        BiosReleaseDate          = [System.String]$classWin32BIOS.ReleaseDate
+        BiosVersion              = [System.String]$classWin32BIOS.SMBIOSBIOSVersion
+        ComputerManufacturer     = [System.String]$ComputerManufacturer
+        ComputerModel            = [System.String]$ComputerModel
+        ComputerName             = $classWin32ComputerSystem.Name
+        ComputerSystemFamily     = [System.String]$ComputerSystemFamily
+        ComputerSystemProduct    = [System.String]$ComputerSystemProduct
+        ComputerSystemSKU        = [System.String]$ComputerSystemSKU
+        ComputerSystemType       = [System.String]$ComputerSystemType
+        HardwareHash             = [System.String]$HardwareHash
+        IsAutopilotSpec          = [System.Boolean]$IsAutopilotSpec
+        IsDesktop                = [System.Boolean]$IsDesktop
+        IsLaptop                 = [System.Boolean]$IsLaptop
+        IsOnBattery              = [System.Boolean]$IsOnBattery
+        IsServer                 = [System.Boolean]$IsServer
+        IsSFF                    = [System.Boolean]$IsSFF
+        IsTablet                 = [System.Boolean]$IsTablet
+        IsTpmSpec                = [System.Boolean]$IsTpmSpec
+        IsUEFI                   = [System.Boolean]$IsUEFI
+        IsVM                     = [System.Boolean]$IsVM
+        IsWinPE                  = [System.Boolean]$IsWinPE
+        KeyboardLayout           = $KeyboardLayout
+        KeyboardName             = $KeyboardName
+        LocalDisk                = $LocalDisk
+        LocalPartition           = $LocalPartition
+        LocalVolume              = $LocalVolume
+        NetGateways              = $NetGateways
+        NetIPAddress             = $NetIPAddress
+        NetMacAddress            = $NetMacAddress
+        OSArchitecture           = $OSArchitecture
+        OSVersion                = $classWin32OperatingSystem.Version
+        ProcessorArchitecture    = $ProcessorArchitecture
+        SerialNumber             = $SerialNumber
+        SystemFirmwareHardwareId = $SystemFirmwareHardwareId
+        TimeZone                 = $classWin32TimeZone.StandardName
+        TotalPhysicalMemoryGB    = $TotalPhysicalMemoryGB
+        TpmIsActivated           = $DeviceTpmIsActivated
+        TpmIsEnabled             = $DeviceTpmIsEnabled
+        TpmIsOwned               = $DeviceTpmIsOwned
+        TpmManufacturerIdTxt     = $DeviceTpmManufacturerIdTxt
+        TpmManufacturerVersion   = $DeviceTpmManufacturerVersion
+        TpmSpecVersion           = $DeviceTpmSpecVersion
+        USBCache                 = $USBCache
+        USBDisk                  = $USBDisk
+        USBPartition             = $USBPartition
+        USBVolume                = $USBVolume
+        UUID                     = $deviceUUID
+        EndpointSHA              = [System.String]$EndpointSHA #Device UUID SHA256
+        idOSDeployDevice         = $idOSDeployDevice
+        idOSDeployBoot          = $idOSDeployBoot
+        idRegisteredEmail        = $idRegisteredEmail
+        idRegisteredLicense      = $idRegisteredLicense
     }
-    $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File "$LogsPath\OSDCoreDevice.json" -Force -Encoding utf8
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreDevice"
     #=================================================
-    # OSDCoreCacheContent
-    $global:OSDCoreCacheContent = Get-OSDCoreCacheContent
-    #=================================================
-    # OSDCoreOperatingSystems
-    $global:OSDCoreOperatingSystems = Get-OSDCoreOperatingSystems | Where-Object { $_.Architecture -match "$ProcessorArchitecture" }
-    $null = Set-OSDCoreOperatingSystemCloudObject -OSArchitecture $ProcessorArchitecture
-    #=================================================
-    # OSDCoreDriverPacks
-    $global:OSDCoreDriverPacks = Get-ModuleCoreDriverPacks -OSDManufacturer $OSDManufacturer
-    $global:OSDCoreDriverPackCloudObject = $global:OSDCoreDriverPacks | Where-Object { $_.SystemId -match $OSDProduct } | Select-Object -First 1
+    # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
+    $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
+    if (Test-Path -LiteralPath $OSDCoreDeviceClixmlPath) {
+        Remove-Item -LiteralPath $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
+    }
+    $global:OSDCoreDevice | Export-Clixml -Path $OSDCoreDeviceClixmlPath -Force
+
+    $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
+    if (Test-Path -LiteralPath $OSDCoreDeviceJsonPath) {
+        Remove-Item -LiteralPath $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
+    }
+    $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File $OSDCoreDeviceJsonPath -Force -Encoding utf8
     #=================================================
     # OSDCloudLogs
     # Look for available drives (USB, mapped network drives, and local drives) with at least 1 GB of free space and write permissions for the current user to copy logs.

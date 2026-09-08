@@ -37,7 +37,7 @@ function Save-MicrosoftUpdateCatalogUpdate {
         $Update = Get-MSCatalogUpdate -Search "KB4515384"
         Save-MSCatalogUpdate -Update $Update -Destination C:\Windows\Temp\ -UseBits
     #>
-    
+
     param (
         [Parameter(
             Mandatory = $true,
@@ -55,7 +55,7 @@ function Save-MicrosoftUpdateCatalogUpdate {
     if ($Links.Matches.Count -eq 1) {
         $Link = $Links.Matches[0]
 
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $($Link.Value)"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($Link.Value)"
 
         $SaveWebFile = Save-WebFile -SourceUrl $Link.Value -DestinationDirectory "$DestinationDirectory" -DestinationName $Link.Value.Split('/')[-1]
         $SaveWebFile

@@ -2,14 +2,14 @@ function step-install-getwindowsedition {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
-    $Step = $global:OSDCloudCurrentStep
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Running Get-WindowsEdition against offline path C:\."
         $WindowsEdition = (Get-WindowsEdition -Path 'C:\' -ErrorAction Stop | Out-String).Trim()
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $WindowsEdition"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $WindowsEdition"
         $global:OSDCloudWorkflowInvoke.WindowsEdition = $WindowsEdition
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] WindowsEdition stored in workflow state."
     }
     catch {
         Write-Warning "[$(Get-Date -format s)] Unable to get Windows Edition. OK."
@@ -19,7 +19,6 @@ function step-install-getwindowsedition {
         $Error.Clear()
     }
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

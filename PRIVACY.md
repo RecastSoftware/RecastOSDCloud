@@ -55,7 +55,7 @@ What Data May Be Shared
 - Deployment analytics events include the fields described in the Deployment Analytics section.
 - Connectivity and time checks send standard HTTP HEAD requests to endpoints such as Microsoft connectivity test services or Google, depending on the workflow path.
 - Catalog lookups and content downloads send standard HTTP or HTTPS requests to Microsoft, GitHub, OEM, PowerShell Gallery, or other selected content endpoints.
-- User-provided WinPE startup command URLs may be fetched and executed if configured by the operator.
+- User-provided WinPEStartup command URLs may be fetched and executed if configured by the operator.
 - Third-party services you connect to may log network metadata such as IP address, request headers, requested URL, and timestamp.
 
 External Services
@@ -69,7 +69,7 @@ OSDCloud may interact with external services when you choose to download content
 - **PowerShell Gallery** - used for module availability checks and updates. Governed by the Microsoft Privacy Statement.
 - **OEM driver sites** - Dell, HP, Lenovo, Panasonic, Microsoft Surface, and other selected driver pack sources may be queried or downloaded from vendor-hosted servers. Consult each vendor's privacy policy.
 - **PostHog** - deployment analytics. Events are sent to `https://us.i.posthog.com`. See the [PostHog Privacy Policy](https://posthog.com/privacy).
-- **Operator-provided URLs** - WinPE startup workflows can be configured to download and execute commands from URLs provided by the operator. Those endpoints are controlled by the operator or their organization.
+- **Operator-provided URLs** - WinPEStartup workflows can be configured to download and execute commands from URLs provided by the operator. Those endpoints are controlled by the operator or their organization.
 
 Your Choices
 ------------

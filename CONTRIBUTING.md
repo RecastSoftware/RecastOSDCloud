@@ -61,7 +61,7 @@ single-call and procedural.
 
 **WinPE-only code:**
 
-- Guard any WinPE-only logic with `$env:SystemDrive -eq 'X:'` or `$global:IsWinPE`.
+- Guard any WinPE-only logic with `$env:SystemDrive -eq 'X:'`.
 - Place WinPE-only exported functions in `public/WinPE/`. Functions in this
   directory are **not loaded** in a normal Windows session.
 

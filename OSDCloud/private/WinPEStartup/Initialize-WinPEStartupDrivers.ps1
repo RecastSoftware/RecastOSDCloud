@@ -74,7 +74,7 @@ function Initialize-WinPEStartupDrivers {
                     Write-Verbose "No .inf files found in $driverFolder"
                     continue
                 }
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Drivers: $driverFolder"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Drivers: $driverFolder"
 
                 foreach ($inf in $infFiles) {
                     # Write-Verbose "Loading driver: $($inf.FullName)"

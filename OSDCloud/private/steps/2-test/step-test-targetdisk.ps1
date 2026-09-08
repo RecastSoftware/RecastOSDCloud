@@ -1,33 +1,47 @@
+<#
+.SYNOPSIS
+Validates that OSDCloud detected a local deployment disk.
+
+.DESCRIPTION
+Checks $global:OSDCloudWorkflowInvoke.DeploymentDisk before destructive preinstall steps run.
+When a fixed local disk is detected, the step writes an informational success
+message and allows the workflow to continue. When no fixed local disk is detected,
+the step warns that WinPE may require additional storage, SCSI, or RAID drivers,
+then waits so the user can cancel the deployment.
+
+.EXAMPLE
+step-test-targetdisk
+
+Validates that a fixed local disk is available for the workflow.
+
+.NOTES
+Internal workflow step used by OSDCloud deployment tasks.
+
+.OUTPUTS
+None. This function does not return objects.
+#>
 function step-test-targetdisk {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
-    $Step = $global:OSDCloudCurrentStep
+    $Error.Clear()
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    #region Main
-    if ($env:SystemDrive -eq 'X:') {
-        $global:OSDCloudWorkflowInvoke.GetDiskFixed = Get-DeviceLocalDisk | Where-Object { $_.IsBoot -eq $false } | Sort-Object Number
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DeploymentDisk: $($global:OSDCloudWorkflowInvoke.DeploymentDisk | Out-String)"
+
+    if ($global:OSDCloudWorkflowInvoke.DeploymentDisk) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DeploymentDisk was detected. Continuing."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Fixed Disk is valid. OK."
     }
     else {
-        $global:OSDCloudWorkflowInvoke.GetDiskFixed = Get-DeviceLocalDisk | Sort-Object Number
-    }
-
-
-    if ($global:OSDCloudWorkflowInvoke.GetDiskFixed) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Fixed Disk is valid. OK."
-    }
-    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DeploymentDisk was not detected. Stopping workflow for user intervention."
         Write-Warning "[$(Get-Date -format s)] Unable to detect a Fixed Disk."
         Write-Warning "[$(Get-Date -format s)] WinPE may need additional Disk, SCSI or Raid Drivers."
         Write-Warning 'Press Ctrl+C to exit OSDCloud'
         Start-Sleep -Seconds 86400
         exit
     }
-    #endregion
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

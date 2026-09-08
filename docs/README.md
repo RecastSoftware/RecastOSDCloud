@@ -14,17 +14,16 @@ a boot image and just want to deploy, start at [`04-deploy-windows.md`](04-deplo
 | 2 | [Build a WinPE boot image](02-build-boot-image.md) | Produce a custom WinPE WIM/ISO with OSDCloud baked in |
 | 3 | [Boot a device into WinPE](03-boot-device.md) | Get a target device running WinPE from USB, ISO, or PXE |
 | 4 | [Deploy Windows 11](04-deploy-windows.md) | Walk an operator through a first deployment end-to-end |
-| 5 | [Customize the deployment](05-customize-deployment.md) | Change OS edition, language, workflow channel, or skip steps |
+| 5 | [Customize the deployment](05-customize-deployment.md) | Change OS edition, language, workflow settings, or skip steps |
 | 6 | [Unattended deployment with a USB profile](06-unattended-usb-profile.md) | Drop a JSON file on USB for zero-touch deployments |
 | 7 | [Deploy to ARM64 devices](07-arm64-devices.md) | Image a Snapdragon / Surface Pro 11 / Copilot+ PC |
 | 8 | [Hand off to Autopilot and OOBE](08-autopilot-oobe.md) | Enrol the device in Intune after deployment |
 | 9 | [Troubleshoot a failed deployment](09-troubleshooting.md) | Diagnose a deployment that didn't finish |
-| 10 | [ENV files](10-env-files.md) | Pre-seed a deployment from an `osdcloud.env` file |
 
 ## Function reference
 
 These how-tos focus on tasks. For cmdlet-by-cmdlet parameter reference
-see [`../OSDCloud/docs/`](../OSDCloud/docs/) — one page per exported function.
+see the available generated pages in [`../OSDCloud/docs/`](../OSDCloud/docs/).
 
 ## Related modules
 

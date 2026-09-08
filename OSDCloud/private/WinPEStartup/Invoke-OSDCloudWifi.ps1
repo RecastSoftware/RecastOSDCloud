@@ -80,11 +80,11 @@ function Invoke-OSDCloudWifi {
     #=================================================
     # Test-OSDCloudInternetConnection
     if (Test-OSDCloudInternetConnection -Uri 'google.com') {
-        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Ping google.com success. Device is already connected to the Internet"
+        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ping google.com success. Device is already connected to the Internet"
         $StartOSDCloudWifi = $false
     }
     else {
-        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Ping google.com failed. Will attempt to connect to a Wireless Network"
+        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ping google.com failed. Will attempt to connect to a Wireless Network"
         $StartOSDCloudWifi = $true
     }
     #=================================================
@@ -110,7 +110,7 @@ function Invoke-OSDCloudWifi {
         }
 
         if (!$StartOSDCloudWifi) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Unable to enable Wireless Network due to missing components"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Unable to enable Wireless Network due to missing components"
             if ($MissingDlls.Count -gt 0) {
                 Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Missing DLL files: $($MissingDlls -join ', ')"
             }
@@ -126,10 +126,10 @@ function Invoke-OSDCloudWifi {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] WlanSvc service is already running"
             }
             else {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Starting WlanSvc service from state '$($WlanService.Status)'"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Starting WlanSvc service from state '$($WlanService.Status)'"
                 Start-Service -Name 'WlanSvc' -ErrorAction Stop
 
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Waiting for WlanSvc service to start"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Waiting for WlanSvc service to start"
                 $WlanService.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Running, [TimeSpan]::FromSeconds(30))
                 $WlanService.Refresh()
 
@@ -137,7 +137,7 @@ function Invoke-OSDCloudWifi {
                     throw "WlanSvc did not reach the Running state within the timeout period."
                 }
 
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] WlanSvc service started successfully"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] WlanSvc service started successfully"
             }
         }
         catch [System.TimeoutException] {
@@ -209,7 +209,7 @@ function Invoke-OSDCloudWifi {
         if ($Module) {
             $UEFIWifiProfile = Get-UEFIVariable -Namespace "{43B9C282-A6F5-4C36-B8DE-C8738F979C65}" -VariableName PrebootWifiProfile
             if ($UEFIWifiProfile) {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Found Wi-Fi Profile in HP UEFI"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Found Wi-Fi Profile in HP UEFI"
                 $UEFIWifiProfile = $UEFIWifiProfile -Replace "`0",""
 
                 $SSIDString = $UEFIWifiProfile.Split(",") | Where-Object {$_ -match "SSID"}
@@ -218,10 +218,10 @@ function Invoke-OSDCloudWifi {
                 $KeyString = $UEFIWifiProfile.Split(",") | Where-Object {$_ -match "Password"}
                 $Key = ($KeyString.Split(":") | Where-Object {$_ -notmatch "Password"}).Replace("`"","")
                 if ($SSID) {
-                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Found $SSID in UEFI, Attepting to Create Profile and Connect"
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Found $SSID in UEFI, Attepting to Create Profile and Connect"
                     Set-OSDCloudWifi -WLanName $SSID -Passwd $Key -outfile "$env:TEMP\UEFIWifiProfile.XML"
                     if (!($WifiProfile)) {
-                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Setting WifiProfile var to $env:TEMP\UEFIWifiProfile.XML"
+                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Setting WifiProfile var to $env:TEMP\UEFIWifiProfile.XML"
                         $WifiProfile = "$env:TEMP\UEFIWifiProfile.XML"
                     }
                 }
@@ -233,7 +233,7 @@ function Invoke-OSDCloudWifi {
     #TODO Test on ARM64
     if ($StartOSDCloudWifi) {
         if ($WirelessNetworkAdapter.NetEnabled -eq $true) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Wireless is already connected ... Disconnecting"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Wireless is already connected ... Disconnecting"
             (Get-WmiObject -ClassName Win32_NetworkAdapter | Where-Object { $_.InterfaceIndex -eq $WirelessNetworkAdapter.InterfaceIndex }).disable() | Out-Null
             Start-Sleep -Seconds 5
             (Get-WmiObject -ClassName Win32_NetworkAdapter | Where-Object { $_.InterfaceIndex -eq $WirelessNetworkAdapter.InterfaceIndex }).enable() | Out-Null
@@ -245,7 +245,7 @@ function Invoke-OSDCloudWifi {
     # Connect
     if ($StartOSDCloudWifi) {
             if ($WifiProfile -and (Test-Path $WifiProfile)) {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Starting unattended Wi-Fi connection "
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Starting unattended Wi-Fi connection "
             }
             else {
                 Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Starting Wi-Fi Network Menu "
@@ -262,15 +262,17 @@ function Invoke-OSDCloudWifi {
             if ($StartOSDCloudWifi) {
                 # use saved wi-fi profile to make the unattended connection
                 try {
-                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Establishing a connection using $WifiProfile"
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Establishing a connection using $WifiProfile"
                     Connect-OSDCloudWifiByXMLProfile $WifiProfile -ErrorAction Stop
                     Start-Sleep -Seconds 10
                 }
                 catch {
                     Write-Warning $_
                     # to avoid infinite loop of tries
-                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Removing invalid Wi-Fi profile '$WifiProfile'"
-                    Remove-Item $WifiProfile -Force
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Removing invalid Wi-Fi profile '$WifiProfile'"
+                    if (Test-Path -LiteralPath $WifiProfile) {
+                        Remove-Item -LiteralPath $WifiProfile -Force
+                    }
                     continue
                 }
             }
@@ -294,7 +296,7 @@ function Invoke-OSDCloudWifi {
                         $SSID = $SSIDList | Where-Object { $_.index -eq $SSIDIndex } | Select-Object -exp SSID
 
                         # connect to selected Wi-Fi
-                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Establishing a connection to SSID $SSID"
+                        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Establishing a connection to SSID $SSID"
                         try {
                             Connect-OSDCloudWifi $SSID -ErrorAction Stop
                         } catch {
@@ -312,14 +314,14 @@ function Invoke-OSDCloudWifi {
             } else {
                 $text = "to SSID $SSID"
             }
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Waiting for a connection $text"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Waiting for a connection $text"
             Start-Sleep -Seconds 15
 
             $i = 30
             #TODO Resolve issue with WirelessNetworkAdapter
             while (((Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration | Where-Object { $_.Index -eq $($WirelessNetworkAdapter.DeviceID) }).IPEnabled -eq $false) -and $i -gt 0) {
                 --$i
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Waiting for Wi-Fi Connection ($i)"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Waiting for Wi-Fi Connection ($i)"
                 Start-Sleep -Seconds 1
             }
         }

@@ -7,53 +7,61 @@ function Invoke-OSDCloudWorkflowTask {
     #=================================================
     $Error.Clear()
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    $ModuleName = $($MyInvocation.MyCommand.Module.Name)
-    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] ModuleName: $ModuleName"
-    $ModuleBase = $($MyInvocation.MyCommand.Module.ModuleBase)
-    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] ModuleBase: $ModuleBase"
-    $ModuleVersion = $($MyInvocation.MyCommand.Module.Version)
-    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] ModuleVersion: $ModuleVersion"
-    #=================================================
-    # Set global variables
-    [System.String]$global:Architecture = $OSDCoreDevice.ProcessorArchitecture
-    [System.Boolean]$global:IsOnBattery = $OSDCoreDevice.IsOnBattery
-    [System.Boolean]$global:IsVM = $OSDCoreDevice.IsVM
-    [System.Boolean]$global:IsWinPE = $($env:SystemDrive -eq 'X:')
     #=================================================
     # Re-apply the OSDCloud Property override layer to $global:OSDCloudDeploy so authoritative
     # overrides win over any changes made by the workflow UI, and so the snapshot below
     # inherits the final values.
-    if ($global:OSDCloudEnv -and (Get-Command -Name 'Set-OSDCloudEnvOverride' -ErrorAction SilentlyContinue)) {
+    <#
+    if ($global:OSDCloudEnv -and (Get-Command -Name 'Set-OSDCloudEnvOverride' -ErrorAction Ignore)) {
         Set-OSDCloudEnvOverride -Target $global:OSDCloudDeploy -ResolveOperatingSystem -AddMissingKeys
     }
+    #>
     #=================================================
+    $operatingSystemCloudObject = $global:OSDCloudDeploy.OperatingSystemCloudObject
+    $workflowSettingsUser = $global:OSDCloudWorkflowSettingsUser
+    if (-not $workflowSettingsUser -and (Get-Command -Name 'Initialize-OSDCloudWorkflowSettingsUser' -ErrorAction Ignore)) {
+        $settingsArchitecture = if ($global:OSDCloudDeploy.OSArchitecture -ieq 'arm64') { 'ARM64' } else { 'AMD64' }
+        Initialize-OSDCloudWorkflowSettingsUser -WorkflowName $global:OSDCloudDeploy.WorkflowName -Architecture $settingsArchitecture | Out-Null
+        $workflowSettingsUser = $global:OSDCloudWorkflowSettingsUser
+    }
     $global:OSDCloudWorkflowInvoke = $null
     $global:OSDCloudWorkflowInvoke = [ordered]@{
-        Architecture              = $global:Architecture
-        OSDManufacturer           = $OSDCoreDevice.OSDManufacturer
-        OSDModel                  = $OSDCoreDevice.OSDModel
-        OSDProduct                = $OSDCoreDevice.OSDProduct
-        DriverPackName            = $global:OSDCloudDeploy.DriverPackName
-        DriverPackObject          = $global:OSDCloudDeploy.DriverPackObject
-        DriverFolderName          = $global:OSDCloudDeploy.DriverFolderName
-        DriverFolderNames         = $global:OSDCloudDeploy.DriverFolderNames
-        DriverFolderPath          = $global:OSDCloudDeploy.DriverFolderPath
-        DriverFolderPaths         = $global:OSDCloudDeploy.DriverFolderPaths
-        DriverFolderSelections    = $global:OSDCloudDeploy.DriverFolderSelections
-        IsOnBattery               = $global:IsOnBattery
-        IsVM                      = $global:IsVM
-        IsWinPE                   = $global:IsWinPE
-        LogsPath                  = "$env:TEMP\osdcloud-logs"
-        OperatingSystem           = $global:OSDCloudDeploy.OperatingSystem
-        OperatingSystemObject     = $global:OSDCloudDeploy.OperatingSystemObject
-        TimeEnd                   = $null
-        TimeSpan                  = $null
-        TimeStart                 = [datetime](Get-Date)
+        DeploymentDisk            = $global:OSDCloudDeploy.DeploymentDisk
+        DiskPartition             = [pscustomobject]@{
+            DiskNumber = $global:OSDCloudDeploy.DeploymentDiskNumber
+        }
+        FileInfoWindowsImage       = $null
+        DriverPackCacheObject      = $global:OSDCloudDeploy.DriverPackCacheObject
+        DriverPackName             = $global:OSDCloudDeploy.DriverPackName
+        DriverPackCloudObject      = $global:OSDCloudDeploy.DriverPackCloudObject
+        DriverPackCloudTest        = $global:OSDCloudDeploy.DriverPackCloudTest
+        Force                      = $global:OSDCloudDeploy.Force
+        LaunchMethod               = $global:OSDCloudDeploy.LaunchMethod
+        LogsPath                   = "$env:TEMP\osdcloud-logs"
+        OperatingSystem            = $global:OSDCloudDeploy.OperatingSystem
+        OperatingSystemCacheObject = $global:OSDCloudDeploy.OperatingSystemCacheObject
+        OperatingSystemCloudObject = $operatingSystemCloudObject
+        OperatingSystemCloudTest   = $global:OSDCloudDeploy.OperatingSystemCloudTest
+        OSBuild                    = $global:OSDCloudDeploy.OSBuild
+        OSEditionId                = $global:OSDCloudDeploy.OSEditionId
+        RecoveryPartition          = $workflowSettingsUser.RecoveryPartition
+        SkipFirmwareUpdate         = $global:OSDCloudDeploy.SkipFirmwareUpdate
+        TimeEnd                    = $null
+        TimeSpan                   = $null
+        TimeStart                  = [datetime](Get-Date)
+        ParamsExpandWindowsImage   = $null
+        USBPartitions              = $null
+        WindowsEdition             = $null
+        WindowsImage               = $null
+        WindowsImageIndex          = $null
+        WindowsImagePath           = $null
+        WinpeRestart               = [bool]$workflowSettingsUser.WinpeRestart
+        WinpeShutdown              = [bool]$workflowSettingsUser.WinpeShutdown
     }
     #=================================================
     #region OSDCloud Deployment Analytics
-    $eventName = 'osdcloud_deploy'
-    function Send-OSDCloudDeployEvent {
+    $eventName = 'deploy-osdcloud-dev'
+    function Send-EventDeployOSDCloud {
         param(
             [Parameter(Mandatory)]
             [string]$EventName,
@@ -90,10 +98,12 @@ function Invoke-OSDCloudWorkflowTask {
         }
     }
     # UUID
-    $deviceUUID = $global:OSDCoreDevice.UUID
-    # Convert the UUID to a hash value to protect user privacyand ensure a consistent identifier across events
-    $deviceUUIDHash = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
-    [string]$distinctId = $deviceUUIDHash
+    $deviceUUID = [System.String]$global:OSDCoreDevice.UUID
+    # Convert the UUID to a hash value to protect user privacy and ensure a consistent identifier across events
+    [string]$distinctId = $global:OSDCoreDevice.EndpointSHA
+    if ([string]::IsNullOrWhiteSpace($distinctId) -and -not [string]::IsNullOrWhiteSpace($deviceUUID)) {
+        $distinctId = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
+    }
     if ([string]::IsNullOrWhiteSpace($distinctId)) {
         $distinctId = [System.Guid]::NewGuid().ToString()
     }
@@ -108,48 +118,59 @@ function Invoke-OSDCloudWorkflowTask {
         $osName = [string]$computerInfo.OsName
     }
     $eventProperties = @{
-        deploymentPhase            = [string]$deploymentPhase
-        osdManufacturer            = $OSDCoreDevice.OSDManufacturer
-        osdModel                   = $OSDCoreDevice.OSDModel
-        osdProduct                 = $OSDCoreDevice.OSDProduct
-        deviceManufacturer         = $OSDCoreDevice.ComputerManufacturer
-        deviceModel                = $OSDCoreDevice.ComputerModel
-        deviceSystemFamily         = $OSDCoreDevice.ComputerSystemFamily
-        deviceSystemProduct        = $OSDCoreDevice.ComputerSystemProduct
-        deviceSystemSKU            = $OSDCoreDevice.ComputerSystemSKU
-        deviceSystemType           = $OSDCoreDevice.ComputerSystemType
-        biosReleaseDate            = $OSDCoreDevice.BiosReleaseDate
-        biosSMBIOSBIOSVersion      = $OSDCoreDevice.BiosSMBIOSBIOSVersion
-        keyboardName               = $OSDCoreDevice.KeyboardName
-        keyboardLayout             = $OSDCoreDevice.KeyboardLayout
-        winArchitecture            = [string]$env:PROCESSOR_ARCHITECTURE
-        winBuildLabEx              = [string]$computerInfo.WindowsBuildLabEx
-        winBuildNumber             = [string]$computerInfo.OsBuildNumber
-        winCountryCode             = [string]$computerInfo.OsCountryCode
-        winEditionId               = [string]$computerInfo.WindowsEditionId
-        winInstallationType        = [string]$computerInfo.WindowsInstallationType
-        winLanguage                = [string]$computerInfo.OsLanguage
-        winName                    = [string]$osName
-        winTimeZone                = [string]$computerInfo.TimeZone
-        winVersion                 = [string]$computerInfo.OsVersion
-        osdcloudModuleVersion      = [string]$ModuleVersion
+        OSDManufacturer                  = $OSDCoreDevice.OSDManufacturer
+        OSDModel                         = $OSDCoreDevice.OSDModel
+        OSDProduct                       = $OSDCoreDevice.OSDProduct
+        deviceBaseBoardProduct           = $OSDCoreDevice.BaseBoardProduct
+        deviceBiosReleaseDate            = $OSDCoreDevice.BiosReleaseDate
+        deviceBiosVersion                = $OSDCoreDevice.BiosVersion
+        deviceComputerManufacturer       = $OSDCoreDevice.ComputerManufacturer
+        deviceComputerModel              = $OSDCoreDevice.ComputerModel
+        deviceComputerSystemFamily       = $OSDCoreDevice.ComputerSystemFamily
+        deviceComputerSystemProduct      = $OSDCoreDevice.ComputerSystemProduct
+        deviceComputerSystemSKU          = $OSDCoreDevice.ComputerSystemSKU
+        deviceComputerSystemType         = $OSDCoreDevice.ComputerSystemType
+        deviceKeyboardLayout             = $OSDCoreDevice.KeyboardLayout
+        deviceKeyboardName               = $OSDCoreDevice.KeyboardName
+        deviceOSArchitecture             = $OSDCoreDevice.OSArchitecture
+        deviceOSVersion                  = $OSDCoreDevice.OSVersion
+        deviceProcessorArchitecture      = $OSDCoreDevice.ProcessorArchitecture
+        deviceSystemFirmwareHardwareId   = $OSDCoreDevice.SystemFirmwareHardwareId
+        deviceTimeZone                   = $OSDCoreDevice.TimeZone
+        deviceTotalPhysicalMemoryGB      = $OSDCoreDevice.TotalPhysicalMemoryGB
+        winArchitecture                  = [string]$env:PROCESSOR_ARCHITECTURE
+        winBuildLabEx                    = [string]$computerInfo.WindowsBuildLabEx
+        winBuildNumber                   = [string]$computerInfo.OsBuildNumber
+        winCountryCode                   = [string]$computerInfo.OsCountryCode
+        winEditionId                     = [string]$computerInfo.WindowsEditionId
+        winInstallationType              = [string]$computerInfo.WindowsInstallationType
+        winLanguage                      = [string]$computerInfo.OsLanguage
+        winName                          = [string]$osName
+        winTimeZone                      = [string]$computerInfo.TimeZone
+        winVersion                       = [string]$computerInfo.OsVersion
+        osdcloudModuleVersion      = [string]$($MyInvocation.MyCommand.Module.Version)
         osdcloudWorkflowName       = [string]$global:OSDCloudDeploy.WorkflowName
         osdcloudWorkflowTaskName   = [string]$global:OSDCloudDeploy.WorkflowTaskName
         osdcloudDriverPackName     = [string]$global:OSDCloudDeploy.DriverPackName
-        osdcloudOSName             = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSName
-        osdcloudOSVersion          = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSVersion
-        osdcloudOSActivationStatus = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSActivation
-        osdcloudOSBuild            = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSBuild
-        osdcloudOSBuildVersion     = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSBuildVersion
-        osdcloudOSLanguageCode     = [string]$global:OSDCloudDeploy.OperatingSystemObject.OSLanguageCode
+        osdcloudOSName             = [string]$operatingSystemCloudObject.OSName
+        osdcloudOSVersion          = [string]$operatingSystemCloudObject.OSVersion
+        osdcloudOSActivationStatus = [string]$operatingSystemCloudObject.OSActivation
+        osdcloudOSBuild            = [string]$operatingSystemCloudObject.OSBuild
+        osdcloudOSBuildVersion     = [string]$operatingSystemCloudObject.OSBuildVersion
+        osdcloudOSLanguageCode     = [string]$operatingSystemCloudObject.OSLanguageCode
+        deploymentPhase            = [string]$deploymentPhase
+        idOSDeployDevice           = [string]$global:OSDCoreDevice.idOSDeployDevice # OSDeploy Device Hash
+        idOSDeployBoot            = [string]$global:OSDCoreDevice.idOSDeployBoot # OSDeploy Boot GUID
+        idRegisteredEmail          = [string]$global:OSDCoreDevice.idRegisteredEmail
+        idRegisteredLicense        = [string]$global:OSDCoreDevice.idRegisteredLicense
     }
     $postApi = 'phc_2h7nQJCo41Hc5C64B2SkcEBZOvJ6mHr5xAHZyjPl3ZK'
-    Send-OSDCloudDeployEvent -EventName $eventName -ApiKey $postApi -DistinctId $distinctId -Properties $eventProperties
+    Send-EventDeployOSDCloud -EventName $eventName -ApiKey $postApi -DistinctId $distinctId -Properties $eventProperties
     #endregion
     #=================================================
     # Start Workflow Task Execution
     if ($null -ne $global:OSDCloudDeploy.WorkflowTaskObject) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)]"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO]"
 
         foreach ($step in $global:OSDCloudDeploy.WorkflowTaskObject.steps) {
             # Set the current step in the global variable
@@ -157,19 +178,19 @@ function Invoke-OSDCloudWorkflowTask {
             #=================================================
             # Should we skip this step? (support both 'skip' and legacy 'disable')
             if (($step.skip -eq $true) -or ($step.disable -eq $true)) {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [Skip:True] $($step.name)"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [Skip:True] $($step.name)"
                 continue
             }
             #=================================================
             # Can we test this step in full Windows OS (not WinPE)?
-            if (($global:IsWinPE -ne $true) -and ($step.testinfullos -ne $true)) {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [Skip:FullOS] $($step.name)"
+            if (($env:SystemDrive -ne 'X:') -and ($step.testinfullos -ne $true)) {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [Skip:FullOS] $($step.name)"
                 continue
             }
             #=================================================
             # Can we pause before this step?
             if ($step.pause -eq $true) {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [Pause:True] $($step.name)"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [Pause:True] $($step.name)"
                 Pause
             }
             #=================================================
@@ -182,7 +203,7 @@ function Invoke-OSDCloudWorkflowTask {
                 if (($command -is [string]) -and ($command.Contains(" "))) {
                     $commandline = $command
                 }
-                elseif (-not (Get-Command $command -ErrorAction SilentlyContinue)) {
+                elseif (-not (Get-Command $command -ErrorAction Ignore)) {
                     Write-Host -ForegroundColor DarkRed "[$(Get-Date -format s)] [Step command does not exist] $($step.command)"
                     continue
                 }

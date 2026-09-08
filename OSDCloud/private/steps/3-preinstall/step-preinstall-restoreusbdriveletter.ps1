@@ -2,13 +2,12 @@ function step-preinstall-restoreusbdriveletter {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
-    $Step = $global:OSDCloudCurrentStep
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    #region Main
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] USB partition count: $(@($global:OSDCloudWorkflowInvoke.USBPartitions).Count)"
+
     if ($global:OSDCloudWorkflowInvoke.USBPartitions) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Restoring USB Drive Letters. OK."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Restoring USB Drive Letters. OK."
         foreach ($Item in $global:OSDCloudWorkflowInvoke.USBPartitions) {
             $Params = @{
                 AssignDriveLetter = $true
@@ -16,12 +15,15 @@ function step-preinstall-restoreusbdriveletter {
                 PartitionNumber   = $Item.PartitionNumber
                 ErrorAction       = 'SilentlyContinue'
             }
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Restoring drive letter on Disk $($Params.DiskNumber), Partition $($Params.PartitionNumber)."
             Add-PartitionAccessPath @Params
             Start-Sleep -Seconds 5
         }
     }
+    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No saved USB partitions were found."
+    }
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

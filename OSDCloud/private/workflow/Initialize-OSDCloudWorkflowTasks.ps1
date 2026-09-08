@@ -70,7 +70,7 @@ function Initialize-OSDCloudWorkflowTasks {
     }
     #=================================================
     # Path that is going to be used
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $($WorkflowTasksPath.Replace((Split-Path $ModuleBase -Parent) + '\', ''))"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($WorkflowTasksPath.Replace((Split-Path $ModuleBase -Parent) + '\', ''))"
 
     $OSDCloudWorkflowTasks = foreach ($item in $WorkflowTasksFiles) {
         Get-Content $item.FullName -Raw | ConvertFrom-Json
@@ -91,7 +91,6 @@ function Initialize-OSDCloudWorkflowTasks {
     }
     $global:OSDCloudWorkflowTasks = $OSDCloudWorkflowTasks | Sort-Object -Property @{Expression='default';Descending=$true}, @{Expression='name';Descending=$false}
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

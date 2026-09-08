@@ -66,7 +66,7 @@ Functions are procedural and single-call, not pipeline-aware. Skip the blocks un
 ### Global state
 
 `Initialize-*` functions populate `$global:OSDCloud*` variables; `Invoke-*` and `Get-*` functions read them.
-Key globals: `$global:OSDCoreDevice`, `$global:OSDCloudDeploy`, `$global:OSDCloudWorkflowTasks`, `$global:OSDCloudWorkflowInvoke`, `$global:Architecture`, `$global:IsWinPE`, `$global:IsVM`, `$global:IsOnBattery`.
+Key globals: `$global:OSDCoreDevice`, `$global:OSDCloudDeploy`, `$global:OSDCloudWorkflowTasks`, `$global:OSDCloudWorkflowInvoke`.
 Document any new global variables added.
 
 ### Naming
@@ -80,7 +80,7 @@ Document any new global variables added.
 
 ### WinPE-specific code
 
-- Guard WinPE-only logic with `$env:SystemDrive -eq 'X:'` or the `$global:IsWinPE` flag
+- Guard WinPE-only logic with `$env:SystemDrive -eq 'X:'` flag
 - Place WinPE-only exported functions in `public/WinPE/`
 
 ## Workflows
@@ -115,7 +115,7 @@ Version follows `YY.M.D.revision` format – update `ModuleVersion` in `OSDCloud
 ## Common pitfalls
 
 - `public/WinPE/` functions are **not loaded outside WinPE** – do not call them in normal-environment code.
-- The module requires `curl.exe` to be present for download operations – validated in `Initialize-OSDCloudDeploy`.
+- The module requires `curl.exe` to be present for download operations – validated in `Initialize-DeployOSDCloud`.
 - `HtmlAgilityPack.dll` type is loaded once; re-importing silently skips the Add-Type call but may conflict if another version is loaded first.
 - Analytics events (PostHog) are sent during workflow execution – see [PRIVACY.md](../PRIVACY.md) for opt-out details.
 - Commit scopes: `workflow`, `driver-packs`, `pe-startup`, `deployment`, `classes`, `catalog`, `core`, `wi-fi`, `main`.

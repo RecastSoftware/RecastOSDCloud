@@ -19,7 +19,7 @@ In order of frequency:
 
 | Phase | Path | When |
 |---|---|---|
-| WinPE startup | `X:\Windows\Temp\osdcloud-logs\` | While in WinPE |
+| WinPEStartup | `X:\Windows\Temp\osdcloud-logs\` | While in WinPE |
 | Workflow (early) | `X:\OSDCloud\Logs\` | Before disk is partitioned |
 | Workflow (post-disk) | `C:\Windows\Temp\osdcloud-logs\` | After step 14 (log restart) |
 | First boot | `C:\Windows\Temp\osdcloud-logs\` | After OOBE |
@@ -135,10 +135,10 @@ session — most steps are skipped outside WinPE (only those with
 ### A USB profile isn't applied
 
 ```powershell
-Get-ChildItem -Path *:\WinPEStartup\Profiles\*.json
+Get-ChildItem -Path *:\WinPEStartup\profiles\*.json
 ```
 
-- Profile must be at `<drive>:\WinPEStartup\Profiles\*.json` — exact path.
+- Profile must be at `<drive>:\WinPEStartup\profiles\*.json` — exact path.
 - File must parse as JSON (after stripping `//` and `/* */` comments). Validate on Windows:
   ```powershell
   Get-Content profile.json -Raw |

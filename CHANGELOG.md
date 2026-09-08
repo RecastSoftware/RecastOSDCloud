@@ -2,6 +2,78 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.9.8.1 - September 8, 2026
+
+### Added
+
+- Added deployment disk selection and expanded deployment disk validation.
+- Added OSDeploy license registration, license state management, and license help output.
+- Added verbose workflow step diagnostics for deployment troubleshooting.
+- Added WinPE startup profiles for restart and shutdown actions.
+- Added a WinPEStartup guide and updated deployment, troubleshooting, and unattended USB documentation.
+
+### Changed
+
+- Module version bumped to `26.9.8.1`.
+- Consolidated deployment, workflow, and device state objects used across deployment execution.
+- Improved operating system and driver pack cache object handling, including deployment catalog state scoping and registered catalog refresh behavior.
+- Preserved operating system language selections through deployment parameter resolution.
+- Improved device identity handling and hashed the device identifier used for telemetry.
+- Renamed device identity and license properties to use the current core naming conventions.
+- Refreshed WinPEStartup initialization, command execution, module update, Wi-Fi, USB, and device error handling paths.
+- Updated workflow step logging, status output, target disk checks, driver pack checks, and Windows image validation.
+- Refactored driver pack catalog retrieval and update functions across Dell, HP, Lenovo, Panasonic, and Surface catalogs.
+- Updated Windows 11 25H2 operating system catalog content to build `26200.9168`.
+- Refreshed Dell and HP driver pack catalogs and Surface driver pack URLs.
+- Updated deployment, feature, privacy, and workflow documentation and standardized Recast status messages.
+
+### Removed
+
+- Removed retired workflow assets and legacy workflow UI projects from unused channels.
+
+## 26.8.10.1 - August 10, 2026
+
+### Added
+
+- Added `Initialize-DeployOSDCloud` as the new deployment initialization implementation with expanded deployment/device state handling and validation flow.
+- Added cache and validation helpers across core systems:
+  - `Initialize-OSDCoreCache`
+  - `Get-OSDCoreDriverPackCacheObject`
+  - `Get-OSDCoreOperatingSystemCacheObject`
+  - `Test-OSDCoreDriverPackCloudObject`
+  - `Test-OSDCoreOperatingSystemCloudObject`
+- Added workflow operating system helper functions:
+  - `Get-OSDCloudWorkflowSettingsOSFile`
+  - `Resolve-OSDCloudWorkflowOSActivation`
+  - `Test-OSDCloudWorkflowSettingsOS`
+- Added deployment hardware override support for workflow-driven operating system selection constraints.
+- Added deployment and device state snapshot exports for the revised deployment initialization flow.
+- Added module driver pack catalog export support for temporary XML snapshots.
+- Added repository documentation pages `docs/about_osdcorecache.md`, `docs/about_osdcoredevice.md`, and `docs/about_winpestartup.md`.
+- Added the `osdcore-operating-system-cloud-object` Copilot skill for core operating system object mapping and maintenance.
+
+### Changed
+
+- Module version bumped to `26.8.10.1`.
+- Refactored deployment initialization by replacing `Initialize-OSDCloudDeploy` usage with `Initialize-DeployOSDCloud` across deployment entry points (`Deploy-OSDCloud`, `Deploy-OSDCloudCLI`, and `Deploy-OSDCloudGUI`).
+- Renamed module catalog initializer functions to align naming and intent:
+  - `Get-ModuleCoreDriverPacks` -> `Initialize-ModuleCoreDriverPacks`
+  - `Get-ModuleCoreOperatingSystems` -> `Initialize-ModuleCoreOperatingSystems`
+- Centralized and reorganized cache handling by moving cache helpers from `private/core-device/` to `private/core-cache/` and improving USB cache object refresh behavior.
+- Improved deployment startup behavior by continuing after initialization, removing unreachable initialization code, using resolved operating system cloud objects, and warning when custom workflow settings are supplied.
+- Improved core operating system and driver pack selection reliability by validating cloud/cache objects, normalizing schema handling, and supporting file-path based operating system URL checks.
+- Improved cache, operating system URL, device identity, and catalog initialization status logging for clearer troubleshooting.
+- Improved workflow operating system resolution and parameter flow by centralizing OS settings selection and activation resolution logic.
+- Updated workflow and task execution scripts with standardized informational logging markers and aligned step/test behavior for target disk, driver pack, and Windows image validation.
+- Updated WinPEStartup components, including Wi-Fi and USB drive-letter initialization paths, to align with the revised deployment/core orchestration flow.
+- Updated Microsoft Update Catalog save helpers and related driver workflow step behavior to match revised validation and logging patterns.
+- Updated workflow UI `MainWindow` scripts across classic, default, dev, insiders, and vNext channels for consistency with the updated deployment flow.
+- Updated repository guidance in Copilot instruction assets and catalog update instructions.
+
+### Removed
+
+- Removed legacy `Initialize-OSDCloudDeploy.ps1` in favor of `Initialize-DeployOSDCloud.ps1`.
+
 ## 26.8.18.1 - August 18, 2026
 
 ### Added
@@ -68,7 +140,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added WinPE startup profiles for `Deploy-OSDCloud` and `Show-OSDCloudDeviceInfo`.
+- Added WinPEStartup profiles for `Deploy-OSDCloud` and `Show-OSDCloudDeviceInfo`.
 
 ### Changed
 
@@ -262,7 +334,7 @@ All notable changes to this project will be documented in this file.
     add `INPUTS`/`OUTPUTS`/`NOTES` sections, and cross-link related pages.
 - Conceptual guides in `docs/`:
   - `getting-started.md` — installation, quick start, and cmdlet overview.
-  - `winpe-startup.md` — WinPE startup sequence, script hooks, USB profiles,
+  - `winpe-startup.md` — WinPEStartup sequence, script hooks, USB profiles,
     and `InvokeXxxCommand` behaviour.
   - `psoptions.md` — two-layer `PSDefaultParameterValues` system with full
     key reference table and override examples.

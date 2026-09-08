@@ -94,26 +94,26 @@ function Deploy-OSDCloudCLI {
 
         [Parameter(Mandatory = $false)]
         [ArgumentCompleter({
-            param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
+                param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameters)
 
-            $profileNames = @('default')
-            if ($env:SystemDrive -ne 'X:' -and $env:ProgramData) {
-                $profileRoot = Join-Path -Path $env:ProgramData -ChildPath 'OSDeployCore\OSDCloud\Profiles'
-                if (Test-Path -Path $profileRoot -PathType Container) {
-                    $directoryNames = Get-ChildItem -Path $profileRoot -Directory -ErrorAction SilentlyContinue |
+                $profileNames = @('default')
+                if ($env:SystemDrive -ne 'X:' -and $env:ProgramData) {
+                    $profileRoot = Join-Path -Path $env:ProgramData -ChildPath 'OSDeployCore\OSDCloud\Profiles'
+                    if (Test-Path -Path $profileRoot -PathType Container) {
+                        $directoryNames = Get-ChildItem -Path $profileRoot -Directory -ErrorAction SilentlyContinue |
                         Select-Object -ExpandProperty Name
-                    if ($directoryNames) {
-                        $profileNames += $directoryNames
+                        if ($directoryNames) {
+                            $profileNames += $directoryNames
+                        }
                     }
                 }
-            }
 
-            foreach ($profileName in ($profileNames | Sort-Object -Unique)) {
-                if ($profileName -like "$wordToComplete*") {
-                    [System.Management.Automation.CompletionResult]::new($profileName, $profileName, 'ParameterValue', $profileName)
+                foreach ($profileName in ($profileNames | Sort-Object -Unique)) {
+                    if ($profileName -like "$wordToComplete*") {
+                        [System.Management.Automation.CompletionResult]::new($profileName, $profileName, 'ParameterValue', $profileName)
+                    }
                 }
-            }
-        })]
+            })]
         [ValidateNotNullOrEmpty()]
         [System.String]
         $ProfileName = 'default'
@@ -137,13 +137,13 @@ function Deploy-OSDCloudCLI {
         # Initialize OSDCloudWorkflow
         # Override values (Parameters > ENV) are assembled into $global:OSDCloudEnv
         # and applied to $global:OSDCloudDeploy - including operating system resolution - inside
-        # Initialize-OSDCloudDeploy.
+        # Initialize-DeployOSDCloud.
         $WorkflowName = 'cli'
         $envParameters = @{}
-        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction SilentlyContinue) {
+        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction Ignore) {
             $envParameters = ConvertTo-OSDCloudEnvParameter -BoundParameters $PSBoundParameters
         }
-        Initialize-OSDCloudDeploy -WorkflowName $WorkflowName -EnvParameters $envParameters -ProfileName $ProfileName
+        Initialize-DeployOSDCloud -WorkflowName $WorkflowName -EnvParameters $envParameters -Force:$Force.IsPresent -ProfileName $ProfileName
 
         $selectedTask = if ($null -ne $Task) { $Task } else { [System.String]$global:OSDCloudDeploy.WorkflowTaskName }
         $selectedOperatingSystem = if ($null -ne $OperatingSystem) { $OperatingSystem } else { [System.String]$global:OSDCloudDeploy.OperatingSystem }
@@ -151,17 +151,10 @@ function Deploy-OSDCloudCLI {
         $selectedOSActivation = if ($null -ne $OSActivation) { $OSActivation } else { [System.String]$global:OSDCloudDeploy.OSActivation }
         $selectedOSLanguageCode = if ($null -ne $OSLanguageCode) { $OSLanguageCode } else { [System.String]$global:OSDCloudDeploy.OSLanguageCode }
 
-        if ($selectedOSEdition -in @('Enterprise', 'Enterprise N')) {
-            if ($selectedOSActivation -ne 'Volume') {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] OSEdition '$selectedOSEdition' requires OSActivation 'Volume'."
-            }
-            $selectedOSActivation = 'Volume'
-        }
-        elseif ($selectedOSEdition -in @('Home', 'Home N')) {
-            if ($selectedOSActivation -ne 'Retail') {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] OSEdition '$selectedOSEdition' requires OSActivation 'Retail'."
-            }
-            $selectedOSActivation = 'Retail'
+        $resolvedOSActivation = Resolve-OSDCloudWorkflowOSActivation -OSEdition $selectedOSEdition -OSActivation $selectedOSActivation
+        if ($resolvedOSActivation -ne $selectedOSActivation) {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSEdition '$selectedOSEdition' requires OSActivation '$resolvedOSActivation'."
+            $selectedOSActivation = $resolvedOSActivation
         }
 
         $operatingSystemValues = [array]$global:OSDCloudDeploy.OperatingSystemValues
@@ -186,36 +179,35 @@ function Deploy-OSDCloudCLI {
             throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] OSEdition '$selectedOSEdition' is not valid for workflow '$WorkflowName'. Valid values: $($validOSEditions -join ', ')"
         }
 
-        $workflowTaskValues = [array]($global:OSDCloudDeploy.Flows | Select-Object -ExpandProperty Name)
+        $workflowTaskValues = [array]($global:OSDCloudDeploy.WorkflowTasks | Select-Object -ExpandProperty Name)
         if ($selectedTask -notin $workflowTaskValues) {
             throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Task '$selectedTask' is not valid for workflow '$WorkflowName'. Valid values: $($workflowTaskValues -join ', ')"
         }
 
-        $workflowTaskObject = $global:OSDCloudDeploy.Flows | Where-Object { $_.Name -eq $selectedTask } | Select-Object -First 1
+        $workflowTaskObject = $global:OSDCloudDeploy.WorkflowTasks | Where-Object { $_.Name -eq $selectedTask } | Select-Object -First 1
 
-        $operatingSystemObject = $global:DeployOSDCloudOperatingSystems |
-            Where-Object { $_.OperatingSystem -eq $selectedOperatingSystem } |
-            Where-Object { $_.OSActivation -eq $selectedOSActivation } |
-            Where-Object { $_.OSLanguageCode -eq $selectedOSLanguageCode } |
-            Select-Object -First 1
+        $operatingSystemCloudObject = $global:OSDCoreOperatingSystems |
+        Where-Object { $_.OperatingSystem -eq $selectedOperatingSystem } |
+        Where-Object { $_.OSActivation -eq $selectedOSActivation } |
+        Where-Object { $_.OSLanguageCode -eq $selectedOSLanguageCode } |
+        Select-Object -First 1
 
-        if (-not $operatingSystemObject) {
+        if (-not $operatingSystemCloudObject) {
             throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No Operating System object found for OperatingSystem '$selectedOperatingSystem' with OSActivation '$selectedOSActivation' and OSLanguageCode '$selectedOSLanguageCode'."
         }
 
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] OperatingSystem: $selectedOperatingSystem"
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] OSEdition: $selectedOSEdition"
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] OSActivation: $selectedOSActivation"
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] OSLanguageCode: $selectedOSLanguageCode"
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Task: $selectedTask"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OperatingSystem: $selectedOperatingSystem"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSEdition: $selectedOSEdition"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSActivation: $selectedOSActivation"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSLanguageCode: $selectedOSLanguageCode"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Task: $selectedTask"
 
-        $global:OSDCloudDeploy.OperatingSystem = $operatingSystemObject.OperatingSystem
-        $global:OSDCloudDeploy.OperatingSystemObject = $operatingSystemObject
-        $global:OSDCloudDeploy.OSBuild = $operatingSystemObject.OSBuild
-        $global:OSDCloudDeploy.OSBuildVersion = $operatingSystemObject.OSBuildVersion
-        $global:OSDCloudDeploy.OSVersion = $operatingSystemObject.OSVersion
-        $global:OSDCloudDeploy.ImageFileName = $operatingSystemObject.FileName
-        $global:OSDCloudDeploy.ImageFileUrl = $operatingSystemObject.FilePath
+        $global:OSDCloudDeploy.OperatingSystem = $operatingSystemCloudObject.OperatingSystem
+        $global:OSDCloudDeploy.OperatingSystemCloudObject = $operatingSystemCloudObject
+        $global:OSDCloudDeploy.OperatingSystemCacheObject = Get-OSDCoreOperatingSystemCacheObject -OperatingSystemCloudObject $operatingSystemCloudObject
+        $global:OSDCloudDeploy.OSBuild = $operatingSystemCloudObject.OSBuild
+        $global:OSDCloudDeploy.OSBuildVersion = $operatingSystemCloudObject.OSBuildVersion
+        $global:OSDCloudDeploy.OSVersion = $operatingSystemCloudObject.OSVersion
         $global:OSDCloudDeploy.OSEdition = $selectedOSEdition
         $global:OSDCloudDeploy.OSEditionId = $selectedOSEditionObject.EditionId
         $global:OSDCloudDeploy.OSActivation = $selectedOSActivation
@@ -227,7 +219,7 @@ function Deploy-OSDCloudCLI {
         $global:OSDCloudDeploy.Force = $Force.IsPresent
 
         #=================================================
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Invoke-OSDCloudWorkflowTask"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Invoke-OSDCloudWorkflowTask"
         $global:OSDCloudDeploy.TimeStart = Get-Date
         $global:OSDCloudDeploy | Out-Host
         Invoke-OSDCloudWorkflowTask

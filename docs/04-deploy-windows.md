@@ -10,7 +10,7 @@ a freshly installed Windows 11 at the OOBE screen.
 
 OSDCloud splits the deployment into two halves:
 
-1. **WinPE startup** — `Invoke-WinPEStartup` brings the environment online
+1. **WinPEStartup** — `Invoke-WinPEStartup` brings the environment online
    (drivers, network, current module).
 2. **OS deployment** — `Deploy-OSDCloud` runs a 40-step workflow that
    installs Windows and injects drivers.
@@ -98,6 +98,15 @@ To skip the UX entirely (scripted runs):
 Deploy-OSDCloud -CLI
 ```
 
+On devices with multiple local disks, specify the deployment target explicitly:
+
+```powershell
+Deploy-OSDCloud -CLI -DiskNumber 1
+```
+
+The disk number must be one of the local deployment disks detected by OSDCloud.
+USB, virtual, offline, and otherwise unsupported disks are not valid targets.
+
 ### 4. The 40-step workflow runs
 
 Phases run in order:
@@ -134,5 +143,5 @@ Logs are written to `C:\Windows\Temp\osdcloud-logs\`. Start with
 
 ## Next
 
-- [Customize the deployment](05-customize-deployment.md) — pick a different OS, edition, or workflow channel.
+- [Customize the deployment](05-customize-deployment.md) — pick a different OS or edition, or change workflow settings.
 - [Run unattended with a USB profile](06-unattended-usb-profile.md) — remove the operator from the loop.

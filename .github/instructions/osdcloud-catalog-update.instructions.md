@@ -219,4 +219,4 @@ Key differences:
 - **Omitting the build switch case** — a new OS XML will load without errors but produce zero OS options in the UX because every `<File>` hits the `default { continue }` branch.
 - **Stale `surface.json` driver URLs** — `Get-OSDCoreDriverPackCatalogSurface` serves MSI URLs from `OSDCloud/core/driverpacks/surface.json`; if `UpdatePage` links change and the automated workflow has not run, deployed drivers may point to outdated or removed files. Run `.github/scripts/Update-MicrosoftCatalog.ps1` manually to refresh.
 - **Editing OEM XML snapshots manually** — Dell/HP/Lenovo XML is replaced wholesale from upstream; manual edits will be lost on the next snapshot refresh.
-- **Adding a Windows version string to workflow configs without the catalog XML** — the UX will offer the version but `Get-OSDCloudCoreOperatingSystems` will return no matching ESD entries, causing `Initialize-OSDCloudDeploy` to throw.
+- **Adding a Windows version string to workflow configs without the catalog XML** — the UX will offer the version but `Get-OSDCloudCoreOperatingSystems` will return no matching ESD entries, causing `Initialize-DeployOSDCloud` to throw.

@@ -4,7 +4,7 @@ function Get-OSDCoreOperatingSystems {
     Gets parsed OSD core operating system catalog entries.
 
     .DESCRIPTION
-    Imports normalized raw catalog records from Get-ModuleCoreOperatingSystems and
+    Imports normalized raw catalog records from Initialize-ModuleCoreOperatingSystems and
     transforms them into OSD core operating system objects used by selection and
     deployment workflows. The function derives build identity, Windows family and
     release, normalized architecture, activation channel, and compatibility flags,
@@ -49,100 +49,106 @@ function Get-OSDCoreOperatingSystems {
     $records = @()
     $mctRecords = @()
 
-    $mctRecords = Get-ModuleCoreOperatingSystems
+    Initialize-ModuleCoreOperatingSystems
+    if (-not ($global:ModuleCoreOperatingSystems)) {
+        throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to load Module Core Operating Systems."
+    }
+    $mctRecords = $global:ModuleCoreOperatingSystems
 
     if (-not $mctRecords) {
         return $records
     }
 
     foreach ($node in ($mctRecords | Sort-Object FileName, LanguageCode, Architecture)) {
-        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Processing $($node.FileName)"
+        # Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Processing $($node.FileName)"
 
         if ([string]::IsNullOrWhiteSpace($node.FileName) -or $node.FileName.Length -lt 5) {
             continue
         }
-            #=================================================
-            #   OSBuild
-            #   Get the OSBuild from the FileName
-            $OSBuild = $node.FileName.Substring(0, 5)
-            #=================================================
-            #   OperatingSystem / OSName / OSVersion
-            #   19045 = Windows 10 22H2
-            #   22000 = Windows 11 21H2
-            #   22621 = Windows 11 22H2
-            #   22631 = Windows 11 23H2
-            #   26100 = Windows 11 24H2
-            #   26200 = Windows 11 25H2
-            #   28000 = Windows 11 26H1
-            switch ($OSBuild) {
-                '19045' { $OSName = 'Windows 10'; $OSVersion = '22H2' }
-                '22000' { $OSName = 'Windows 11'; $OSVersion = '21H2' }
-                '22621' { $OSName = 'Windows 11'; $OSVersion = '22H2' }
-                '22631' { $OSName = 'Windows 11'; $OSVersion = '23H2' }
-                '26100' { $OSName = 'Windows 11'; $OSVersion = '24H2' }
-                '26200' { $OSName = 'Windows 11'; $OSVersion = '25H2' }
-                '28000' { $OSName = 'Windows 11'; $OSVersion = '26H1' }
-                default { continue }
-            }
-            #=================================================
-            #   OSBuildVersion
-            #   Combination of <OSBuild>.<Sub>
-            #   Extract from FileName
-            #=================================================
-            $fileNameParts = $node.FileName -split '\.'
-            if ($fileNameParts.Count -lt 2) {
-                continue
-            }
-            $OSBuildVersion = "$($fileNameParts[0]).$($fileNameParts[1])"
-            #=================================================
-            #   OSArchitecture
-            #   Avoids confusion between x64 releases (amd64/arm64)
-            #=================================================
-            if ($node.Architecture -match 'x64') {
-                $OSArchitecture = 'amd64'
-            } elseif ($node.Architecture -match 'arm64') {
-                $OSArchitecture = 'arm64'
-            } else {
-                $OSArchitecture = 'x86'
-                continue
-            }
-            #=================================================
-            #   OSActivation
-            #=================================================
-            if ($node.FileName -match 'clientconsumer_ret') {
-                $OSActivation = 'Retail'
-            }
-            elseif ($node.FileName -match 'CLIENTBUSINESS_VOL') {
-                $OSActivation = 'Volume'
-            }
-            else {
-                $OSActivation = 'Unknown'
-                continue
-            }
-            #=================================================
-            #   Win10 / Win11
-            #=================================================
-            if ($OSName -eq 'Windows 10') {
-                $Win10 = $true
-                $Win11 = $false
-            }
-            elseif ($OSName -eq 'Windows 11') {
-                $Win10 = $false
-                $Win11 = $true
-            }
-            else {
-                $Win10 = $false
-                $Win11 = $false
-            }
-            #=================================================
-            #   OSD Module Properties
-            #=================================================
-            # DisplayName should be in the format "Win11-25H2-amd64"
-            $DisplayName = "$OSName $OSVersion $OSArchitecture $($node.LanguageCode) $OSActivation $OSBuildVersion"
-            #=================================================
-            #   ObjectProperties
-            #=================================================
-            <#
+        #=================================================
+        #   OSBuild
+        #   Get the OSBuild from the FileName
+        $OSBuild = $node.FileName.Substring(0, 5)
+        #=================================================
+        #   OperatingSystem / OSName / OSVersion
+        #   19045 = Windows 10 22H2
+        #   22000 = Windows 11 21H2
+        #   22621 = Windows 11 22H2
+        #   22631 = Windows 11 23H2
+        #   26100 = Windows 11 24H2
+        #   26200 = Windows 11 25H2
+        #   28000 = Windows 11 26H1
+        switch ($OSBuild) {
+            '19045' { $OSName = 'Windows 10'; $OSVersion = '22H2' }
+            '22000' { $OSName = 'Windows 11'; $OSVersion = '21H2' }
+            '22621' { $OSName = 'Windows 11'; $OSVersion = '22H2' }
+            '22631' { $OSName = 'Windows 11'; $OSVersion = '23H2' }
+            '26100' { $OSName = 'Windows 11'; $OSVersion = '24H2' }
+            '26200' { $OSName = 'Windows 11'; $OSVersion = '25H2' }
+            '28000' { $OSName = 'Windows 11'; $OSVersion = '26H1' }
+            default { continue }
+        }
+        #=================================================
+        #   OSBuildVersion
+        #   Combination of <OSBuild>.<Sub>
+        #   Extract from FileName
+        #=================================================
+        $fileNameParts = $node.FileName -split '\.'
+        if ($fileNameParts.Count -lt 2) {
+            continue
+        }
+        $OSBuildVersion = "$($fileNameParts[0]).$($fileNameParts[1])"
+        #=================================================
+        #   OSArchitecture
+        #   Avoids confusion between x64 releases (amd64/arm64)
+        #=================================================
+        if ($node.Architecture -match 'x64') {
+            $OSArchitecture = 'amd64'
+        }
+        elseif ($node.Architecture -match 'arm64') {
+            $OSArchitecture = 'arm64'
+        }
+        else {
+            $OSArchitecture = 'x86'
+            continue
+        }
+        #=================================================
+        #   OSActivation
+        #=================================================
+        if ($node.FileName -match 'clientconsumer_ret') {
+            $OSActivation = 'Retail'
+        }
+        elseif ($node.FileName -match 'CLIENTBUSINESS_VOL') {
+            $OSActivation = 'Volume'
+        }
+        else {
+            $OSActivation = 'Unknown'
+            continue
+        }
+        #=================================================
+        #   Win10 / Win11
+        #=================================================
+        if ($OSName -eq 'Windows 10') {
+            $Win10 = $true
+            $Win11 = $false
+        }
+        elseif ($OSName -eq 'Windows 11') {
+            $Win10 = $false
+            $Win11 = $true
+        }
+        else {
+            $Win10 = $false
+            $Win11 = $false
+        }
+        #=================================================
+        #   OSD Module Properties
+        #=================================================
+        # DisplayName should be in the format "Win11-25H2-amd64"
+        $DisplayName = "$OSName $OSVersion $OSArchitecture $($node.LanguageCode) $OSActivation $OSBuildVersion"
+        #=================================================
+        #   ObjectProperties
+        #=================================================
+        <#
             Status       :
             ReleaseDate  : 2023-12-04
             Name         : Windows 10 22H2 x64 ar-sa Retail 19045.3803
@@ -163,28 +169,29 @@ function Get-OSDCoreOperatingSystems {
             #>
 
         $records += [pscustomobject]@{
-            Status          = $null
-            ReleaseDate     = $null
-            Name            = $DisplayName
-            Version         = $OSName
-            ReleaseID       = $OSVersion
-            Architecture    = $OSArchitecture
-            Language        = $node.LanguageCode
-            Activation      = $OSActivation
-            Build           = $OSBuildVersion
-            FileName        = $node.FileName
-            ImageIndex      = $node.ImageIndex
-            ImageName       = $node.ImageName
-            Url             = $node.FilePath
-            SHA1            = $node.Sha1
-            SHA256          = $node.Sha256
-            UpdateID        = $node.UpdateID
-            Win10           = $Win10
-            Win11           = $Win11
+            Status       = $null
+            ReleaseDate  = $null
+            Name         = $DisplayName
+            Version      = $OSName
+            ReleaseID    = $OSVersion
+            Architecture = $OSArchitecture
+            Language     = $node.LanguageCode
+            Activation   = $OSActivation
+            Build        = $OSBuildVersion
+            FileName     = $node.FileName
+            ImageIndex   = $node.ImageIndex
+            ImageName    = $node.ImageName
+            Url          = $node.FilePath
+            SHA1         = $node.Sha1
+            SHA256       = $node.Sha256
+            UpdateID     = $node.UpdateID
+            Win10        = $Win10
+            Win11        = $Win11
         }
     }
 
     $records = $records | Sort-Object -Property Url -Unique
     $records = $records | Sort-Object -Property Name
+    $records | Export-Clixml -Path (Join-Path -Path $env:TEMP -ChildPath 'OSDCoreOperatingSystems.xml') -Force
     return $records
 }

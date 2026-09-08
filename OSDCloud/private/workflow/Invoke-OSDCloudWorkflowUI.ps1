@@ -57,7 +57,7 @@ function Invoke-OSDCloudWorkflowUI {
         throw
     }
 
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $($currentUiPath.Replace((Split-Path $ModuleBase -Parent) + '\', ''))"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($currentUiPath.Replace((Split-Path $ModuleBase -Parent) + '\', ''))"
     . $currentUiPath
     #=================================================
 }

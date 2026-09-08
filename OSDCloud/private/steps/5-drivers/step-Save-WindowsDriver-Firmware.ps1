@@ -2,37 +2,40 @@ function step-Save-WindowsDriver-Firmware {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
-    $Step = $global:OSDCloudCurrentStep
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    if ($global:OSDCloudDeploy.SkipFirmwareUpdate -eq $true) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Firmware update steps were disabled by -SkipFirmwareUpdate. Skip."
+    if ($global:OSDCloudWorkflowInvoke.SkipFirmwareUpdate -eq $true) {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] SkipFirmwareUpdate is true."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Firmware update steps were disabled by -SkipFirmwareUpdate. Skip."
         return
     }
     if ($PSVersionTable.PSVersion.Major -ne 5) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] PowerShell 5.1 is required to run this step. Skip."
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] PowerShell major version is $($PSVersionTable.PSVersion.Major)."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] PowerShell 5.1 is required to run this step. Skip."
         return
     }
     if ($IsVM -eq $true) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Microsoft Update Firmware is not enabled for Virtual Machines. Skip."
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Virtual machine detected."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Update Firmware is not enabled for Virtual Machines. Skip."
         return
     }
     if ($global:OSDCoreDevice.IsOnBattery -eq $true) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Microsoft Update Firmware is not enabled for devices on battery power"
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Device is on battery."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Update Firmware is not enabled for devices on battery power"
         return
     }
     #=================================================
     # Is it reachable online?
     $Url = 'https://catalog.update.microsoft.com/Home.aspx'
     try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Testing Microsoft Update Catalog with HEAD request: $Url"
         $WebRequest = Invoke-WebRequest -Uri $Url -UseBasicParsing -Method Head
         if ($WebRequest.StatusCode -eq 200) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Microsoft Update Catalog returned a 200 status code. OK."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Update Catalog returned a 200 status code. OK."
         }
     }
     catch {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Microsoft Update Catalog is not reachable. Skip."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft Update Catalog is not reachable. Skip."
         return
     }
 
@@ -52,16 +55,17 @@ function step-Save-WindowsDriver-Firmware {
     #>
 
     $DestinationDirectory = "C:\Windows\Temp\osdcloud-drivers-firmware"
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Firmware Updates will be downloaded from Microsoft Update Catalog to $DestinationDirectory"
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Not all systems support a driver Firmware Update"
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] BIOS or Firmware Settings may need to be enabled for Firmware Updates"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Firmware Updates will be downloaded from Microsoft Update Catalog to $DestinationDirectory"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Not all systems support a driver Firmware Update"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] BIOS or Firmware Settings may need to be enabled for Firmware Updates"
 
     $SystemFirmwareHardwareId = $global:OSDCoreDevice.SystemFirmwareHardwareId
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] System Firmware Hardware ID: $SystemFirmwareHardwareId"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DestinationDirectory: $DestinationDirectory; SystemFirmwareHardwareId: $SystemFirmwareHardwareId"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Firmware Hardware ID: $SystemFirmwareHardwareId"
 
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Calling Save-MicrosoftUpdateCatalogDriver for firmware hardware ID."
     Save-MicrosoftUpdateCatalogDriver -DestinationDirectory $DestinationDirectory -HardwareID $SystemFirmwareHardwareId
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

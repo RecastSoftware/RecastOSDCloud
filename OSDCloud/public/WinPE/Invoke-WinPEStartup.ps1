@@ -3,10 +3,10 @@
 function Invoke-WinPEStartup {
     <#
     .SYNOPSIS
-        Runs the WinPE startup workflow for OSDCloud.
+        Runs the WinPEStartup workflow for OSDCloud.
 
     .DESCRIPTION
-        Executes the OSDCloud WinPE startup sequence from a single entry point.
+        Executes the OSDCloud WinPEStartup sequence from a single entry point.
         The function can optionally load defaults from module JSON, discover and
         apply a startup profile, and then run startup steps in order including
         environment setup, drivers, files, hardware checks, connectivity, module
@@ -387,7 +387,7 @@ function Invoke-WinPEStartup {
         $candidateProfiles = [System.Collections.Generic.List[object]]::new()
 
         foreach ($driveLetter in [char[]](67..90)) {
-            $profileRoot = '{0}:\WinPEStartup\Profiles' -f $driveLetter
+            $profileRoot = '{0}:\WinPEStartup\profiles' -f $driveLetter
 
             if (-not (Test-Path -LiteralPath $profileRoot -PathType Container)) {
                 continue
@@ -427,7 +427,7 @@ function Invoke-WinPEStartup {
             }
             else {
                 Write-Host ''
-                Write-Host 'Available WinPE Startup profiles:'
+                Write-Host 'Available WinPEStartup profiles:'
                 $orderedProfiles |
                     Select-Object Index, Name, Drive, Path |
                     Format-Table -AutoSize |
@@ -557,7 +557,7 @@ function Invoke-WinPEStartup {
             Write-Verbose "Invoke-WinPEStartup: Applied default '$parameterName' from JSON configuration."
         }
 
-        Write-Verbose 'Invoke-WinPEStartup: Starting full WinPE startup sequence'
+        Write-Verbose 'Invoke-WinPEStartup: Starting full WinPEStartup sequence'
     }
 
     process {

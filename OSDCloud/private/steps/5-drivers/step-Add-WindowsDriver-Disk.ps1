@@ -7,7 +7,7 @@
     to the running Windows installation. It uses DISM (Deployment Image Servicing and
     Management) to inject drivers with the Add-WindowsDriver cmdlet. Drivers are applied
     to the C:\ drive and are logged for troubleshooting purposes.
-    
+
     This is part of the OSDCloud deployment workflow and runs during the driver injection phase.
 
 .NOTES
@@ -20,7 +20,7 @@
 
 .EXAMPLE
     step-Add-WindowsDriver-Disk
-    
+
     Adds all drivers from the OSDCloud drivers directory to the system.
 
 .OUTPUTS
@@ -30,22 +30,27 @@ function step-Add-WindowsDriver-Disk {
     [CmdletBinding()]
     param ()
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $Message; Write-Verbose -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
+    #=================================================
     $Step = $global:OSDCloudCurrentStep
     #=================================================
     $LogPath = "C:\Windows\Temp\osdcloud-logs"
 
     $DriverPath = "C:\Windows\Temp\osdcloud-drivers-disk"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPath: $DriverPath; LogPath: $LogPath"
 
     if (Test-Path -Path $DriverPath) {
         if (-not (Test-Path -Path $LogPath)) {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating log path: $LogPath"
             New-Item -ItemType Directory -Path $LogPath -Force | Out-Null
         }
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Running Add-WindowsDriver from disk driver path."
         Add-WindowsDriver -Path "C:\" -Driver "$DriverPath" -Recurse -ForceUnsigned -LogPath "$LogPath\dism-add-windowsdriver-disk.log" -ErrorAction SilentlyContinue
     }
+    else {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPath was not found. Skipping disk driver injection."
+    }
     #=================================================
-    $Message = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
-    Write-Verbose -Message $Message; Write-Debug -Message $Message
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }

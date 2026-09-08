@@ -69,7 +69,7 @@ function Initialize-WinPEStartupFiles {
             if (Test-Path -Path $contentFolder -PathType Container) {
                 Write-Verbose "Found content folder: $contentFolder"
 
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] Files: $contentFolder"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Files: $contentFolder"
                 # Write-Verbose "Copying content from $contentFolder to $destination"
                 Invoke-Robocopy -Source $contentFolder -Destination $destination
             }

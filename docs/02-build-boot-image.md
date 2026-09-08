@@ -10,7 +10,8 @@ Build a new boot image when:
 - You added scripts or apps to `%ProgramData%\OSDeployCore\OSDRepo\` that should be in WinPE.
 
 Rebuild **does not** automatically happen when OSDCloud publishes a new module
-version — the module is downloaded at WinPE startup time, not baked in.
+version. The build includes the currently loaded OSDCloud module, and WinPE
+startup updates it from the PowerShell Gallery by default.
 
 ## Why a separate module
 
@@ -21,24 +22,25 @@ session — none of which are available in WinPE. That work lives in the
 
 ## Prerequisites
 
-- Windows 11 25H2 or newer (build 26100+).
-- PowerShell 7.6+ running as Administrator.
+- Windows 11 25H2 or newer (build 26200+).
+- PowerShell 7.4+ installed with the MSI and running as Administrator.
 - Windows ADK installed.
-- The OSDeploy module installed: `Install-Module OSDeploy -SkipPublisherCheck -Force`.
+- The OSDeploy module installed: `Install-Module OSDeploy -AllowPrerelease -Force`.
 
 For a full prerequisite walkthrough see the OSDeploy docs:
-[`../../RecastOSDeploy/docs/Build-OSDeployBoot.md`](../../RecastOSDeploy/docs/Build-OSDeployBoot.md).
+[`Build-OSDeployBoot`](https://github.com/OSDeploy/RecastOSDeploy/blob/main/OSDeploy/docs/Build-OSDeployBoot.md).
 
 ## How to build
 
-### 1. Import a Windows source (once)
+### 1. Download and stage a Windows source (once)
 
 ```powershell
-Import-OSDeployCoreOS
+Update-OSDeployCoreESD
+Update-OSDeployCoreOS
 ```
 
-Pick a Windows 11 ISO when prompted. This extracts a WinRE source used as
-the WinPE baseline. Skip this step if you plan to use `-UseAdkWinPE` instead.
+This downloads a Windows Enterprise ESD and stages its WinRE source for use
+as the WinPE baseline. Skip this step if you plan to use `-UseAdkWinPE` instead.
 
 ### 2. (Optional) Refresh WinPE drivers
 
@@ -60,7 +62,7 @@ Build-OSDeployBoot -Name 'OSDCloud-amd64'
 Build-OSDeployBoot -Name 'OSDCloud-arm64' -UseAdkWinPE -Architecture arm64
 ```
 
-Output lands in `%ProgramData%\OSDeployCore\boot\<Name>-<timestamp>\`:
+Output lands in `%ProgramData%\OSDeployCore\boot\<Name>\`:
 
 | File / folder | Use |
 |---|---|
@@ -68,14 +70,14 @@ Output lands in `%ProgramData%\OSDeployCore\boot\<Name>-<timestamp>\`:
 | `bootmedia.iso` | Bootable ISO (UEFI CA 2011) |
 | `bootmedia_ca2023.iso` | Bootable ISO using the UEFI CA 2023 boot manager (for Secure Boot policies that require it) |
 
-### 4. Verify OSDCloud is in the image
+### 4. Verify the OSDCloud version
 
-OSDCloud is **not** pre-installed in the WIM. It is downloaded from the
-PowerShell Gallery the first time `Invoke-WinPEStartup` runs after boot.
-That's by design — the module always self-updates.
+`Build-OSDeployBoot` copies the currently loaded OSDCloud module into the WIM.
+When `Invoke-WinPEStartup` runs, it installs the latest gallery version unless
+`-SkipUpdateOSDCloud` is set.
 
-If you need the module baked in (air-gapped builds), copy the module folder
-to `OSDRepo\winpe-script\` before building.
+For an air-gapped image, load the required OSDCloud version before building
+and set `SkipUpdateOSDCloud` in the startup profile.
 
 ## How to rebuild without re-mounting
 

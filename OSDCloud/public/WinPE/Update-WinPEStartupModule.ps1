@@ -24,7 +24,7 @@
     System.Void
 
 .NOTES
-    This function is intended for WinPE startup workflows.
+    This function is intended for WinPEStartup workflows.
     Installation uses AllUsers scope, Force, and SkipPublisherCheck.
 #>
 function Update-WinPEStartupModule {
@@ -41,7 +41,7 @@ function Update-WinPEStartupModule {
     Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] Update PowerShell Module: $Name"
     Write-Host -ForegroundColor DarkCyan "[$(Get-Date -format s)] Close this window to cancel (starting in 10 seconds)"
     Start-Sleep -Seconds 10
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] $Name $($GalleryPSModule.Version) [AllUsers]"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $Name $($GalleryPSModule.Version) [AllUsers]"
     Install-Module $Name -Scope AllUsers -Force -SkipPublisherCheck
     Import-Module $Name -Force
     #=================================================
