@@ -702,9 +702,9 @@ function Initialize-OSDCoreDevice {
         $idOSDeployDevice = [System.String]$env:ID_OSDEPLOYDEVICE
     }
 
-    $idOSDeployBuild = $null
-    if (-not [string]::IsNullOrWhiteSpace($env:ID_OSDEPLOYBUILD)) {
-        $idOSDeployBuild = [System.String]$env:ID_OSDEPLOYBUILD
+    $idOSDeployBoot = $null
+    if (-not [string]::IsNullOrWhiteSpace($env:ID_OSDEPLOYBOOT)) {
+        $idOSDeployBoot = [System.String]$env:ID_OSDEPLOYBOOT
     }
 
     $idRegisteredEmail = $null
@@ -805,7 +805,7 @@ function Initialize-OSDCoreDevice {
         UUID                     = $deviceUUID
         EndpointSHA              = [System.String]$EndpointSHA #Device UUID SHA256
         idOSDeployDevice         = $idOSDeployDevice
-        idOSDeployBuild          = $idOSDeployBuild
+        idOSDeployBoot          = $idOSDeployBoot
         idRegisteredEmail        = $idRegisteredEmail
         idRegisteredLicense      = $idRegisteredLicense
     }

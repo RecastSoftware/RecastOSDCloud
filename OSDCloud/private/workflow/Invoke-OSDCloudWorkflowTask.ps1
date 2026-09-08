@@ -98,9 +98,9 @@ function Invoke-OSDCloudWorkflowTask {
         }
     }
     # UUID
-    $deviceUUID = $global:OSDCoreDevice.UUID
+    $deviceUUID = [System.String]$global:OSDCoreDevice.UUID
     # Convert the UUID to a hash value to protect user privacy and ensure a consistent identifier across events
-    [string]$distinctId = $global:OSDCoreDevice.DeviceId
+    [string]$distinctId = $global:OSDCoreDevice.EndpointSHA
     if ([string]::IsNullOrWhiteSpace($distinctId) -and -not [string]::IsNullOrWhiteSpace($deviceUUID)) {
         $distinctId = [System.BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([System.Text.Encoding]::UTF8.GetBytes($deviceUUID))).Replace("-", "")
     }
@@ -160,7 +160,7 @@ function Invoke-OSDCloudWorkflowTask {
         osdcloudOSLanguageCode     = [string]$operatingSystemCloudObject.OSLanguageCode
         deploymentPhase            = [string]$deploymentPhase
         idOSDeployDevice           = [string]$global:OSDCoreDevice.idOSDeployDevice # OSDeploy Device Hash
-        idOSDeployBuild            = [string]$global:OSDCoreDevice.idOSDeployBuild # OSDeploy Boot GUID
+        idOSDeployBoot            = [string]$global:OSDCoreDevice.idOSDeployBoot # OSDeploy Boot GUID
         idRegisteredEmail          = [string]$global:OSDCoreDevice.idRegisteredEmail
         idRegisteredLicense        = [string]$global:OSDCoreDevice.idRegisteredLicense
     }
