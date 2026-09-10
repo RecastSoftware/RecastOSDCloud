@@ -646,14 +646,6 @@ function Invoke-WinPEStartup {
             }
         }
 
-        # Initialize-WinPEStartupScript -FileName 'startup.cmd'
-
-        # Initialize-WinPEStartupScript -FileName 'startup.ps1'
-
-        # Initialize-WinPEStartupScript -FileName 'main.cmd'
-
-        # Initialize-WinPEStartupScript -FileName 'main.ps1'
-
         if ($InvokeMainCommand) {
             $mainCommandList = $InvokeMainCommand | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
@@ -705,12 +697,6 @@ function Invoke-WinPEStartup {
                 }
             }
         }
-
-        # Initialize-WinPEStartupScript -NewProcess -NoExit -FileName 'main-wait.ps1'
-
-        # Initialize-WinPEStartupScript -FileName 'shutdown.cmd'
-
-        # Initialize-WinPEStartupScript -FileName 'shutdown.ps1'
 
         if ($InvokeShutdownCommand) {
             $shutdownCommandList = $InvokeShutdownCommand | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
