@@ -153,7 +153,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.08.07",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.01.16",
     "Name": "Surface Go 3 [26.01.16]",
     "Manufacturer": "Microsoft",
@@ -163,15 +163,15 @@
       "Surface_Go_3_1926",
       "Surface_Go_3_2022"
     ],
-    "FileName": "SurfaceGo3_Win11_22631_26.072.17911.0.msi",
-    "Url": "https://download.microsoft.com/download/100ded78-f124-4076-ab44-4be7375925fa/SurfaceGo3_Win11_22631_26.072.17911.0.msi",
+    "FileName": "SurfaceGo3_Win11_22631_26.080.320.0.msi",
+    "Url": "https://download.microsoft.com/download/100ded78-f124-4076-ab44-4be7375925fa/SurfaceGo3_Win11_22631_26.080.320.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=103504"
   },
   {
-    "CatalogVersion": "26.08.07",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.05",
     "Name": "Surface Go 4 [26.02.05]",
     "Manufacturer": "Microsoft",
@@ -199,7 +199,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.08.07",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.01.21",
     "Name": "Surface Hub 2S and 3 [26.01.21]",
     "Manufacturer": "Microsoft",
@@ -210,8 +210,8 @@
       "Surface Hub 3 50",
       "Surface Hub 3 85"
     ],
-    "FileName": "SurfaceHub3_Hub2S_Win11_22631_26.050.1291.0.msi",
-    "Url": "https://download.microsoft.com/download/e421ce83-c5a6-47a9-83a5-35ed280d6ef1/SurfaceHub3_Hub2S_Win11_22631_26.050.1291.0.msi",
+    "FileName": "SurfaceHub3_Hub2S_Win11_22631_26.073.33266.0.msi",
+    "Url": "https://download.microsoft.com/download/e421ce83-c5a6-47a9-83a5-35ed280d6ef1/SurfaceHub3_Hub2S_Win11_22631_26.073.33266.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
@@ -280,7 +280,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.08.15",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.03.05",
     "Name": "Surface Laptop 4 AMD [26.03.05]",
     "Manufacturer": "Microsoft",
@@ -297,7 +297,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=102923"
   },
   {
-    "CatalogVersion": "26.08.15",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.27",
     "Name": "Surface Laptop 4 Intel [26.02.27]",
     "Manufacturer": "Microsoft",
@@ -314,7 +314,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=102924"
   },
   {
-    "CatalogVersion": "26.08.15",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Laptop 5 [26.01.28]",
     "Manufacturer": "Microsoft",
@@ -325,29 +325,29 @@
       "Surface_Laptop_5_for_Business_1950:1951",
       "Surface_Laptop_5_for_Business_1979"
     ],
-    "FileName": "SurfaceLaptop5_Win11_22631_26.072.18051.0.msi",
-    "Url": "https://download.microsoft.com/download/68992368-8d70-4231-a9e4-23dfaede832b/SurfaceLaptop5_Win11_22631_26.072.18051.0.msi",
+    "FileName": "SurfaceLaptop5_Win11_22631_26.073.32218.0.msi",
+    "Url": "https://download.microsoft.com/download/68992368-8d70-4231-a9e4-23dfaede832b/SurfaceLaptop5_Win11_22631_26.073.32218.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=104679"
   },
   {
-    "CatalogVersion": "26.08.15",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.13",
     "Name": "Surface Laptop 5G [26.02.13]",
     "Manufacturer": "Microsoft",
     "Model": "Surface Laptop 5G",
     "SystemId": "Surface_Laptop_5G_7th_Edition_With_Intel_For_Business_2119",
-    "FileName": "SurfaceLaptop7-5GforBusinesswithIntel_Win11_22631_26.070.2989.0.msi",
-    "Url": "https://download.microsoft.com/download/b6ba11a9-2e1b-401b-8cbc-2af02cda74e8/SurfaceLaptop7-5GforBusinesswithIntel_Win11_22631_26.070.2989.0.msi",
+    "FileName": "SurfaceLaptop7-5GforBusinesswithIntel_Win11_22631_26.074.43712.0.msi",
+    "Url": "https://download.microsoft.com/download/b6ba11a9-2e1b-401b-8cbc-2af02cda74e8/SurfaceLaptop7-5GforBusinesswithIntel_Win11_22631_26.074.43712.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108347"
   },
   {
-    "CatalogVersion": "26.08.15",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.03",
     "Name": "Surface Laptop 6 [26.02.03]",
     "Manufacturer": "Microsoft",
@@ -364,7 +364,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=105946"
   },
   {
-    "CatalogVersion": "26.08.15",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.27",
     "Name": "Surface Laptop 7 ARM [26.02.27]",
     "Manufacturer": "Microsoft",
@@ -383,7 +383,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=106120"
   },
   {
-    "CatalogVersion": "26.08.15",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.03.18",
     "Name": "Surface Laptop 7 Intel [26.03.18]",
     "Manufacturer": "Microsoft",
@@ -392,15 +392,15 @@
       "Surface_Laptop_7th_Edition_With_Intel_For_Business_2107",
       "Surface_Laptop_7th_Edition_With_Intel_For_Business_2108"
     ],
-    "FileName": "SurfaceLaptop7withIntel_Win11_22631_26.044.42206.0.msi",
-    "Url": "https://download.microsoft.com/download/1543bd80-9cae-498d-8b0f-9841e4d7b2a8/SurfaceLaptop7withIntel_Win11_22631_26.044.42206.0.msi",
+    "FileName": "SurfaceLaptop7withIntel_Win11_22631_26.072.20743.0.msi",
+    "Url": "https://download.microsoft.com/download/1543bd80-9cae-498d-8b0f-9841e4d7b2a8/SurfaceLaptop7withIntel_Win11_22631_26.072.20743.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108014"
   },
   {
-    "CatalogVersion": "26.08.15",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.06.19",
     "Name": "Surface Laptop 8 Intel [26.06.19]",
     "Manufacturer": "Microsoft",
@@ -411,15 +411,15 @@
       "Surface_Laptop_for_Business_15in_8th_Ed_Intel_2108",
       "Surface_Laptop_for_Business_15in_8th_Ed_Intel_2136"
     ],
-    "FileName": "SurfaceLaptop8withIntel_Win11_26200_26.052.17609.0.msi",
-    "Url": "https://download.microsoft.com/download/74b2d3cc-d205-41ed-8784-59ceba1411f0/SurfaceLaptop8withIntel_Win11_26200_26.052.17609.0.msi",
+    "FileName": "SurfaceLaptop8withIntel_Win11_26100_26.083.37379.0.msi",
+    "Url": "https://download.microsoft.com/download/74b2d3cc-d205-41ed-8784-59ceba1411f0/SurfaceLaptop8withIntel_Win11_26100_26.083.37379.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108669"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.06.16",
     "Name": "Surface Laptop 8 Snapdragon [26.06.16]",
     "Manufacturer": "Microsoft",
@@ -456,7 +456,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Laptop Go 2 [26.01.28]",
     "Manufacturer": "Microsoft",
@@ -470,21 +470,21 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=104251"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.05",
     "Name": "Surface Laptop Go 3 [26.02.05]",
     "Manufacturer": "Microsoft",
     "Model": "Surface Laptop Go 3",
     "SystemId": "Surface_Laptop_Go_3_2013",
-    "FileName": "SurfaceLaptopGo3_Win11_22631_26.072.22278.0.msi",
-    "Url": "https://download.microsoft.com/download/cad99f30-7b1c-4ee5-a88b-71e729362b2b/SurfaceLaptopGo3_Win11_22631_26.072.22278.0.msi",
+    "FileName": "SurfaceLaptopGo3_Win11_22631_26.090.781.0.msi",
+    "Url": "https://download.microsoft.com/download/cad99f30-7b1c-4ee5-a88b-71e729362b2b/SurfaceLaptopGo3_Win11_22631_26.090.781.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=105608"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.24",
     "Name": "Surface Laptop 13in 1st Snapdragon [26.02.24]",
     "Manufacturer": "Microsoft",
@@ -501,7 +501,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108198"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.06.19",
     "Name": "Surface Laptop 13in 1st Intel [26.06.19]",
     "Manufacturer": "Microsoft",
@@ -515,7 +515,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108670"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.01.16",
     "Name": "Surface Laptop Studio [26.01.16]",
     "Manufacturer": "Microsoft",
@@ -529,7 +529,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=103505"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Laptop Studio 2 [26.01.28]",
     "Manufacturer": "Microsoft",
@@ -658,7 +658,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.01.16",
     "Name": "Surface Pro 7+ [26.01.16]",
     "Manufacturer": "Microsoft",
@@ -667,15 +667,15 @@
       "Surface_Pro_7+_1960",
       "Surface_Pro_7+_with_LTE_Advanced_1961"
     ],
-    "FileName": "SurfacePro7+_Win11_22631_26.052.26600.0.msi",
-    "Url": "https://download.microsoft.com/download/0195da46-88f9-4f56-8046-babe15cafe2e/SurfacePro7+_Win11_22631_26.052.26600.0.msi",
+    "FileName": "SurfacePro7+_Win11_22631_26.074.41214.0.msi",
+    "Url": "https://download.microsoft.com/download/0195da46-88f9-4f56-8046-babe15cafe2e/SurfacePro7+_Win11_22631_26.074.41214.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=102633"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.23",
     "Name": "Surface Pro 8 [26.02.23]",
     "Manufacturer": "Microsoft",
@@ -693,7 +693,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=103503"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.03.18",
     "Name": "Surface Pro 9 [26.03.18]",
     "Manufacturer": "Microsoft",
@@ -710,7 +710,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=104680"
   },
   {
-    "CatalogVersion": "26.09.01",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "25.12.03",
     "Name": "Surface Pro 9 5G [25.12.03]",
     "Manufacturer": "Microsoft",
@@ -755,7 +755,7 @@
     "UpdatePage": null
   },
   {
-    "CatalogVersion": "26.09.04",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.23",
     "Name": "Surface Studio 2+ [26.02.23]",
     "Manufacturer": "Microsoft",
@@ -769,7 +769,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=104681"
   },
   {
-    "CatalogVersion": "26.09.04",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.04.06",
     "Name": "Surface Pro 10 [26.04.06]",
     "Manufacturer": "Microsoft",
@@ -785,7 +785,7 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=105947"
   },
   {
-    "CatalogVersion": "26.09.04",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.03.19",
     "Name": "Surface Pro 10 5G [26.03.19]",
     "Manufacturer": "Microsoft",
@@ -803,7 +803,7 @@
     "UpdatePage": "https://www.microsoft.com/en-us/download/details.aspx?id=106292"
   },
   {
-    "CatalogVersion": "26.09.04",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.02.23",
     "Name": "Surface Pro 11 ARM64 [26.02.23]",
     "Manufacturer": "Microsoft",
@@ -824,21 +824,21 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=106119"
   },
   {
-    "CatalogVersion": "26.09.04",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.03.12",
     "Name": "Surface Pro 11 Intel [26.03.12]",
     "Manufacturer": "Microsoft",
     "Model": "Surface Pro 11 Intel",
     "SystemId": "Surface_Pro_11th_Edition_With_Intel_For_Business_2103",
-    "FileName": "SurfacePro11withIntel_Win11_22631_26.070.2030.0.msi",
-    "Url": "https://download.microsoft.com/download/c26c62fe-da4b-41d1-b276-c855751c247c/SurfacePro11withIntel_Win11_22631_26.070.2030.0.msi",
+    "FileName": "SurfacePro11withIntel_Win11_22631_26.081.13472.0.msi",
+    "Url": "https://download.microsoft.com/download/c26c62fe-da4b-41d1-b276-c855751c247c/SurfacePro11withIntel_Win11_22631_26.081.13472.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108013"
   },
   {
-    "CatalogVersion": "26.09.04",
+    "CatalogVersion": "26.09.12",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Pro Snapdragon 12-inch [26.01.28]",
     "Manufacturer": "Microsoft",
