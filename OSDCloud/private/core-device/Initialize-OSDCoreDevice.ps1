@@ -805,7 +805,7 @@ function Initialize-OSDCoreDevice {
         UUID                     = $deviceUUID
         EndpointSHA              = [System.String]$EndpointSHA #Device UUID SHA256
         idOSDeployDevice         = $idOSDeployDevice
-        idOSDeployBoot          = $idOSDeployBoot
+        idOSDeployBoot           = $idOSDeployBoot
         idRegisteredEmail        = $idRegisteredEmail
         idRegisteredLicense      = $idRegisteredLicense
     }
