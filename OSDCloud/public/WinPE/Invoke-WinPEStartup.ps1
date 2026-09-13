@@ -398,10 +398,9 @@ function Invoke-WinPEStartup {
 
                 foreach ($profileFile in $profileFiles) {
                     [void]$candidateProfiles.Add([pscustomobject]@{
-                        Index = 0
-                        Name  = $profileFile.Name
-                        Drive = '{0}:' -f $driveLetter
-                        Path  = $profileFile.FullName
+                        Index   = 0
+                        Profile = $profileFile.BaseName
+                        Path    = $profileFile.FullName
                     })
                 }
             }
@@ -427,9 +426,9 @@ function Invoke-WinPEStartup {
             }
             else {
                 Write-Host ''
-                Write-Host 'Available WinPEStartup profiles:'
+                Write-Host 'WinPEStartup Profiles:'
                 $orderedProfiles |
-                    Select-Object Index, Name, Drive, Path |
+                    Select-Object Index, Profile, Path |
                     Format-Table -AutoSize |
                     Out-String |
                     Write-Host
