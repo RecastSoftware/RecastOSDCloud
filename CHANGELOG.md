@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.9.12 - September 13, 2026
+
+### Added
+
+- Added the `author-winpe-profile-json` Copilot skill with WinPE startup profile properties, command behavior, examples, and validation guidance.
+
+### Changed
+
+- Module version bumped to `26.9.12` and marked as a `preview` prerelease.
+- Updated module description, tags, project URL, and GPL 3.0 license URL for the RecastSoftware repository.
+- Renamed the bundled `PS DeviceInfo.json` WinPE startup profile to `DeviceInfo.json`.
+- Simplified WinPE startup profile selection output to show the profile base name and full path.
+- Renamed the deployment analytics event from `deploy-osdcloud-dev` to `Deploy-OSDCloud` and removed the registered email address from its properties.
+
+### Removed
+
+- Removed the deprecated `Initialize-WinPEStartupScript` helper and obsolete startup, main, and shutdown script initialization references.
+
 ## 26.9.8.1 - September 8, 2026
 
 ### Added

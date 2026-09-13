@@ -398,10 +398,9 @@ function Invoke-WinPEStartup {
 
                 foreach ($profileFile in $profileFiles) {
                     [void]$candidateProfiles.Add([pscustomobject]@{
-                        Index = 0
-                        Name  = $profileFile.Name
-                        Drive = '{0}:' -f $driveLetter
-                        Path  = $profileFile.FullName
+                        Index   = 0
+                        Profile = $profileFile.BaseName
+                        Path    = $profileFile.FullName
                     })
                 }
             }
@@ -427,9 +426,9 @@ function Invoke-WinPEStartup {
             }
             else {
                 Write-Host ''
-                Write-Host 'Available WinPEStartup profiles:'
+                Write-Host 'WinPEStartup Profiles:'
                 $orderedProfiles |
-                    Select-Object Index, Name, Drive, Path |
+                    Select-Object Index, Profile, Path |
                     Format-Table -AutoSize |
                     Out-String |
                     Write-Host
@@ -646,14 +645,6 @@ function Invoke-WinPEStartup {
             }
         }
 
-        # Initialize-WinPEStartupScript -FileName 'startup.cmd'
-
-        # Initialize-WinPEStartupScript -FileName 'startup.ps1'
-
-        # Initialize-WinPEStartupScript -FileName 'main.cmd'
-
-        # Initialize-WinPEStartupScript -FileName 'main.ps1'
-
         if ($InvokeMainCommand) {
             $mainCommandList = $InvokeMainCommand | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
 
@@ -705,12 +696,6 @@ function Invoke-WinPEStartup {
                 }
             }
         }
-
-        # Initialize-WinPEStartupScript -NewProcess -NoExit -FileName 'main-wait.ps1'
-
-        # Initialize-WinPEStartupScript -FileName 'shutdown.cmd'
-
-        # Initialize-WinPEStartupScript -FileName 'shutdown.ps1'
 
         if ($InvokeShutdownCommand) {
             $shutdownCommandList = $InvokeShutdownCommand | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
