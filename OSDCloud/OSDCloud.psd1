@@ -18,6 +18,7 @@
     Copyright         = '(c) 2026 Recast Software. All rights reserved.'
     Description          = @'
 Recast OSDCloud PowerShell Module - Preview
+Workplace Ninja Summit Release
 PowerShell module for OSDCloud v2 deployment automation and WinPEStartup from recastsoftware.com.
 Includes operating system, driver pack, and device provisioning workflows.
 '@
