@@ -9,9 +9,9 @@ Create profiles that configure `Invoke-WinPEStartup` without embedding workflow 
 
 ## Profile location and discovery
 
-- Store profiles in `OSDCloud/core/OSDRepo/winpe-profiles/`.
+- Store bundled profiles in `OSDCloud/core/winpestartup-profiles/`.
 - Use a descriptive `.json` filename. The startup function discovers profile files from `WinPEStartup\Profiles` on attached drives.
-- A profile is a flat map of parameter names to scalar values or arrays. Do not add nested objects.
+- A profile is a flat map of parameter names to scalar values or arrays, with one supported nested object: the top-level `Environment` section.
 - Prefer standard JSON. The loader tolerates comments, but comments are unnecessary and can make external validation fail.
 
 ## Property names
@@ -38,6 +38,27 @@ Use the exact `Invoke-WinPEStartup:` prefix for every profile property:
 | `Invoke-WinPEStartup:InvokeShutdownCommandEA` | `Continue` or `Stop` | Handle shutdown child-process failure |
 
 Use JSON booleans (`true`/`false`) rather than quoted boolean strings. Use arrays when there are multiple commands or modules; command entries execute in array order in one child PowerShell process.
+
+## Environment variables
+
+Use an unprefixed top-level `Environment` object to set process-scoped environment variables after the profile is selected:
+
+```json
+{
+  "Environment": {
+    "OSDCLOUD_SITE": "BranchOffice",
+    "OSDCLOUD_DEPLOYMENT_RING": 2,
+    "OSDCLOUD_INTERACTIVE": true
+  }
+}
+```
+
+- Variable values may be strings, numbers, or booleans and are converted to invariant strings.
+- Existing process variables with the same name are overwritten.
+- Child PowerShell sessions launched by the startup, main, and shutdown command phases inherit the values.
+- Null values, arrays, nested objects, and invalid names warn and are skipped without blocking other entries.
+- Values are not persisted to the registry or machine environment.
+- Do not put secrets in profiles. Although values are not logged, profile files are plain text.
 
 ## Command behavior
 
@@ -83,11 +104,11 @@ Use JSON booleans (`true`/`false`) rather than quoted boolean strings. Use array
 1. Identify the target profile and read its existing JSON before editing.
 2. Map the requested behavior to the exact parameter in the table above.
 3. Preserve unrelated properties, ordering, and formatting.
-4. Add or update only the required property. Keep the JSON flat.
+4. Add or update only the required property. Keep the JSON flat except for the supported `Environment` object.
 5. Parse the edited file with PowerShell 5.1:
 
 ```powershell
-$profile = Get-Content -LiteralPath '.\OSDCloud\core\OSDRepo\winpe-profiles\<profile>.json' -Raw | ConvertFrom-Json
+$profile = Get-Content -LiteralPath '.\OSDCloud\core\winpestartup-profiles\<profile>.json' -Raw | ConvertFrom-Json
 $profile | Out-Null
 ```
 

@@ -12,6 +12,11 @@ function Invoke-WinPEStartup {
         environment setup, drivers, files, hardware checks, connectivity, module
         updates, script execution, and optional URL/command invocations.
 
+        A selected profile may include an env or Environment object. Supported
+        scalar values are converted to strings and assigned to the current
+        process, overwriting existing values. Child PowerShell command sessions
+        inherit the resulting environment.
+
         This function only runs in WinPE where SystemDrive is X:. If it is called
         outside WinPE, it writes a warning and exits without running startup steps.
 
@@ -200,6 +205,7 @@ function Invoke-WinPEStartup {
         $defaultsPrefix = 'Invoke-WinPEStartup:'
         $resolvedDefaults = [ordered]@{}
         $selectedProfile = $null
+        $profileEnvironment = $null
 
         # Snapshot the parameter names that were pre-bound via $global:PSDefaultParameterValues.
         # These must not block profile overrides — only truly explicit caller args should win.
@@ -286,6 +292,62 @@ function Invoke-WinPEStartup {
             return @([string]$Value)
         }
 
+        function Set-WinPEStartupProfileEnvironment {
+            [CmdletBinding()]
+            param (
+                [Parameter()]
+                $InputObject,
+
+                [Parameter(Mandatory = $true)]
+                [string]$SourceName
+            )
+
+            if ($InputObject -isnot [System.Management.Automation.PSCustomObject] -and $InputObject -isnot [System.Collections.IDictionary]) {
+                Write-Warning "Invoke-WinPEStartup: Skipping invalid Environment section from '$SourceName'. Expected a JSON object."
+                return
+            }
+
+            $entries = @()
+
+            if ($InputObject -is [System.Collections.IDictionary]) {
+                foreach ($entry in $InputObject.GetEnumerator()) {
+                    $entries += [pscustomobject]@{
+                        Name  = [string]$entry.Key
+                        Value = $entry.Value
+                    }
+                }
+            }
+            else {
+                foreach ($property in $InputObject.PSObject.Properties) {
+                    $entries += [pscustomobject]@{
+                        Name  = [string]$property.Name
+                        Value = $property.Value
+                    }
+                }
+            }
+
+            foreach ($entry in $entries) {
+                if ([string]::IsNullOrWhiteSpace($entry.Name) -or $entry.Name.Contains('=') -or $entry.Name.Contains([char]0)) {
+                    Write-Warning "Invoke-WinPEStartup: Skipping invalid environment variable name from '$SourceName'."
+                    continue
+                }
+
+                if ($null -eq $entry.Value -or $entry.Value -isnot [System.IConvertible]) {
+                    Write-Warning "Invoke-WinPEStartup: Skipping unsupported value for environment variable '$($entry.Name)' from '$SourceName'. Expected a string, number, or boolean."
+                    continue
+                }
+
+                try {
+                    $environmentValue = [System.Convert]::ToString($entry.Value, [System.Globalization.CultureInfo]::InvariantCulture)
+                    [System.Environment]::SetEnvironmentVariable($entry.Name, $environmentValue, [System.EnvironmentVariableTarget]::Process)
+                    Write-Verbose "Invoke-WinPEStartup: Set process environment variable '$($entry.Name)' from '$SourceName'."
+                }
+                catch {
+                    Write-Warning "Invoke-WinPEStartup: Failed to set environment variable '$($entry.Name)' from '$SourceName': $($_.Exception.Message)"
+                }
+            }
+        }
+
         function Add-WinPEStartupDefaults {
             [CmdletBinding()]
             param (
@@ -322,6 +384,10 @@ function Invoke-WinPEStartup {
             foreach ($entry in $entries) {
                 if ([string]::IsNullOrWhiteSpace($entry.Name)) {
                     Write-Warning "Invoke-WinPEStartup: Skipping empty key from '$SourceName'."
+                    continue
+                }
+
+                if ($KeyFormat -eq 'Any' -and $entry.Name -in @('env', 'Environment')) {
                     continue
                 }
 
@@ -465,6 +531,18 @@ function Invoke-WinPEStartup {
             try {
                 $rawProfile = Get-Content -LiteralPath $selectedProfile.Path -Raw -ErrorAction Stop
                 $profileDefaults = ConvertFrom-WinPEStartupJsonContent -RawContent $rawProfile
+                $environmentProperties = @($profileDefaults.PSObject.Properties | Where-Object { $_.Name -in @('env', 'Environment') })
+
+                if ($environmentProperties.Count -gt 1) {
+                    throw "Profile cannot contain both 'env' and 'Environment' properties."
+                }
+
+                $environmentProperty = $environmentProperties | Select-Object -First 1
+
+                if ($environmentProperty) {
+                    $profileEnvironment = $environmentProperty.Value
+                }
+
                 Add-WinPEStartupDefaults -InputObject $profileDefaults -SourceName $selectedProfile.Path -KeyFormat Any
                 Write-Host "WinPE profile applied: $($selectedProfile.Path)"
             }
@@ -554,6 +632,10 @@ function Invoke-WinPEStartup {
             }
 
             Write-Verbose "Invoke-WinPEStartup: Applied default '$parameterName' from JSON configuration."
+        }
+
+        if ($selectedProfile -and $environmentProperty) {
+            Set-WinPEStartupProfileEnvironment -InputObject $profileEnvironment -SourceName $selectedProfile.Path
         }
 
         Write-Verbose 'Invoke-WinPEStartup: Starting full WinPEStartup sequence'

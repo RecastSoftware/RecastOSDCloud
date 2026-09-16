@@ -1,7 +1,0 @@
-{
-  "Invoke-WinPEStartup:InvokeMainCommand": [
-    "Show-OSDCloudDeviceInfo"
-  ],
-  "Invoke-WinPEStartup:InvokeMainCommandNoExit": true,
-  "Invoke-WinPEStartup:InvokeMainCommandEA": "Continue"
-}
