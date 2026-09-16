@@ -1,4 +1,4 @@
-<DriverPackManifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" baseLocation="downloads.dell.com" dateTime="2026-09-08T14:13:04" releaseID="8WVY3" version="2026.09.02" application="OnDemandCabBuilder" schemaVersion="2.3" xsi:noNamespaceSchemaLocation="https://downloads.dell.com/catalog/clientschema/4.0/DriverPackManifest.xsd" baseLocationAccessProtocols="HTTP FTP" deltaBase="http://en.community.dell.com" xmlns="openmanage/cm/dm">
+<DriverPackManifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" baseLocation="downloads.dell.com" dateTime="2026-09-15T06:33:41" releaseID="RJ1X9" version="2026.09.02" application="OnDemandCabBuilder" schemaVersion="2.3" xsi:noNamespaceSchemaLocation="https://downloads.dell.com/catalog/clientschema/4.0/DriverPackManifest.xsd" baseLocationAccessProtocols="HTTP FTP" deltaBase="http://en.community.dell.com" xmlns="openmanage/cm/dm">
   <DriverPackage format="cab" hashMD5="4B4B4330EBFF3E9F353D2C3D7B4450F6" size="72429980" dateTime="2014-07-11T00:00:00" vendorVersion="1.0" dellVersion="A01" path="FOLDER02291001M/1/160-vista-A01-JFH0G.CAB" releaseID="JFH0G" delta="/techcenter/enterprise-client/w/wiki/optiplex-160-vista-driver-cab" type="win">
     <Name>
       <Display lang="en"><![CDATA[160-vista-A01-JFH0G.CAB]]></Display>
@@ -53751,63 +53751,6 @@
       </Cryptography>
     </DriverPackMetadataInfo>
   </DriverPackage>
-  <DriverPackage format="exe" hashMD5="D7926784FA1D13CDE051E8334B8B61CD" size="672692400" dateTime="2026-08-24T05:44:51" vendorVersion="1.0" dellVersion="A06" path="FOLDER14772074M/1/PC14255-D40FH_Win11_1.0_A06.exe" releaseID="D40FH" delta="" type="win">
-    <Name>
-      <Display lang="en"><![CDATA[PC14255-D40FH_Win11_1.0_A06.exe]]></Display>
-    </Name>
-    <Description>
-      <Display lang="en"><![CDATA[With the Dell Command Deploy Driver Packs, an I/T Administrator can perform the following tasks:
-1) Use Microsoft Windows OS-based PnP enumeration capabilities to install drivers for applicable devices
-2) Create a system-level optimized deployment sequence
-3) Setup an appropriate boot control sequence.
-4) Optimize the deployment of targeted system-specific driver packages.]]></Display>
-    </Description>
-    <SupportedOperatingSystems>
-      <OperatingSystem osCode="Windows11" osVendor="Microsoft" osArch="x64" osType="client" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0">
-        <Display lang="en"><![CDATA[ Windows 11 x64 ]]></Display>
-        <SupportedLanguages>
-          <Language lang="en">English</Language>
-        </SupportedLanguages>
-      </OperatingSystem>
-    </SupportedOperatingSystems>
-    <SupportedSystems>
-      <Brand key="58" prefix="DPL">
-        <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0D50" name="Dell Pro 14 PC14255" rtsDate="2025-03-26T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ Dell Pro 14 PC14255 ]]></Display>
-        </Model>
-      </Brand>
-      <Brand key="58" prefix="DPL">
-        <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0D51" name="Dell Pro 14 PC14255" rtsDate="2025-03-26T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ Dell Pro 14 PC14255 ]]></Display>
-        </Model>
-      </Brand>
-      <Brand key="58" prefix="DPL">
-        <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0D52" name="Dell Pro 14 PC14255" rtsDate="2025-03-26T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ Dell Pro 14 PC14255 ]]></Display>
-        </Model>
-      </Brand>
-    </SupportedSystems>
-    <ImportantInfo URL="http://www.dell.com/support/home/us/en/04/Drivers/DriversDetails?driverId=D40FH">
-      <Display lang="en"><![CDATA[Please visit http://Dell.com/Command for additional help on using CABs for OS Deployment.]]></Display>
-    </ImportantInfo>
-    <Cryptography>
-      <Hash algorithm="MD5">D7926784FA1D13CDE051E8334B8B61CD</Hash>
-      <Hash algorithm="SHA1">2EB8690604C12D25A97E460D803D7FE67AB6F38B</Hash>
-      <Hash algorithm="SHA256">0808961928EE303BD3D272E783AE21D022C87573DE1A3F1E418E8E4391ED960C</Hash>
-    </Cryptography>
-    <DriverPackMetadataInfo>
-      <Size>612682</Size>
-      <path>FOLDER14772065M/1/PC14255-D40FH_Win11_1.0_A06.xml</path>
-      <Cryptography>
-        <Hash algorithm="MD5">CB235B161C57A6E5B50FF61B608672C0</Hash>
-        <Hash algorithm="SHA1">84A77245B2E9AD1CA989FD68026948A0DAD94043</Hash>
-        <Hash algorithm="SHA256">322CAAA9CB521CA4FE5F2ADC3D0ACCF6298EF8E20B4879F3ED70735B895D4D8B</Hash>
-      </Cryptography>
-    </DriverPackMetadataInfo>
-  </DriverPackage>
   <DriverPackage format="exe" hashMD5="936E214CE44DC665060966A31CEF0BED" size="569091616" dateTime="2026-08-24T05:44:51" vendorVersion="1.0" dellVersion="A06" path="FOLDER14686539M/1/PC16255-K29JH_Win10_1.0_A06.exe" releaseID="K29JH" delta="" type="win">
     <Name>
       <Display lang="en"><![CDATA[PC16255-K29JH_Win10_1.0_A06.exe]]></Display>
@@ -55306,8 +55249,8 @@
     <SupportedSystems>
       <Brand key="60" prefix="DPML">
         <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
-        <Model systemID="0D32" name="-" rtsDate="2025-07-16T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0D32" name="Dell Pro Max 14 Premium MA14250" rtsDate="2025-07-16T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro Max 14 Premium MA14250 ]]></Display>
         </Model>
       </Brand>
     </SupportedSystems>
@@ -55351,8 +55294,8 @@
     <SupportedSystems>
       <Brand key="60" prefix="DPML">
         <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
-        <Model systemID="0D33" name="-" rtsDate="2025-07-16T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0D33" name="Dell Pro Max 16 Premium MA16250" rtsDate="2025-07-16T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro Max 16 Premium MA16250 ]]></Display>
         </Model>
       </Brand>
     </SupportedSystems>
@@ -55396,20 +55339,20 @@
     <SupportedSystems>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E29" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E29" name="Dell Pro 3 14 P314265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 3 14 P314265 ]]></Display>
         </Model>
       </Brand>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E5D" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E5D" name="Dell Pro 3 14 P314265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 3 14 P314265 ]]></Display>
         </Model>
       </Brand>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E67" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E67" name="Dell Pro 3 14 P314265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 3 14 P314265 ]]></Display>
         </Model>
       </Brand>
     </SupportedSystems>
@@ -55453,38 +55396,38 @@
     <SupportedSystems>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E25" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E25" name="Dell Pro 5 14 P514265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 5 14 P514265 ]]></Display>
         </Model>
       </Brand>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E31" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E31" name="Dell Pro 5 14 P514265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 5 14 P514265 ]]></Display>
         </Model>
       </Brand>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E5F" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E5F" name="Dell Pro 5 14 P514265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 5 14 P514265 ]]></Display>
         </Model>
       </Brand>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E65" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E65" name="Dell Pro 5 14 P514265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 5 14 P514265 ]]></Display>
         </Model>
       </Brand>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E5B" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E5B" name="Dell Pro 5 14 P514265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 5 14 P514265 ]]></Display>
         </Model>
       </Brand>
       <Brand key="58" prefix="DPL">
         <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
-        <Model systemID="0E69" name="-" rtsDate="2026-05-27T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ - ]]></Display>
+        <Model systemID="0E69" name="Dell Pro 5 14 P514265" rtsDate="2026-05-27T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 5 14 P514265 ]]></Display>
         </Model>
       </Brand>
     </SupportedSystems>
@@ -55503,6 +55446,63 @@
         <Hash algorithm="MD5">4C57B652C1B92DAE34A7AB56D4ADEE44</Hash>
         <Hash algorithm="SHA1">45F02C6E689F8E44769FCA60102857381D787AD7</Hash>
         <Hash algorithm="SHA256">69EB517CA9B2085ED65DA0D240D6736AA92CB6453A131C12E046B94F74620F85</Hash>
+      </Cryptography>
+    </DriverPackMetadataInfo>
+  </DriverPackage>
+  <DriverPackage format="exe" hashMD5="E83F324D60B0DC6C92CF5EF562A739A0" size="664347568" dateTime="2026-09-15T00:53:07" vendorVersion="1.0" dellVersion="A07" path="FOLDER14974146M/1/PC14255-KPTK1_Win11_1.0_A07.exe" releaseID="KPTK1" delta="" type="win">
+    <Name>
+      <Display lang="en"><![CDATA[PC14255-KPTK1_Win11_1.0_A07.exe]]></Display>
+    </Name>
+    <Description>
+      <Display lang="en"><![CDATA[With the Dell Command Deploy Driver Packs, an I/T Administrator can perform the following tasks:
+1) Use Microsoft Windows OS-based PnP enumeration capabilities to install drivers for applicable devices
+2) Create a system-level optimized deployment sequence
+3) Setup an appropriate boot control sequence.
+4) Optimize the deployment of targeted system-specific driver packages.]]></Display>
+    </Description>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="Windows11" osVendor="Microsoft" osArch="x64" osType="client" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0">
+        <Display lang="en"><![CDATA[ Windows 11 x64 ]]></Display>
+        <SupportedLanguages>
+          <Language lang="en">English</Language>
+        </SupportedLanguages>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <SupportedSystems>
+      <Brand key="58" prefix="DPL">
+        <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
+        <Model systemID="0D50" name="Dell Pro 14 PC14255" rtsDate="2025-03-26T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 14 PC14255 ]]></Display>
+        </Model>
+      </Brand>
+      <Brand key="58" prefix="DPL">
+        <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
+        <Model systemID="0D51" name="Dell Pro 14 PC14255" rtsDate="2025-03-26T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 14 PC14255 ]]></Display>
+        </Model>
+      </Brand>
+      <Brand key="58" prefix="DPL">
+        <Display lang="en"><![CDATA[ Dell Pro Laptops ]]></Display>
+        <Model systemID="0D52" name="Dell Pro 14 PC14255" rtsDate="2025-03-26T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro 14 PC14255 ]]></Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/04/Drivers/DriversDetails?driverId=KPTK1">
+      <Display lang="en"><![CDATA[Please visit http://Dell.com/Command for additional help on using CABs for OS Deployment.]]></Display>
+    </ImportantInfo>
+    <Cryptography>
+      <Hash algorithm="MD5">E83F324D60B0DC6C92CF5EF562A739A0</Hash>
+      <Hash algorithm="SHA1">987D7B4311A45D34F1CE9D57470AEB8B251B5A39</Hash>
+      <Hash algorithm="SHA256">AC26823A2323EEBAC1FB12422AA6F3D1D6151AE2463ADF71A77662F07B6B9FF1</Hash>
+    </Cryptography>
+    <DriverPackMetadataInfo>
+      <Size>606454</Size>
+      <path>FOLDER14974141M/1/PC14255-KPTK1_Win11_1.0_A07.xml</path>
+      <Cryptography>
+        <Hash algorithm="MD5">5F32E73F374BF063093F6169226E8518</Hash>
+        <Hash algorithm="SHA1">260C2DE50EEB958AA476561EA247EF47F00DDBB5</Hash>
+        <Hash algorithm="SHA256">51F80270F40FDE29A10D1FDE0EE507025AFB887516DA0C311D77AF68FE9B61A9</Hash>
       </Cryptography>
     </DriverPackMetadataInfo>
   </DriverPackage>
