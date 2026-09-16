@@ -48,35 +48,26 @@ function Initialize-ModuleCoreDriverPacks {
     #=================================================
     [System.String]$GenericDriverPackJson = Join-Path $($MyInvocation.MyCommand.Module.ModuleBase) 'core\driverpacks\generic.json'
 
-    $shouldUpdateDriverPackCatalog = $global:OSDCoreLicense.IsRegistered -eq $true
+    $updateDriverPackCatalog = switch ($OSDManufacturer) {
+        'Dell' { { Update-OSDCoreDriverPackCatalogDell -Confirm:$false } }
+        'HP' { { Update-OSDCoreDriverPackCatalogHP -Confirm:$false } }
+        'Lenovo' { { Update-OSDCoreDriverPackCatalogLenovo -Confirm:$false } }
+        'Microsoft' { { Update-OSDCoreDriverPackCatalogSurface -OSDProduct $OSDProduct -Confirm:$false } }
+        'Panasonic' { { Update-OSDCoreDriverPackCatalogPanasonic -Confirm:$false } }
+        default { $null }
+    }
 
-    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] shouldUpdateDriverPackCatalog is '$shouldUpdateDriverPackCatalog'."
-
-    if ($shouldUpdateDriverPackCatalog) {
-        $updateDriverPackCatalog = switch ($OSDManufacturer) {
-            'Dell' { { Update-OSDCoreDriverPackCatalogDell -Confirm:$false } }
-            'HP' { { Update-OSDCoreDriverPackCatalogHP -Confirm:$false } }
-            'Lenovo' { { Update-OSDCoreDriverPackCatalogLenovo -Confirm:$false } }
-            'Microsoft' { { Update-OSDCoreDriverPackCatalogSurface -OSDProduct $OSDProduct -Confirm:$false } }
-            'Panasonic' { { Update-OSDCoreDriverPackCatalogPanasonic -Confirm:$false } }
-            default { $null }
+    if ($updateDriverPackCatalog) {
+        try {
+            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Updating driver pack catalog for $OSDManufacturer."
+            & $updateDriverPackCatalog
         }
-
-        if ($updateDriverPackCatalog) {
-            try {
-                Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Updating driver pack catalog for $OSDManufacturer."
-                & $updateDriverPackCatalog
-            }
-            catch {
-                Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to update driver pack catalog for $OSDManufacturer. Using bundled catalog. $($_.Exception.Message)"
-            }
-        }
-        else {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No driver pack catalog updater is available for $OSDManufacturer."
+        catch {
+            # Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to update driver pack catalog for $OSDManufacturer. Using bundled catalog. $($_.Exception.Message)"
         }
     }
     else {
-        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Driver pack catalog update skipped because OSDCoreLicense.IsRegistered is not true."
+        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] No driver pack catalog updater is available for $OSDManufacturer."
     }
 
     # Load Generic driver pack catalog for fallback
