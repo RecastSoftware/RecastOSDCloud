@@ -824,21 +824,21 @@
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=106119"
   },
   {
-    "CatalogVersion": "26.09.17",
+    "CatalogVersion": "26.09.19",
     "ReleaseDate": "26.03.12",
     "Name": "Surface Pro 11 Intel [26.03.12]",
     "Manufacturer": "Microsoft",
     "Model": "Surface Pro 11 Intel",
     "SystemId": "Surface_Pro_11th_Edition_With_Intel_For_Business_2103",
-    "FileName": "SurfacePro11withIntel_Win11_22631_26.081.13472.0.msi",
-    "Url": "https://download.microsoft.com/download/c26c62fe-da4b-41d1-b276-c855751c247c/SurfacePro11withIntel_Win11_22631_26.081.13472.0.msi",
+    "FileName": "SurfacePro11withIntel_Win11_22631_26.083.38253.0.msi",
+    "Url": "https://download.microsoft.com/download/c26c62fe-da4b-41d1-b276-c855751c247c/SurfacePro11withIntel_Win11_22631_26.083.38253.0.msi",
     "OperatingSystem": "Windows 11",
     "OSArchitecture": "amd64",
     "HashMD5": null,
     "UpdatePage": "https://www.microsoft.com/download/details.aspx?id=108013"
   },
   {
-    "CatalogVersion": "26.09.17",
+    "CatalogVersion": "26.09.19",
     "ReleaseDate": "26.01.28",
     "Name": "Surface Pro Snapdragon 12-inch [26.01.28]",
     "Manufacturer": "Microsoft",
