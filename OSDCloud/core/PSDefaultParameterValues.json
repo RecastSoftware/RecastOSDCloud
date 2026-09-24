@@ -10,8 +10,7 @@
   "Invoke-WinPEStartup:InvokeStartupCommandNoExit": false,
   "Invoke-WinPEStartup:InvokeStartupCommandEA": "Continue",
   "Invoke-WinPEStartup:InvokeMainCommand": [
-    "Show-OSDCloudDeviceInfo",
-    "Deploy-OSDCloud"
+    "Show-OSDCloudDeviceInfo"
   ],
   "Invoke-WinPEStartup:InvokeMainCommandNoExit": true,
   "Invoke-WinPEStartup:InvokeMainCommandEA": "Continue",
