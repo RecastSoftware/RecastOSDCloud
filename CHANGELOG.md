@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.9.24.1 - September 24, 2026
+
+### Added
+
+- Added WinPE startup profile support for process-scoped environment variables through an `Environment` or `env` object, including validation and inheritance by child PowerShell sessions.
+- Added operating system catalog discovery from ProgramData and mounted drive `OSDCloud\catalogs\operatingsystems` directories, selecting the latest valid catalog revision for each major build.
+- Added the Windows 11 25H2 operating system catalog for build `26200.9457` and restored builds `26200.8653` and `26200.8873` to the active catalog set.
+
+### Changed
+
+- Module version bumped to `26.9.24.1`, removed the `preview` prerelease tag, and identified the module as the Workplace Ninja Summit release.
+- Updated WinPE startup profile documentation and the `author-winpe-profile-json` Copilot skill with environment variable behavior and examples.
+- Updated bundled WinPE startup defaults to show device information without automatically starting `Deploy-OSDCloud`, and removed the redundant bundled `DeviceInfo.json` profile.
+- Updated driver pack catalog initialization to refresh supported OEM catalogs without requiring a registered license and to fall back silently to bundled data when an update fails.
+- Refreshed the HP driver pack catalog.
+- Changed successful operating system cache hash verification messages to dark green.
+
 ## 26.9.12 - September 13, 2026
 
 ### Added

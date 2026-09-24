@@ -6,6 +6,7 @@ OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operatin
 
 ## Overview
 
+- Current repository module version: `26.9.24.1`.
 - Focused on Windows deployment workflows driven by PowerShell.
 - Supports WinPEStartup helpers and deployment UX options.
 - Provides cmdlets for device info, Wi-Fi setup, and module updates in PE.

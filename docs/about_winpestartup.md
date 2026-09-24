@@ -61,6 +61,25 @@ H:\WinPEStartup\profiles\BranchOffice.json
 
 Profiles may use either prefixed keys, such as `Invoke-WinPEStartup:SkipWiFi`, or plain splat-style keys, such as `SkipWiFi`. That makes profiles easier to read while still supporting the same parameters.
 
+A profile may also include an unprefixed `Environment` object:
+
+```json
+{
+  "Environment": {
+    "OSDCLOUD_SITE": "BranchOffice",
+    "OSDCLOUD_DEPLOYMENT_RING": 2,
+    "OSDCLOUD_INTERACTIVE": true
+  },
+  "Invoke-WinPEStartup:InvokeMainCommand": [
+    "Deploy-OSDCloud"
+  ]
+}
+```
+
+Environment values must be strings, numbers, or booleans. OSDCloud converts each value to a string and sets it in the current WinPE process after the profile is selected. Existing variables with the same name are overwritten, and the startup, main, and shutdown child PowerShell processes inherit the resulting environment. The values last only for the current process tree; they are not written to the machine environment or registry.
+
+Null values, arrays, nested objects, and invalid variable names produce a warning and are skipped. Other valid environment entries and profile settings continue to apply. Environment values are not written to the console or verbose output.
+
 If exactly one profile is found, OSDCloud selects it automatically. If several profiles are found, OSDCloud shows a numbered list and lets the operator choose. Pressing Enter or typing `q` cancels the profile selection and stops the remaining startup sequence.
 
 Explicit parameters passed to `Invoke-WinPEStartup` take precedence over JSON values. That rule is important: a profile can supply defaults, but a real command-line choice from the operator should not be silently overridden.

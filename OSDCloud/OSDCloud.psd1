@@ -8,7 +8,7 @@
 @{
     # --- Identity ---
     RootModule        = 'OSDCloud.psm1'
-    ModuleVersion     = '26.9.12'
+    ModuleVersion     = '26.9.24.1'
     CompatiblePSEditions = @('Core','Desktop')
     GUID              = '2fbd5c65-79c7-4561-9a2e-c4a4eebc89c7'
 
@@ -18,6 +18,7 @@
     Copyright         = '(c) 2026 Recast Software. All rights reserved.'
     Description          = @'
 Recast OSDCloud PowerShell Module - Preview
+Workplace Ninja Summit Release
 PowerShell module for OSDCloud v2 deployment automation and WinPEStartup from recastsoftware.com.
 Includes operating system, driver pack, and device provisioning workflows.
 '@
@@ -62,7 +63,6 @@ Includes operating system, driver pack, and device provisioning workflows.
             Tags       = @('OSD', 'OSDeploy', 'OSDCloud', 'Recast', 'RecastSoftware')
             ProjectUri = 'https://github.com/RecastSoftware/RecastOSDCloud'
             LicenseUri = 'https://www.gnu.org/licenses/gpl-3.0.html'
-            Prerelease = 'preview'
         }
     }
 }
