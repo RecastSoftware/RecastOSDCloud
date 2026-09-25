@@ -300,19 +300,19 @@ function Initialize-OSDCoreDevice {
         $DeviceTpmManufacturerVersion = $null
         $DeviceTpmSpecVersion = $null
 
-        Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] [NOT SUPPORTED] TPM is not supported on this device."
-        Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] [NOT SUPPORTED] Intune Autopilot is not supported on this device."
+        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] TPM: NOT supported on this device."
+        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Intune Autopilot: NOT supported on this device."
     }
 
     if ($DeviceTpmSpecVersion) {
         $majorVersion = $DeviceTpmSpecVersion.Split(',')[0] -as [int]
         if ($majorVersion -lt 2) {
-            Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] [NOT SUPPORTED] TPM version is lower than 2.0 on this device."
-            Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] [NOT SUPPORTED] Intune Autopilot is not supported on this device."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] TPM 2.0: NOT supported on this device."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Intune Autopilot: NOT supported on this device."
         }
         else {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] TPM 2.0 is supported on this device."
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Intune Autopilot is supported on this device."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] TPM 2.0: Supported on this device."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Intune Autopilot: Supported on this device."
             $IsAutopilotSpec = $true
             $IsTpmSpec = $true
         }
@@ -324,11 +324,11 @@ function Initialize-OSDCoreDevice {
         $SecureBootStatus = Confirm-SecureBootUEFI
     }
     catch {
-        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Unable to access UEFI Secure Boot information."
-        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] This system may not support UEFI or Secure Boot."
+        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] UEFI Secure Boot: Unable to access information."
+        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] UEFI Secure Boot: This system may not support UEFI or Secure Boot."
     }
     if ($SecureBootStatus -eq $true) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Secure Boot is enabled on this device."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Secure Boot: Enabled on this device."
 
         if (Get-Command -Name Get-SecureBootUEFI -ErrorAction Ignore) {
             try {
