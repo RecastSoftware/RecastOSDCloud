@@ -13,15 +13,15 @@ Catalog snapshots live under the repository's OSDCloud/core tree. OS metadata is
 ### File naming
 
 ```
-<build>.<revision>-<windows-name>-<version>.xml
+<major>.<ubr>.<yyMMdd>-<HHmm>.xml
 ```
 
 Examples:
-- `26200.8037-win11-25h2.xml`
-- `26100.4349-win11-24h2.xml`
-- `19045.3803-win10-22h2.xml`
+- `26200.9457.260913-0221.xml`
+- `26100.4349.250607-1500.xml`
+- `19045.3803.231204-0204.xml`
 
-The filename encodes the full servicing build (`build.revision`). The validated numeric build metadata identifies the OS through `ConvertTo-OSDCoreOperatingSystemInfo`; the `<windows-name>-<version>` suffix is descriptive and is not used to determine the OS name or version. The full `build.revision` becomes `OSBuildVersion`.
+The filename encodes the full servicing build (`major.ubr`) and the media release timestamp. The complete identity must match the common `<major>.<ubr>.<yyMMdd>-<HHmm>` prefix of the ESD filenames in the catalog. The validated numeric build metadata identifies the OS through `ConvertTo-OSDCoreOperatingSystemInfo`; the full `major.ubr` becomes `OSBuildVersion`.
 
 ### XML structure
 
@@ -35,7 +35,7 @@ Each `<File>` element contains:
 
 | Element | Description |
 |---|---|
-| `FileName` | ESD filename — must start with `<build>.<revision>.` |
+| `FileName` | ESD filename — must start with the catalog's `<major>.<ubr>.<yyMMdd>-<HHmm>.` identity |
 | `LanguageCode` | BCP-47 code, e.g. `en-us`, `fr-fr` |
 | `Language` | Human-readable language name |
 | `Edition` | PowerShell edition ID, e.g. `Professional`, `Education`, `Core` |

@@ -119,8 +119,8 @@ function Initialize-ModuleCoreOperatingSystems {
     $catalogCandidates = @()
     foreach ($catalogFile in $catalogFiles) {
         $file = $catalogFile.File
-        if ($file.Name -notmatch '^(?<MajorBuild>\d+)\.(?<Revision>\d+)-.+\.xml$') {
-            $message = "Operating system catalog filename '$($file.FullName)' does not match '<build>.<revision>-<windows-name>-<version>.xml'."
+        if ($file.Name -notmatch '^(?<MajorBuild>\d{5})\.(?<Revision>0|[1-9]\d*)\.(?<Timestamp>\d{6}-\d{4})\.xml$') {
+            $message = "Operating system catalog filename '$($file.FullName)' does not match '<major>.<ubr>.<yyMMdd>-<HHmm>.xml'."
             if ($catalogFile.External) {
                 Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] $message Skipping external catalog."
                 continue

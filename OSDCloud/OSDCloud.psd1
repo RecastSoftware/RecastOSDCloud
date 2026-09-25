@@ -34,6 +34,7 @@ Includes operating system, driver pack, and device provisioning workflows.
         'Get-OSDCloudModuleVersion',
         'Show-OSDCloudDeviceInfo',
         'Start-OSDCloudExplorer',
+        'Update-OSDCloudCoreCatalogOS',
         # WinPE
         'Invoke-WinPEStartup',
         'Invoke-WinPEStartupManager',
