@@ -1,4 +1,8 @@
 {
+  "env": {
+    "WINPESTARTUP_AUTHOR": "OSDeploy",
+    "WINPESTARTUP_PROFILE": "OSDCloud"
+  },
   "Invoke-WinPEStartup:InvokeMainCommand": [
     "Show-OSDCloudDeviceInfo",
     "Deploy-OSDCloud"
