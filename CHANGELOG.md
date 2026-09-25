@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.9.25.1 - September 25, 2026
+
+### Added
+
+- Added private operating system catalog refresh support that downloads and validates the current Windows products catalog, publishes it to the module, and synchronizes it to eligible OSDCloud drives.
+- Added centralized Windows build conversion for operating system name and release metadata, including Windows 11 26H1 build `28000`.
+- Added author and profile environment variables to the bundled OSDCloud WinPE startup profile.
+
+### Changed
+
+- Module version bumped to `26.9.25.1` and the preview designation was removed from the module description.
+- Renamed bundled operating system catalogs to include their build and media release timestamp, corrected the Windows 11 25H2 catalog snapshot mapping, and updated catalog maintenance guidance for the new naming format.
+- Updated operating system catalog initialization to validate timestamped identities, expose build metadata on catalog records, and use the centralized build conversion helper.
+- Updated module loading to exclude Pester test files from function discovery.
+- Standardized deployment version, system clock, TPM, Autopilot, and Secure Boot status messages.
+
 ## 26.9.24.1 - September 24, 2026
 
 ### Added
