@@ -190,7 +190,7 @@ function Deploy-OSDCloud {
     end {
         #=================================================
         $ModuleVersion = $($MyInvocation.MyCommand.Module.Version)
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$($MyInvocation.MyCommand.Name)] $ModuleVersion"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($MyInvocation.MyCommand.ModuleName) Module: $ModuleVersion"
         <#
         Write-Host -ForegroundColor DarkCyan 'OSDCloud collects analytic data during the deployment process to help improve the product and user experience.'
         Write-Host -ForegroundColor DarkCyan 'No personally identifiable information (PII) is collected, and all data is anonymized to protect user privacy.'

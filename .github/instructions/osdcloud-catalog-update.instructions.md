@@ -13,15 +13,15 @@ Catalog snapshots live under the repository's OSDCloud/core tree. OS metadata is
 ### File naming
 
 ```
-<build>.<revision>-<windows-name>-<version>.xml
+<major>.<ubr>.<yyMMdd>-<HHmm>.xml
 ```
 
 Examples:
-- `26200.8037-win11-25h2.xml`
-- `26100.4349-win11-24h2.xml`
-- `19045.3803-win10-22h2.xml`
+- `26200.9457.260913-0221.xml`
+- `26100.4349.250607-1500.xml`
+- `19045.3803.231204-0204.xml`
 
-The filename encodes the full servicing build (`build.revision`) and maps to the OS name and version. The first five digits (`build`) are extracted programmatically to identify the OS; the full `build.revision` becomes `OSBuildVersion`.
+The filename encodes the full servicing build (`major.ubr`) and the media release timestamp. The complete identity must match the common `<major>.<ubr>.<yyMMdd>-<HHmm>` prefix of the ESD filenames in the catalog. The validated numeric build metadata identifies the OS through `ConvertTo-OSDCoreOperatingSystemInfo`; the full `major.ubr` becomes `OSBuildVersion`.
 
 ### XML structure
 
@@ -35,7 +35,7 @@ Each `<File>` element contains:
 
 | Element | Description |
 |---|---|
-| `FileName` | ESD filename — must start with `<build>.<revision>.` |
+| `FileName` | ESD filename — must start with the catalog's `<major>.<ubr>.<yyMMdd>-<HHmm>.` identity |
 | `LanguageCode` | BCP-47 code, e.g. `en-us`, `fr-fr` |
 | `Language` | Human-readable language name |
 | `Edition` | PowerShell edition ID, e.g. `Professional`, `Education`, `Core` |
@@ -53,24 +53,24 @@ Each `<File>` element contains:
 
 1. **Add the XML file** to `OSDCloud/core/operatingsystems/` following the naming convention above.
 
-2. **Register the build number** in `OSDCloud/private/core/Get-OSDCloudCoreOperatingSystems.ps1`.
+2. **Register the build number** in `OSDCloud/private/core-operatingsystem/ConvertTo-OSDCoreOperatingSystemInfo.ps1`.
    Locate the `switch ($OSBuild)` block and add a new case:
 
    ```powershell
    switch ($OSBuild) {
-       '19045' { $OperatingSystem = 'Windows 10 22H2'; $OSName = 'Windows 10'; $OSVersion = '22H2' }
-       '22621' { $OperatingSystem = 'Windows 11 22H2'; $OSName = 'Windows 11'; $OSVersion = '22H2' }
-       '22631' { $OperatingSystem = 'Windows 11 23H2'; $OSName = 'Windows 11'; $OSVersion = '23H2' }
-       '26100' { $OperatingSystem = 'Windows 11 24H2'; $OSName = 'Windows 11'; $OSVersion = '24H2' }
-       '26200' { $OperatingSystem = 'Windows 11 25H2'; $OSName = 'Windows 11'; $OSVersion = '25H2' }
-       '28000' { $OperatingSystem = 'Windows 11 26H1'; $OSName = 'Windows 11'; $OSVersion = '26H1' }
+     '19045' { $OSName = 'Windows 10'; $OSVersion = '22H2' }
+     '22621' { $OSName = 'Windows 11'; $OSVersion = '22H2' }
+     '22631' { $OSName = 'Windows 11'; $OSVersion = '23H2' }
+     '26100' { $OSName = 'Windows 11'; $OSVersion = '24H2' }
+     '26200' { $OSName = 'Windows 11'; $OSVersion = '25H2' }
+     '28000' { $OSName = 'Windows 11'; $OSVersion = '26H1' }
        # add new build here:
-       '<build>' { $OperatingSystem = 'Windows 11 <Ver>'; $OSName = 'Windows 11'; $OSVersion = '<Ver>' }
-       default { continue }
+     '<build>' { $OSName = 'Windows 11'; $OSVersion = '<Ver>' }
+     default { return }
    }
    ```
 
-   Without this entry, the build's ESD entries are silently skipped.
+   The converter composes `OperatingSystem` from `OSName` and `OSVersion`. Without a mapping entry, the build's ESD entries are silently skipped.
 
 3. **Update workflow OS configs** — for every channel that should offer the new build, add the version string to `OSDCloud/workflow/<channel>/os-amd64.json` and `OSDCloud/workflow/<channel>/os-arm64.json`:
 
@@ -216,7 +216,7 @@ Key differences:
 
 ## Common mistakes
 
-- **Omitting the build switch case** — a new OS XML will load without errors but produce zero OS options in the UX because every `<File>` hits the `default { continue }` branch.
+- **Omitting the converter switch case** — a new OS XML will load without errors but produce zero OS options in the UX because the converter returns no release information for the build.
 - **Stale `surface.json` driver URLs** — `Get-OSDCoreDriverPackCatalogSurface` serves MSI URLs from `OSDCloud/core/driverpacks/surface.json`; if `UpdatePage` links change and the automated workflow has not run, deployed drivers may point to outdated or removed files. Run `.github/scripts/Update-MicrosoftCatalog.ps1` manually to refresh.
 - **Editing OEM XML snapshots manually** — Dell/HP/Lenovo XML is replaced wholesale from upstream; manual edits will be lost on the next snapshot refresh.
 - **Adding a Windows version string to workflow configs without the catalog XML** — the UX will offer the version but `Get-OSDCloudCoreOperatingSystems` will return no matching ESD entries, causing `Initialize-DeployOSDCloud` to throw.

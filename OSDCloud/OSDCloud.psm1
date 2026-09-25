@@ -15,10 +15,10 @@ $global:OSDCloudModule = Get-Content -Path (Join-Path $script:OSDCloudModuleBase
 $script:OSDCloudPSDefaultParameterValuesPath = Join-Path $script:OSDCloudModuleBase 'core\PSDefaultParameterValues.json'
 
 # Get public and private function definition files.
-$Classes = @(Get-ChildItem -Path "$PSScriptRoot\classes\*.ps1")
-$Private = @( Get-ChildItem -Path $PSScriptRoot\private\*.ps1 -ErrorAction SilentlyContinue -Recurse )
-$PublicWinOS = @( Get-ChildItem -Path $PSScriptRoot\public\WinOS\*.ps1 -ErrorAction SilentlyContinue -Recurse )
-$PublicWinPE = @( Get-ChildItem -Path $PSScriptRoot\public\WinPE\*.ps1 -ErrorAction SilentlyContinue -Recurse )
+$Classes = @(Get-ChildItem -Path "$PSScriptRoot\classes\*.ps1" -Exclude '*.Tests.ps1')
+$Private = @( Get-ChildItem -Path $PSScriptRoot\private\*.ps1 -Exclude '*.Tests.ps1' -ErrorAction SilentlyContinue -Recurse )
+$PublicWinOS = @( Get-ChildItem -Path $PSScriptRoot\public\WinOS\*.ps1 -Exclude '*.Tests.ps1' -ErrorAction SilentlyContinue -Recurse )
+$PublicWinPE = @( Get-ChildItem -Path $PSScriptRoot\public\WinPE\*.ps1 -Exclude '*.Tests.ps1' -ErrorAction SilentlyContinue -Recurse )
 
 try {
     if (!([System.Management.Automation.PSTypeName]'HtmlAgilityPack.HtmlDocument').Type) {

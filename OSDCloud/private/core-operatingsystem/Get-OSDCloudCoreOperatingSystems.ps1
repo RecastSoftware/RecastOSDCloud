@@ -61,42 +61,23 @@ function Get-OSDCloudCoreOperatingSystems {
     foreach ($node in ($mctRecords | Sort-Object FileName, LanguageCode, Architecture)) {
         # Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Processing $($node.FileName)"
 
-        if ([string]::IsNullOrWhiteSpace($node.FileName) -or $node.FileName.Length -lt 5) {
+        if ([string]::IsNullOrWhiteSpace($node.OSBuild) -or [string]::IsNullOrWhiteSpace($node.OSBuildVersion)) {
             continue
         }
-        #=================================================
-        #   OSBuild
-        #   Get the OSBuild from the FileName
-        $OSBuild = $node.FileName.Substring(0, 5)
         #=================================================
         #   OperatingSystem / OSName / OSVersion
-        #   19045 = Windows 10 22H2
-        #   22000 = Windows 11 21H2
-        #   22621 = Windows 11 22H2
-        #   22631 = Windows 11 23H2
-        #   26100 = Windows 11 24H2
-        #   26200 = Windows 11 25H2
-        #   28000 = Windows 11 26H1
-        switch ($OSBuild) {
-            '19045' { $OperatingSystem = 'Windows 10 22H2'; $OSName = 'Windows 10'; $OSVersion = '22H2' }
-            '22000' { $OperatingSystem = 'Windows 11 21H2'; $OSName = 'Windows 11'; $OSVersion = '21H2' }
-            '22621' { $OperatingSystem = 'Windows 11 22H2'; $OSName = 'Windows 11'; $OSVersion = '22H2' }
-            '22631' { $OperatingSystem = 'Windows 11 23H2'; $OSName = 'Windows 11'; $OSVersion = '23H2' }
-            '26100' { $OperatingSystem = 'Windows 11 24H2'; $OSName = 'Windows 11'; $OSVersion = '24H2' }
-            '26200' { $OperatingSystem = 'Windows 11 25H2'; $OSName = 'Windows 11'; $OSVersion = '25H2' }
-            '28000' { $OperatingSystem = 'Windows 11 26H1'; $OSName = 'Windows 11'; $OSVersion = '26H1' }
-            default { continue }
-        }
-        #=================================================
-        #   OSBuildVersion
-        #   Combination of <OSBuild>.<Sub>
-        #   Extract from FileName
-        #=================================================
-        $fileNameParts = $node.FileName -split '\.'
-        if ($fileNameParts.Count -lt 2) {
+        $operatingSystemInfo = ConvertTo-OSDCoreOperatingSystemInfo -OSBuild $node.OSBuild
+        if (-not $operatingSystemInfo) {
             continue
         }
-        $OSBuildVersion = "$($fileNameParts[0]).$($fileNameParts[1])"
+        $OperatingSystem = $operatingSystemInfo.OperatingSystem
+        $OSName = $operatingSystemInfo.OSName
+        $OSVersion = $operatingSystemInfo.OSVersion
+        #=================================================
+        #   OSBuild / OSBuildVersion
+        #=================================================
+        $OSBuild = [string]$node.OSBuild
+        $OSBuildVersion = [string]$node.OSBuildVersion
         #=================================================
         #   OSArchitecture
         #   Avoids confusion between x64 releases (amd64/arm64)
