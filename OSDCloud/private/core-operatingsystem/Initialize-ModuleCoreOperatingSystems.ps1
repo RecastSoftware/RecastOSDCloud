@@ -219,6 +219,9 @@ function Initialize-ModuleCoreOperatingSystems {
                 }
             }
 
+            $properties['OSBuild'] = [string]$catalog.MajorBuild
+            $properties['OSBuildVersion'] = $catalog.BuildVersion.ToString()
+
             $mctRecords += [pscustomobject]$properties
         }
     }
