@@ -127,7 +127,7 @@
 
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Operating System" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#3b455a" Margin="4" />
                             <ComboBox Grid.Row="2" Grid.Column="1" x:Name="OperatingSystemCombo" Margin="4" Height="24" FontWeight="SemiBold" />
-                            <TextBlock Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" x:Name="SelectedIdText" Text="Default Windows 11 25H2 amd64 Retail en-us 26200.7462" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="DarkGray" TextWrapping="Wrap" Margin="4" />
+                            <TextBlock Grid.Row="2" Grid.Column="3" Grid.ColumnSpan="3" x:Name="SelectedIdText" Text="Default Windows 11 26H2 amd64 Retail en-us 26300.9457" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="DarkGray" TextWrapping="Wrap" Margin="4" />
                             
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Language" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#3b455a" Margin="4" />
                             <ComboBox Grid.Row="3" Grid.Column="1" x:Name="OSLanguageCodeCombo" Margin="4" Height="24" FontWeight="SemiBold" />
@@ -140,7 +140,7 @@
                             <ComboBox Grid.Row="5" Grid.Column="1" x:Name="OSActivationCombo" Margin="4" Height="24" FontWeight="SemiBold" />
                             
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="FileName" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#3b455a" Margin="4" />
-                            <TextBlock Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="5" Margin="4" x:Name="SelectedFileNameText" Text="Default 26200.7462.251207-0044.25h2_ge_release_svc_refresh_CLIENTCONSUMER_RET_x64FRE_en-us.esd" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="DarkGray" TextWrapping="Wrap" />
+                            <TextBlock Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="5" Margin="4" x:Name="SelectedFileNameText" Text="Default 26300.9457.260913-1737.26h2_ge_release_svc_refresh_CLIENTCONSUMER_RET_x64FRE_en-us.esd" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="DarkGray" TextWrapping="Wrap" />
                             
                             <TextBlock Grid.Row="8" Grid.Column="0" Text="DriverPack" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="#3b455a" Margin="4" />
                             <ComboBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="5" x:Name="DriverPackCombo" Margin="4" Height="24" FontWeight="SemiBold" SelectedIndex="0" />
