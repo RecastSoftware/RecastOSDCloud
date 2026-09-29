@@ -63,6 +63,7 @@ Each `<File>` element contains:
      '22631' { $OSName = 'Windows 11'; $OSVersion = '23H2' }
      '26100' { $OSName = 'Windows 11'; $OSVersion = '24H2' }
      '26200' { $OSName = 'Windows 11'; $OSVersion = '25H2' }
+    '26300' { $OSName = 'Windows 11'; $OSVersion = '26H2' }
      '28000' { $OSName = 'Windows 11'; $OSVersion = '26H1' }
        # add new build here:
      '<build>' { $OSName = 'Windows 11'; $OSVersion = '<Ver>' }
@@ -77,8 +78,8 @@ Each `<File>` element contains:
    ```json
    {
      "OperatingSystem": {
-       "default": "Windows 11 <Ver>",
-       "values": ["Windows 11 <Ver>", "Windows 11 25H2", "Windows 11 24H2"]
+       "default": "Windows 11 26H2",
+       "values": ["Windows 11 26H2", "Windows 11 25H2", "Windows 11 24H2"]
      }
    }
    ```

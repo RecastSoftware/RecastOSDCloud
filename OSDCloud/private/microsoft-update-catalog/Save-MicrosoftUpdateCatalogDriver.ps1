@@ -113,7 +113,7 @@ function Save-MicrosoftUpdateCatalogDriver {
 
                     try {
                         # Define version search order (newest to oldest)
-                        $VersionSearchOrder = @('25H2', '24H2', '23H2', '22H2', '21H2', 'Vibranium', '1903', '1809')
+                        $VersionSearchOrder = @('26H2', '25H2', '24H2', '23H2', '22H2', '21H2', 'Vibranium', '1903', '1809')
 
                         # Search for driver with version-specific queries first
                         foreach ($Version in $VersionSearchOrder) {

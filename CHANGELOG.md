@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.9.29.1 - September 29, 2026
+
+### Added
+
+- Added Windows 11 26H2 operating system catalog support for build `26300.9457` on amd64 and arm64.
+- Added `SetupComplete.cmd` and `OOBE.cmd` initialization after Windows image expansion for post-installation tasks.
+
+### Changed
+
+- Module version bumped to `26.9.29.1` and identified as the Windows 11 26H2 release.
+- Changed the default Windows 11 release from 25H2 to 26H2 across deployment workflows, USB cache updates, operating system selection helpers, and the default workflow UI.
+- Updated Microsoft Update Catalog driver searches to prioritize 26H2 before earlier Windows releases.
+- Refreshed the HP driver pack catalog.
+- Updated generated Lenovo and Microsoft Surface driver pack installation scripts with RecastOSDCloud branding.
+- Updated deployment documentation and catalog and workflow maintenance guidance for Windows 11 26H2.
+
 ## 26.9.25.1 - September 25, 2026
 
 ### Added

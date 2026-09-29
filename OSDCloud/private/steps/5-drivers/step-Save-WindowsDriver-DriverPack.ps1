@@ -287,8 +287,7 @@ function step-Save-WindowsDriver-DriverPack {
 
 $Content = @"
 :: ========================================================
-:: OSDCloud DriverPack Installation for Lenovo
-:: ========================================================
+:: RecastOSDCloud DriverPack Installation for Lenovo
 $DownloadedFile /SILENT /SUPPRESSMSGBOXES
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\PnPUnattend\DriverPaths\1" /v Path /t REG_SZ /d "C:\Drivers" /f
 pnpunattend.exe AuditSystem /L
@@ -308,8 +307,7 @@ rd /s /q C:\Windows\Temp\osdcloud-driverpack-download
 
 $Content = @"
 :: ========================================================
-:: OSDCloud DriverPack Installation for Lenovo
-:: ========================================================
+:: RecastOSDCloud DriverPack Installation for Lenovo
 $DownloadedFile /SILENT /SUPPRESSMSGBOXES
 reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\UnattendSettings\PnPUnattend\DriverPaths\1" /v Path /t REG_SZ /d "C:\Drivers" /f
 pnpunattend.exe AuditSystem /L
@@ -358,8 +356,7 @@ rd /s /q C:\Windows\Temp\osdcloud-driverpack-download
 
 $Content = @"
 :: ========================================================
-:: OSDCloud DriverPack Installation for Microsoft Surface
-:: ========================================================
+:: RecastOSDCloud DriverPack Installation for Microsoft Surface
 msiexec /i $DownloadedFile /qn /norestart /l*v C:\Windows\Temp\osdcloud-logs\drivers-driverpack-microsoft.log
 rd /s /q C:\Windows\Temp\osdcloud-driverpack-download
 :: ========================================================
