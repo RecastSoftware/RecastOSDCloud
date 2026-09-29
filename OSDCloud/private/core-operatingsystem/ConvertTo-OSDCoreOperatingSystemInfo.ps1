@@ -12,9 +12,9 @@ function ConvertTo-OSDCoreOperatingSystemInfo {
     Five-digit Windows build number to convert.
 
     .EXAMPLE
-    ConvertTo-OSDCoreOperatingSystemInfo -OSBuild '26200'
+    ConvertTo-OSDCoreOperatingSystemInfo -OSBuild '26300'
 
-    Returns Windows 11 25H2 operating system release information.
+    Returns Windows 11 26H2 operating system release information.
 
     .INPUTS
     None
@@ -48,6 +48,7 @@ function ConvertTo-OSDCoreOperatingSystemInfo {
         '22631' { $OSName = 'Windows 11'; $OSVersion = '23H2' }
         '26100' { $OSName = 'Windows 11'; $OSVersion = '24H2' }
         '26200' { $OSName = 'Windows 11'; $OSVersion = '25H2' }
+        '26300' { $OSName = 'Windows 11'; $OSVersion = '26H2' }
         '28000' { $OSName = 'Windows 11'; $OSVersion = '26H1' }
         default { return }
     }

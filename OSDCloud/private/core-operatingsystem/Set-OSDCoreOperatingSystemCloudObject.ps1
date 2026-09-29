@@ -74,7 +74,7 @@ function Set-OSDCoreOperatingSystemCloudObject {
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [string]$OSReleaseID = '25H2',
+        [string]$OSReleaseID = '26H2',
 
         [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]

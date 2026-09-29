@@ -15,7 +15,7 @@ A workflow is a folder under `OSDCloud/workflow/` that bundles:
 - UI configuration.
 
 The module currently supports the `default` workflow for public deployments.
-Its settings allow Windows 11 25H2, 24H2, and 23H2 and use the standard
+Its settings allow Windows 11 26H2, 25H2, and 24H2 and use the standard
 40-step task.
 
 The module also contains a `cli` folder for the internal preview CLI
@@ -51,7 +51,7 @@ to Enterprise + en-gb:
 
 ```jsonc
 {
-  "OperatingSystem": { "default": "Windows 11 25H2", "values": ["Windows 11 25H2"] },
+  "OperatingSystem": { "default": "Windows 11 26H2", "values": ["Windows 11 26H2"] },
   "OSActivation":    { "default": "Volume",          "values": ["Volume"] },
   "OSEdition":       { "default": "Enterprise",      "values": [{ "Edition": "Enterprise", "EditionId": "Enterprise" }] },
   "OSLanguageCode":  { "default": "en-gb",           "values": ["en-gb"] }

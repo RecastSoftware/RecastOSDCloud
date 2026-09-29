@@ -52,6 +52,15 @@ function step-install-expandwindowsimage {
         try {
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Running Expand-WindowsImage with parameters: $($Params | Out-String)"
             Expand-WindowsImage @Params | Out-Null
+            # Create SetupComplete.cmd if it does not exist
+            $setupCompletePath = 'C:\Windows\Setup\Scripts\SetupComplete.cmd'
+            if (-not (Test-Path $setupCompletePath)) {
+                New-Item -Path $setupCompletePath -ItemType File -Force | Out-Null
+            }
+            # Create SetupComplete.cmd
+            ":: RecastOSDCloud $(Get-Date -format s)" | Out-File -FilePath $setupCompletePath -Append -Encoding ascii -Width 2000 -Force
+            # Create OOBE.cmd
+            ":: RecastOSDCloud $(Get-Date -format s)" | Out-File -FilePath 'C:\Windows\Setup\Scripts\OOBE.cmd' -Append -Encoding ascii -Width 2000 -Force
         }
         catch {
             Write-Warning "[$(Get-Date -format s)] Expand-WindowsImage failed."
