@@ -57,11 +57,10 @@ function step-install-expandwindowsimage {
             if (-not (Test-Path $setupCompletePath)) {
                 New-Item -Path $setupCompletePath -ItemType File -Force | Out-Null
             }
-            # Ensure SetupComplete.cmd exists for post-installation tasks, create first line with ':: OSDCloud Deployment'
-            $setupCompleteContent = Get-Content -Path $setupCompletePath -Raw
-            if (-not $setupCompleteContent.StartsWith(':: OSDCloud Deployment')) {
-                Set-Content -Path $setupCompletePath -Value (":: OSDCloud Deployment" + [System.Environment]::NewLine + $setupCompleteContent) -Force
-            }
+            # Create SetupComplete.cmd
+            ":: RecastOSDCloud $(Get-Date -format s)" | Out-File -FilePath $setupCompletePath -Append -Encoding ascii -Width 2000 -Force
+            # Create OOBE.cmd
+            ":: RecastOSDCloud $(Get-Date -format s)" | Out-File -FilePath 'C:\Windows\Setup\Scripts\OOBE.cmd' -Append -Encoding ascii -Width 2000 -Force
         }
         catch {
             Write-Warning "[$(Get-Date -format s)] Expand-WindowsImage failed."
