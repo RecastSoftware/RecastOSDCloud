@@ -83,47 +83,6 @@ function Set-OSDCoreOperatingSystemCloudObject {
         [Parameter(Mandatory = $false)]
         [switch]$RefreshCatalog
     )
-    <# OSD PowerShell Module
-        PS C:\Users\david> $OSDCoreOperatingSystemCloudObject
-
-        Status       :
-        ReleaseDate  :
-        Name         : Windows 11 25H2 amd64 en-us Retail 26200.8873
-        Version      : Windows 11
-        ReleaseID    : 25H2
-        Architecture : amd64
-        Language     : en-us
-        Activation   : Retail
-        Build        : 26200.8873
-        FileName     : 26200.8873.260710-2020.25h2_ge_release_svc_refresh_CLIENTCONSUMER_RET_x64FRE_en-us.esd
-        ImageIndex   :
-        ImageName    :
-        Url          : http://dl.delivery.mp.microsoft.com/filestreamingservice/files/0f68e999-6e25-4ae7-92db-23cbb3a723a9/26200.8873.260710-2020.25h2_ge_release_svc_refresh_CLIENTCONSUMER_RET_x64FRE_en-us.esd
-        SHA1         :
-        SHA256       : e4c251a99eeade29aa5d462047bcb257d640cd2c98dfb7a2305f45876d1790c1
-        UpdateID     :
-        Win10        : False
-        Win11        : True
-    #>
-    <# OSDCloud PowerShell Module
-        PS C:\Users\david> $OSDCoreOperatingSystemCloudObject
-
-        Id              : Windows 11 25H2 amd64 Retail en-us 26200.8873
-        OperatingSystem : Windows 11 25H2
-        OSName          : Windows 11
-        OSVersion       : 25H2
-        OSArchitecture  : amd64
-        OSActivation    : Retail
-        OSLanguageCode  : en-us
-        OSLanguage      : English (United States)
-        OSBuild         : 26200
-        OSBuildVersion  : 26200.8873
-        Size            : 6050059595
-        Sha1            :
-        Sha256          : e4c251a99eeade29aa5d462047bcb257d640cd2c98dfb7a2305f45876d1790c1
-        FileName        : 26200.8873.260710-2020.25h2_ge_release_svc_refresh_CLIENTCONSUMER_RET_x64FRE_en-us.esd
-        FilePath        : http://dl.delivery.mp.microsoft.com/filestreamingservice/files/0f68e999-6e25-4ae7-92db-23cbb3a723a9/26200.8873.260710-2020.25h2_ge_release_svc_refresh_CLIENTCONSUMER_RET_x64FRE_en-us.esd
-    #>
 
     $Error.Clear()
     $ModuleName = $($MyInvocation.MyCommand.Module.Name)
@@ -138,28 +97,20 @@ function Set-OSDCoreOperatingSystemCloudObject {
     $normalizedLanguageCode = $OSLanguageCode.ToLowerInvariant()
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Normalized filters: Architecture='$normalizedArchitecture', Language='$normalizedLanguageCode'"
 
-    $catalogProvider = $null
-    $catalogShape = $null
+    $catalogProvider = 'Get-OSDCoreOperatingSystems'
     if ($ModuleName -eq 'OSD') {
-        $catalogProvider = 'Get-OSDCoreOperatingSystems'
         $catalogShape = 'OSD'
     }
     elseif ($ModuleName -eq 'OSDCloud') {
-        $catalogProvider = 'Get-OSDCloudCoreOperatingSystems'
         $catalogShape = 'OSDCloud'
-    }
-    elseif (Get-Command -Name 'Get-OSDCloudCoreOperatingSystems' -ErrorAction Ignore) {
-        $catalogProvider = 'Get-OSDCloudCoreOperatingSystems'
-        $catalogShape = 'OSDCloud'
-    }
-    elseif (Get-Command -Name 'Get-OSDCoreOperatingSystems' -ErrorAction Ignore) {
-        $catalogProvider = 'Get-OSDCoreOperatingSystems'
-        $catalogShape = 'OSD'
     }
     else {
-        throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to load core operating systems provider command."
+        $catalogShape = $null
     }
-    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using operating systems provider '$catalogProvider' for '$catalogShape' object shape"
+    if (-not (Get-Command -Name $catalogProvider -ErrorAction Ignore)) {
+        throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to load core operating systems provider command '$catalogProvider'."
+    }
+    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using operating systems provider '$catalogProvider'"
 
     $existingCatalogShape = $null
     if ($global:OSDCoreOperatingSystems) {
@@ -206,8 +157,7 @@ function Set-OSDCoreOperatingSystemCloudObject {
             catch {
                 [version]'0.0'
             }
-        }; Descending                   = $true 
-    } |
+        }; Descending = $true } |
     Select-Object -First 1
 
     if (-not $global:OSDCoreOperatingSystemCloudObject) {

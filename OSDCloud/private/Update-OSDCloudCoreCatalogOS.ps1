@@ -44,7 +44,12 @@ function Update-OSDCloudCoreCatalogOS {
 		System.Management.Automation.PSCustomObject. Returns the detected build, module catalog
 		path, publication status, synchronized drive catalog paths, item count, and SHA256 hash.
 
+	.LINK
+		https://github.com/OSDeploy/OSD/tree/master/docs
+
 	.NOTES
+		Author: David Segura - Recast Software
+		2026-09-30 - Added validated operating-system catalog publication
 		Requires Windows, Windows PowerShell 5.1 or later, internet access, expand.exe, writable
 		temporary storage, and write access to the module catalog directory when updating.
 	#>

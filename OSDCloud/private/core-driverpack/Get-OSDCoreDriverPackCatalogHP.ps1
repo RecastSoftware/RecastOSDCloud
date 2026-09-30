@@ -54,7 +54,7 @@ function Get-OSDCoreDriverPackCatalogHP {
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Building driver pack catalog"
     $hpCatalogRoot = $xmlCatalogContent.NewDataSet.HPClientDriverPackCatalog
     if ($hpCatalogRoot -and $hpCatalogRoot.DateReleased) {
-        $dtDateReleased = [datetime]::ParseExact($hpCatalogRoot.DateReleased, 'yyyy-MM-dd', $null)
+        $dtDateReleased = [datetime]::ParseExact($hpCatalogRoot.DateReleased, 'yyyy-MM-dd', [System.Globalization.CultureInfo]::InvariantCulture)
         $catalogVersion = $dtDateReleased.ToString('yy.MM.dd')
     }
     else {
@@ -76,7 +76,7 @@ function Get-OSDCoreDriverPackCatalogHP {
         $osVersion = $osVersion.Substring($osVersion.Length - 4)
 
         $template = 'M/d/yyyy hh:mm:ss tt'
-        $dtReleaseDate = [datetime]::ParseExact($hpSoftPaq.DateReleased, $template, $null)
+        $dtReleaseDate = [datetime]::ParseExact($hpSoftPaq.DateReleased, $template, [System.Globalization.CultureInfo]::InvariantCulture)
         $releaseDate = $dtReleaseDate.ToString('yy.MM.dd')
 
         $systemIds = if ($item.SystemId) {
