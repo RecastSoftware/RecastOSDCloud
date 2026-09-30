@@ -121,7 +121,7 @@ function step-Save-WindowsDriver-DriverPack {
             $null = New-Item -Path $USBDownloadPath -ItemType Directory -Force
         }
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading DriverPack to USB cache."
-        $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
+        $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
 
         if ($SaveWebFile) {
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Copying cached DriverPack from $($SaveWebFile.FullName) to $DownloadPath."
@@ -134,7 +134,7 @@ function step-Save-WindowsDriver-DriverPack {
         # $SaveWebFile is a FileInfo Object, not a path
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DownloadPath: $DownloadPath"
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading DriverPack directly to $DownloadPath."
-        $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $DownloadPath -ErrorAction Stop
+        $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $DownloadPath -ErrorAction Stop
         $FileInfo = $SaveWebFile
     }
     #=================================================

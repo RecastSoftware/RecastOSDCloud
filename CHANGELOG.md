@@ -15,14 +15,17 @@ All notable changes to this project will be documented in this file.
 - Made bundled operating-system catalogs win when an external catalog has the same build revision, while preserving higher-revision external overlays.
 - Merged the OSD and OSDCloud catalog projections into `Get-OSDCoreOperatingSystems`, retaining each module's native property schema.
 - Updated deployment initialization, operating-system selection, default OS resolution, catalog refresh, maintenance guidance, and function help to use the unified provider and synchronized catalog model.
+- Unified the shared private core utilities with OSD and renamed the centralized download helper to `Invoke-RecastOSDDownloadFile`.
 
 ### Fixed
 
 - Made HP driver pack catalog release-date parsing culture-independent.
+- Corrected the shared download helper's forced WebClient path so it no longer overwrites the typed switch parameter.
 
 ### Removed
 
 - Removed the redundant private `Get-OSDCloudCoreOperatingSystems` provider after migrating its callers to the unified function.
+- Removed the legacy `Invoke-OSDCloudDownloadFile` command name.
 
 ## 26.9.29.1 - September 29, 2026
 

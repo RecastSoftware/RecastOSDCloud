@@ -122,7 +122,7 @@ function step-install-downloadwindowsimage {
             $null = New-Item -Path $USBDownloadPath -ItemType Directory -Force
         }
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading Windows image to USB cache."
-        $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
+        $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
 
         if ($SaveWebFile) {
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Copying cached Windows image from $($SaveWebFile.FullName) to $DownloadPath."
@@ -135,7 +135,7 @@ function step-install-downloadwindowsimage {
         # $SaveWebFile is a FileInfo Object, not a path
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DownloadPath: $DownloadPath"
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading Windows image directly to $DownloadPath."
-        $SaveWebFile = Invoke-OSDCloudDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory $DownloadPath -ErrorAction Stop
+        $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory $DownloadPath -ErrorAction Stop
         $FileInfo = $SaveWebFile
     }
     #=================================================
