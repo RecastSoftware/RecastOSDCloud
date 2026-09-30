@@ -10,6 +10,7 @@ function Initialize-ModuleCoreOperatingSystems {
     is converted into a PowerShell object, excluded metadata properties are removed, and duplicate
     properties are normalized. Duplicate catalog rows are grouped by FilePath, FileName,
     LanguageCode, and Architecture, then the preferred row is selected by hash availability.
+    The bundled module catalog wins when an external catalog has the same build revision.
 
     .EXAMPLE
     Initialize-ModuleCoreOperatingSystems
@@ -37,6 +38,7 @@ function Initialize-ModuleCoreOperatingSystems {
     2026-07-22 - Initial help block created
     2026-08-05 - Expanded help content and examples
     2026-09-17 - Added external catalog discovery and latest build selection
+    2026-09-30 - Preferred bundled catalogs when external revisions are equal
     #>
     [CmdletBinding()]
     [OutputType([pscustomobject[]])]
@@ -166,7 +168,14 @@ function Initialize-ModuleCoreOperatingSystems {
         Sort-Object -Property BuildVersion -Descending |
         Select-Object -First 1 -ExpandProperty BuildVersion
 
-        $_.Group | Where-Object { $_.BuildVersion -eq $latestBuildVersion }
+        $latestCatalogs = @($_.Group | Where-Object { $_.BuildVersion -eq $latestBuildVersion })
+        $bundledCatalogs = @($latestCatalogs | Where-Object { -not $_.External })
+        if ($bundledCatalogs.Count -gt 0) {
+            $bundledCatalogs
+        }
+        else {
+            $latestCatalogs
+        }
     } |
     Sort-Object -Property MajorBuild, BuildVersion, @{ Expression = { $_.File.FullName } }
 
