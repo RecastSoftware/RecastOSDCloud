@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.9.30.1 - September 30, 2026
+
+### Added
+
+- Added a manifest-driven synchronization check for canonical operating-system functions and catalog XML files shared with the OSD module.
+- Added a read-only GitHub Actions workflow that detects operating-system parity drift against `OSDeploy/OSD`.
+
+### Changed
+
+- Module version bumped to `26.9.30.1` and the module description updated to identify the Windows 11 26H2 GA release.
+- Made bundled operating-system catalogs win when an external catalog has the same build revision, while preserving higher-revision external overlays.
+- Merged the OSD and OSDCloud catalog projections into `Get-OSDCoreOperatingSystems`, retaining each module's native property schema.
+- Updated deployment initialization, operating-system selection, default OS resolution, catalog refresh, maintenance guidance, and function help to use the unified provider and synchronized catalog model.
+
+### Fixed
+
+- Made HP driver pack catalog release-date parsing culture-independent.
+
+### Removed
+
+- Removed the redundant private `Get-OSDCloudCoreOperatingSystems` provider after migrating its callers to the unified function.
+
 ## 26.9.29.1 - September 29, 2026
 
 ### Added
