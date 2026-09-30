@@ -134,20 +134,9 @@ function Initialize-DeployOSDCloud {
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreDriverPacks"
     #=================================================
     # CoreOperatingSystems
-    $ModuleName = $($MyInvocation.MyCommand.Module.Name)
-    if ($ModuleName -eq 'OSD') {
-        $global:OSDCoreOperatingSystems = Get-OSDCoreOperatingSystems |
-        Where-Object { $_.Architecture -match $processorArchitecture }
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreOperatingSystems"
-    }
-    elseif ($ModuleName -eq 'OSDCloud') {
-        $global:OSDCoreOperatingSystems = Get-OSDCloudCoreOperatingSystems |
-        Where-Object { $_.OSArchitecture -match $processorArchitecture }
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreOperatingSystems"
-    }
-    else {
-        throw "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to load core operating systems provider command."
-    }
+    $global:OSDCoreOperatingSystems = Get-OSDCoreOperatingSystems |
+    Where-Object { ($_.Architecture -match $processorArchitecture) -or ($_.OSArchitecture -match $processorArchitecture) }
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreOperatingSystems"
     #=================================================
     # OSDCloudDeploy
     $global:OSDCloudDeploy = $null
