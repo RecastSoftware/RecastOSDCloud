@@ -1,6 +1,6 @@
 ---
 name: osdcore-operating-system-cloud-object
-description: "Use when identifying, mapping, reviewing, or changing $OSDCoreOperatingSystemCloudObject, Set-OSDCoreOperatingSystemCloudObject, Get-OSDCoreOperatingSystems, or Get-OSDCloudCoreOperatingSystems across the OSD and OSDCloud PowerShell modules."
+description: "Use when identifying, mapping, reviewing, or changing $OSDCoreOperatingSystemCloudObject, Set-OSDCoreOperatingSystemCloudObject, or Get-OSDCoreOperatingSystems across the OSD and OSDCloud PowerShell modules."
 argument-hint: "OS filters or code path, for example: Windows 11 25H2 amd64 Retail en-us"
 ---
 
@@ -17,7 +17,7 @@ Identify the selected object by its properties before consuming it:
 | Module shape | Strong indicators | Provider |
 | --- | --- | --- |
 | `OSD` | `Name`, `Version`, `ReleaseID`, `Architecture`, `Language`, `Activation`, `Build`, `Url`, `SHA1`, `SHA256` | `Get-OSDCoreOperatingSystems` |
-| `OSDCloud` | `Id`, `OperatingSystem`, `OSName`, `OSVersion`, `OSArchitecture`, `OSActivation`, `OSLanguageCode`, `OSBuild`, `OSBuildVersion`, `FilePath`, `Sha1`, `Sha256` | `Get-OSDCloudCoreOperatingSystems` |
+| `OSDCloud` | `Id`, `OperatingSystem`, `OSName`, `OSVersion`, `OSArchitecture`, `OSActivation`, `OSLanguageCode`, `OSBuild`, `OSBuildVersion`, `FilePath`, `Sha1`, `Sha256` | `Get-OSDCoreOperatingSystems` |
 
 Prefer module context when it is available:
 
@@ -64,9 +64,7 @@ PowerShell property lookup is case-insensitive, but preserve the native property
 
 1. Read `OSDCloud/private/core-operatingsystem/Set-OSDCoreOperatingSystemCloudObject.ps1` and the provider functions before editing.
 2. Determine whether the call is running in `OSD`, `OSDCloud`, or helper/test code without a module name.
-3. Load the matching catalog provider:
-   - `OSD`: `Get-OSDCoreOperatingSystems`
-   - `OSDCloud`: `Get-OSDCloudCoreOperatingSystems`
+3. Load `Get-OSDCoreOperatingSystems`; it returns the native schema for its current module context.
 4. Normalize input filters before comparing: architecture and language should be lowercase; map `x64` to `amd64` where user input or catalog data can contain either spelling.
 5. Filter with equivalent properties, not a single module schema.
 6. Sort by the full build equivalent: `Build` for `OSD`, `OSBuildVersion` for `OSDCloud`.

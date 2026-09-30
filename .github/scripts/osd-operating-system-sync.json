@@ -1,0 +1,32 @@
+{
+  "Files": [
+    {
+      "Source": "OSDCloud/private/core-operatingsystem/ConvertTo-OSDCoreOperatingSystemInfo.ps1",
+      "Destination": "Private/core-operatingsystem/ConvertTo-OSDCoreOperatingSystemInfo.ps1"
+    },
+    {
+      "Source": "OSDCloud/private/core-operatingsystem/Initialize-ModuleCoreOperatingSystems.ps1",
+      "Destination": "Private/core-operatingsystem/Initialize-ModuleCoreOperatingSystems.ps1"
+    },
+    {
+      "Source": "OSDCloud/private/core-operatingsystem/Get-OSDCoreOperatingSystems.ps1",
+      "Destination": "Private/core-operatingsystem/Get-OSDCoreOperatingSystems.ps1"
+    },
+    {
+      "Source": "OSDCloud/private/core-operatingsystem/Set-OSDCoreOperatingSystemCloudObject.ps1",
+      "Destination": "Private/core-operatingsystem/Set-OSDCoreOperatingSystemCloudObject.ps1"
+    },
+    {
+      "Source": "OSDCloud/private/Update-OSDCloudCoreCatalogOS.ps1",
+      "Destination": "Private/core-operatingsystem/Update-OSDCloudCoreCatalogOS.ps1"
+    }
+  ],
+  "Directories": [
+    {
+      "Source": "OSDCloud/core/operatingsystems",
+      "Destination": "core/operatingsystems",
+      "Pattern": "*.xml",
+      "RemoveExtra": true
+    }
+  ]
+}
