@@ -7,6 +7,9 @@ function Deploy-OSDCloudCLI {
         Initializes and runs an OSDCloud deployment workflow directly in the current
         console session without launching the graphical UX. This function is a CLI-only
         entry point and immediately invokes workflow tasks after initialization.
+        Uses the newest eligible ModelDrivers folder matching manufacturer/product and
+        architecture whenever available, regardless of model text, deployed OS build,
+        or the selected OEM driver-pack bypass state.
 
         In addition to the static parameters documented here, workflow-specific runtime
         parameters are added dynamically from the CLI workflow definition.
@@ -219,6 +222,7 @@ function Deploy-OSDCloudCLI {
         $global:OSDCloudDeploy.Force = $Force.IsPresent
 
         #=================================================
+        Set-OSDCloudModelDriversCacheObject
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Invoke-OSDCloudWorkflowTask"
         $global:OSDCloudDeploy.TimeStart = Get-Date
         $global:OSDCloudDeploy | Out-Host

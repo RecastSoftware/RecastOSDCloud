@@ -149,6 +149,7 @@ function Initialize-DeployOSDCloud {
         DriverPackCacheObject      = $null
         DriverPackCloudObject      = $null
         DriverPackCloudTest        = $false
+        ModelDriversCacheObject    = $null
         Force                      = $Force.IsPresent
         Function                   = $($MyInvocation.MyCommand.Name)
         LaunchMethod               = 'OSDCloudWorkflow'
@@ -299,8 +300,9 @@ function Initialize-DeployOSDCloud {
         $DriverPackCloudObject = $global:ModuleCoreDriverPacks | Where-Object { $_.SystemId -match $OSDProduct } | Select-Object -First 1
     }
     Write-Host -ForegroundColor Gray "[$(Get-Date -format s)] [INFO] OSDManufacturer: $OSDManufacturer"
-    Write-Host -ForegroundColor Gray "[$(Get-Date -format s)] [INFO] OSDModel: $OSDModel"
     Write-Host -ForegroundColor Gray "[$(Get-Date -format s)] [INFO] OSDProduct: $OSDProduct"
+    Write-Host -ForegroundColor Gray "[$(Get-Date -format s)] [INFO] OSDModel: $OSDModel"
+    $global:OSDCloudDeploy.ModelDriversCacheObject = Get-OSDCoreModelDriversCacheObject -OSArchitecture $processorArchitecture
 
     if ($DriverPackCloudObject) {
         $global:OSDCloudDeploy.DriverPackCloudObject = $DriverPackCloudObject
@@ -310,7 +312,11 @@ function Initialize-DeployOSDCloud {
     }
     #=================================================
     # DriverPackCloudTest
-    if ($DriverPackCloudObject) {
+    if ($global:OSDCloudDeploy.ModelDriversCacheObject) {
+        $global:OSDCloudDeploy.DriverPackName = 'ModelDrivers'
+        Write-Host -ForegroundColor Gray "[$(Get-Date -format s)] [INFO] ModelDrivers: $($global:OSDCloudDeploy.ModelDriversCacheObject.FullName)"
+    }
+    elseif ($DriverPackCloudObject) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Test DriverPack CloudObject."
         $global:OSDCloudDeploy.DriverPackCloudTest = Test-OSDCoreDriverPackCloudObject -DriverPackCloudObject $DriverPackCloudObject
         if ($global:OSDCloudDeploy.DriverPackCloudTest) {

@@ -352,6 +352,10 @@ else {
 # Build the driver pack picker from the module catalog, while keeping explicit
 # fallback choices for no driver pack or Microsoft Update Catalog lookup.
 $DriverPackCatalog = @('None', 'Microsoft Update Catalog')
+$script:DefaultDriverPackCloudObject = $global:OSDCloudDeploy.DriverPackCloudObject
+if ($global:OSDCloudDeploy.ModelDriversCacheObject) {
+	$DriverPackCatalog += 'ModelDrivers'
+}
 if ($global:OSDCoreDriverPacks) {
 	$DriverPackCatalog += $global:OSDCoreDriverPacks | ForEach-Object { $_.Name }
 }
@@ -524,9 +528,20 @@ function Update-DriverPackResults {
 	# so the final deployment state reflects the latest UI selection.
 	$selectedDriverPackName = Get-ComboValue -ComboBox $DriverPackCombo
 	$global:OSDCloudDeploy.DriverPackName = $selectedDriverPackName
-	$global:OSDCloudDeploy.DriverPackCloudObject = $global:OSDCoreDriverPacks | Where-Object { $_.Name -eq $selectedDriverPackName }
+	$global:OSDCloudDeploy.DriverPackCloudObject = if ($selectedDriverPackName -eq 'ModelDrivers') {
+		$script:DefaultDriverPackCloudObject
+	}
+	else {
+		$global:OSDCoreDriverPacks | Where-Object { $_.Name -eq $selectedDriverPackName }
+	}
 	$global:OSDCloudDeploy.DriverPackCacheObject = Get-OSDCoreDriverPackCacheObject -DriverPackCloudObject $global:OSDCloudDeploy.DriverPackCloudObject
-	$DriverPackUrlText.Text = [string]$global:OSDCloudDeploy.DriverPackCloudObject.Url
+	Set-OSDCloudModelDriversCacheObject
+	$DriverPackUrlText.Text = if ($global:OSDCloudDeploy.ModelDriversCacheObject) {
+		"ModelDrivers (preferred): $($global:OSDCloudDeploy.ModelDriversCacheObject.FullName)"
+	}
+	else {
+		[string]$global:OSDCloudDeploy.DriverPackCloudObject.Url
+	}
 }
 $DriverPackCombo.Add_SelectionChanged({ Update-DriverPackResults })
 $OperatingSystemCombo.Add_SelectionChanged({ Update-OsResults })
@@ -542,6 +557,7 @@ $StartButton.Add_Click({
 	})
 
 Update-OsResults
+Update-DriverPackResults
 
 # Initialize Configuration summary with current values
 if ($SummaryTaskSequenceText) {
