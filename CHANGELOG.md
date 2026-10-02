@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Added ModelDrivers cache discovery for `modeldrivers-amd64` and `modeldrivers-arm64`, and deployment support for the newest safe folder matching device manufacturer/product and architecture.
+- Added inventory-only WinPEDrivers cache discovery for `winpedrivers-amd64` and `winpedrivers-arm64`, using the same folder naming and metadata as ModelDrivers.
+
+### Changed
+
+- Prefer ModelDrivers over OEM driver packs regardless of descriptive model text or deployed OS build. CLI always uses eligible ModelDrivers; the GUI still honors explicit None and Microsoft Update Catalog selections.
+- Resolve ModelDrivers by volume identity after USB drive-letter changes and exclude sources on local disks that will be cleared.
+
 ## 26.9.30.1 - September 30, 2026
 
 ### Added
