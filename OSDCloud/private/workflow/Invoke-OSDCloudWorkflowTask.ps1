@@ -17,6 +17,7 @@ function Invoke-OSDCloudWorkflowTask {
     }
     #>
     #=================================================
+    Set-OSDCloudModelDriversCacheObject
     $operatingSystemCloudObject = $global:OSDCloudDeploy.OperatingSystemCloudObject
     $workflowSettingsUser = $global:OSDCloudWorkflowSettingsUser
     if (-not $workflowSettingsUser -and (Get-Command -Name 'Initialize-OSDCloudWorkflowSettingsUser' -ErrorAction Ignore)) {
@@ -35,6 +36,8 @@ function Invoke-OSDCloudWorkflowTask {
         DriverPackName             = $global:OSDCloudDeploy.DriverPackName
         DriverPackCloudObject      = $global:OSDCloudDeploy.DriverPackCloudObject
         DriverPackCloudTest        = $global:OSDCloudDeploy.DriverPackCloudTest
+        ModelDriversCacheObject    = $global:OSDCloudDeploy.ModelDriversCacheObject
+        ModelDriversStaged         = $false
         Force                      = $global:OSDCloudDeploy.Force
         LaunchMethod               = $global:OSDCloudDeploy.LaunchMethod
         LogsPath                   = "$env:TEMP\osdcloud-logs"
