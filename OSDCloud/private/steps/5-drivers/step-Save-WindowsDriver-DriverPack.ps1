@@ -7,11 +7,35 @@ function step-Save-WindowsDriver-DriverPack {
         $DriverPackCloudObject = $global:OSDCloudWorkflowInvoke.DriverPackCloudObject
     )
     #=================================================
+    $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     $Step = $global:OSDCloudCurrentStep
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackName: $DriverPackName"
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackCloudObject.Url: $($DriverPackCloudObject.Url)"
+
+    if ($global:OSDCloudWorkflowInvoke.ModelDriversCacheObject) {
+        $global:OSDCloudWorkflowInvoke.ModelDriversStaged = $false
+        $modelDriversPath = Resolve-OSDCoreModelDriversPath -CacheObject $global:OSDCloudWorkflowInvoke.ModelDriversCacheObject
+        if (-not $modelDriversPath) {
+            throw 'The selected ModelDrivers source is no longer available. Cannot stage drivers.'
+        }
+        $expandPath = 'C:\Windows\Temp\osdcloud-driverpack-expand'
+        if (Test-Path -LiteralPath $expandPath) {
+            throw "ModelDrivers staging directory already exists: $expandPath. Refusing to mix driver sources."
+        }
+        New-Item -Path $expandPath -ItemType Directory -ErrorAction Stop | Out-Null
+        Get-ChildItem -LiteralPath $modelDriversPath -Force -ErrorAction Stop |
+            ForEach-Object {
+                Copy-Item -LiteralPath $_.FullName -Destination $expandPath -Recurse -Force -ErrorAction Stop
+            }
+        if (@(Get-ChildItem -LiteralPath $expandPath -Recurse -File -Filter '*.inf' -ErrorAction Stop).Count -eq 0) {
+            throw "No INF files were staged from ModelDrivers: $modelDriversPath"
+        }
+        $global:OSDCloudWorkflowInvoke.ModelDriversStaged = $true
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] ModelDrivers staged from $modelDriversPath"
+        return
+    }
 
     # Is DriverPackName set to None?
     if ($DriverPackName -eq 'None') {
