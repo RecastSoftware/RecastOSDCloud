@@ -29,8 +29,8 @@ function step-Add-WindowsDriver-DriverFolder {
         $DriverFolderPath
     )
     #=================================================
-    $startMessage = "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    Write-Debug -Message $startMessage; Write-Verbose -Message $startMessage
+    $Error.Clear()
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     $Error.Clear()
     $logPath = 'C:\Windows\Temp\osdcloud-logs'
