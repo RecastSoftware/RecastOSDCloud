@@ -26,6 +26,12 @@ function Deploy-OSDCloud {
         Skips the graphical UX and runs the deployment workflow immediately in the
         current console session.
 
+    .PARAMETER PostAction
+        Specifies what to do after the workflow completes successfully. Restart and
+        Shutdown are available only in WinPE. Exit closes the PowerShell session.
+        Restart, Shutdown, and Exit run after a 10-second delay. Defaults to Quit,
+        which returns without taking further action.
+
     .PARAMETER Force
         Suppresses supported confirmation prompts for destructive workflow steps.
 
@@ -60,6 +66,11 @@ function Deploy-OSDCloud {
         Deploy-OSDCloud -CLI
 
         Runs the default OSDCloud workflow immediately without the graphical UX.
+
+    .EXAMPLE
+        Deploy-OSDCloud -CLI -PostAction Restart
+
+        Runs the default workflow and restarts WinPE 10 seconds after it completes.
 
     .EXAMPLE
         Deploy-OSDCloud -WorkflowName 'latest'
@@ -108,6 +119,11 @@ function Deploy-OSDCloud {
 
         [System.Management.Automation.SwitchParameter]
         $CLI,
+
+        [Parameter(Mandatory = $false, HelpMessage = 'Action to take after the workflow completes successfully.')]
+        [ValidateSet('Restart', 'Shutdown', 'Quit', 'Exit')]
+        [System.String]
+        $PostAction = 'Quit',
 
         [Parameter(Mandatory = $false, HelpMessage = 'Optional local disk number to use as the deployment target.')]
         [System.UInt32]
@@ -343,11 +359,13 @@ function Deploy-OSDCloud {
         Initialize-DeployOSDCloud @initializeOSDCloudDeployParameters
         #=================================================
         # Start Deployment Workflow
+        $workflowCompleted = $false
         if ($CLI.IsPresent) {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Invoke-OSDCloudWorkflowTask"
             $global:OSDCloudDeploy.TimeStart = Get-Date
             $global:OSDCloudDeploy | Out-Host
             Invoke-OSDCloudWorkflowTask
+            $workflowCompleted = $true
         }
         else {
             # Prevents the workflow from starting unless the Start button is clicked in the GUI
@@ -360,6 +378,7 @@ function Deploy-OSDCloud {
                 # $global:OSDCloudDeploy | Out-Host
                 try {
                     Invoke-OSDCloudWorkflowTask
+                    $workflowCompleted = $true
                 }
                 catch {
                     Write-Warning "Failed to invoke OSDCloud Workflow '$WorkflowName': $_"
@@ -367,6 +386,29 @@ function Deploy-OSDCloud {
             }
             else {
                 Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow '$WorkflowName' was not started."
+            }
+        }
+
+        if ($workflowCompleted) {
+            if ($PostAction -eq 'Restart' -or $PostAction -eq 'Shutdown') {
+                if ($env:SystemDrive -ne 'X:') {
+                    Write-Warning "PostAction '$PostAction' is only available in WinPE. Skipping."
+                }
+                else {
+                    $wpeutilCommand = if ($PostAction -eq 'Restart') { 'reboot' } else { 'shutdown' }
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] PostAction '$PostAction' will run in 10 seconds."
+                    Start-Sleep -Seconds 10
+                    & wpeutil.exe $wpeutilCommand
+                    $wpeutilExitCode = $LASTEXITCODE
+                    if ($wpeutilExitCode -ne 0) {
+                        Write-Error "wpeutil.exe $wpeutilCommand failed with exit code $wpeutilExitCode."
+                    }
+                }
+            }
+            elseif ($PostAction -eq 'Exit') {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Exiting the PowerShell session in 10 seconds."
+                Start-Sleep -Seconds 10
+                exit
             }
         }
     }
