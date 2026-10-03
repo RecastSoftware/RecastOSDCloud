@@ -1,38 +1,53 @@
 function step-powershell-savemodule {
     [CmdletBinding()]
     param (
-        $Name = $Step.parameters.name
+        $Name
     )
     #=================================================
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    #=================================================
-    $Step = $global:OSDCloudCurrentStep
-    #region Main
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO]"
-    $PowerShellSavePath = 'C:\Program Files\WindowsPowerShell'
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Module Name: $Name; PowerShellSavePath: $PowerShellSavePath"
-
-    if (-not (Test-Path "$PowerShellSavePath\Configuration")) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating PowerShell configuration path."
-        New-Item -Path "$PowerShellSavePath\Configuration" -ItemType Directory -Force | Out-Null
-    }
-    if (-not (Test-Path "$PowerShellSavePath\Modules")) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating PowerShell modules path."
-        New-Item -Path "$PowerShellSavePath\Modules" -ItemType Directory -Force | Out-Null
-    }
-    if (-not (Test-Path "$PowerShellSavePath\Scripts")) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating PowerShell scripts path."
-        New-Item -Path "$PowerShellSavePath\Scripts" -ItemType Directory -Force | Out-Null
-    }
+    $Error.Clear()
+    $ProgressPhase = 'Preparing to save the requested PowerShell module'
 
     try {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Saving module $Name to $PowerShellSavePath\Modules."
-        Save-Module -Name $Name -Path "$PowerShellSavePath\Modules" -Force -ErrorAction Stop
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
+        $Step = $global:OSDCloudCurrentStep
+        if (-not $PSBoundParameters.ContainsKey('Name')) {
+            $Name = $Step.parameters.name
+        }
+        if ([string]::IsNullOrWhiteSpace([string]$Name)) {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] No module name was specified. Skipping this optional step."
+            return
+        }
+
+        $PowerShellSavePath = 'C:\Program Files\WindowsPowerShell'
+        $ModulesPath = Join-Path $PowerShellSavePath 'Modules'
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Preparing to save PowerShell module '$Name'."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Module destination:"
+        Write-Host -ForegroundColor DarkGray "  $ModulesPath"
+
+        foreach ($DirectoryName in @('Configuration', 'Modules', 'Scripts')) {
+            $DirectoryPath = Join-Path $PowerShellSavePath $DirectoryName
+            $ProgressPhase = "Preparing PowerShell $DirectoryName directory"
+            if (-not (Test-Path -LiteralPath $DirectoryPath -PathType Container -ErrorAction Stop)) {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Creating PowerShell $DirectoryName directory:"
+                Write-Host -ForegroundColor DarkGray "  $DirectoryPath"
+                New-Item -Path $DirectoryPath -ItemType Directory -Force -ErrorAction Stop | Out-Null
+            }
+            else {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] PowerShell $DirectoryName directory already exists:"
+                Write-Host -ForegroundColor DarkGray "  $DirectoryPath"
+            }
+        }
+
+        $ProgressPhase = "Saving PowerShell module '$Name'"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Saving module '$Name' to:"
+        Write-Host -ForegroundColor DarkGray "  $ModulesPath"
+        Save-Module -Name $Name -Path $ModulesPath -Force -ErrorAction Stop
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Module '$Name' saved successfully."
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     }
     catch {
-        Write-Warning "[$(Get-Date -format s)] Unable to Save-Module $Name to $PowerShellSavePath\Modules"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] Optional module-save step failed during '$ProgressPhase': $($_.Exception.Message)"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Continuing OSDCloud without the requested module."
     }
-    #=================================================
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }
