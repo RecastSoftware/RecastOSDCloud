@@ -54,7 +54,7 @@ function step-finalize-osdcloudlogs {
                 Write-Host -ForegroundColor DarkGray "  $WinPELogsPath"
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Copying WinPE logs to:"
                 Write-Host -ForegroundColor DarkGray "  $LogsPath"
-                & robocopy.exe $WinPELogsPath $LogsPath '*.*' /e /ndl /r:0 /w:0
+                & robocopy.exe $WinPELogsPath $LogsPath '*.*' /e /ndl /nfl /njh /njs /r:0 /w:0
                 $RobocopyExitCode = $LASTEXITCODE
                 if ($RobocopyExitCode -ge 8) {
                     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] WinPE log copy returned robocopy exit code $RobocopyExitCode."
