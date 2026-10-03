@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.10.2.1 - October 2, 2026
+
+### Added
+
+- Added ModelDrivers cache discovery for `modeldrivers-amd64` and `modeldrivers-arm64`, including model identity and build metadata, and deployment support for the newest eligible folder matching device manufacturer/product and architecture.
+- Added inventory-only WinPEDrivers cache discovery for `winpedrivers-amd64` and `winpedrivers-arm64`, using the same folder naming and metadata as ModelDrivers.
+- Added tests for ModelDrivers discovery, validation, path resolution, staging, deployment initialization, and cache inventory.
+- Added `-PostAction` to `Deploy-OSDCloud` to select the action taken after a successful workflow.
+
+### Changed
+
+- Prefer ModelDrivers over OEM driver packs regardless of descriptive model text or deployed OS build. CLI always uses eligible ModelDrivers; the GUI defaults to ModelDrivers when available but honors explicit None and Microsoft Update Catalog selections.
+- Validate ModelDrivers sources before disk clearing, retain volume identity across USB drive-letter changes, exclude sources on local disks that will be cleared, and stop explicitly if a selected source cannot be safely re-resolved or staged.
+- Improve driver-pack, firmware, Microsoft Update Catalog, and driver export workflows with clearer validation, progress reporting, and error handling.
+- Improve PowerShell module save/update, EULA update, workflow finalization, and log/temp cleanup steps with clearer progress and error reporting; refine system date/time synchronization messages and log copying.
+- Update boot-device, cache, and deployment customization documentation, including architecture-specific USB boot labels and the OEM DriverPack step name.
+- Refresh the HP driver pack catalog and update dependency versions.
+- Module version bumped to `26.10.2.1`.
+
 ## 26.9.30.1 - September 30, 2026
 
 ### Added

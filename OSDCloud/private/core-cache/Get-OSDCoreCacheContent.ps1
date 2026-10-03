@@ -9,7 +9,7 @@ function Get-OSDCoreCacheContent {
         DriveRoot, VolumeLabel, VolumeUniqueId, and USB properties.
         Exports the returned object to $env:Temp\OSDCoreCache.xml each time the function runs.
 
-        If Type is omitted, retur ns all supported cache content types.
+        If Type is omitted, returns all supported cache content types.
 
         Type values:
         - ESD: All .esd files under '<DriveLetter>:\OSDCloud\OS' recursively.
@@ -18,7 +18,15 @@ function Get-OSDCoreCacheContent {
           '<DriveLetter>:\OSDCloud\DriverPacks' recursively.
         - Drivers: Immediate folders under '<DriveLetter>:\OSDCloud\Drivers' that
           contain at least one .inf file in any child folder.
-                - Profiles: Immediate folders under '<DriveLetter>:\OSDCloud\Profiles'.
+        - ModelDrivers: Immediate folders under 'OSDCloud\modeldrivers-amd64' and
+          'OSDCloud\modeldrivers-arm64' containing .inf files recursively. Names use
+          '<osdmanufacturer>_<osdproduct>_<osdmodel>_<osbuild>'. Model text is
+          descriptive; deployment matches manufacturer/product and selects the
+          highest numeric folder build, regardless of the deployed OS build.
+        - WinPEDrivers: Immediate folders under 'OSDCloud\winpedrivers-amd64' and
+          'OSDCloud\winpedrivers-arm64' with the same naming and INF requirements
+          as ModelDrivers. Discovered for inventory only; not used in deployment.
+        - Profiles: Immediate folders under '<DriveLetter>:\OSDCloud\Profiles'.
         - WIM: All .wim files under '<DriveLetter>:\OSDCloud\WIM' recursively.
         - *: Includes all supported Type values.
 
@@ -43,6 +51,12 @@ function Get-OSDCoreCacheContent {
     .OUTPUTS
         System.Object[]. Objects with Type, Name, FullName, SizeMB,
         DriveRoot, VolumeLabel, VolumeUniqueId, and USB.
+        ModelDrivers and WinPEDrivers also include OSArchitecture, OSBuildVersion, and ModelIdentity
+        (the folder name without its trailing build).
+
+    .NOTES
+        ModelDrivers discovery does not guarantee that a source is safe for deployment.
+        Deployment excludes sources on disks that will be cleared.
 
     .EXAMPLE
         Get-OSDCoreCacheContent
@@ -60,6 +74,16 @@ function Get-OSDCoreCacheContent {
         Returns all .esd files and driver pack files from each discovered cache.
 
     .EXAMPLE
+        Get-OSDCoreCacheContent -Type ModelDrivers
+
+        Returns model-specific driver folders for both architectures.
+
+    .EXAMPLE
+        Get-OSDCoreCacheContent -Type WinPEDrivers
+
+        Returns cached WinPE driver folders for both architectures.
+
+    .EXAMPLE
         Get-OSDCoreCacheContent -Type *
 
         Returns all supported cache content types.
@@ -73,7 +97,7 @@ function Get-OSDCoreCacheContent {
     [OutputType([System.Object[]])]
     param (
         [Parameter()]
-        [ValidateSet('ESD', 'ISO', 'DriverPacks', 'Drivers', 'Profiles', 'WIM', '*')]
+        [ValidateSet('ESD', 'ISO', 'DriverPacks', 'Drivers', 'ModelDrivers', 'WinPEDrivers', 'Profiles', 'WIM', '*')]
         [string[]]$Type,
 
         [Parameter()]
@@ -159,10 +183,10 @@ function Get-OSDCoreCacheContent {
         )
 
         [PSCustomObject]@{
+            Type           = $ResultType
             Name           = Split-Path -Path $ResultFullName -Leaf
             FullName       = $ResultFullName
             SizeMB         = Get-FileOnlySizeMB -Path $ResultFullName
-            Type           = $ResultType
             USB            = [bool]$VolumeMetadata.USB
             DriveRoot      = [string]$VolumeMetadata.DriveRoot
             VolumeLabel    = [string]$VolumeMetadata.VolumeLabel
@@ -223,10 +247,10 @@ function Get-OSDCoreCacheContent {
     $selectedTypes = if ($PSBoundParameters.ContainsKey('Type')) {
         @($Type | Sort-Object -Unique)
     } else {
-        @('ESD', 'ISO', 'DriverPacks', 'Drivers', 'Profiles', 'WIM')
+        @('ESD', 'ISO', 'DriverPacks', 'Drivers', 'ModelDrivers', 'WinPEDrivers', 'Profiles', 'WIM')
     }
     if ($selectedTypes -contains '*') {
-        $selectedTypes = @('ESD', 'ISO', 'DriverPacks', 'Drivers', 'Profiles', 'WIM')
+        $selectedTypes = @('ESD', 'ISO', 'DriverPacks', 'Drivers', 'ModelDrivers', 'WinPEDrivers', 'Profiles', 'WIM')
     }
 
     $result = foreach ($selectedType in $selectedTypes) {
@@ -283,6 +307,38 @@ function Get-OSDCoreCacheContent {
                 }
                 break
             }
+            { $_ -in @('ModelDrivers', 'WinPEDrivers') } {
+                $driverType = if ($selectedType -eq 'ModelDrivers') { 'ModelDrivers' } else { 'WinPEDrivers' }
+                foreach ($cacheEntry in $cachePaths) {
+                    foreach ($architecture in 'amd64', 'arm64') {
+                        $architectureDriversPath = Join-Path -Path $cacheEntry.CachePath -ChildPath "$($driverType.ToLowerInvariant())-$architecture"
+                        if (-not (Test-Path -LiteralPath $architectureDriversPath -PathType Container)) {
+                            continue
+                        }
+
+                        foreach ($folder in (Get-ChildItem -LiteralPath $architectureDriversPath -Directory -ErrorAction Stop)) {
+                            $buildVersion = $null
+                            if ($folder.Name -notmatch '^(?<Identity>[^_]+_.+_.+)_(?<Build>\d+\.\d+)$' -or
+                                -not [version]::TryParse($Matches.Build, [ref]$buildVersion)) {
+                                Write-Warning "[$(Get-Date -format s)] Invalid $driverType folder name: $($folder.FullName)"
+                                continue
+                            }
+                            $modelIdentity = $Matches.Identity
+                            $infFiles = @(Get-ChildItem -LiteralPath $folder.FullName -Recurse -File -Filter '*.inf' -ErrorAction Stop)
+                            if ($infFiles.Count -eq 0) {
+                                continue
+                            }
+
+                            $cacheObject = New-CacheResultObject -ResultType $driverType -ResultFullName $folder.FullName -VolumeMetadata $cacheEntry.VolumeMetadata
+                            $cacheObject | Add-Member -NotePropertyName OSArchitecture -NotePropertyValue $architecture
+                            $cacheObject | Add-Member -NotePropertyName OSBuildVersion -NotePropertyValue $buildVersion.ToString()
+                            $cacheObject | Add-Member -NotePropertyName ModelIdentity -NotePropertyValue $modelIdentity
+                            $cacheObject
+                        }
+                    }
+                }
+                break
+            }
             'Profiles' {
                 foreach ($cacheEntry in $cachePaths) {
                     $profilesPath = Join-Path -Path $cacheEntry.CachePath -ChildPath 'Profiles'
@@ -310,7 +366,7 @@ function Get-OSDCoreCacheContent {
         }
     }
 
-    $result = @($result | Sort-Object -Property FullName, Type -Unique | Sort-Object -Property FullName)
+    $result = @($result | Sort-Object -Property FullName, Type -Unique | Sort-Object -Property Type, FullName)
     $result | Export-Clixml -Path (Join-Path -Path $env:Temp -ChildPath 'OSDCoreCache.xml') -Force
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Found $($result.Count) path(s)"
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"

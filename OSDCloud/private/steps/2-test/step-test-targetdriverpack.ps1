@@ -4,8 +4,11 @@ Validates driver pack availability for an OSDCloud workflow task.
 
 .DESCRIPTION
 Checks the selected driver pack before driver download and injection steps run.
+When ModelDrivers are selected in the workflow snapshot, validates that the same
+source volume and folder remain available and are not on any disk eligible for
+clearing, then bypasses OEM URL and archive validation.
 The step treats DriverPackName values of None and Microsoft Update Catalog as
-valid bypass states. When a driver pack object is present, it validates that the
+valid bypass states when ModelDrivers are not selected. When a driver pack object is present, it validates that the
 object has a Url, then checks whether that URL responds online or whether the
 matching driver pack file is already available under OSDCloud\DriverPacks on a
 local file system drive.
@@ -51,6 +54,15 @@ function step-test-targetdriverpack {
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackName: $DriverPackName"
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPackCloudObject.Url: $($DriverPackCloudObject.Url)"
+
+    if ($global:OSDCloudWorkflowInvoke.ModelDriversCacheObject) {
+        $modelDriversPath = Resolve-OSDCoreModelDriversPath -CacheObject $global:OSDCloudWorkflowInvoke.ModelDriversCacheObject
+        if (-not $modelDriversPath) {
+            throw 'The selected ModelDrivers source is unavailable or unsafe. Stopping before disk clearing.'
+        }
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] ModelDrivers source is valid: $modelDriversPath"
+        return
+    }
 
     # Is DriverPackName set to None?
     if ($DriverPackName -eq 'None') {

@@ -2,6 +2,7 @@ function step-Add-WindowsDriver-MSUpdate {
     [CmdletBinding()]
     param ()
     #=================================================
+    $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     $Step = $global:OSDCloudCurrentStep

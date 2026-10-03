@@ -18,10 +18,59 @@ The inventory includes:
 | `ISO` | Windows ISO files (`.iso`) |
 | `DriverPacks` | OEM driver-pack files (`.cab`, `.exe`, `.msi`, and `.zip`) |
 | `Drivers` | Driver folders containing `.inf` files |
+| `modeldrivers-amd64` / `modeldrivers-arm64` | Model-specific driver folders containing `.inf` files recursively |
+| `winpedrivers-amd64` / `winpedrivers-arm64` | Model-specific WinPE driver folders containing `.inf` files recursively (inventory only) |
 | `Profiles` | Deployment profile folders |
 | `WIM` | Windows image files (`.wim`) |
 
 For every item it finds, the cache records useful details such as the file name, full path, size, drive letter, volume label, and whether the drive is connected by USB.
+
+## ModelDrivers
+
+ModelDrivers are expanded driver folders for a single device product. Put them directly under the architecture-specific root:
+
+```text
+E:\OSDCloud\modeldrivers-amd64\
+    HP_8CD1_HP ZBook Firefly 16 inch G11 Mobile Workstation PC_26200.9457\
+    HP_895E_HP Z2 Mini G9 Workstation Desktop PC_26200.9457\
+E:\OSDCloud\modeldrivers-arm64\
+    <osdmanufacturer>_<osdproduct>_<osdmodel>_<osbuild>\
+```
+
+The build suffix uses numeric `major.revision` format. Each folder must contain at least one `.inf` file, either directly or in a subfolder. Invalid folder names produce a warning and are skipped; folders without INF files are not inventoried.
+
+`Get-OSDCoreCacheContent -Type ModelDrivers` returns these directories. They are also included when `Type` is omitted or set to `*`. Each entry includes the existing cache properties plus:
+
+| Property | Meaning |
+|---|---|
+| `OSArchitecture` | `amd64` or `arm64`, taken from the parent root |
+| `OSBuildVersion` | Numeric build suffix, stored as a string |
+| `ModelIdentity` | Folder name without the trailing build |
+
+Deployment matches the case-insensitive **`<osdmanufacturer>_<osdproduct>_` prefix**, including the delimiter. The descriptive `osdmodel` text does not affect matching. Among matching folders for the deployment architecture, OSDCloud selects the highest numeric build version; equal builds use full-path ordering for a deterministic choice. **The folder build does not have to match the deployed Windows build.** This selection rule does not certify driver compatibility with that Windows build.
+
+CLI always prefers an eligible ModelDrivers folder over an OEM driver pack, including when the driver-pack state is `None` or `Microsoft Update Catalog`. The GUI defaults to `ModelDrivers` when available and shows the preferred source path. Selecting an OEM pack still prefers matching ModelDrivers; explicitly selecting `None` or `Microsoft Update Catalog` in the GUI bypasses ModelDrivers.
+
+Inventory discovery checks all eligible drives, but deployment excludes sources on **any local disk that the workflow will clear**, not only the selected deployment disk. Unsafe or unresolvable sources produce warnings; OSDCloud tries the next matching safe folder, then falls back to the configured OEM pack when available.
+
+The selected volume identity is retained so USB drive-letter reassignment does not change the source. Before disk clearing, the workflow validates the selected source. After USB restoration it re-resolves the same volume and folder, copies the drivers into the existing local driver staging directory, and injects them recursively into offline Windows. No OEM archive download or extraction is performed when ModelDrivers are selected. Missing sources, staging failures, or injection errors stop deployment explicitly instead of silently changing sources after disk clearing.
+
+The deployment stores the entry separately as `$global:OSDCloudDeploy.ModelDriversCacheObject`. The workflow snapshot carries it in `$global:OSDCloudWorkflowInvoke.ModelDriversCacheObject` and records successful staging with `ModelDriversStaged`. These do not replace the OEM cloud/archive metadata.
+
+## WinPEDrivers
+
+WinPEDrivers use the same folder naming, numeric build suffix, and recursive INF requirements as ModelDrivers, under `E:\OSDCloud\winpedrivers-amd64` or `E:\OSDCloud\winpedrivers-arm64`:
+
+```text
+E:\OSDCloud\winpedrivers-amd64\
+    HP_8CD1_HP ZBook Firefly 16 inch G11 Mobile Workstation PC_26200.9457\
+E:\OSDCloud\winpedrivers-arm64\
+    <osdmanufacturer>_<osdproduct>_<osdmodel>_<osbuild>\
+```
+
+`Get-OSDCoreCacheContent -Type WinPEDrivers` returns these folders with `Type` set to `WinPEDrivers` and the same `OSArchitecture`, `OSBuildVersion`, `ModelIdentity`, and common cache properties as ModelDrivers. They are also included when `Type` is omitted or set to `*`, and in the exported cache XML. Invalid folder names produce warnings and folders without INF files are skipped.
+
+**WinPEDrivers are discovered for cache inventory only.** OSDCloud does not currently select, stage, inject, or otherwise use them during deployment or WinPE startup.
 
 ## Why this is awesome
 

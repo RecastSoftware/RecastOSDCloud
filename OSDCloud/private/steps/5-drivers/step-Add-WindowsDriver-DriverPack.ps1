@@ -2,6 +2,7 @@ function step-Add-WindowsDriver-DriverPack {
     [CmdletBinding()]
     param ()
     #=================================================
+    $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     $Step = $global:OSDCloudCurrentStep
@@ -9,6 +10,19 @@ function step-Add-WindowsDriver-DriverPack {
 
     $DriverPath = "C:\Windows\Temp\osdcloud-driverpack-expand"
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DriverPath: $DriverPath; LogPath: $LogPath"
+
+    if ($global:OSDCloudWorkflowInvoke.ModelDriversCacheObject) {
+        if (-not $global:OSDCloudWorkflowInvoke.ModelDriversStaged -or
+            -not (Test-Path -LiteralPath $DriverPath -PathType Container)) {
+            throw 'ModelDrivers staging did not complete. Refusing to inject an unrelated driver source.'
+        }
+        if (-not (Test-Path -LiteralPath $LogPath)) {
+            New-Item -ItemType Directory -Path $LogPath -Force -ErrorAction Stop | Out-Null
+        }
+        Add-WindowsDriver -Path 'C:\' -Driver $DriverPath -Recurse -ForceUnsigned `
+            -LogPath "$LogPath\dism-add-windowsdriver-driverpack.log" -ErrorAction Stop | Out-Null
+        return
+    }
     
     if (Test-Path -Path $DriverPath) {
         if (-not (Test-Path -Path $LogPath)) {

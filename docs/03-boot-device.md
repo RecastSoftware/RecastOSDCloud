@@ -32,14 +32,24 @@ Pick:
 2. Which media folder (`bootmedia` or `bootmedia_ca2023`).
 3. The target USB disk (7 GB minimum).
 
-The function wipes the disk, creates a FAT32 boot partition (`OSDEPLOY`) and
-an NTFS data partition (`OSDCloud`), then copies the WinPE files.
+The function wipes the disk, creates a FAT32 boot partition (`BOOT-AMD64` or
+`BOOT-ARM64`, based on Architecture in the selected build's `properties.json`) and
+an NTFS data partition (`OSDCloud`), then copies the WinPE files. Use `-BootLabel`
+to override the automatic boot label.
 
 To refresh an existing OSDCloud USB without repartitioning:
 
 ```powershell
 Update-OSDeployBootUSB
 ```
+
+By default, updates target USB boot volumes labeled for the selected build's
+architecture and legacy `OSDEPLOY` volumes. Legacy volumes are relabeled to
+`BOOT-AMD64` or `BOOT-ARM64` after a successful copy and metadata write.
+Volumes labeled for the other architecture are left untouched. Supplying
+`-BootLabel` targets only that label and disables automatic relabeling.
+Automatic labeling requires valid build metadata; missing or unsupported
+Architecture stops creation or updating before USB preparation or copying.
 
 Then on the target device: power on, F12/F10/Esc into the boot menu, select
 the USB device. UEFI mode is required.
