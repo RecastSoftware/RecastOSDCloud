@@ -2,31 +2,43 @@ function step-postaction-removeosdcloudlogs {
     [CmdletBinding()]
     param ()
     #=================================================
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    #=================================================
-    $Step = $global:OSDCloudCurrentStep
-    # Stop Transcript at this point as this file is locked and will cause issues with cleanup
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Stopping transcript before log cleanup."
-    $null = Stop-Transcript -ErrorAction SilentlyContinue
+    $Error.Clear()
+    $ProgressPhase = 'Preparing to remove OSDCloud logs'
 
-    $LogsPath = "C:\Windows\Temp\osdcloud-logs"
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LogsPath: $LogsPath"
+    try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
+        $Step = $global:OSDCloudCurrentStep
+        $LogsPath = 'C:\Windows\Temp\osdcloud-logs'
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Preparing to remove temporary OSDCloud logs."
 
-    $Params = @{
-        ErrorAction = 'SilentlyContinue'
-        Force       = $true
-        Path        = $LogsPath
-        Recurse     = $true
-    }
+        $ProgressPhase = 'Stopping the PowerShell transcript'
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Stopping the PowerShell transcript before log cleanup."
+        try {
+            $null = Stop-Transcript -ErrorAction Stop
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] PowerShell transcript stopped."
+        }
+        catch {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] No active transcript was stopped: $($_.Exception.Message)"
+        }
 
-    if (Test-Path $LogsPath) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Removing OSDCloud logs path: $LogsPath"
-        Remove-Item @Params | Out-Null
+        $ProgressPhase = 'Checking for the OSDCloud log directory'
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Checking for OSDCloud logs at:"
+        Write-Host -ForegroundColor DarkGray "  $LogsPath"
+        if (Test-Path -LiteralPath $LogsPath -PathType Container -ErrorAction Stop) {
+            $LogFileCount = @(Get-ChildItem -LiteralPath $LogsPath -File -Recurse -Force -ErrorAction SilentlyContinue).Count
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Found $LogFileCount log file(s). Removing the log directory."
+            $ProgressPhase = 'Removing the OSDCloud log directory'
+            Remove-Item -LiteralPath $LogsPath -Recurse -Force -ErrorAction Stop
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] OSDCloud log directory removed."
+        }
+        else {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] OSDCloud log directory was not found. No log cleanup is needed."
+        }
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     }
-    else {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LogsPath was not found. Nothing to remove."
+    catch {
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] Optional log cleanup failed during '$ProgressPhase': $($_.Exception.Message)"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Continuing without removing all OSDCloud logs."
     }
-    #=================================================
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }
