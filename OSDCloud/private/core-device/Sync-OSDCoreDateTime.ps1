@@ -115,40 +115,40 @@ function Sync-OSDCoreDateTime {
         }
 
         if ($result.LocalDateTime -and $result.InternetDateTime) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Clock: $($result.LocalDateTime)"
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Network Time: $($result.InternetDateTime)"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System DateTime: $($result.LocalDateTime)"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Network DateTime: $($result.InternetDateTime)"
             $result.DifferenceMinutes = [math]::Round([math]::Abs(($result.InternetDateTime - $result.LocalDateTime).TotalMinutes))
 
             if ($result.DifferenceMinutes -gt $ThresholdMinutes) {
-                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: Time difference of $($result.DifferenceMinutes) minutes exceeds $ThresholdMinutes minute threshold."
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: Time difference of $($result.DifferenceMinutes) minutes exceeds $ThresholdMinutes minute threshold."
 
                 if ($result.IsWinPE) {
                     if ($Force) {
                         if ($PSCmdlet.ShouldProcess("System Clock", "Set to $($result.InternetDateTime)")) {
-                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Clock: Synchronize with Network Time."
+                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System DateTime: Synchronize with Network Time."
                             try {
                                 $null = Set-Date -Date $result.InternetDateTime -ErrorAction Stop
                                 $result.ClockUpdated = $true
-                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Clock: Successfully updated to Network Time."
+                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System DateTime: Successfully updated to Network Time."
                             }
                             catch {
-                                $result.ErrorMessage = "Failed to set system clock: $($_.Exception.Message)"
-                                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: $($result.ErrorMessage)"
+                                $result.ErrorMessage = "Failed to set System DateTime: $($_.Exception.Message)"
+                                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: $($result.ErrorMessage)"
                             }
                         }
                     }
                     else {
-                        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: System clock is $($result.DifferenceMinutes) minutes out of sync with internet time"
-                        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: Use -Force parameter to update the system clock"
+                        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: System clock is $($result.DifferenceMinutes) minutes out of sync with internet time"
+                        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: Use -Force parameter to update the system clock"
                     }
                 }
                 else {
-                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: System clock is $($result.DifferenceMinutes) minutes out of sync with internet time"
-                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: Please synchronize your system clock manually (not in WinPE environment)"
+                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: System clock is $($result.DifferenceMinutes) minutes out of sync with internet time"
+                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: Please synchronize your system clock manually (not in WinPE environment)"
                 }
             }
             else {
-                # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Clock: Synchronized within threshold ($($result.DifferenceMinutes) minutes difference)."
+                # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System DateTime: Synchronized within threshold ($($result.DifferenceMinutes) minutes difference)."
             }
         }
 
