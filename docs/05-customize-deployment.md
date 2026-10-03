@@ -125,7 +125,7 @@ Steps marked **Skipped** have `"skip": true` shipped from the catalog.
 | 20 | Apply WinPE Drivers to offline WinRE | |
 | 21 | Firmware: Download from Microsoft Update Catalog | |
 | 22 | Firmware: Apply Driver | |
-| 23 | OEM DriverPack: Download from OEM | Dell / HP / Lenovo / Microsoft / Panasonic |
+| 23 | Download DriverPack from OEM | Dell / HP / Lenovo / Microsoft / Panasonic |
 | 24 | OEM DriverPack: Apply or stage in SetupComplete.cmd | |
 | 25 | Apply Drivers from a OSD folder match | Pulls from local `OSD\` folders if present |
 | 26 | Download Drivers from Microsoft Update Catalog | |
