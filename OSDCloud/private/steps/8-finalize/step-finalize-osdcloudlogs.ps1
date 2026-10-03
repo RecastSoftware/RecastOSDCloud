@@ -2,47 +2,83 @@ function step-finalize-osdcloudlogs {
     [CmdletBinding()]
     param ()
     #=================================================
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
-    #=================================================
-    $Step = $global:OSDCloudCurrentStep
-    #region Main
-    $LogsPath = "C:\Windows\Temp\osdcloud-logs"
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LogsPath: $LogsPath"
+    $Error.Clear()
+    $ProgressPhase = 'Preparing the OSDCloud log directory'
 
-    $Params = @{
-        Path        = $LogsPath
-        ItemType    = 'Directory'
-        Force       = $true
-        ErrorAction = 'SilentlyContinue'
-    }
+    try {
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
+        $Step = $global:OSDCloudCurrentStep
+        $LogsPath = 'C:\Windows\Temp\osdcloud-logs'
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Preparing OSDCloud deployment logs."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Log collection destination:"
+        Write-Host -ForegroundColor DarkGray "  $LogsPath"
 
-    if (-not (Test-Path $Params.Path)) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating logs path: $($Params.Path)"
-        New-Item @Params | Out-Null
-    }
+        if (-not (Test-Path -LiteralPath $LogsPath -PathType Container -ErrorAction Stop)) {
+            $ProgressPhase = 'Creating the OSDCloud log directory'
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Creating log directory:"
+            Write-Host -ForegroundColor DarkGray "  $LogsPath"
+            New-Item -Path $LogsPath -ItemType Directory -Force -ErrorAction Stop | Out-Null
+        }
 
-    # Copy the DISM log to C:\Windows\Temp\osdcloud-logs
-    if (Test-Path "$env:SystemRoot\logs\dism\dism.log") {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Copying DISM log from $env:SystemRoot\logs\dism\dism.log."
-        Copy-Item -Path "$env:SystemRoot\logs\dism\dism.log" -Destination 'C:\Windows\Temp\osdcloud-logs\dism.log' -Force | Out-Null
-    }
-    else {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DISM log was not found at $env:SystemRoot\logs\dism\dism.log."
-    }
+        $DismLogSource = Join-Path $env:SystemRoot 'logs\dism\dism.log'
+        $DismLogDestination = Join-Path $LogsPath 'dism.log'
+        $ProgressPhase = 'Collecting the DISM log'
+        if (Test-Path -LiteralPath $DismLogSource -PathType Leaf -ErrorAction Stop) {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Copying DISM log from:"
+            Write-Host -ForegroundColor DarkGray "  $DismLogSource"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Copying DISM log to:"
+            Write-Host -ForegroundColor DarkGray "  $DismLogDestination"
+            Copy-Item -LiteralPath $DismLogSource -Destination $DismLogDestination -Force -ErrorAction Stop
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] DISM log copied successfully."
+        }
+        else {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] DISM log was not found at:"
+            Write-Host -ForegroundColor DarkGray "  $DismLogSource"
+        }
 
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Stopping transcript."
-    $null = Stop-Transcript -ErrorAction SilentlyContinue
+        $ProgressPhase = 'Stopping the PowerShell transcript'
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Stopping the PowerShell transcript, if one is active."
+        try {
+            $null = Stop-Transcript -ErrorAction Stop
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] PowerShell transcript stopped."
+        }
+        catch {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] No active transcript was stopped: $($_.Exception.Message)"
+        }
 
-    # Copy existing WinPE Logs to C:\Windows\Temp\osdcloud-logs
-    if ($env:SystemDrive -eq 'X:') {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Copying WinPE logs from X:\Windows\Temp\osdcloud-logs to C:\Windows\Temp\osdcloud-logs."
-        $null = robocopy "X:\Windows\Temp\osdcloud-logs" "C:\Windows\Temp\osdcloud-logs" *.* /e /ndl /r:0 /w:0
+        if ($env:SystemDrive -eq 'X:') {
+            $WinPELogsPath = 'X:\Windows\Temp\osdcloud-logs'
+            $ProgressPhase = 'Copying WinPE logs to the target Windows volume'
+            if (Test-Path -LiteralPath $WinPELogsPath -PathType Container -ErrorAction Stop) {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Copying WinPE logs from:"
+                Write-Host -ForegroundColor DarkGray "  $WinPELogsPath"
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Copying WinPE logs to:"
+                Write-Host -ForegroundColor DarkGray "  $LogsPath"
+                & robocopy.exe $WinPELogsPath $LogsPath '*.*' /e /ndl /r:0 /w:0
+                $RobocopyExitCode = $LASTEXITCODE
+                if ($RobocopyExitCode -ge 8) {
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] WinPE log copy returned robocopy exit code $RobocopyExitCode."
+                }
+                else {
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] WinPE log copy completed (robocopy exit code $RobocopyExitCode)."
+                }
+            }
+            else {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] WinPE log directory was not found:"
+                Write-Host -ForegroundColor DarkGray "  $WinPELogsPath"
+            }
+        }
+        else {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] SystemDrive is $env:SystemDrive; skipping WinPE log copy."
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] SystemDrive is $env:SystemDrive. WinPE log copy is not required."
+        }
+
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] OSDCloud log collection completed."
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     }
-    else {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] SystemDrive is $env:SystemDrive; skipping WinPE log copy."
+    catch {
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] Optional log collection failed during '$ProgressPhase': $($_.Exception.Message)"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Continuing OSDCloud without completing all log collection tasks."
     }
-    #endregion
-    #=================================================
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
 }
