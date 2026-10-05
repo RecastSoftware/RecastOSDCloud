@@ -48,7 +48,7 @@ The `default` channel ships these ARM64 options (`workflow/default/os-arm64.json
 
 | Setting | Default | Available values |
 |---|---|---|
-| Operating System | Windows 11 26H2 | 26H2, 25H2, 24H2 |
+| Operating System | Windows 11 26H2 | 26H2, 25H2, 24H2, 23H2 |
 | Activation | Retail | Retail, Volume |
 | **Edition** | Pro | **Home, Pro, Enterprise only** — no N or Education editions |
 | Language | en-us | 37 codes (no `bs-latn-ba` or `ms-my`) |

@@ -52,6 +52,7 @@ function step-install-expandwindowsimage {
         try {
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Running Expand-WindowsImage with parameters: $($Params | Out-String)"
             Expand-WindowsImage @Params | Out-Null
+            New-Item -Path 'C:\Windows\Setup\Scripts' -ItemType Directory -Force | Out-Null
             # Create SetupComplete.cmd if it does not exist
             $setupCompletePath = 'C:\Windows\Setup\Scripts\SetupComplete.cmd'
             if (-not (Test-Path $setupCompletePath)) {

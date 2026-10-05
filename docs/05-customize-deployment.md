@@ -15,8 +15,8 @@ A workflow is a folder under `OSDCloud/workflow/` that bundles:
 - UI configuration.
 
 The module currently supports the `default` workflow for public deployments.
-Its settings allow Windows 11 26H2, 25H2, and 24H2 and use the standard
-40-step task.
+Its settings allow Windows 11 26H2, 25H2, 24H2, and 23H2 and use the
+standard 40-step task.
 
 The module also contains a `cli` folder for the internal preview CLI
 implementation. It is not a supported GUI workflow or a replacement for
