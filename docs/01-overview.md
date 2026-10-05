@@ -18,7 +18,7 @@ Typical scenarios:
 | Provision a new PC for Autopilot enrolment | **Yes** — deploy Windows, hand off to OOBE. See [guide 8](08-autopilot-oobe.md). |
 | Deploy a custom corporate gold image | **No** — OSDCloud uses Microsoft ESDs. Use MDT/ConfigMgr or build a custom WIM. |
 | Air-gapped network (no internet) | **No** — OSDCloud downloads ESDs and driver packs at runtime. |
-| Deploy Windows 10 | **No** — current workflows target Windows 11 (26H2/25H2/24H2). |
+| Deploy Windows 10 | **No** — the public default workflow targets Windows 11 (26H2/25H2/24H2/23H2). |
 
 ## Why use OSDCloud
 

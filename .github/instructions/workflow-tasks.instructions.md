@@ -157,7 +157,7 @@ Each channel provides OS picker configuration per architecture.
 {
   "OperatingSystem": {
     "default": "Windows 11 26H2",
-    "values": ["Windows 11 26H2", "Windows 11 25H2", "Windows 11 24H2"]
+    "values": ["Windows 11 26H2", "Windows 11 25H2", "Windows 11 24H2", "Windows 11 23H2"]
   },
   "OSActivation": {
     "default": "Retail",

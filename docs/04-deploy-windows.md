@@ -85,7 +85,7 @@ only what you need:
 
 | Setting | Default | Notes |
 |---|---|---|
-| Operating System | Windows 11 26H2 | 25H2 and 24H2 also available |
+| Operating System | Windows 11 26H2 | 25H2, 24H2, and 23H2 also available |
 | Activation | Retail | Use Volume for VL/MAK keys |
 | Edition | Pro | Home / Pro / Enterprise (+ Education and N variants on amd64) |
 | Language | en-us | 38 codes (amd64) / 37 codes (arm64) |
