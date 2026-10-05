@@ -6,11 +6,25 @@ OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operatin
 
 ## Overview
 
-- Current repository module version: `26.10.2.1`.
+- Current repository module version: `26.10.4.1`.
 - Defaults to Windows 11 26H2 for amd64 and arm64 deployments.
 - Focused on Windows deployment workflows driven by PowerShell.
-- Supports WinPEStartup helpers and deployment UX options.
+- Supports WinpeStartup helpers and deployment UX options.
 - Provides cmdlets for device info, Wi-Fi setup, and module updates in PE.
+
+---
+
+## What's New in 26.10.4.1
+
+Released October 4, 2026.
+
+- **Consistent WinpeStartup naming:** Exported startup cmdlets, private helpers, module defaults, bundled profiles, messages, and documentation now use `WinpeStartup`, including `Invoke-WinpeStartup` and the `Invoke-WinpeStartup:` JSON key prefix.
+- **Consistent media paths:** Startup content discovery uses `WinpeStartup\Drivers`, `WinpeStartup\Files`, and `WinpeStartup\profiles`.
+- **Existing behavior preserved:** This is a naming-consistency release. Startup parameters, default settings, and deployment behavior are unchanged, and existing PEStartup compatibility aliases remain available.
+
+See [CHANGELOG.md](CHANGELOG.md) for the complete release history and [WinpeStartup documentation](docs/about_winpestartup.md) for startup configuration.
+
+---
 
 ## Requirements
 
@@ -55,13 +69,13 @@ Deploy-OSDCloud
 
 | Cmdlet | Alias | Description |
 |---|---|---|
-| `Invoke-WinPEStartup` | — | Runs the full WinPEStartup workflow. |
-| `Invoke-WinPEStartupManager` | `Invoke-OSDCloudPEStartup` | Dispatches individual startup actions. |
-| `Show-WinPEStartupDevices` | `Show-PEStartupHardware` | Shows all PnP devices. |
-| `Show-WinPEStartupDeviceErrors` | `Show-PEStartupErrors` | Shows PnP devices with errors. |
-| `Show-WinPEStartupIpconfig` | `Show-PEStartupIpconfig` | Displays `ipconfig /all`. |
-| `Show-WinPEStartupWifi` | `Show-PEStartupWifi` | Connects to Wi-Fi and waits for DHCP. |
-| `Update-WinPEStartupModule` | `Use-PEStartupUpdateModule` | Updates a module from PSGallery. |
+| `Invoke-WinpeStartup` | — | Runs the full WinpeStartup workflow. |
+| `Invoke-WinpeStartupManager` | `Invoke-OSDCloudPEStartup` | Dispatches individual startup actions. |
+| `Show-WinpeStartupDevices` | `Show-PEStartupHardware` | Shows all PnP devices. |
+| `Show-WinpeStartupDeviceErrors` | `Show-PEStartupErrors` | Shows PnP devices with errors. |
+| `Show-WinpeStartupIpconfig` | `Show-PEStartupIpconfig` | Displays `ipconfig /all`. |
+| `Show-WinpeStartupWifi` | `Show-PEStartupWifi` | Connects to Wi-Fi and waits for DHCP. |
+| `Update-WinpeStartupModule` | `Use-PEStartupUpdateModule` | Updates a module from PSGallery. |
 
 ## Documentation
 
@@ -91,7 +105,7 @@ Task-oriented guides for IT admins. Start at the [docs index](docs/README.md), o
 | [OSDCloud/docs/Show-OSDCloudDeviceInfo.md](OSDCloud/docs/Show-OSDCloudDeviceInfo.md) | `Show-OSDCloudDeviceInfo` |
 | [OSDCloud/docs/Start-OSDCloudExplorer.md](OSDCloud/docs/Start-OSDCloudExplorer.md) | `Start-OSDCloudExplorer` |
 
-WinPEStartup cmdlets are currently documented through in-module help. In WinPE, run `Get-Help <CmdletName> -Detailed` for usage details.
+WinpeStartup cmdlets are currently documented through in-module help. In WinPE, run `Get-Help <CmdletName> -Detailed` for usage details.
 
 ### External links
 

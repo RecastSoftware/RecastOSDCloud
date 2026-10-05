@@ -7,7 +7,7 @@
 @{
     # --- Identity ---
     RootModule           = 'OSDCloud.psm1'
-    ModuleVersion        = '26.10.2.1'
+    ModuleVersion        = '26.10.4.1'
     CompatiblePSEditions = @('Core', 'Desktop')
     GUID                 = '2fbd5c65-79c7-4561-9a2e-c4a4eebc89c7'
 
@@ -17,7 +17,7 @@
     Copyright            = '(c) 2026 Recast Software. All rights reserved.'
     Description          = @'
 Recast OSDCloud PowerShell Module.
-PowerShell module for OSDCloud v2 deployment automation and WinPEStartup from recastsoftware.com.
+PowerShell module for OSDCloud v2 deployment automation and WinpeStartup from recastsoftware.com.
 Includes operating system, driver pack, and device provisioning workflows.
 Windows 11 26H2 GA Release
 '@
@@ -34,13 +34,13 @@ Windows 11 26H2 GA Release
         'Show-OSDCloudDeviceInfo',
         'Start-OSDCloudExplorer',
         # WinPE
-        'Invoke-WinPEStartup',
-        'Invoke-WinPEStartupManager',
-        'Show-WinPEStartupDeviceErrors',
-        'Show-WinPEStartupDevices',
-        'Show-WinPEStartupIpconfig',
-        'Show-WinPEStartupWifi',
-        'Update-WinPEStartupModule'
+        'Invoke-WinpeStartup',
+        'Invoke-WinpeStartupManager',
+        'Show-WinpeStartupDeviceErrors',
+        'Show-WinpeStartupDevices',
+        'Show-WinpeStartupIpconfig',
+        'Show-WinpeStartupWifi',
+        'Update-WinpeStartupModule'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()

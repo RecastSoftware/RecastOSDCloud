@@ -1,6 +1,6 @@
 #requires -Version 5.1
 
-function Initialize-WinPEStartupMain {
+function Initialize-WinpeStartupMain {
     <#
     .SYNOPSIS
         Runs wpeinit and wpeutil to initialize the WinPE environment
@@ -12,12 +12,12 @@ function Initialize-WinPEStartupMain {
         startnet.cmd / ReStartnet.cmd.
 
     .EXAMPLE
-        Initialize-WinPEStartupMain
+        Initialize-WinpeStartupMain
 
         Runs wpeinit and wpeutil initialization commands.
 
     .EXAMPLE
-        Initialize-WinPEStartupMain -Verbose
+        Initialize-WinpeStartupMain -Verbose
 
         Runs initialization with detailed progress output.
 
@@ -32,12 +32,12 @@ function Initialize-WinPEStartupMain {
     begin {
         $skipExecution = $false
         if ($env:SystemDrive -ne 'X:') {
-            Write-Warning 'Initialize-WinPEStartupMain: Not running in WinPE (SystemDrive is not X:). Exiting.'
+            Write-Warning 'Initialize-WinpeStartupMain: Not running in WinPE (SystemDrive is not X:). Exiting.'
             $skipExecution = $true
             return
         }
 
-        Write-Verbose 'Initialize-WinPEStartupMain: Starting'
+        Write-Verbose 'Initialize-WinpeStartupMain: Starting'
     }
 
     process {
@@ -57,13 +57,13 @@ function Initialize-WinPEStartupMain {
         Start-Sleep -Seconds 2 # Wait for wpeutil UpdateBootInfo to complete before proceeding
 
         # Reassign USB drive letters to the next available letter starting at H.
-        Write-Verbose 'Running Set-WinPEStartupUSBDriveLetter'
-        Set-WinPEStartupUSBDriveLetter
-        Start-Sleep -Seconds 2 # Wait for Set-WinPEStartupUSBDriveLetter to complete before proceeding
+        Write-Verbose 'Running Set-WinpeStartupUSBDriveLetter'
+        Set-WinpeStartupUSBDriveLetter
+        Start-Sleep -Seconds 2 # Wait for Set-WinpeStartupUSBDriveLetter to complete before proceeding
 
         Write-Verbose 'Running wpeutil UpdateBootInfo'
         Invoke-WpeUtil -Command 'UpdateBootInfo'
-        Start-Sleep -Seconds 2 # Wait for Set-WinPEStartupUSBDriveLetter to complete before proceeding
+        Start-Sleep -Seconds 2 # Wait for Set-WinpeStartupUSBDriveLetter to complete before proceeding
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize network"
         ipconfig /release | Out-Null
@@ -75,6 +75,6 @@ function Initialize-WinPEStartupMain {
 
     end {
         if ($skipExecution) { return }
-        Write-Verbose 'Initialize-WinPEStartupMain: Complete'
+        Write-Verbose 'Initialize-WinpeStartupMain: Complete'
     }
 }

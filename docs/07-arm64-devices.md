@@ -71,7 +71,7 @@ Check what was used in `C:\Windows\Temp\osdcloud-logs\` after deployment.
 Exactly the same operator flow as amd64:
 
 ```powershell
-Invoke-WinPEStartup
+Invoke-WinpeStartup
 Deploy-OSDCloud           # or -CLI
 ```
 

@@ -19,7 +19,7 @@ In order of frequency:
 
 | Phase | Path | When |
 |---|---|---|
-| WinPEStartup | `X:\Windows\Temp\osdcloud-logs\` | While in WinPE |
+| WinpeStartup | `X:\Windows\Temp\osdcloud-logs\` | While in WinPE |
 | Workflow (early) | `X:\OSDCloud\Logs\` | Before disk is partitioned |
 | Workflow (post-disk) | `C:\Windows\Temp\osdcloud-logs\` | After step 14 (log restart) |
 | First boot | `C:\Windows\Temp\osdcloud-logs\` | After OOBE |
@@ -41,10 +41,10 @@ Copy-Item C:\Windows\Temp\osdcloud-logs\* D:\osdcloud-logs\ -Recurse
 | Cmdlet | What it shows |
 |---|---|
 | `Show-OSDCloudDeviceInfo` | Make, model, serial, TPM, Secure Boot, disk, RAM, battery, IP |
-| `Show-WinPEStartupDevices` | All PnP devices in WinPE |
-| `Show-WinPEStartupDeviceErrors` | PnP devices reporting an error (missing driver) |
-| `Show-WinPEStartupIpconfig` | `ipconfig /all` output |
-| `Show-WinPEStartupWifi` | Connect / reconnect to Wi-Fi |
+| `Show-WinpeStartupDevices` | All PnP devices in WinPE |
+| `Show-WinpeStartupDeviceErrors` | PnP devices reporting an error (missing driver) |
+| `Show-WinpeStartupIpconfig` | `ipconfig /all` output |
+| `Show-WinpeStartupWifi` | Connect / reconnect to Wi-Fi |
 | `Start-OSDCloudExplorer` | WinForms file browser — useful for reading logs in WinPE |
 
 Run any of them at the `X:\` prompt.
@@ -54,7 +54,7 @@ Run any of them at the `X:\` prompt.
 ### "No network adapter" in WinPE
 
 ```powershell
-Show-WinPEStartupDeviceErrors
+Show-WinpeStartupDeviceErrors
 ```
 
 If the Ethernet or Wi-Fi NIC shows here, WinPE is missing a driver. Fix:
@@ -69,8 +69,8 @@ Add-WindowsDriver -Path X:\ -Driver D:\Drivers -Recurse
 ### "Wi-Fi connects but no IP"
 
 ```powershell
-Show-WinPEStartupWifi    # reconnect
-Show-WinPEStartupIpconfig
+Show-WinpeStartupWifi    # reconnect
+Show-WinpeStartupIpconfig
 ```
 
 DHCP retry is built in. If the IP stays `169.254.x.x`, the access point
@@ -135,10 +135,10 @@ session — most steps are skipped outside WinPE (only those with
 ### A USB profile isn't applied
 
 ```powershell
-Get-ChildItem -Path *:\WinPEStartup\profiles\*.json
+Get-ChildItem -Path *:\WinpeStartup\profiles\*.json
 ```
 
-- Profile must be at `<drive>:\WinPEStartup\profiles\*.json` — exact path.
+- Profile must be at `<drive>:\WinpeStartup\profiles\*.json` — exact path.
 - File must parse as JSON (after stripping `//` and `/* */` comments). Validate on Windows:
   ```powershell
   Get-Content profile.json -Raw |
@@ -150,7 +150,7 @@ Get-ChildItem -Path *:\WinPEStartup\profiles\*.json
 ### Module didn't self-update
 
 ```
-[Invoke-WinPEStartup] Update-WinPEStartupModule -Name OSDCloud  → SKIPPED
+[Invoke-WinpeStartup] Update-WinpeStartupModule -Name OSDCloud  → SKIPPED
 ```
 
 `-SkipUpdateOSDCloud` is `true` (somewhere in your profile or call). Either
@@ -161,7 +161,7 @@ remove it or run `Install-Module OSDCloud -SkipPublisherCheck -Force` by hand.
 Run with `-Verbose`:
 
 ```powershell
-Invoke-WinPEStartup -Verbose
+Invoke-WinpeStartup -Verbose
 Deploy-OSDCloud -CLI -Verbose
 ```
 

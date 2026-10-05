@@ -5,37 +5,37 @@ description: Author and update OSDCloud WinPE startup profile JSON files. Use th
 
 # Author WinPE Profile JSON
 
-Create profiles that configure `Invoke-WinPEStartup` without embedding workflow logic in the profile. Preserve the existing JSON style and make the smallest change that satisfies the request.
+Create profiles that configure `Invoke-WinpeStartup` without embedding workflow logic in the profile. Preserve the existing JSON style and make the smallest change that satisfies the request.
 
 ## Profile location and discovery
 
 - Store bundled profiles in `OSDCloud/core/winpestartup-profiles/`.
-- Use a descriptive `.json` filename. The startup function discovers profile files from `WinPEStartup\Profiles` on attached drives.
+- Use a descriptive `.json` filename. The startup function discovers profile files from `WinpeStartup\Profiles` on attached drives.
 - A profile is a flat map of parameter names to scalar values or arrays, with one supported nested object: the top-level `Environment` section.
 - Prefer standard JSON. The loader tolerates comments, but comments are unnecessary and can make external validation fail.
 
 ## Property names
 
-Use the exact `Invoke-WinPEStartup:` prefix for every profile property:
+Use the exact `Invoke-WinpeStartup:` prefix for every profile property:
 
 | Property | JSON value | Effect |
 |---|---|---|
-| `Invoke-WinPEStartup:SkipOnScreenKeyboard` | boolean | Skip the on-screen keyboard check |
-| `Invoke-WinPEStartup:ShowPnpDevices` | boolean | Show PnP device hardware |
-| `Invoke-WinPEStartup:ShowPnpErrors` | boolean | Show PnP device errors |
-| `Invoke-WinPEStartup:SkipWiFi` | boolean | Skip Wi-Fi startup and connection checks |
-| `Invoke-WinPEStartup:SkipIPConfig` | boolean | Skip IP configuration display |
-| `Invoke-WinPEStartup:SkipUpdateOSDCloud` | boolean | Skip the OSDCloud module update |
-| `Invoke-WinPEStartup:InstallModule` | string or string array | Update additional PowerShell modules |
-| `Invoke-WinPEStartup:InvokeStartupCommand` | string or string array | Run commands before the main phase |
-| `Invoke-WinPEStartup:InvokeStartupCommandNoExit` | boolean | Keep the startup child PowerShell open |
-| `Invoke-WinPEStartup:InvokeStartupCommandEA` | `Continue` or `Stop` | Handle startup child-process failure |
-| `Invoke-WinPEStartup:InvokeMainCommand` | string or string array | Run commands in the main phase |
-| `Invoke-WinPEStartup:InvokeMainCommandNoExit` | boolean | Keep the main child PowerShell open |
-| `Invoke-WinPEStartup:InvokeMainCommandEA` | `Continue` or `Stop` | Handle main child-process failure |
-| `Invoke-WinPEStartup:InvokeShutdownCommand` | string or string array | Run commands in the shutdown phase |
-| `Invoke-WinPEStartup:InvokeShutdownCommandNoExit` | boolean | Keep the shutdown child PowerShell open |
-| `Invoke-WinPEStartup:InvokeShutdownCommandEA` | `Continue` or `Stop` | Handle shutdown child-process failure |
+| `Invoke-WinpeStartup:SkipOnScreenKeyboard` | boolean | Skip the on-screen keyboard check |
+| `Invoke-WinpeStartup:ShowPnpDevices` | boolean | Show PnP device hardware |
+| `Invoke-WinpeStartup:ShowPnpErrors` | boolean | Show PnP device errors |
+| `Invoke-WinpeStartup:SkipWiFi` | boolean | Skip Wi-Fi startup and connection checks |
+| `Invoke-WinpeStartup:SkipIPConfig` | boolean | Skip IP configuration display |
+| `Invoke-WinpeStartup:SkipUpdateOSDCloud` | boolean | Skip the OSDCloud module update |
+| `Invoke-WinpeStartup:InstallModule` | string or string array | Update additional PowerShell modules |
+| `Invoke-WinpeStartup:InvokeStartupCommand` | string or string array | Run commands before the main phase |
+| `Invoke-WinpeStartup:InvokeStartupCommandNoExit` | boolean | Keep the startup child PowerShell open |
+| `Invoke-WinpeStartup:InvokeStartupCommandEA` | `Continue` or `Stop` | Handle startup child-process failure |
+| `Invoke-WinpeStartup:InvokeMainCommand` | string or string array | Run commands in the main phase |
+| `Invoke-WinpeStartup:InvokeMainCommandNoExit` | boolean | Keep the main child PowerShell open |
+| `Invoke-WinpeStartup:InvokeMainCommandEA` | `Continue` or `Stop` | Handle main child-process failure |
+| `Invoke-WinpeStartup:InvokeShutdownCommand` | string or string array | Run commands in the shutdown phase |
+| `Invoke-WinpeStartup:InvokeShutdownCommandNoExit` | boolean | Keep the shutdown child PowerShell open |
+| `Invoke-WinpeStartup:InvokeShutdownCommandEA` | `Continue` or `Stop` | Handle shutdown child-process failure |
 
 Use JSON booleans (`true`/`false`) rather than quoted boolean strings. Use arrays when there are multiple commands or modules; command entries execute in array order in one child PowerShell process.
 
@@ -64,7 +64,7 @@ Use an unprefixed top-level `Environment` object to set process-scoped environme
 
 - Write ordinary PowerShell lines as strings, for example `Show-OSDCloudDeviceInfo` or `Deploy-OSDCloud`.
 - Use `Restart-Computer -Force` for a restart at the end of the shutdown phase. Do not use `shutdown.exe` unless the request specifically requires its options.
-- URLs beginning with `http://` or `https://` are automatically converted to `Invoke-RestMethod -Uri '<url>' | Invoke-Expression` by `Invoke-WinPEStartup`. Do not wrap those URLs yourself.
+- URLs beginning with `http://` or `https://` are automatically converted to `Invoke-RestMethod -Uri '<url>' | Invoke-Expression` by `Invoke-WinpeStartup`. Do not wrap those URLs yourself.
 - A `NoExit` setting leaves the child process open. Do not set it for a normal deployment or restart profile unless the user explicitly requests an interactive window.
 - `Continue` is the default failure behavior. Choose `Stop` only when a failed child command must terminate startup.
 - Keep deployment commands in the appropriate phase. For example, inspection and deployment belong in `InvokeMainCommand`; reboot belongs in `InvokeShutdownCommand`.
@@ -75,13 +75,13 @@ Use an unprefixed top-level `Environment` object to set process-scoped environme
 
 ```json
 {
-  "Invoke-WinPEStartup:InvokeMainCommand": [
+  "Invoke-WinpeStartup:InvokeMainCommand": [
     "Show-OSDCloudDeviceInfo",
     "Deploy-OSDCloud"
   ],
-  "Invoke-WinPEStartup:InvokeMainCommandNoExit": true,
-  "Invoke-WinPEStartup:InvokeMainCommandEA": "Continue",
-  "Invoke-WinPEStartup:InvokeShutdownCommand": [
+  "Invoke-WinpeStartup:InvokeMainCommandNoExit": true,
+  "Invoke-WinpeStartup:InvokeMainCommandEA": "Continue",
+  "Invoke-WinpeStartup:InvokeShutdownCommand": [
     "Restart-Computer -Force"
   ]
 }
@@ -91,11 +91,11 @@ Use an unprefixed top-level `Environment` object to set process-scoped environme
 
 ```json
 {
-  "Invoke-WinPEStartup:InvokeMainCommand": [
+  "Invoke-WinpeStartup:InvokeMainCommand": [
     "Show-OSDCloudDeviceInfo"
   ],
-  "Invoke-WinPEStartup:InvokeMainCommandNoExit": true,
-  "Invoke-WinPEStartup:InvokeMainCommandEA": "Continue"
+  "Invoke-WinpeStartup:InvokeMainCommandNoExit": true,
+  "Invoke-WinpeStartup:InvokeMainCommandEA": "Continue"
 }
 ```
 
@@ -115,7 +115,7 @@ $profile | Out-Null
 6. For command changes, verify the resulting property explicitly:
 
 ```powershell
-$profile.'Invoke-WinPEStartup:InvokeShutdownCommand'
+$profile.'Invoke-WinpeStartup:InvokeShutdownCommand'
 ```
 
 Do not execute profile commands during validation. Parsing verifies syntax without starting deployment, downloading content, or restarting the workstation.

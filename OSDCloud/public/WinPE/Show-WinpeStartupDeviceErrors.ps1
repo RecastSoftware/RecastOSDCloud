@@ -1,4 +1,4 @@
-function Show-WinPEStartupDeviceErrors {
+function Show-WinpeStartupDeviceErrors {
     <#
     .SYNOPSIS
         Displays WinPE Plug and Play device errors.
@@ -9,9 +9,9 @@ function Show-WinPEStartupDeviceErrors {
         displays results in table format, waits 5 seconds, then exits.
 
     .EXAMPLE
-        Show-WinPEStartupDeviceErrors
+        Show-WinpeStartupDeviceErrors
 
-        Displays detected device errors during WinPEStartup.
+        Displays detected device errors during WinpeStartup.
 
     .OUTPUTS
         System.Void

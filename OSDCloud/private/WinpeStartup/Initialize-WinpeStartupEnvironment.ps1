@@ -1,6 +1,6 @@
 #requires -Version 5.1
 
-function Initialize-WinPEStartupEnvironment {
+function Initialize-WinpeStartupEnvironment {
     <#
     .SYNOPSIS
         Initializes the WinPE shell environment for OS deployment
@@ -21,13 +21,13 @@ function Initialize-WinPEStartupEnvironment {
           - Sets the PowerShell execution policy to Bypass via registry
 
     .EXAMPLE
-        Initialize-WinPEStartupEnvironment
+        Initialize-WinpeStartupEnvironment
 
         Creates all shell folders, sets environment variables, and writes
         registry keys for the current WinPE session.
 
     .EXAMPLE
-        Initialize-WinPEStartupEnvironment -Verbose
+        Initialize-WinpeStartupEnvironment -Verbose
 
         Runs the full environment initialization with detailed progress output.
 
@@ -42,12 +42,12 @@ function Initialize-WinPEStartupEnvironment {
     begin {
         $skipExecution = $false
         if ($env:SystemDrive -ne 'X:') {
-            Write-Warning 'Initialize-WinPEStartupEnvironment: Not running in WinPE (SystemDrive is not X:). Exiting.'
+            Write-Warning 'Initialize-WinpeStartupEnvironment: Not running in WinPE (SystemDrive is not X:). Exiting.'
             $skipExecution = $true
             return
         }
 
-        Write-Verbose 'Initialize-WinPEStartupEnvironment: Starting WinPE environment initialization'
+        Write-Verbose 'Initialize-WinpeStartupEnvironment: Starting WinPE environment initialization'
 
         $systemDrive = $env:SystemDrive
         $profileRoot = Join-Path -Path $systemDrive -ChildPath 'windows\system32\config\systemprofile'
@@ -55,7 +55,7 @@ function Initialize-WinPEStartupEnvironment {
 
     process {
         if ($skipExecution) { return }
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize WinPEStartup"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize WinpeStartup"
         # ── Shell Folders ───────────────────────────────────────────────
         $shellFolders = @(
             Join-Path -Path $systemDrive -ChildPath 'Program Files\WindowsPowerShell\Scripts'
@@ -100,6 +100,6 @@ function Initialize-WinPEStartupEnvironment {
 
     end {
         if ($skipExecution) { return }
-        Write-Verbose 'Initialize-WinPEStartupEnvironment: Complete'
+        Write-Verbose 'Initialize-WinpeStartupEnvironment: Complete'
     }
 }

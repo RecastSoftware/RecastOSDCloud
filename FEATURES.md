@@ -6,9 +6,9 @@
 
 ---
 
-## WinPEStartup Orchestration
+## WinpeStartup Orchestration
 
-`Invoke-WinPEStartup` automates everything between power-on and deployment — loading drivers, connecting to the network, and auto-updating OSDCloud — in a single command. Drop a JSON profile on a USB drive for site-specific settings without touching the boot image. Extend the sequence with custom PowerShell or a HTTPS URL at any phase.
+`Invoke-WinpeStartup` automates everything between power-on and deployment — loading drivers, connecting to the network, and auto-updating OSDCloud — in a single command. Drop a JSON profile on a USB drive for site-specific settings without touching the boot image. Extend the sequence with custom PowerShell or a HTTPS URL at any phase.
 
 ---
 

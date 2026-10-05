@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.10.4.1 - October 4, 2026
+
+### Changed
+
+- Standardized `WinPEStartup` naming to `WinpeStartup` across exported startup cmdlets, private helpers, source folders and files, internal calls, status messages, and function help.
+- Updated module defaults and the bundled OSDCloud startup profile to use the `Invoke-WinpeStartup:` JSON key prefix. Startup driver, file, and profile discovery now consistently references `WinpeStartup\Drivers`, `WinpeStartup\Files`, and `WinpeStartup\profiles`.
+- Updated the module description, README command reference, deployment and troubleshooting guides, startup documentation, feature and privacy documentation, and profile-authoring guidance to use the same naming.
+- Retained existing PEStartup compatibility aliases and updated their targets to the standardized cmdlet names. This release changes capitalization only; startup parameters, defaults, and deployment behavior are unchanged.
+- Module version bumped from `26.10.2.1` to `26.10.4.1`.
+
 ## 26.10.2.1 - October 2, 2026
 
 ### Added
@@ -108,7 +118,7 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
-- Removed the deprecated `Initialize-WinPEStartupScript` helper and obsolete startup, main, and shutdown script initialization references.
+- Removed the deprecated `Initialize-WinpeStartupScript` helper and obsolete startup, main, and shutdown script initialization references.
 
 ## 26.9.8.1 - September 8, 2026
 
@@ -118,7 +128,7 @@ All notable changes to this project will be documented in this file.
 - Added OSDeploy license registration, license state management, and license help output.
 - Added verbose workflow step diagnostics for deployment troubleshooting.
 - Added WinPE startup profiles for restart and shutdown actions.
-- Added a WinPEStartup guide and updated deployment, troubleshooting, and unattended USB documentation.
+- Added a WinpeStartup guide and updated deployment, troubleshooting, and unattended USB documentation.
 
 ### Changed
 
@@ -128,7 +138,7 @@ All notable changes to this project will be documented in this file.
 - Preserved operating system language selections through deployment parameter resolution.
 - Improved device identity handling and hashed the device identifier used for telemetry.
 - Renamed device identity and license properties to use the current core naming conventions.
-- Refreshed WinPEStartup initialization, command execution, module update, Wi-Fi, USB, and device error handling paths.
+- Refreshed WinpeStartup initialization, command execution, module update, Wi-Fi, USB, and device error handling paths.
 - Updated workflow step logging, status output, target disk checks, driver pack checks, and Windows image validation.
 - Refactored driver pack catalog retrieval and update functions across Dell, HP, Lenovo, Panasonic, and Surface catalogs.
 - Updated Windows 11 25H2 operating system catalog content to build `26200.9168`.
@@ -173,7 +183,7 @@ All notable changes to this project will be documented in this file.
 - Improved cache, operating system URL, device identity, and catalog initialization status logging for clearer troubleshooting.
 - Improved workflow operating system resolution and parameter flow by centralizing OS settings selection and activation resolution logic.
 - Updated workflow and task execution scripts with standardized informational logging markers and aligned step/test behavior for target disk, driver pack, and Windows image validation.
-- Updated WinPEStartup components, including Wi-Fi and USB drive-letter initialization paths, to align with the revised deployment/core orchestration flow.
+- Updated WinpeStartup components, including Wi-Fi and USB drive-letter initialization paths, to align with the revised deployment/core orchestration flow.
 - Updated Microsoft Update Catalog save helpers and related driver workflow step behavior to match revised validation and logging patterns.
 - Updated workflow UI `MainWindow` scripts across classic, default, dev, insiders, and vNext channels for consistency with the updated deployment flow.
 - Updated repository guidance in Copilot instruction assets and catalog update instructions.
@@ -248,7 +258,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added WinPEStartup profiles for `Deploy-OSDCloud` and `Show-OSDCloudDeviceInfo`.
+- Added WinpeStartup profiles for `Deploy-OSDCloud` and `Show-OSDCloudDeviceInfo`.
 
 ### Changed
 
@@ -434,15 +444,15 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Reference documentation for all 12 exported functions in `OSDCloud/docs/`:
-  - New pages: `Invoke-WinPEStartup.md`, `Invoke-WinPEStartupManager.md`,
-    `Show-WinPEStartupDevices.md`, `Show-WinPEStartupDeviceErrors.md`,
-    `Show-WinPEStartupIpconfig.md`, `Show-WinPEStartupWifi.md`,
-    `Update-WinPEStartupModule.md`
+  - New pages: `Invoke-WinpeStartup.md`, `Invoke-WinpeStartupManager.md`,
+    `Show-WinpeStartupDevices.md`, `Show-WinpeStartupDeviceErrors.md`,
+    `Show-WinpeStartupIpconfig.md`, `Show-WinpeStartupWifi.md`,
+    `Update-WinpeStartupModule.md`
   - Updated existing pages to fill in blank `ProgressAction` descriptions,
     add `INPUTS`/`OUTPUTS`/`NOTES` sections, and cross-link related pages.
 - Conceptual guides in `docs/`:
   - `getting-started.md` — installation, quick start, and cmdlet overview.
-  - `winpe-startup.md` — WinPEStartup sequence, script hooks, USB profiles,
+  - `winpe-startup.md` — WinpeStartup sequence, script hooks, USB profiles,
     and `InvokeXxxCommand` behaviour.
   - `psoptions.md` — two-layer `PSDefaultParameterValues` system with full
     key reference table and override examples.

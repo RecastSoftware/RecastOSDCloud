@@ -14,7 +14,7 @@ difference is the JSON file on the USB.
 
 ## Why profiles exist
 
-`Invoke-WinPEStartup` accepts parameters for everything it does. Hard-coding
+`Invoke-WinpeStartup` accepts parameters for everything it does. Hard-coding
 those parameters means rebuilding the boot image whenever a policy changes.
 Profiles invert that: the boot image is generic, and a JSON file on USB
 supplies the per-site / per-scenario settings at boot time.
@@ -29,7 +29,7 @@ core/PSDefaultParameterValues.json         ← module defaults (lowest)
 
 The module defaults are loaded into `$PSDefaultParameterValues` when the
 module imports. A profile overrides any matching key. Explicit parameters
-passed on the `Invoke-WinPEStartup` command line override both.
+passed on the `Invoke-WinpeStartup` command line override both.
 
 ## How to create a profile
 
@@ -38,7 +38,7 @@ passed on the `Invoke-WinPEStartup` command line override both.
 Place a JSON file at:
 
 ```
-<USB drive>:\WinPEStartup\profiles\<anything>.json
+<USB drive>:\WinpeStartup\profiles\<anything>.json
 ```
 
 Any partition on any drive connected at boot is scanned. The OSDCloud USB's
@@ -51,11 +51,11 @@ NTFS data partition (`OSDCloud` label, created by
 
 ### 2. Choose keys
 
-Profile keys are the `Invoke-WinPEStartup` parameter names. Both forms work:
+Profile keys are the `Invoke-WinpeStartup` parameter names. Both forms work:
 
 ```jsonc
 { "SkipWiFi": true }                              // plain key
-{ "Invoke-WinPEStartup:SkipWiFi": true }          // prefixed key
+{ "Invoke-WinpeStartup:SkipWiFi": true }          // prefixed key
 ```
 
 `//` line comments and `/* */` block comments are stripped before parsing.
@@ -167,7 +167,7 @@ Empty `InvokeMainCommand` means startup runs but no deployment is triggered
 On any Windows machine with the module installed:
 
 ```powershell
-Get-Content '<USB>:\WinPEStartup\profiles\mysite.json' -Raw |
+Get-Content '<USB>:\WinpeStartup\profiles\mysite.json' -Raw |
     ForEach-Object { $_ -replace '//[^\r\n]*','' -replace '/\*.*?\*/','' } |
     ConvertFrom-Json
 ```

@@ -24,7 +24,7 @@ private/         # Orchestration helpers – not exported
   main/          # Core module init (Initialize-OSDCloudModule)
   microsoft-update-catalog/  # MUC lookup
   operatingsystem/  # OS catalog helpers
-  WinPEStartup/  # WinPE boot sequence
+  WinpeStartup/  # WinPE boot sequence
   steps/         # Workflow step implementations
   workflow/      # Workflow orchestration helpers
 classes/         # PowerShell class definitions (dot-sourced before functions)
