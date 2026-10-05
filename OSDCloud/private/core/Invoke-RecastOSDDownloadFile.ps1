@@ -1,12 +1,40 @@
-<#
-.SYNOPSIS
-Downloads a file from the internet and returns a Get-Item Object
-.DESCRIPTION
-Downloads a file from the internet and returns a Get-Item Object
-.LINK
-https://github.com/OSDeploy/OSD/tree/master/Docs
-#>
-function Invoke-OSDCloudDownloadFile {
+function Invoke-RecastOSDDownloadFile {
+    <#
+    .SYNOPSIS
+    Downloads a file to a local path and returns file information.
+
+    .DESCRIPTION
+    Downloads content from a source URL into a destination directory using
+    either curl or WebClient fallback logic, then returns a FileInfo object for
+    the downloaded file.
+
+    .PARAMETER SourceUrl
+    Source URL to download.
+
+    .PARAMETER DestinationName
+    Optional destination file name. If omitted, the file name is derived from
+    the source URL.
+
+    .PARAMETER DestinationDirectory
+    Destination directory for the downloaded file.
+
+    .PARAMETER Overwrite
+    Overwrites the destination file if it already exists.
+
+    .PARAMETER WebClient
+    Forces use of WebClient instead of curl.
+
+    .EXAMPLE
+    Invoke-RecastOSDDownloadFile -SourceUrl 'https://example.org/file.cab' -DestinationDirectory "$env:TEMP\OSD"
+    Downloads the file and returns a FileInfo object.
+
+    .LINK
+    https://github.com/OSDeploy/OSD/tree/master/docs
+
+    .NOTES
+    Author: David Segura - Recast Software
+    2026-09-30 - Unified the OSD and OSDCloud download helpers
+    #>
     [CmdletBinding()]
     [OutputType([System.IO.FileInfo])]
     param
@@ -33,6 +61,7 @@ function Invoke-OSDCloudDownloadFile {
         [System.Management.Automation.SwitchParameter]
         $WebClient
     )
+    $Error.Clear()
     #=================================================
     #	Values
     #=================================================
@@ -108,9 +137,13 @@ function Invoke-OSDCloudDownloadFile {
 
         if ($UseWebClient -eq $true) {
             [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls1
-            $WebClient = New-Object System.Net.WebClient
-            $WebClient.DownloadFile($SourceUrl, $DestinationFullName)
-            $WebClient.Dispose()
+            $webClientInstance = New-Object System.Net.WebClient
+            try {
+                $webClientInstance.DownloadFile($SourceUrl, $DestinationFullName)
+            }
+            finally {
+                $webClientInstance.Dispose()
+            }
         }
         else {
             Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] cURL Source: $SourceUrl"
