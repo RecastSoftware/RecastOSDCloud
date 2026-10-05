@@ -6,11 +6,25 @@ OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operatin
 
 ## Overview
 
-- Current repository module version: `26.10.2.1`.
+- Current repository module version: `26.10.4.1`.
 - Defaults to Windows 11 26H2 for amd64 and arm64 deployments.
 - Focused on Windows deployment workflows driven by PowerShell.
 - Supports WinpeStartup helpers and deployment UX options.
 - Provides cmdlets for device info, Wi-Fi setup, and module updates in PE.
+
+---
+
+## What's New in 26.10.4.1
+
+Released October 4, 2026.
+
+- **Consistent WinpeStartup naming:** Exported startup cmdlets, private helpers, module defaults, bundled profiles, messages, and documentation now use `WinpeStartup`, including `Invoke-WinpeStartup` and the `Invoke-WinpeStartup:` JSON key prefix.
+- **Consistent media paths:** Startup content discovery uses `WinpeStartup\Drivers`, `WinpeStartup\Files`, and `WinpeStartup\profiles`.
+- **Existing behavior preserved:** This is a naming-consistency release. Startup parameters, default settings, and deployment behavior are unchanged, and existing PEStartup compatibility aliases remain available.
+
+See [CHANGELOG.md](CHANGELOG.md) for the complete release history and [WinpeStartup documentation](docs/about_winpestartup.md) for startup configuration.
+
+---
 
 ## Requirements
 

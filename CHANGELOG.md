@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.10.4.1 - October 4, 2026
+
+### Changed
+
+- Standardized `WinPEStartup` naming to `WinpeStartup` across exported startup cmdlets, private helpers, source folders and files, internal calls, status messages, and function help.
+- Updated module defaults and the bundled OSDCloud startup profile to use the `Invoke-WinpeStartup:` JSON key prefix. Startup driver, file, and profile discovery now consistently references `WinpeStartup\Drivers`, `WinpeStartup\Files`, and `WinpeStartup\profiles`.
+- Updated the module description, README command reference, deployment and troubleshooting guides, startup documentation, feature and privacy documentation, and profile-authoring guidance to use the same naming.
+- Retained existing PEStartup compatibility aliases and updated their targets to the standardized cmdlet names. This release changes capitalization only; startup parameters, defaults, and deployment behavior are unchanged.
+- Module version bumped from `26.10.2.1` to `26.10.4.1`.
+
 ## 26.10.2.1 - October 2, 2026
 
 ### Added
