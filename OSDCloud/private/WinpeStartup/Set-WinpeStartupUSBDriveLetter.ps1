@@ -1,6 +1,6 @@
 #requires -Version 5.1
 
-function Set-WinPEStartupUSBDriveLetter {
+function Set-WinpeStartupUSBDriveLetter {
     <#
     .SYNOPSIS
         Reassigns USB drive letters in WinPE starting at H.
@@ -14,12 +14,12 @@ function Set-WinPEStartupUSBDriveLetter {
         ([System.IO.DriveInfo]::GetDrives()) to improve reliability in WinPE.
 
     .EXAMPLE
-        Set-WinPEStartupUSBDriveLetter
+        Set-WinpeStartupUSBDriveLetter
 
         Reassigns USB partition drive letters starting at H.
 
     .EXAMPLE
-        Set-WinPEStartupUSBDriveLetter -Verbose
+        Set-WinpeStartupUSBDriveLetter -Verbose
 
         Reassigns USB partition drive letters and writes detailed logs.
 
@@ -34,7 +34,7 @@ function Set-WinPEStartupUSBDriveLetter {
     $Error.Clear()
 
     if ($env:SystemDrive -ne 'X:') {
-        Write-Warning 'Set-WinPEStartupUSBDriveLetter: Not running in WinPE (SystemDrive is not X:). Exiting.'
+        Write-Warning 'Set-WinpeStartupUSBDriveLetter: Not running in WinPE (SystemDrive is not X:). Exiting.'
         return
     }
 
@@ -88,7 +88,7 @@ function Set-WinPEStartupUSBDriveLetter {
         }
 
         if (-not $newLetter) {
-            Write-Warning "Set-WinPEStartupUSBDriveLetter: No available drive letters remain in the H-Z range for Disk $($usbPartition.DiskNumber) Partition $($usbPartition.PartitionNumber)."
+            Write-Warning "Set-WinpeStartupUSBDriveLetter: No available drive letters remain in the H-Z range for Disk $($usbPartition.DiskNumber) Partition $($usbPartition.PartitionNumber)."
             $failureCount += 1
             continue
         }
@@ -107,7 +107,7 @@ function Set-WinPEStartupUSBDriveLetter {
             $resultCount += 1
         }
         catch {
-            Write-Warning "Set-WinPEStartupUSBDriveLetter: Failed to reassign Disk $($usbPartition.DiskNumber) Partition $($usbPartition.PartitionNumber) from $oldLetter to $newLetter. $($_.Exception.Message)"
+            Write-Warning "Set-WinpeStartupUSBDriveLetter: Failed to reassign Disk $($usbPartition.DiskNumber) Partition $($usbPartition.PartitionNumber) from $oldLetter to $newLetter. $($_.Exception.Message)"
             $failureCount += 1
         }
     }

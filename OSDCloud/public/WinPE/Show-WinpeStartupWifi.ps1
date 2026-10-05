@@ -9,7 +9,7 @@
     local IP assignment and renews DHCP leases when needed.
 
 .EXAMPLE
-    Show-WinPEStartupWifi
+    Show-WinpeStartupWifi
 
     Attempts to establish Wi-Fi connectivity and validates network initialization.
 
@@ -17,15 +17,15 @@
     System.Void
 
 .NOTES
-    This function is intended for WinPEStartup workflows.
+    This function is intended for WinpeStartup workflows.
     If required wireless components are missing, Wi-Fi start is skipped.
 #>
-function Show-WinPEStartupWifi {
+function Show-WinpeStartupWifi {
     [CmdletBinding()]
     param ()
     #=================================================
     $Error.Clear()
-    $host.ui.RawUI.WindowTitle = "[$(Get-Date -format s)] OSDCloud - WinPEStartup Wi-Fi"
+    $host.ui.RawUI.WindowTitle = "[$(Get-Date -format s)] OSDCloud - WinpeStartup Wi-Fi"
     #=================================================
     # Test-OSDCloudInternetConnection
     if (Test-OSDCloudInternetConnection -Uri 'google.com') {

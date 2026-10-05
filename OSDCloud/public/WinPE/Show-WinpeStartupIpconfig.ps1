@@ -4,10 +4,10 @@
 
 .DESCRIPTION
     Runs ipconfig /all to display network adapter and addressing details.
-    This function is typically used during WinPEStartup troubleshooting.
+    This function is typically used during WinpeStartup troubleshooting.
 
 .EXAMPLE
-    Show-WinPEStartupIpconfig
+    Show-WinpeStartupIpconfig
 
     Displays full adapter and IP configuration details.
 
@@ -21,7 +21,7 @@
 .LINK
     ipconfig
 #>
-function Show-WinPEStartupIpconfig {
+function Show-WinpeStartupIpconfig {
     [CmdletBinding()]
     param ()
     #=================================================

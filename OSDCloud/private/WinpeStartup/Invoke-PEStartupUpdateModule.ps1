@@ -66,7 +66,7 @@ $Unattend = @"
 				<Run$($Run)Command wcm:action="add">
 					<Order>1</Order>
 					<Description>Update PowerShell Module $Name</Description>
-					<Path>powershell.exe -NoLogo -NoProfile -WindowStyle $WindowStyle $PSNoExit-Command Update-WinPEStartupModule -Name $Name</Path>
+					<Path>powershell.exe -NoLogo -NoProfile -WindowStyle $WindowStyle $PSNoExit-Command Update-WinpeStartupModule -Name $Name</Path>
 				</Run$($Run)Command>
 			</Run$($Run)>
 		</component>
@@ -78,7 +78,7 @@ $Unattend = @"
 				<Run$($Run)Command wcm:action="add">
 					<Order>1</Order>
 					<Description>Update PowerShell Module $Name</Description>
-					<Path>powershell.exe -NoLogo -NoProfile -WindowStyle $WindowStyle $PSNoExit-Command Update-WinPEStartupModule -Name $Name</Path>
+					<Path>powershell.exe -NoLogo -NoProfile -WindowStyle $WindowStyle $PSNoExit-Command Update-WinpeStartupModule -Name $Name</Path>
 				</Run$($Run)Command>
 			</Run$($Run)>
 		</component>
@@ -89,7 +89,7 @@ $Unattend = @"
 	$Unattend | Out-File -FilePath "$env:Temp\UpdatePSModule$Name.xml" -Encoding utf8 -Force
 
 	if ($Wait -and $NoExit) {
-		# Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] This window may need to be closed to continue the WinPEStartup process"
+		# Write-Host -ForegroundColor Yellow "[$(Get-Date -format s)] This window may need to be closed to continue the WinpeStartup process"
 	}
 
 	if ($Wait) {

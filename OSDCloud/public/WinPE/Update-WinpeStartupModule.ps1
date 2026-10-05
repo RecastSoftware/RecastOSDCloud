@@ -11,12 +11,12 @@
     Specifies the module name to install or update.
 
 .EXAMPLE
-    Update-WinPEStartupModule -Name OSDCloud
+    Update-WinpeStartupModule -Name OSDCloud
 
     Installs or updates the OSDCloud module and imports it.
 
 .EXAMPLE
-    Update-WinPEStartupModule -Name PSDiskPart
+    Update-WinpeStartupModule -Name PSDiskPart
 
     Installs or updates the PSDiskPart module after the countdown.
 
@@ -24,10 +24,10 @@
     System.Void
 
 .NOTES
-    This function is intended for WinPEStartup workflows.
+    This function is intended for WinpeStartup workflows.
     Installation uses AllUsers scope, Force, and SkipPublisherCheck.
 #>
-function Update-WinPEStartupModule {
+function Update-WinpeStartupModule {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]

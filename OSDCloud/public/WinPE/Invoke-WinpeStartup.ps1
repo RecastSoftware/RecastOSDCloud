@@ -1,12 +1,12 @@
 ﻿#requires -Version 5.1
 
-function Invoke-WinPEStartup {
+function Invoke-WinpeStartup {
     <#
     .SYNOPSIS
-        Runs the WinPEStartup workflow for OSDCloud.
+        Runs the WinpeStartup workflow for OSDCloud.
 
     .DESCRIPTION
-        Executes the OSDCloud WinPEStartup sequence from a single entry point.
+        Executes the OSDCloud WinpeStartup sequence from a single entry point.
         The function can optionally load defaults from module JSON, discover and
         apply a startup profile, and then run startup steps in order including
         environment setup, drivers, files, hardware checks, connectivity, module
@@ -21,17 +21,17 @@ function Invoke-WinPEStartup {
         outside WinPE, it writes a warning and exits without running startup steps.
 
     .EXAMPLE
-        Invoke-WinPEStartup
+        Invoke-WinpeStartup
 
         Runs the startup workflow with default behavior.
 
     .EXAMPLE
-        Invoke-WinPEStartup -Verbose
+        Invoke-WinpeStartup -Verbose
 
         Runs the startup workflow and writes verbose progress details.
 
     .EXAMPLE
-        Invoke-WinPEStartup -SkipWiFi -SkipIPConfig
+        Invoke-WinpeStartup -SkipWiFi -SkipIPConfig
 
         Runs startup but skips Wi-Fi and IP configuration display steps.
 
@@ -39,10 +39,10 @@ function Invoke-WinPEStartup {
         Skips launching the on-screen keyboard check.
 
     .PARAMETER ShowPnpDevices
-        Shows the Plug and Play device hardware window (`Show-WinPEStartupDevices`). By default this window is not displayed.
+        Shows the Plug and Play device hardware window (`Show-WinpeStartupDevices`). By default this window is not displayed.
 
     .PARAMETER ShowPnpErrors
-        Shows the Plug and Play device error window (`Show-WinPEStartupDeviceErrors`). By default this window is not displayed.
+        Shows the Plug and Play device error window (`Show-WinpeStartupDeviceErrors`). By default this window is not displayed.
 
     .PARAMETER SkipWiFi
         Skips Wi-Fi startup and connection checks.
@@ -171,7 +171,7 @@ function Invoke-WinPEStartup {
         $skipExecution = $false
 
         if ($env:SystemDrive -ne 'X:') {
-            Write-Warning 'Invoke-WinPEStartup: Not running in WinPE (SystemDrive is not X:). Exiting.'
+            Write-Warning 'Invoke-WinpeStartup: Not running in WinPE (SystemDrive is not X:). Exiting.'
             $skipExecution = $true
             return
         }
@@ -202,7 +202,7 @@ function Invoke-WinPEStartup {
         )
 
         $knownParameters = @($switchLikeParameters + $arrayParameters + $stringParameters)
-        $defaultsPrefix = 'Invoke-WinPEStartup:'
+        $defaultsPrefix = 'Invoke-WinpeStartup:'
         $resolvedDefaults = [ordered]@{}
         $selectedProfile = $null
         $profileEnvironment = $null
@@ -216,7 +216,7 @@ function Invoke-WinPEStartup {
             }
         }
 
-        function ConvertFrom-WinPEStartupJsonContent {
+        function ConvertFrom-WinpeStartupJsonContent {
             [CmdletBinding()]
             param (
                 [Parameter(Mandatory = $true)]
@@ -227,7 +227,7 @@ function Invoke-WinPEStartup {
             return (ConvertFrom-Json -InputObject $sanitizedJson -ErrorAction Stop)
         }
 
-        function ConvertTo-WinPEStartupBoolean {
+        function ConvertTo-WinpeStartupBoolean {
             [CmdletBinding()]
             param (
                 [Parameter()]
@@ -263,7 +263,7 @@ function Invoke-WinPEStartup {
             return [bool]$Value
         }
 
-        function ConvertTo-WinPEStartupStringArray {
+        function ConvertTo-WinpeStartupStringArray {
             [CmdletBinding()]
             param (
                 [Parameter()]
@@ -292,7 +292,7 @@ function Invoke-WinPEStartup {
             return @([string]$Value)
         }
 
-        function Set-WinPEStartupProfileEnvironment {
+        function Set-WinpeStartupProfileEnvironment {
             [CmdletBinding()]
             param (
                 [Parameter()]
@@ -303,7 +303,7 @@ function Invoke-WinPEStartup {
             )
 
             if ($InputObject -isnot [System.Management.Automation.PSCustomObject] -and $InputObject -isnot [System.Collections.IDictionary]) {
-                Write-Warning "Invoke-WinPEStartup: Skipping invalid Environment section from '$SourceName'. Expected a JSON object."
+                Write-Warning "Invoke-WinpeStartup: Skipping invalid Environment section from '$SourceName'. Expected a JSON object."
                 return
             }
 
@@ -328,27 +328,27 @@ function Invoke-WinPEStartup {
 
             foreach ($entry in $entries) {
                 if ([string]::IsNullOrWhiteSpace($entry.Name) -or $entry.Name.Contains('=') -or $entry.Name.Contains([char]0)) {
-                    Write-Warning "Invoke-WinPEStartup: Skipping invalid environment variable name from '$SourceName'."
+                    Write-Warning "Invoke-WinpeStartup: Skipping invalid environment variable name from '$SourceName'."
                     continue
                 }
 
                 if ($null -eq $entry.Value -or $entry.Value -isnot [System.IConvertible]) {
-                    Write-Warning "Invoke-WinPEStartup: Skipping unsupported value for environment variable '$($entry.Name)' from '$SourceName'. Expected a string, number, or boolean."
+                    Write-Warning "Invoke-WinpeStartup: Skipping unsupported value for environment variable '$($entry.Name)' from '$SourceName'. Expected a string, number, or boolean."
                     continue
                 }
 
                 try {
                     $environmentValue = [System.Convert]::ToString($entry.Value, [System.Globalization.CultureInfo]::InvariantCulture)
                     [System.Environment]::SetEnvironmentVariable($entry.Name, $environmentValue, [System.EnvironmentVariableTarget]::Process)
-                    Write-Verbose "Invoke-WinPEStartup: Set process environment variable '$($entry.Name)' from '$SourceName'."
+                    Write-Verbose "Invoke-WinpeStartup: Set process environment variable '$($entry.Name)' from '$SourceName'."
                 }
                 catch {
-                    Write-Warning "Invoke-WinPEStartup: Failed to set environment variable '$($entry.Name)' from '$SourceName': $($_.Exception.Message)"
+                    Write-Warning "Invoke-WinpeStartup: Failed to set environment variable '$($entry.Name)' from '$SourceName': $($_.Exception.Message)"
                 }
             }
         }
 
-        function Add-WinPEStartupDefaults {
+        function Add-WinpeStartupDefaults {
             [CmdletBinding()]
             param (
                 [Parameter(Mandatory = $true)]
@@ -383,7 +383,7 @@ function Invoke-WinPEStartup {
 
             foreach ($entry in $entries) {
                 if ([string]::IsNullOrWhiteSpace($entry.Name)) {
-                    Write-Warning "Invoke-WinPEStartup: Skipping empty key from '$SourceName'."
+                    Write-Warning "Invoke-WinpeStartup: Skipping empty key from '$SourceName'."
                     continue
                 }
 
@@ -392,7 +392,7 @@ function Invoke-WinPEStartup {
                 }
 
                 if ($entry.Value -is [System.Management.Automation.PSCustomObject] -or $entry.Value -is [System.Collections.IDictionary]) {
-                    Write-Warning "Invoke-WinPEStartup: Skipping nested object value for '$($entry.Name)' from '$SourceName'. Profiles and defaults must be flat key-value maps."
+                    Write-Warning "Invoke-WinpeStartup: Skipping nested object value for '$($entry.Name)' from '$SourceName'. Profiles and defaults must be flat key-value maps."
                     continue
                 }
 
@@ -400,12 +400,12 @@ function Invoke-WinPEStartup {
                 $hasPrefix = $parameterName.StartsWith($defaultsPrefix, [System.StringComparison]::OrdinalIgnoreCase)
 
                 if ($KeyFormat -eq 'Prefixed' -and -not $hasPrefix) {
-                    Write-Verbose "Invoke-WinPEStartup: Ignoring non-prefixed key '$($entry.Name)' from '$SourceName'."
+                    Write-Verbose "Invoke-WinpeStartup: Ignoring non-prefixed key '$($entry.Name)' from '$SourceName'."
                     continue
                 }
 
                 if ($KeyFormat -eq 'Splat' -and $hasPrefix) {
-                    Write-Verbose "Invoke-WinPEStartup: Ignoring prefixed key '$($entry.Name)' from '$SourceName'."
+                    Write-Verbose "Invoke-WinpeStartup: Ignoring prefixed key '$($entry.Name)' from '$SourceName'."
                     continue
                 }
 
@@ -418,7 +418,7 @@ function Invoke-WinPEStartup {
                 }
 
                 if ($knownParameters -notcontains $parameterName) {
-                    Write-Verbose "Invoke-WinPEStartup: Ignoring unknown default key '$($entry.Name)' from '$SourceName'."
+                    Write-Verbose "Invoke-WinpeStartup: Ignoring unknown default key '$($entry.Name)' from '$SourceName'."
                     continue
                 }
 
@@ -429,31 +429,31 @@ function Invoke-WinPEStartup {
         if (Test-Path -LiteralPath $Script:OSDCloudPSDefaultParameterValuesPath -PathType Leaf) {
             try {
                 $rawDefaults = Get-Content -LiteralPath $Script:OSDCloudPSDefaultParameterValuesPath -Raw -ErrorAction Stop
-                $moduleDefaults = ConvertFrom-WinPEStartupJsonContent -RawContent $rawDefaults
-                Add-WinPEStartupDefaults -InputObject $moduleDefaults -SourceName $Script:OSDCloudPSDefaultParameterValuesPath -KeyFormat Prefixed
+                $moduleDefaults = ConvertFrom-WinpeStartupJsonContent -RawContent $rawDefaults
+                Add-WinpeStartupDefaults -InputObject $moduleDefaults -SourceName $Script:OSDCloudPSDefaultParameterValuesPath -KeyFormat Prefixed
             }
             catch {
-                Write-Warning "Invoke-WinPEStartup: Failed to load defaults from '$Script:OSDCloudPSDefaultParameterValuesPath': $($_.Exception.Message)"
+                Write-Warning "Invoke-WinpeStartup: Failed to load defaults from '$Script:OSDCloudPSDefaultParameterValuesPath': $($_.Exception.Message)"
             }
         }
 
         # Initialize WinPE environment (shell folders, env vars, registry)
-        Initialize-WinPEStartupEnvironment
+        Initialize-WinpeStartupEnvironment
 
-        # Load drivers from WinPEStartup\Drivers on attached drives
-        Initialize-WinPEStartupDrivers
+        # Load drivers from WinpeStartup\Drivers on attached drives
+        Initialize-WinpeStartupDrivers
 
-        # Copy files from WinPEStartup\Files on attached drives into the RAM disk
-        Initialize-WinPEStartupFiles
+        # Copy files from WinpeStartup\Files on attached drives into the RAM disk
+        Initialize-WinpeStartupFiles
 
         # Run wpeinit and wpeutil commands and wait for initialization to complete
-        Initialize-WinPEStartupMain
+        Initialize-WinpeStartupMain
         Start-Sleep -Seconds 3
 
         $candidateProfiles = [System.Collections.Generic.List[object]]::new()
 
         foreach ($driveLetter in [char[]](67..90)) {
-            $profileRoot = '{0}:\WinPEStartup\profiles' -f $driveLetter
+            $profileRoot = '{0}:\WinpeStartup\profiles' -f $driveLetter
 
             if (-not (Test-Path -LiteralPath $profileRoot -PathType Container)) {
                 continue
@@ -471,7 +471,7 @@ function Invoke-WinPEStartup {
                 }
             }
             catch {
-                Write-Verbose "Invoke-WinPEStartup: Unable to enumerate '$profileRoot': $($_.Exception.Message)"
+                Write-Verbose "Invoke-WinpeStartup: Unable to enumerate '$profileRoot': $($_.Exception.Message)"
             }
         }
 
@@ -488,11 +488,11 @@ function Invoke-WinPEStartup {
             # Use the underlying list's Count, which is always reliable, to decide auto-select vs. prompt.
             if ($candidateProfiles.Count -eq 1) {
                 $selectedProfile = $orderedProfiles[0]
-                Write-Verbose "Invoke-WinPEStartup: Auto-selected only available profile '$($selectedProfile.Path)'"
+                Write-Verbose "Invoke-WinpeStartup: Auto-selected only available profile '$($selectedProfile.Path)'"
             }
             else {
                 Write-Host ''
-                Write-Host 'WinPEStartup Profiles:'
+                Write-Host 'WinpeStartup Profiles:'
                 $orderedProfiles |
                     Select-Object Index, Profile, Path |
                     Format-Table -AutoSize |
@@ -503,13 +503,13 @@ function Invoke-WinPEStartup {
                     $selection = Read-Host 'Select a profile by number, or press Enter to cancel'
 
                     if ([string]::IsNullOrWhiteSpace($selection)) {
-                        Write-Warning 'Invoke-WinPEStartup: Profile selection cancelled.'
+                        Write-Warning 'Invoke-WinpeStartup: Profile selection cancelled.'
                         $skipExecution = $true
                         return
                     }
 
                     if ($selection -match '^(?i)q(?:uit)?$') {
-                        Write-Warning 'Invoke-WinPEStartup: Profile selection cancelled.'
+                        Write-Warning 'Invoke-WinpeStartup: Profile selection cancelled.'
                         $skipExecution = $true
                         return
                     }
@@ -520,17 +520,17 @@ function Invoke-WinPEStartup {
                     }
 
                     if (-not $selectedProfile) {
-                        Write-Warning "Invoke-WinPEStartup: Invalid selection '$selection'."
+                        Write-Warning "Invoke-WinpeStartup: Invalid selection '$selection'."
                     }
                 }
             }
         }
 
         if ($selectedProfile) {
-            Write-Verbose "Invoke-WinPEStartup: Selected profile '$($selectedProfile.Path)'"
+            Write-Verbose "Invoke-WinpeStartup: Selected profile '$($selectedProfile.Path)'"
             try {
                 $rawProfile = Get-Content -LiteralPath $selectedProfile.Path -Raw -ErrorAction Stop
-                $profileDefaults = ConvertFrom-WinPEStartupJsonContent -RawContent $rawProfile
+                $profileDefaults = ConvertFrom-WinpeStartupJsonContent -RawContent $rawProfile
                 $environmentProperties = @($profileDefaults.PSObject.Properties | Where-Object { $_.Name -in @('env', 'Environment') })
 
                 if ($environmentProperties.Count -gt 1) {
@@ -543,11 +543,11 @@ function Invoke-WinPEStartup {
                     $profileEnvironment = $environmentProperty.Value
                 }
 
-                Add-WinPEStartupDefaults -InputObject $profileDefaults -SourceName $selectedProfile.Path -KeyFormat Any
+                Add-WinpeStartupDefaults -InputObject $profileDefaults -SourceName $selectedProfile.Path -KeyFormat Any
                 Write-Host "WinPE profile applied: $($selectedProfile.Path)"
             }
             catch {
-                Write-Warning "Invoke-WinPEStartup: Failed to load profile '$($selectedProfile.Path)': $($_.Exception.Message)"
+                Write-Warning "Invoke-WinpeStartup: Failed to load profile '$($selectedProfile.Path)': $($_.Exception.Message)"
                 $skipExecution = $true
                 return
             }
@@ -555,7 +555,7 @@ function Invoke-WinPEStartup {
 
         foreach ($parameterName in $knownParameters) {
             if ($PSBoundParameters.ContainsKey($parameterName) -and -not $globalPreBoundParameters.Contains($parameterName)) {
-                Write-Verbose "Invoke-WinPEStartup: Skipping JSON default '$parameterName' because it is already bound."
+                Write-Verbose "Invoke-WinpeStartup: Skipping JSON default '$parameterName' because it is already bound."
                 continue
             }
 
@@ -567,47 +567,47 @@ function Invoke-WinPEStartup {
 
             switch ($parameterName) {
                 'SkipOnScreenKeyboard' {
-                    $SkipOnScreenKeyboard = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $SkipOnScreenKeyboard = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'ShowPnpDevices' {
-                    $ShowPnpDevices = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $ShowPnpDevices = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'ShowPnpErrors' {
-                    $ShowPnpErrors = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $ShowPnpErrors = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'SkipWiFi' {
-                    $SkipWiFi = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $SkipWiFi = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'SkipIPConfig' {
-                    $SkipIPConfig = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $SkipIPConfig = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'SkipUpdateOSDCloud' {
-                    $SkipUpdateOSDCloud = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $SkipUpdateOSDCloud = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'InstallModule' {
-                    $InstallModule = ConvertTo-WinPEStartupStringArray -Value $parameterValue
+                    $InstallModule = ConvertTo-WinpeStartupStringArray -Value $parameterValue
                 }
                 'InvokeStartupCommand' {
-                    $InvokeStartupCommand = ConvertTo-WinPEStartupStringArray -Value $parameterValue
+                    $InvokeStartupCommand = ConvertTo-WinpeStartupStringArray -Value $parameterValue
                 }
                 'InvokeMainCommand' {
-                    $InvokeMainCommand = ConvertTo-WinPEStartupStringArray -Value $parameterValue
+                    $InvokeMainCommand = ConvertTo-WinpeStartupStringArray -Value $parameterValue
                 }
                 'InvokeShutdownCommand' {
-                    $InvokeShutdownCommand = ConvertTo-WinPEStartupStringArray -Value $parameterValue
+                    $InvokeShutdownCommand = ConvertTo-WinpeStartupStringArray -Value $parameterValue
                 }
                 'InvokeStartupCommandNoExit' {
-                    $InvokeStartupCommandNoExit = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $InvokeStartupCommandNoExit = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'InvokeMainCommandNoExit' {
-                    $InvokeMainCommandNoExit = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $InvokeMainCommandNoExit = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'InvokeShutdownCommandNoExit' {
-                    $InvokeShutdownCommandNoExit = ConvertTo-WinPEStartupBoolean -Value $parameterValue
+                    $InvokeShutdownCommandNoExit = ConvertTo-WinpeStartupBoolean -Value $parameterValue
                 }
                 'InvokeStartupCommandEA' {
                     if ($parameterValue -notin @('Continue', 'Stop')) {
-                        Write-Warning "Invoke-WinPEStartup: Invalid value '$parameterValue' for 'InvokeStartupCommandEA' from JSON. Expected 'Continue' or 'Stop'. Skipping."
+                        Write-Warning "Invoke-WinpeStartup: Invalid value '$parameterValue' for 'InvokeStartupCommandEA' from JSON. Expected 'Continue' or 'Stop'. Skipping."
                     }
                     else {
                         $InvokeStartupCommandEA = [string]$parameterValue
@@ -615,7 +615,7 @@ function Invoke-WinPEStartup {
                 }
                 'InvokeMainCommandEA' {
                     if ($parameterValue -notin @('Continue', 'Stop')) {
-                        Write-Warning "Invoke-WinPEStartup: Invalid value '$parameterValue' for 'InvokeMainCommandEA' from JSON. Expected 'Continue' or 'Stop'. Skipping."
+                        Write-Warning "Invoke-WinpeStartup: Invalid value '$parameterValue' for 'InvokeMainCommandEA' from JSON. Expected 'Continue' or 'Stop'. Skipping."
                     }
                     else {
                         $InvokeMainCommandEA = [string]$parameterValue
@@ -623,7 +623,7 @@ function Invoke-WinPEStartup {
                 }
                 'InvokeShutdownCommandEA' {
                     if ($parameterValue -notin @('Continue', 'Stop')) {
-                        Write-Warning "Invoke-WinPEStartup: Invalid value '$parameterValue' for 'InvokeShutdownCommandEA' from JSON. Expected 'Continue' or 'Stop'. Skipping."
+                        Write-Warning "Invoke-WinpeStartup: Invalid value '$parameterValue' for 'InvokeShutdownCommandEA' from JSON. Expected 'Continue' or 'Stop'. Skipping."
                     }
                     else {
                         $InvokeShutdownCommandEA = [string]$parameterValue
@@ -631,14 +631,14 @@ function Invoke-WinPEStartup {
                 }
             }
 
-            Write-Verbose "Invoke-WinPEStartup: Applied default '$parameterName' from JSON configuration."
+            Write-Verbose "Invoke-WinpeStartup: Applied default '$parameterName' from JSON configuration."
         }
 
         if ($selectedProfile -and $environmentProperty) {
-            Set-WinPEStartupProfileEnvironment -InputObject $profileEnvironment -SourceName $selectedProfile.Path
+            Set-WinpeStartupProfileEnvironment -InputObject $profileEnvironment -SourceName $selectedProfile.Path
         }
 
-        Write-Verbose 'Invoke-WinPEStartup: Starting full WinPEStartup sequence'
+        Write-Verbose 'Invoke-WinpeStartup: Starting full WinpeStartup sequence'
     }
 
     process {
@@ -646,33 +646,33 @@ function Invoke-WinPEStartup {
 
         # On Screen Keyboard if one is not detected
         if (-not $SkipOnScreenKeyboard) {
-            Invoke-WinPEStartupManager OSK
+            Invoke-WinpeStartupManager OSK
         }
 
         if ($ShowPnpDevices) {
-            Invoke-WinPEStartupManager DeviceHardware
+            Invoke-WinpeStartupManager DeviceHardware
         }
 
         if ($ShowPnpErrors) {
-            Invoke-WinPEStartupManager DeviceErrors
+            Invoke-WinpeStartupManager DeviceErrors
         }
 
         if (-not $SkipWiFi) {
-            Invoke-WinPEStartupManager WiFi
+            Invoke-WinpeStartupManager WiFi
         }
 
         if (-not $SkipIPConfig) {
-            Invoke-WinPEStartupManager IPConfig
+            Invoke-WinpeStartupManager IPConfig
         }
 
         if ($InstallModule) {
             foreach ($module in $InstallModule) {
-                Invoke-WinPEStartupManager UpdateModule -Value $module
+                Invoke-WinpeStartupManager UpdateModule -Value $module
             }
         }
 
         if (-not $SkipUpdateOSDCloud) {
-            Invoke-WinPEStartupManager UpdateModule -Value OSDCloud
+            Invoke-WinpeStartupManager UpdateModule -Value OSDCloud
         }
 
         if ($InvokeStartupCommand) {
@@ -834,6 +834,6 @@ function Invoke-WinPEStartup {
 
     end {
         if ($skipExecution) { return }
-        Write-Verbose 'Invoke-WinPEStartup: Complete'
+        Write-Verbose 'Invoke-WinpeStartup: Complete'
     }
 }
