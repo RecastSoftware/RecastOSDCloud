@@ -1,20 +1,20 @@
 ﻿{
-  "Invoke-WinPEStartup:SkipOnScreenKeyboard": false,
-  "Invoke-WinPEStartup:ShowPnpDevices": false,
-  "Invoke-WinPEStartup:ShowPnpErrors": false,
-  "Invoke-WinPEStartup:SkipWiFi": false,
-  "Invoke-WinPEStartup:SkipIPConfig": false,
-  "Invoke-WinPEStartup:InstallModule": [],
-  "Invoke-WinPEStartup:SkipUpdateOSDCloud": false,
-  "Invoke-WinPEStartup:InvokeStartupCommand": [],
-  "Invoke-WinPEStartup:InvokeStartupCommandNoExit": false,
-  "Invoke-WinPEStartup:InvokeStartupCommandEA": "Continue",
-  "Invoke-WinPEStartup:InvokeMainCommand": [
+  "Invoke-WinpeStartup:SkipOnScreenKeyboard": false,
+  "Invoke-WinpeStartup:ShowPnpDevices": false,
+  "Invoke-WinpeStartup:ShowPnpErrors": false,
+  "Invoke-WinpeStartup:SkipWiFi": false,
+  "Invoke-WinpeStartup:SkipIPConfig": false,
+  "Invoke-WinpeStartup:InstallModule": [],
+  "Invoke-WinpeStartup:SkipUpdateOSDCloud": false,
+  "Invoke-WinpeStartup:InvokeStartupCommand": [],
+  "Invoke-WinpeStartup:InvokeStartupCommandNoExit": false,
+  "Invoke-WinpeStartup:InvokeStartupCommandEA": "Continue",
+  "Invoke-WinpeStartup:InvokeMainCommand": [
     "Show-OSDCloudDeviceInfo"
   ],
-  "Invoke-WinPEStartup:InvokeMainCommandNoExit": true,
-  "Invoke-WinPEStartup:InvokeMainCommandEA": "Continue",
-  "Invoke-WinPEStartup:InvokeShutdownCommand": [],
-  "Invoke-WinPEStartup:InvokeShutdownCommandNoExit": false,
-  "Invoke-WinPEStartup:InvokeShutdownCommandEA": "Continue"
+  "Invoke-WinpeStartup:InvokeMainCommandNoExit": true,
+  "Invoke-WinpeStartup:InvokeMainCommandEA": "Continue",
+  "Invoke-WinpeStartup:InvokeShutdownCommand": [],
+  "Invoke-WinpeStartup:InvokeShutdownCommandNoExit": false,
+  "Invoke-WinpeStartup:InvokeShutdownCommandEA": "Continue"
 }

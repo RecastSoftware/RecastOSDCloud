@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-    Invokes a WinPEStartup utility action by Id.
+    Invokes a WinpeStartup utility action by Id.
 
 .DESCRIPTION
-    Routes WinPEStartup actions to the corresponding helper command.
+    Routes WinpeStartup actions to the corresponding helper command.
     Actions include on-screen keyboard handling, hardware and error display,
     network utilities, and module update operations.
 
@@ -17,37 +17,37 @@
     For UpdateModule, set this value to the module name to update.
 
 .EXAMPLE
-    Invoke-WinPEStartupManager -Id OSK
+    Invoke-WinpeStartupManager -Id OSK
 
     Launches the on-screen keyboard when no physical keyboard is detected.
 
 .EXAMPLE
-    Invoke-WinPEStartupManager -Id DeviceErrors
+    Invoke-WinpeStartupManager -Id DeviceErrors
 
     Displays non-OK Plug and Play device status details.
 
 .EXAMPLE
-    Invoke-WinPEStartupManager -Id DeviceHardware
+    Invoke-WinpeStartupManager -Id DeviceHardware
 
     Displays Plug and Play device hardware details.
 
 .EXAMPLE
-    Invoke-WinPEStartupManager -Id Info
+    Invoke-WinpeStartupManager -Id Info
 
     Shows comprehensive device information.
 
 .EXAMPLE
-    Invoke-WinPEStartupManager -Id IPConfig
+    Invoke-WinpeStartupManager -Id IPConfig
 
     Launches IP configuration display in a minimized window.
 
 .EXAMPLE
-    Invoke-WinPEStartupManager -Id WiFi
+    Invoke-WinpeStartupManager -Id WiFi
 
     Starts Wi-Fi connection workflow when network connectivity is not detected.
 
 .EXAMPLE
-    Invoke-WinPEStartupManager -Id UpdateModule -Value OSDCloud
+    Invoke-WinpeStartupManager -Id UpdateModule -Value OSDCloud
 
     Updates the OSDCloud module.
 
@@ -55,13 +55,13 @@
     System.Void
 
 .NOTES
-    This function is intended for WinPEStartup workflows.
+    This function is intended for WinpeStartup workflows.
     The UpdateModule action requires Value to be set to a module name.
 
 .LINK
     https://github.com/OSDeploy/OSDCloud
 #>
-function Invoke-WinPEStartupManager {
+function Invoke-WinpeStartupManager {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true, Position = 0)]
@@ -103,10 +103,10 @@ function Invoke-WinPEStartupManager {
             }
         }
         'DeviceErrors' {
-            Invoke-PEStartupCommand Show-WinPEStartupDeviceErrors -NoExit -Wait
+            Invoke-PEStartupCommand Show-WinpeStartupDeviceErrors -NoExit -Wait
         }
         'DeviceHardware' {
-            Invoke-PEStartupCommand Show-WinPEStartupDevices -WindowStyle Minimized -NoExit
+            Invoke-PEStartupCommand Show-WinpeStartupDevices -WindowStyle Minimized -NoExit
         }
         'WiFi' {
             # Wait a few seconds for the network stack to initialize before checking for connectivity
@@ -127,12 +127,12 @@ function Invoke-WinPEStartupManager {
             }
             else {
                 Write-Host "OSDCloud Wi-Fi: Network connection not detected. Launching Wi-Fi connection."
-                Invoke-PEStartupCommand Show-WinPEStartupWifi -Wait
+                Invoke-PEStartupCommand Show-WinpeStartupWifi -Wait
             }
         }
         'IPConfig' {
             Write-Host "OSDCloud IPConfig: Launching IPConfig in minimized window."
-            Invoke-PEStartupCommand Show-WinPEStartupIpconfig -Run Asynchronous -WindowStyle Minimized -NoExit
+            Invoke-PEStartupCommand Show-WinpeStartupIpconfig -Run Asynchronous -WindowStyle Minimized -NoExit
         }
         'UpdateModule' {
             # Value must be specified for this function to work

@@ -73,13 +73,13 @@ if ($FoundErrors.Count -gt 0) {
 
 if ($env:SystemDrive -eq 'X:') {
     Set-Alias -Name OSDCloudExplorer -Value Start-OSDCloudExplorer -Scope Script
-    New-Alias -Name Invoke-OSDCloudPEStartup -Value Invoke-WinPEStartupManager -Description 'Backward compatibility alias' -Force
+    New-Alias -Name Invoke-OSDCloudPEStartup -Value Invoke-WinpeStartupManager -Description 'Backward compatibility alias' -Force
     New-Alias -Name Show-PEStartupDeviceInfo -Value Show-OSDCloudDeviceInfo -Description 'Backward compatibility alias' -Force
-    New-Alias -Name Show-PEStartupHardware -Value Show-WinPEStartupDevices -Description 'Backward compatibility alias' -Force
-    New-Alias -Name Show-PEStartupErrors -Value Show-WinPEStartupDeviceErrors -Description 'Backward compatibility alias' -Force
-    New-Alias -Name Show-PEStartupIpconfig -Value Show-WinPEStartupIpconfig -Description 'Backward compatibility alias' -Force
-    New-Alias -Name Show-PEStartupWifi -Value Show-WinPEStartupWifi -Description 'Backward compatibility alias' -Force
-    New-Alias -Name Use-PEStartupUpdateModule -Value Update-WinPEStartupModule -Description 'Backward compatibility alias' -Force
+    New-Alias -Name Show-PEStartupHardware -Value Show-WinpeStartupDevices -Description 'Backward compatibility alias' -Force
+    New-Alias -Name Show-PEStartupErrors -Value Show-WinpeStartupDeviceErrors -Description 'Backward compatibility alias' -Force
+    New-Alias -Name Show-PEStartupIpconfig -Value Show-WinpeStartupIpconfig -Description 'Backward compatibility alias' -Force
+    New-Alias -Name Show-PEStartupWifi -Value Show-WinpeStartupWifi -Description 'Backward compatibility alias' -Force
+    New-Alias -Name Use-PEStartupUpdateModule -Value Update-WinpeStartupModule -Description 'Backward compatibility alias' -Force
 }
 
 Export-ModuleMember -Function '*' -Alias '*' -Cmdlet '*'

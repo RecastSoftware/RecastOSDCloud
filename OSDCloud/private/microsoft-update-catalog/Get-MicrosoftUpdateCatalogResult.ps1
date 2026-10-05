@@ -250,8 +250,13 @@ function Get-MicrosoftUpdateCatalogResult {
             #region Base Filtering
             # Apply base filters with improved logic
             $Rows = $Rows.Where({
-                    $title = $_.SelectNodes("td")[1].InnerText.Trim()
-                    $classification = $_.SelectNodes("td")[3].InnerText.Trim()
+                    $cells = $_.SelectNodes("td")
+                    if ($null -eq $cells -or $cells.Count -lt 4) {
+                        return $false
+                    }
+
+                    $title = [string]$cells[1].InnerText
+                    $classification = [string]$cells[3].InnerText
                     $include = $true
 
 
@@ -367,7 +372,12 @@ function Get-MicrosoftUpdateCatalogResult {
             # Apply architecture filter with improved logic
             if ($Architecture -ne "all") {
                 $Rows = $Rows.Where({
-                        $title = $_.SelectNodes("td")[1].InnerText.Trim()
+                        $cells = $_.SelectNodes("td")
+                        if ($null -eq $cells -or $cells.Count -lt 2) {
+                            return $false
+                        }
+
+                        $title = [string]$cells[1].InnerText
                         switch ($Architecture) {
                             "x64" { $title -match "x64|64.?bit|64.?based" -and -not ($title -match "x86|32.?bit|arm64") }
                             "x86" { $title -match "x86|32.?bit|32.?based" -and -not ($title -match "64.?bit|arm64") }

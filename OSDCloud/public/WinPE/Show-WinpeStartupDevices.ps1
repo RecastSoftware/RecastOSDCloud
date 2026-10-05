@@ -1,4 +1,4 @@
-function Show-WinPEStartupDevices {
+function Show-WinpeStartupDevices {
     <#
     .SYNOPSIS
         Displays WinPE Plug and Play device inventory.
@@ -9,7 +9,7 @@ function Show-WinPEStartupDevices {
         query command to the clipboard for reuse.
 
     .EXAMPLE
-        Show-WinPEStartupDevices
+        Show-WinpeStartupDevices
 
         Displays Plug and Play hardware information in WinPE.
 

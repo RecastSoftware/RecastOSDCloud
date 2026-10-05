@@ -3,10 +3,10 @@
     "WINPESTARTUP_AUTHOR": "OSDeploy",
     "WINPESTARTUP_PROFILE": "OSDCloud"
   },
-  "Invoke-WinPEStartup:InvokeMainCommand": [
+  "Invoke-WinpeStartup:InvokeMainCommand": [
     "Show-OSDCloudDeviceInfo",
     "Deploy-OSDCloud"
   ],
-  "Invoke-WinPEStartup:InvokeMainCommandNoExit": true,
-  "Invoke-WinPEStartup:InvokeMainCommandEA": "Continue"
+  "Invoke-WinpeStartup:InvokeMainCommandNoExit": true,
+  "Invoke-WinpeStartup:InvokeMainCommandEA": "Continue"
 }

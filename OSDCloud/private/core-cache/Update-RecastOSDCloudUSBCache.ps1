@@ -355,8 +355,8 @@ function Update-RecastOSDCloudUSBCache {
     #================================================
     # OSDCoreDriverPackCloudObject
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDManufacturer: $($global:OSDCoreDevice.OSDManufacturer)"
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDModel: $($global:OSDCoreDevice.OSDModel)"
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDProduct: $($global:OSDCoreDevice.OSDProduct)"
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDModel: $($global:OSDCoreDevice.OSDModel)"
     if ($global:OSDCoreDriverPackCloudObject) {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Verifying OSDCoreDriverPackCloudObject."
         $global:OSDCoreDriverPackCloudObject | Out-Host

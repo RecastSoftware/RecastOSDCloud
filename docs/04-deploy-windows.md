@@ -10,7 +10,7 @@ a freshly installed Windows 11 at the OOBE screen.
 
 OSDCloud splits the deployment into two halves:
 
-1. **WinPEStartup** — `Invoke-WinPEStartup` brings the environment online
+1. **WinpeStartup** — `Invoke-WinpeStartup` brings the environment online
    (drivers, network, current module).
 2. **OS deployment** — `Deploy-OSDCloud` runs a 40-step workflow that
    installs Windows and injects drivers.
@@ -34,7 +34,7 @@ sequenceDiagram
     participant Mod as OSDCloud module
     participant MS as Microsoft + OEM
     Op->>PE: Power on, boot WinPE
-    PE->>Mod: Invoke-WinPEStartup
+    PE->>Mod: Invoke-WinpeStartup
     Mod->>Mod: Drivers, network, self-update
     Op->>Mod: Deploy-OSDCloud
     Mod->>Op: Show UX (OS / edition / language)
@@ -51,13 +51,13 @@ sequenceDiagram
 
 ### 1. WinPE boots
 
-If your boot image runs `Invoke-WinPEStartup` from `startnet.cmd`, the
+If your boot image runs `Invoke-WinpeStartup` from `startnet.cmd`, the
 startup sequence begins automatically. Otherwise, run it manually:
 
 ```powershell
 Install-Module OSDCloud -SkipPublisherCheck -Force
 Import-Module OSDCloud
-Invoke-WinPEStartup
+Invoke-WinpeStartup
 ```
 
 What happens during startup:

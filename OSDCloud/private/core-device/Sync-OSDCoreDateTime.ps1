@@ -1,22 +1,22 @@
 function Sync-OSDCoreDateTime {
     <#
     .SYNOPSIS
-        Synchronizes the system clock with internet time from Google.
+        Synchronizes the system datetime with the internet datetime from Google.
 
     .DESCRIPTION
-        Retrieves the current time from Google's HTTP Date header and compares it with the local system time.
-        If the time difference exceeds the specified threshold and the system is running in WinPE (X: drive),
-        the function will update the system clock to match the internet time.
+        Retrieves the current datetime from Google's HTTP Date header and compares it with the local system datetime.
+        If the datetime difference exceeds the specified threshold and the system is running in WinPE (X: drive),
+        the function will update the system datetime to match the internet datetime.
 
         Note: Uses HTTP instead of HTTPS to avoid certificate validation issues that may occur when the
-        system clock is significantly out of sync.
+        system datetime is significantly out of sync.
 
     .PARAMETER ThresholdMinutes
         The minimum time difference in minutes required to trigger a synchronization warning or action.
         Default is 5 minutes.
 
     .PARAMETER Force
-        When specified, actually updates the system clock when the time difference exceeds the threshold.
+        When specified, actually updates the system datetime when the time difference exceeds the threshold.
         Without this parameter, the function only reports time differences without making changes.
 
     .PARAMETER PassThru
@@ -26,20 +26,20 @@ function Sync-OSDCoreDateTime {
     .EXAMPLE
         Sync-OSDCoreDateTime
 
-        Checks the system time against internet time and reports any differences (in WinPE environment).
+        Checks the system datetime against the internet datetime and reports any differences (in WinPE environment).
 
     .EXAMPLE
         Sync-OSDCoreDateTime -Force
 
-        Checks and actually updates the system clock if the time difference exceeds the threshold.
+        Checks and actually updates the system datetime if the datetime difference exceeds the threshold.
 
     .EXAMPLE
         Sync-OSDCoreDateTime -ThresholdMinutes 30 -Force -PassThru
 
-        Uses a 30-minute threshold, updates the clock if needed, and returns detailed synchronization results.
+        Uses a 30-minute threshold, updates the system datetime if needed, and returns detailed synchronization results.
 
     .NOTES
-        This function only modifies the system clock when running in Windows Preinstallation Environment (WinPE),
+        This function only modifies the system datetime when running in Windows Preinstallation Environment (WinPE),
         detected by checking if the system drive is X:.
     #>
     [CmdletBinding(SupportsShouldProcess)]
@@ -115,40 +115,40 @@ function Sync-OSDCoreDateTime {
         }
 
         if ($result.LocalDateTime -and $result.InternetDateTime) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Clock: $($result.LocalDateTime)"
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Network Time: $($result.InternetDateTime)"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System DateTime: $($result.LocalDateTime)"
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Network DateTime: $($result.InternetDateTime)"
             $result.DifferenceMinutes = [math]::Round([math]::Abs(($result.InternetDateTime - $result.LocalDateTime).TotalMinutes))
 
             if ($result.DifferenceMinutes -gt $ThresholdMinutes) {
-                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: Time difference of $($result.DifferenceMinutes) minutes exceeds $ThresholdMinutes minute threshold."
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: Time difference of $($result.DifferenceMinutes) minutes exceeds $ThresholdMinutes minute threshold."
 
                 if ($result.IsWinPE) {
                     if ($Force) {
-                        if ($PSCmdlet.ShouldProcess("System Clock", "Set to $($result.InternetDateTime)")) {
-                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Clock: Synchronize with Network Time."
+                        if ($PSCmdlet.ShouldProcess("System DateTime", "Set to $($result.InternetDateTime)")) {
+                            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System DateTime: Synchronize with internet datetime."
                             try {
                                 $null = Set-Date -Date $result.InternetDateTime -ErrorAction Stop
                                 $result.ClockUpdated = $true
-                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Clock: Successfully updated to Network Time."
+                                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System DateTime: Successfully updated to internet datetime."
                             }
                             catch {
-                                $result.ErrorMessage = "Failed to set system clock: $($_.Exception.Message)"
-                                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: $($result.ErrorMessage)"
+                                $result.ErrorMessage = "Failed to set System DateTime: $($_.Exception.Message)"
+                                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: $($result.ErrorMessage)"
                             }
                         }
                     }
                     else {
-                        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: System clock is $($result.DifferenceMinutes) minutes out of sync with internet time"
-                        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: Use -Force parameter to update the system clock"
+                        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: System datetime is $($result.DifferenceMinutes) minutes out of sync with internet time"
+                        Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: Use -Force parameter to update the system datetime"
                     }
                 }
                 else {
-                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: System clock is $($result.DifferenceMinutes) minutes out of sync with internet time"
-                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System Clock: Please synchronize your system clock manually (not in WinPE environment)"
+                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: System datetime is $($result.DifferenceMinutes) minutes out of sync with internet time"
+                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] System DateTime: Please synchronize your system datetime manually (not in WinPE environment)"
                 }
             }
             else {
-                # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System Clock: Synchronized within threshold ($($result.DifferenceMinutes) minutes difference)."
+                # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] System DateTime: Synchronized within threshold ($($result.DifferenceMinutes) minutes difference)."
             }
         }
 

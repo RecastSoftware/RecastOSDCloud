@@ -1,6 +1,6 @@
 #requires -Version 5.1
 
-function Initialize-WinPEStartupDrivers {
+function Initialize-WinpeStartupDrivers {
     <#
     .SYNOPSIS
         Loads drivers from $WinPEDriver$ folders found on any attached drive
@@ -16,21 +16,21 @@ function Initialize-WinPEStartupDrivers {
 
     .PARAMETER SubfolderPath
         The relative subfolder path to search for on each drive. Defaults
-        to 'WinPEStartup\Drivers'.
+        to 'WinpeStartup\Drivers'.
 
     .EXAMPLE
-        Initialize-WinPEStartupDrivers
+        Initialize-WinpeStartupDrivers
 
         Scans all drive letters and loads every .inf found under $WinPEDriver$.
 
     .EXAMPLE
-        Initialize-WinPEStartupDrivers -SubfolderPath 'MyDrivers'
+        Initialize-WinpeStartupDrivers -SubfolderPath 'MyDrivers'
 
         Scans all drive letters for a subfolder path MyDrivers instead of
-        the default WinPEStartup\Drivers.
+        the default WinpeStartup\Drivers.
 
     .EXAMPLE
-        Initialize-WinPEStartupDrivers -Verbose
+        Initialize-WinpeStartupDrivers -Verbose
 
         Loads drivers with detailed progress showing each drive and .inf file.
 
@@ -43,18 +43,18 @@ function Initialize-WinPEStartupDrivers {
     param (
         [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [string]$SubfolderPath = 'WinPEStartup\Drivers'
+        [string]$SubfolderPath = 'WinpeStartup\Drivers'
     )
 
     begin {
         $skipExecution = $false
         if ($env:SystemDrive -ne 'X:') {
-            Write-Warning 'Initialize-WinPEStartupDrivers: Not running in WinPE (SystemDrive is not X:). Exiting.'
+            Write-Warning 'Initialize-WinpeStartupDrivers: Not running in WinPE (SystemDrive is not X:). Exiting.'
             $skipExecution = $true
             return
         }
 
-        Write-Verbose 'Initialize-WinPEStartupDrivers: Starting driver scan'
+        Write-Verbose 'Initialize-WinpeStartupDrivers: Starting driver scan'
     }
 
     process {
@@ -86,6 +86,6 @@ function Initialize-WinPEStartupDrivers {
 
     end {
         if ($skipExecution) { return }
-        Write-Verbose 'Initialize-WinPEStartupDrivers: Complete'
+        Write-Verbose 'Initialize-WinpeStartupDrivers: Complete'
     }
 }

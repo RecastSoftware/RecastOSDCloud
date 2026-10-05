@@ -1,29 +1,29 @@
-# WinPEStartup: OSDCloud's Boot-Time Checklist
+# WinpeStartup: OSDCloud's Boot-Time Checklist
 
 WinPE is a small, temporary operating system. That makes it fast and useful for deployment, but it also means the environment starts with very little state. Drive letters may not be stable, networking may still be waking up, optional storage or network drivers may be needed, and a technician may have plugged in a USB drive with extra files or a startup profile.
 
-`Invoke-WinPEStartup` is OSDCloud's answer to that early boot problem. It gives WinPE a predictable startup checklist before the user or deployment workflow starts making larger decisions.
+`Invoke-WinpeStartup` is OSDCloud's answer to that early boot problem. It gives WinPE a predictable startup checklist before the user or deployment workflow starts making larger decisions.
 
 ## What it does in plain English
 
-`Invoke-WinPEStartup` runs only when `SystemDrive` is `X:`, which is the normal WinPE RAM disk. If it is called from a full Windows installation, it writes a warning and exits. That guard matters because several startup actions are WinPE-specific and should not change a normal Windows session.
+`Invoke-WinpeStartup` runs only when `SystemDrive` is `X:`, which is the normal WinPE RAM disk. If it is called from a full Windows installation, it writes a warning and exits. That guard matters because several startup actions are WinPE-specific and should not change a normal Windows session.
 
 At a high level, the startup flow does this:
 
 | Phase | What happens | Why it matters |
 |---|---|---|
-| Load defaults | Reads module-level JSON defaults for `Invoke-WinPEStartup:*` keys. | Lets a boot image carry sensible startup behavior without hard-coding it in the function. |
+| Load defaults | Reads module-level JSON defaults for `Invoke-WinpeStartup:*` keys. | Lets a boot image carry sensible startup behavior without hard-coding it in the function. |
 | Prepare the shell | Creates profile folders, sets key environment variables, and configures PowerShell execution policy for the WinPE session. | Gives PowerShell and user-profile paths enough structure to behave like a normal shell. |
-| Load drivers | Scans attached drives for `WinPEStartup\Drivers` and loads discovered `.inf` files with `drvload.exe`. | Allows storage, network, or input drivers to be supplied from USB without rebuilding the boot image. |
-| Copy files | Scans attached drives for `WinPEStartup\Files` and copies content into the WinPE RAM disk. | Makes helper files, tools, or configuration available at `X:\` for the current session. |
+| Load drivers | Scans attached drives for `WinpeStartup\Drivers` and loads discovered `.inf` files with `drvload.exe`. | Allows storage, network, or input drivers to be supplied from USB without rebuilding the boot image. |
+| Copy files | Scans attached drives for `WinpeStartup\Files` and copies content into the WinPE RAM disk. | Makes helper files, tools, or configuration available at `X:\` for the current session. |
 | Initialize WinPE | Runs `wpeinit`, disables the firewall, updates boot info, normalizes USB drive letters, renews networking, and opens a minimized PowerShell session. | Establishes hardware, networking, and predictable removable-drive layout before later steps run. |
-| Select a profile | Scans `WinPEStartup\profiles` on attached drives for JSON profiles. A single profile is selected automatically; multiple profiles are shown as a menu. | Lets one USB drive hold site, customer, or workflow-specific startup settings. |
+| Select a profile | Scans `WinpeStartup\profiles` on attached drives for JSON profiles. A single profile is selected automatically; multiple profiles are shown as a menu. | Lets one USB drive hold site, customer, or workflow-specific startup settings. |
 | Apply parameters | Merges defaults, profile values, and explicit caller parameters. Explicit caller parameters win. | Keeps the configuration flexible while preserving operator intent. |
 | Run startup actions | Optionally launches the on-screen keyboard, device views, Wi-Fi connection UI, IP configuration display, module updates, and startup/main/shutdown commands. | Handles the common things a technician needs immediately after WinPE starts. |
 
 ## The basic flow
 
-The entry point is `Invoke-WinPEStartup`. It does not try to deploy Windows by itself. Instead, it prepares the temporary WinPE session so the next command has a sane environment.
+The entry point is `Invoke-WinpeStartup`. It does not try to deploy Windows by itself. Instead, it prepares the temporary WinPE session so the next command has a sane environment.
 
 The flow is intentionally front-loaded:
 
@@ -42,24 +42,24 @@ That order is deliberate. Drivers and copied files are available before the main
 
 ## Defaults and profiles
 
-WinPEStartup configuration has two useful layers.
+WinpeStartup configuration has two useful layers.
 
 Module defaults are read from the OSDCloud PSDefaultParameterValues JSON file. Keys use the normal PowerShell default-parameter style, such as:
 
 ```json
 {
-  "Invoke-WinPEStartup:SkipWiFi": true,
-  "Invoke-WinPEStartup:SkipIPConfig": true
+  "Invoke-WinpeStartup:SkipWiFi": true,
+  "Invoke-WinpeStartup:SkipIPConfig": true
 }
 ```
 
 Startup profiles are JSON files under this layout on any attached drive:
 
 ```text
-H:\WinPEStartup\profiles\BranchOffice.json
+H:\WinpeStartup\profiles\BranchOffice.json
 ```
 
-Profiles may use either prefixed keys, such as `Invoke-WinPEStartup:SkipWiFi`, or plain splat-style keys, such as `SkipWiFi`. That makes profiles easier to read while still supporting the same parameters.
+Profiles may use either prefixed keys, such as `Invoke-WinpeStartup:SkipWiFi`, or plain splat-style keys, such as `SkipWiFi`. That makes profiles easier to read while still supporting the same parameters.
 
 A profile may also include an unprefixed `Environment` object:
 
@@ -70,7 +70,7 @@ A profile may also include an unprefixed `Environment` object:
     "OSDCLOUD_DEPLOYMENT_RING": 2,
     "OSDCLOUD_INTERACTIVE": true
   },
-  "Invoke-WinPEStartup:InvokeMainCommand": [
+  "Invoke-WinpeStartup:InvokeMainCommand": [
     "Deploy-OSDCloud"
   ]
 }
@@ -82,11 +82,11 @@ Null values, arrays, nested objects, and invalid variable names produce a warnin
 
 If exactly one profile is found, OSDCloud selects it automatically. If several profiles are found, OSDCloud shows a numbered list and lets the operator choose. Pressing Enter or typing `q` cancels the profile selection and stops the remaining startup sequence.
 
-Explicit parameters passed to `Invoke-WinPEStartup` take precedence over JSON values. That rule is important: a profile can supply defaults, but a real command-line choice from the operator should not be silently overridden.
+Explicit parameters passed to `Invoke-WinpeStartup` take precedence over JSON values. That rule is important: a profile can supply defaults, but a real command-line choice from the operator should not be silently overridden.
 
 ## Command hooks
 
-`Invoke-WinPEStartup` supports three command phases:
+`Invoke-WinpeStartup` supports three command phases:
 
 | Parameter | When it runs |
 |---|---|
@@ -114,13 +114,13 @@ A startup checklist gives OSDCloud one predictable place to handle that early in
 
 ### USB media becomes more useful
 
-The same USB drive can provide more than a boot image. With a `WinPEStartup` folder, it can also carry:
+The same USB drive can provide more than a boot image. With a `WinpeStartup` folder, it can also carry:
 
 | Folder | Purpose |
 |---|---|
-| `WinPEStartup\Drivers` | Supplemental `.inf` drivers loaded into WinPE. |
-| `WinPEStartup\Files` | Files copied into the WinPE RAM disk. |
-| `WinPEStartup\profiles` | JSON startup profiles selected at boot. |
+| `WinpeStartup\Drivers` | Supplemental `.inf` drivers loaded into WinPE. |
+| `WinpeStartup\Files` | Files copied into the WinPE RAM disk. |
+| `WinpeStartup\profiles` | JSON startup profiles selected at boot. |
 
 That lets a technician adapt one boot image to different sites or hardware without rebuilding the image every time.
 
@@ -142,7 +142,7 @@ The precedence order keeps the broad settings convenient while still letting the
 
 ### Optional windows stay optional
 
-Not every startup needs the on-screen keyboard, device hardware window, PnP error window, Wi-Fi UI, or IP configuration window. `Invoke-WinPEStartupManager` routes those actions only when the corresponding setting asks for them.
+Not every startup needs the on-screen keyboard, device hardware window, PnP error window, Wi-Fi UI, or IP configuration window. `Invoke-WinpeStartupManager` routes those actions only when the corresponding setting asks for them.
 
 That keeps quiet, unattended runs clean while still making technician-driven troubleshooting easy.
 
@@ -154,7 +154,7 @@ That avoids wasting time on module updates when the device is clearly offline an
 
 ## What it does not do
 
-`Invoke-WinPEStartup` prepares the WinPE session. By itself, it does **not**:
+`Invoke-WinpeStartup` prepares the WinPE session. By itself, it does **not**:
 
 - deploy Windows;
 - partition or wipe disks;
@@ -170,16 +170,16 @@ It answers a smaller but important question: **is this WinPE session ready enoug
 
 Imagine a technician arriving at a workbench before starting a rebuild. They plug in the USB drive, lay out the extra tools, check that the network is working, make sure the keyboard is usable, pick the right instruction sheet, and only then start the deployment.
 
-`Invoke-WinPEStartup` is that setup routine for WinPE. It does the practical boot-time chores first so deployment logic can start from a cleaner, more predictable place.
+`Invoke-WinpeStartup` is that setup routine for WinPE. It does the practical boot-time chores first so deployment logic can start from a cleaner, more predictable place.
 
 ## Where to find the details
 
-The main entry point is [OSDCloud/public/WinPE/Invoke-WinPEStartup.ps1](../OSDCloud/public/WinPE/Invoke-WinPEStartup.ps1). Optional startup actions are dispatched by [OSDCloud/public/WinPE/Invoke-WinPEStartupManager.ps1](../OSDCloud/public/WinPE/Invoke-WinPEStartupManager.ps1).
+The main entry point is [OSDCloud/public/WinPE/Invoke-WinpeStartup.ps1](../OSDCloud/public/WinPE/Invoke-WinpeStartup.ps1). Optional startup actions are dispatched by [OSDCloud/public/WinPE/Invoke-WinpeStartupManager.ps1](../OSDCloud/public/WinPE/Invoke-WinpeStartupManager.ps1).
 
-The private helper functions live under [OSDCloud/private/WinPEStartup](../OSDCloud/private/WinPEStartup). The most important pieces are:
+The private helper functions live under [OSDCloud/private/WinpeStartup](../OSDCloud/private/WinpeStartup). The most important pieces are:
 
-- [Initialize-WinPEStartupEnvironment.ps1](../OSDCloud/private/WinPEStartup/Initialize-WinPEStartupEnvironment.ps1) for shell folders, environment variables, and execution policy.
-- [Initialize-WinPEStartupDrivers.ps1](../OSDCloud/private/WinPEStartup/Initialize-WinPEStartupDrivers.ps1) for supplemental driver loading.
-- [Initialize-WinPEStartupFiles.ps1](../OSDCloud/private/WinPEStartup/Initialize-WinPEStartupFiles.ps1) for copying startup files into the RAM disk.
-- [Initialize-WinPEStartupMain.ps1](../OSDCloud/private/WinPEStartup/Initialize-WinPEStartupMain.ps1) for `wpeinit`, `wpeutil`, drive-letter cleanup, and network refresh.
-- [Set-WinPEStartupUSBDriveLetter.ps1](../OSDCloud/private/WinPEStartup/Set-WinPEStartupUSBDriveLetter.ps1) for deterministic USB drive-letter assignment.
+- [Initialize-WinpeStartupEnvironment.ps1](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupEnvironment.ps1) for shell folders, environment variables, and execution policy.
+- [Initialize-WinpeStartupDrivers.ps1](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupDrivers.ps1) for supplemental driver loading.
+- [Initialize-WinpeStartupFiles.ps1](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupFiles.ps1) for copying startup files into the RAM disk.
+- [Initialize-WinpeStartupMain.ps1](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupMain.ps1) for `wpeinit`, `wpeutil`, drive-letter cleanup, and network refresh.
+- [Set-WinpeStartupUSBDriveLetter.ps1](../OSDCloud/private/WinpeStartup/Set-WinpeStartupUSBDriveLetter.ps1) for deterministic USB drive-letter assignment.

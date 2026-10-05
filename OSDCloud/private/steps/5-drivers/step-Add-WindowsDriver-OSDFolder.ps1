@@ -2,6 +2,7 @@ function step-Add-WindowsDriver-OSDFolder {
     [CmdletBinding()]
     param ()
     #=================================================
+    $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     $LogPath = "C:\Windows\Temp\osdcloud-logs"

@@ -56,7 +56,7 @@ OSDCloud does **not**:
 flowchart LR
     A[OSDeploy<br/>full Windows] -->|Build-OSDeployBoot| B[WinPE boot image<br/>WIM / ISO]
     B -->|USB / PXE / ISO| C[Target device<br/>booted into WinPE]
-    C -->|Invoke-WinPEStartup| D[Network up<br/>OSDCloud current]
+    C -->|Invoke-WinpeStartup| D[Network up<br/>OSDCloud current]
     D -->|Deploy-OSDCloud| E[Windows 11 installed<br/>drivers applied]
     E -->|First boot| F[OOBE / Autopilot]
     G[(Microsoft ESD<br/>OEM driver packs<br/>Microsoft Update Catalog)] -.->|downloaded at runtime| D

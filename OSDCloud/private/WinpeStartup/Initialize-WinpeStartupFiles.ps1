@@ -1,6 +1,6 @@
 #requires -Version 5.1
 
-function Initialize-WinPEStartupFiles {
+function Initialize-WinpeStartupFiles {
     <#
     .SYNOPSIS
         Copies content from $WinPE$ folders found on any attached drive into the WinPE RAM disk
@@ -17,21 +17,21 @@ function Initialize-WinPEStartupFiles {
 
     .PARAMETER SubfolderPath
         The relative subfolder path to search for on each drive. Defaults
-        to 'WinPEStartup\Files'.
+        to 'WinpeStartup\Files'.
 
     .EXAMPLE
-        Initialize-WinPEStartupFiles
+        Initialize-WinpeStartupFiles
 
         Scans all drive letters and copies content from every $WinPE$ folder.
 
     .EXAMPLE
-        Initialize-WinPEStartupFiles -SubfolderPath 'MyContent'
+        Initialize-WinpeStartupFiles -SubfolderPath 'MyContent'
 
         Scans all drive letters for a subfolder path MyContent instead of
-        the default WinPEStartup\Files.
+        the default WinpeStartup\Files.
 
     .EXAMPLE
-        Initialize-WinPEStartupFiles -Verbose
+        Initialize-WinpeStartupFiles -Verbose
 
         Copies content with detailed progress showing each source drive.
 
@@ -44,18 +44,18 @@ function Initialize-WinPEStartupFiles {
     param (
         [Parameter(Mandatory = $false)]
         [ValidateNotNullOrEmpty()]
-        [string]$SubfolderPath = 'WinPEStartup\Files'
+        [string]$SubfolderPath = 'WinpeStartup\Files'
     )
 
     begin {
         $skipExecution = $false
         if ($env:SystemDrive -ne 'X:') {
-            Write-Warning 'Initialize-WinPEStartupFiles: Not running in WinPE (SystemDrive is not X:). Exiting.'
+            Write-Warning 'Initialize-WinpeStartupFiles: Not running in WinPE (SystemDrive is not X:). Exiting.'
             $skipExecution = $true
             return
         }
 
-        Write-Verbose 'Initialize-WinPEStartupFiles: Starting content scan'
+        Write-Verbose 'Initialize-WinpeStartupFiles: Starting content scan'
     }
 
     process {
@@ -78,6 +78,6 @@ function Initialize-WinPEStartupFiles {
 
     end {
         if ($skipExecution) { return }
-        Write-Verbose 'Initialize-WinPEStartupFiles: Complete'
+        Write-Verbose 'Initialize-WinpeStartupFiles: Complete'
     }
 }

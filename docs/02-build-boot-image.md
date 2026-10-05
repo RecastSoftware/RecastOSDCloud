@@ -73,7 +73,7 @@ Output lands in `%ProgramData%\OSDeployCore\boot\<Name>\`:
 ### 4. Verify the OSDCloud version
 
 `Build-OSDeployBoot` copies the currently loaded OSDCloud module into the WIM.
-When `Invoke-WinPEStartup` runs, it installs the latest gallery version unless
+When `Invoke-WinpeStartup` runs, it installs the latest gallery version unless
 `-SkipUpdateOSDCloud` is set.
 
 For an air-gapped image, load the required OSDCloud version before building
