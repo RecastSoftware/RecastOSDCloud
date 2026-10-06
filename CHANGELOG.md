@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- WinpeStartup imports Core `winpe-reg\*.reg` files into the WinPE registry and `winpe-root-cer\*.cer` files into the local machine Root certificate store. Files are processed in sorted path order; discovery, launch, and nonzero exit-code failures warn and continue.
 - WinpeStartup imports process environment defaults from `X:\WinpeStartup\core\*\*.env`, including hidden `.env` files, in sorted path order before shell and selected-profile overrides. Entries use literal single-line assignments; invalid entries and file failures warn and continue without logging values.
 
 ### Changed

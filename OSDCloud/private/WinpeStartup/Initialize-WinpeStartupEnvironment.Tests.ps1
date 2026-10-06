@@ -36,6 +36,7 @@ Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
         Mock New-Item {}
         Mock Set-ItemProperty {}
         Mock Write-Host {}
+        Mock Start-Process { [pscustomobject]@{ ExitCode = 0 } }
     }
 
     AfterEach {
@@ -79,6 +80,9 @@ Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
         $env:WSCORE_TEST_NODE_ENV | Should -Be 'development'
         $env:WSCORE_TEST_PORT | Should -Be '3000'
         $env:WSCORE_TEST_DEBUG | Should -Be 'true'
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+            $Object -match '^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[PASS\] Initialize env$'
+        }
     }
 
     It 'sorts full paths across folders and lets the last file and line win' {
@@ -195,6 +199,12 @@ Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
         $env:WSCORE_TEST_BAD | Should -BeNullOrEmpty
         $env:WSCORE_TEST_NUL | Should -BeNullOrEmpty
         $env:WSCORE_TEST_AFTER_INVALID | Should -Be 'valid'
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+            $Object -match '^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[FAIL\] Initialize env$'
+        }
+        Should -Invoke Write-Host -Times 0 -Exactly -ParameterFilter {
+            $Object -match '\[PASS\] Initialize env$'
+        }
     }
 
     It 'does not log imported values on the verbose stream' {
@@ -316,6 +326,7 @@ Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
         $warnings[0].ToString() | Should -Match 'Not running in WinPE'
         Should -Invoke New-Item -Times 0 -Exactly
         Should -Invoke Set-ItemProperty -Times 0 -Exactly
+        Should -Invoke Start-Process -Times 0 -Exactly
     }
 
     It 'allows the selected startup profile to override Core process values' {
@@ -338,5 +349,177 @@ Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
 
         $env:WSCORE_TEST_PRECEDENCE | Should -Be 'profile-value'
         $env:WSCORE_TEST_CORE_ONLY | Should -Be 'retained'
+    }
+
+    It 'imports hidden registry files and root certificates with quoted paths from multiple Core folders' {
+        $registryPath = New-CoreEnvironmentFixture 'main folder\winpe-reg\settings file.reg' @('synthetic')
+        $certificatePath = New-CoreEnvironmentFixture 'main folder\winpe-root-cer\root file.cer' @('synthetic')
+        New-CoreEnvironmentFixture 'additional\winpe-reg\extra.reg' @('synthetic') | Out-Null
+        New-CoreEnvironmentFixture 'additional\winpe-root-cer\extra.cer' @('synthetic') | Out-Null
+        [System.IO.File]::SetAttributes($registryPath, [System.IO.FileAttributes]::Hidden)
+        [System.IO.File]::SetAttributes($certificatePath, [System.IO.FileAttributes]::Hidden)
+        [System.IO.File]::SetAttributes((Split-Path $registryPath -Parent), [System.IO.FileAttributes]::Hidden)
+        [System.IO.File]::SetAttributes((Split-Path $certificatePath -Parent), [System.IO.FileAttributes]::Hidden)
+
+        $output = @(Initialize-WinpeStartupEnvironment)
+
+        $output.Count | Should -Be 0
+        Should -Invoke Start-Process -Times 4 -Exactly
+        Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {
+            $FilePath -eq 'reg.exe' -and $ArgumentList.Count -eq 2 -and
+            $ArgumentList[0] -eq 'import' -and $ArgumentList[1] -eq "`"$registryPath`"" -and
+            $Wait -and $PassThru -and $NoNewWindow -and $ErrorAction -eq 'Stop' -and
+            -not [string]::IsNullOrWhiteSpace($RedirectStandardOutput) -and
+            -not [string]::IsNullOrWhiteSpace($RedirectStandardError)
+        }
+        Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {
+            $FilePath -eq 'certutil.exe' -and $ArgumentList.Count -eq 3 -and
+            $ArgumentList[0] -eq '-addstore' -and $ArgumentList[1] -eq 'root' -and
+            $ArgumentList[2] -eq "`"$certificatePath`"" -and
+            $Wait -and $PassThru -and $NoNewWindow -and $ErrorAction -eq 'Stop' -and
+            -not [string]::IsNullOrWhiteSpace($RedirectStandardOutput) -and
+            -not [string]::IsNullOrWhiteSpace($RedirectStandardError)
+        }
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+            $Object -match '^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[PASS\] Initialize certificates$'
+        }
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+            $Object -match '^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[PASS\] Initialize registry$'
+        }
+    }
+
+    It 'imports environment files before registry files and certificates and sorts native imports within each type' {
+        $paths = @(
+            New-CoreEnvironmentFixture 'z-last\winpe-root-cer\z.cer' @('synthetic')
+            New-CoreEnvironmentFixture 'z-last\winpe-reg\z.reg' @('synthetic')
+            New-CoreEnvironmentFixture 'a-first\winpe-root-cer\a.cer' @('synthetic')
+            New-CoreEnvironmentFixture 'a-first\winpe-reg\a.reg' @('synthetic')
+        )
+        $environmentPath = New-CoreEnvironmentFixture 'a-first\.env' @('WSCORE_TEST_IMPORT_ORDER=loaded')
+        $calls = [System.Collections.Generic.List[string]]::new()
+        Mock Get-Content {
+            $calls.Add("env $LiteralPath")
+            'WSCORE_TEST_IMPORT_ORDER=loaded'
+        } -ParameterFilter { $LiteralPath -eq $environmentPath }
+        Mock Start-Process {
+            $calls.Add("$FilePath $($ArgumentList -join ' ')")
+            [pscustomobject]@{ ExitCode = 0 }
+        }
+
+        Initialize-WinpeStartupEnvironment
+
+        $calls.Count | Should -Be 5
+        $calls[0] | Should -Be "env $environmentPath"
+        $calls[1] | Should -Be "reg.exe import `"$($paths[3])`""
+        $calls[2] | Should -Be "reg.exe import `"$($paths[1])`""
+        $calls[3] | Should -Be "certutil.exe -addstore root `"$($paths[2])`""
+        $calls[4] | Should -Be "certutil.exe -addstore root `"$($paths[0])`""
+    }
+
+    It 'does not import files at incorrect levels or with incorrect extensions' {
+        foreach ($relativePath in @(
+            'winpe-reg\root.reg'
+            'winpe-root-cer\root.cer'
+            'main\file.reg'
+            'main\file.cer'
+            'main\nested\winpe-reg\deep.reg'
+            'main\nested\winpe-root-cer\deep.cer'
+            'main\winpe-reg\nested\deep.reg'
+            'main\winpe-root-cer\nested\deep.cer'
+            'main\winpe-reg\ignore.txt'
+            'main\winpe-root-cer\ignore.txt'
+        )) {
+            New-CoreEnvironmentFixture $relativePath @('synthetic') | Out-Null
+        }
+
+        Initialize-WinpeStartupEnvironment
+
+        Should -Invoke Start-Process -Times 0 -Exactly
+    }
+
+    It 'warns on nonzero tool exit codes and continues with remaining imports under ErrorAction Stop' {
+        $failedRegistry = New-CoreEnvironmentFixture 'main\winpe-reg\a-failed.reg' @('synthetic')
+        $failedCertificate = New-CoreEnvironmentFixture 'main\winpe-root-cer\a-failed.cer' @('synthetic')
+        New-CoreEnvironmentFixture 'main\winpe-reg\z-valid.reg' @('synthetic') | Out-Null
+        New-CoreEnvironmentFixture 'main\winpe-root-cer\z-valid.cer' @('synthetic') | Out-Null
+        Mock Start-Process {
+            if ($ArgumentList[-1] -like '*a-failed*') {
+                return [pscustomobject]@{ ExitCode = 1 }
+            }
+            return [pscustomobject]@{ ExitCode = 0 }
+        }
+        $warnings = @()
+
+        Initialize-WinpeStartupEnvironment -ErrorAction Stop -WarningVariable warnings -WarningAction SilentlyContinue
+
+        $warnings.Count | Should -Be 2
+        $warnings[0].ToString() | Should -Match ([regex]::Escape($failedRegistry))
+        $warnings[1].ToString() | Should -Match ([regex]::Escape($failedCertificate))
+        ($warnings | Out-String) | Should -Match 'exit code 1'
+        Should -Invoke Start-Process -Times 4 -Exactly
+        Should -Invoke Write-Host -Times 0 -Exactly -ParameterFilter {
+            $Object -match '\[PASS\] Initialize certificates$'
+        }
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+            $Object -match '^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[FAIL\] Initialize certificates$'
+        }
+        Should -Invoke Write-Host -Times 0 -Exactly -ParameterFilter {
+            $Object -match '\[PASS\] Initialize registry$'
+        }
+        Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+            $Object -match '^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] \[FAIL\] Initialize registry$'
+        }
+    }
+
+    It 'warns on process launch errors and continues with subsequent registry and certificate files' {
+        New-CoreEnvironmentFixture 'main\winpe-reg\a-failed.reg' @('synthetic') | Out-Null
+        New-CoreEnvironmentFixture 'main\winpe-root-cer\a-failed.cer' @('synthetic') | Out-Null
+        New-CoreEnvironmentFixture 'main\winpe-reg\z-valid.reg' @('synthetic') | Out-Null
+        New-CoreEnvironmentFixture 'main\winpe-root-cer\z-valid.cer' @('synthetic') | Out-Null
+        Mock Start-Process {
+            if ($ArgumentList[-1] -like '*a-failed*') {
+                throw 'Tool could not start'
+            }
+            [pscustomobject]@{ ExitCode = 0 }
+        }
+        $warnings = @()
+
+        Initialize-WinpeStartupEnvironment -ErrorAction Stop -WarningVariable warnings -WarningAction SilentlyContinue
+
+        $warnings.Count | Should -Be 2
+        ($warnings | Out-String) | Should -Match 'reg.exe'
+        ($warnings | Out-String) | Should -Match 'certutil.exe'
+        Should -Invoke Start-Process -Times 4 -Exactly
+    }
+
+    It 'warns on import folder discovery errors and continues with other Core folders' {
+        New-CoreEnvironmentFixture 'broken\winpe-reg\file.reg' @('synthetic') | Out-Null
+        New-CoreEnvironmentFixture 'broken\winpe-root-cer\file.cer' @('synthetic') | Out-Null
+        New-CoreEnvironmentFixture 'main\winpe-reg\file.reg' @('synthetic') | Out-Null
+        New-CoreEnvironmentFixture 'main\winpe-root-cer\file.cer' @('synthetic') | Out-Null
+        $brokenRegistry = Join-Path $fixtureCorePath 'broken\winpe-reg'
+        $brokenCertificates = Join-Path $fixtureCorePath 'broken\winpe-root-cer'
+        Mock Get-ChildItem { throw 'Cannot enumerate folder' } -ParameterFilter {
+            $LiteralPath -eq $brokenRegistry -or $LiteralPath -eq $brokenCertificates
+        }
+        $warnings = @()
+
+        Initialize-WinpeStartupEnvironment -ErrorAction Stop -WarningVariable warnings -WarningAction SilentlyContinue
+
+        $warnings.Count | Should -Be 2
+        ($warnings | Out-String) | Should -Match 'Failed to discover'
+        Should -Invoke Start-Process -Times 2 -Exactly
+    }
+
+    It 'allows missing or empty import folders without warnings or native tool calls' {
+        [System.IO.Directory]::CreateDirectory((Join-Path $fixtureCorePath 'main\winpe-reg')) | Out-Null
+        [System.IO.Directory]::CreateDirectory((Join-Path $fixtureCorePath 'main\winpe-root-cer')) | Out-Null
+        [System.IO.Directory]::CreateDirectory((Join-Path $fixtureCorePath 'additional')) | Out-Null
+        $warnings = @()
+
+        Initialize-WinpeStartupEnvironment -WarningVariable warnings
+
+        $warnings.Count | Should -Be 0
+        Should -Invoke Start-Process -Times 0 -Exactly
     }
 }

@@ -20,6 +20,12 @@ function Invoke-WinpeStartup {
         are removed, and expressions are not evaluated. Invalid entries and
         file failures warn and continue without logging values.
 
+        Environment setup also imports X:\WinpeStartup\core\*\winpe-reg\*.reg
+        into the WinPE registry using reg.exe import, then adds certificates from
+        X:\WinpeStartup\core\*\winpe-root-cer\*.cer to the local machine Root
+        store using certutil.exe -addstore root. Files are sorted by full path
+        within each type; discovery and import failures warn and continue.
+
         A selected profile may include an env or Environment object. Supported
         scalar values are converted to strings and assigned to the current
         process, overwriting existing values. Child PowerShell command sessions
