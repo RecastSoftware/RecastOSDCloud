@@ -15,25 +15,50 @@ function Initialize-WinpeStartupEnvironment {
         in the WinPE boot sequence.
 
         Actions performed:
+          - Imports X:\WinpeStartup\core\*\*.env into the process environment
           - Creates shell profile directories under SystemDrive
           - Sets APPDATA, HOMEDRIVE, HOMEPATH, LOCALAPPDATA, USERPROFILE
           - Writes the USERDATA registry value to the Session Manager Environment key
           - Sets the PowerShell execution policy to Bypass via registry
 
-    .EXAMPLE
-        Initialize-WinpeStartupEnvironment
+        Core files, including hidden files named .env, are loaded from immediate
+        Core subfolders in sorted full-path order. Later assignments overwrite
+        earlier values. Shell profile variables and the selected startup profile
+        are applied afterward and take precedence over Core values.
 
-        Creates all shell folders, sets environment variables, and writes
-        registry keys for the current WinPE session.
+        Entries use literal, single-line NAME=VALUE syntax. Blank lines and
+        full-line # comments are ignored. Surrounding whitespace and matching
+        outer quotes are removed; embedded equals signs are preserved. Expressions,
+        variable references, escape sequences, and inline comments are not expanded.
+        Multiline values and export syntax are not supported. Empty values use
+        the current runtime's process environment semantics (removal on PS 5.1).
+        Invalid entries and file failures warn and continue without logging values.
+        Missing Core content is allowed. Imported values are not persisted.
 
     .EXAMPLE
-        Initialize-WinpeStartupEnvironment -Verbose
+        PS> Initialize-WinpeStartupEnvironment
+
+        Imports Core environment files, creates shell folders, sets environment
+        variables, and writes registry keys for the current WinPE session.
+
+    .EXAMPLE
+        PS> Initialize-WinpeStartupEnvironment -Verbose
 
         Runs the full environment initialization with detailed progress output.
 
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        None.
+
     .NOTES
         Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-10-06
         Module:  OSDCloud
+        Runs only when SystemDrive is X:.
     #>
     [CmdletBinding()]
     [OutputType([void])]
@@ -56,6 +81,78 @@ function Initialize-WinpeStartupEnvironment {
     process {
         if ($skipExecution) { return }
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize WinpeStartup"
+
+        $corePath = Join-Path -Path $systemDrive -ChildPath 'WinpeStartup\core'
+        $coreFolders = @()
+        try {
+            if (Test-Path -LiteralPath $corePath -PathType Container -ErrorAction Stop) {
+                $coreFolders = @(Get-ChildItem -LiteralPath $corePath -Directory -Force -ErrorAction Stop)
+            }
+        }
+        catch {
+            Write-Warning "Initialize-WinpeStartupEnvironment: Failed to discover Core folders in '$corePath'."
+        }
+
+        $environmentFiles = @(
+            foreach ($coreFolder in $coreFolders) {
+                try {
+                    Get-ChildItem -LiteralPath $coreFolder.FullName -File -Filter '*.env' -Force -ErrorAction Stop |
+                        Where-Object { $_.Name -like '*.env' }
+                }
+                catch {
+                    Write-Warning "Initialize-WinpeStartupEnvironment: Failed to discover environment files in '$($coreFolder.FullName)'."
+                }
+            }
+        )
+
+        foreach ($environmentFile in ($environmentFiles | Sort-Object FullName)) {
+            try {
+                $environmentLines = @(Get-Content -LiteralPath $environmentFile.FullName -ErrorAction Stop)
+            }
+            catch {
+                Write-Warning "Initialize-WinpeStartupEnvironment: Failed to read environment file '$($environmentFile.FullName)'."
+                continue
+            }
+
+            $lineNumber = 0
+            foreach ($environmentLine in $environmentLines) {
+                $lineNumber++
+                $line = $environmentLine.Trim()
+                if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith('#')) {
+                    continue
+                }
+
+                $separatorIndex = $line.IndexOf('=')
+                if ($separatorIndex -le 0) {
+                    Write-Warning "Initialize-WinpeStartupEnvironment: Invalid environment entry in '$($environmentFile.FullName)' at line $lineNumber. Expected NAME=VALUE."
+                    continue
+                }
+
+                $name = $line.Substring(0, $separatorIndex).Trim()
+                $value = $line.Substring($separatorIndex + 1).Trim()
+                if ($name -match '[\s=\x00]' -or [string]::IsNullOrWhiteSpace($name) -or $value.Contains([char]0)) {
+                    Write-Warning "Initialize-WinpeStartupEnvironment: Invalid environment name or value in '$($environmentFile.FullName)' at line $lineNumber."
+                    continue
+                }
+
+                if ($value.StartsWith('"') -or $value.StartsWith("'")) {
+                    if ($value.Length -lt 2 -or $value[$value.Length - 1] -ne $value[0]) {
+                        Write-Warning "Initialize-WinpeStartupEnvironment: Unmatched environment value quotes in '$($environmentFile.FullName)' at line $lineNumber."
+                        continue
+                    }
+                    $value = $value.Substring(1, $value.Length - 2)
+                }
+
+                try {
+                    [System.Environment]::SetEnvironmentVariable($name, $value, [System.EnvironmentVariableTarget]::Process)
+                    Write-Verbose "Initialize-WinpeStartupEnvironment: Loaded environment entry from '$($environmentFile.FullName)' at line $lineNumber."
+                }
+                catch {
+                    Write-Warning "Initialize-WinpeStartupEnvironment: Failed to set environment entry from '$($environmentFile.FullName)' at line $lineNumber."
+                }
+            }
+        }
+
         # ── Shell Folders ───────────────────────────────────────────────
         $shellFolders = @(
             Join-Path -Path $systemDrive -ChildPath 'Program Files\WindowsPowerShell\Scripts'

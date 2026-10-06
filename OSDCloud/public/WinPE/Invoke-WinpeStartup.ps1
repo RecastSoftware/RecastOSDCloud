@@ -12,6 +12,14 @@ function Invoke-WinpeStartup {
         environment setup, drivers, files, hardware checks, connectivity, module
         updates, script execution, and optional URL/command invocations.
 
+        Environment setup imports literal NAME=VALUE entries from
+        X:\WinpeStartup\core\*\*.env, including hidden .env files, in sorted
+        full-path order without searching deeper folders. Core entries are
+        process-scoped defaults; shell profile variables take precedence.
+        Blank lines and full-line # comments are ignored, matching outer quotes
+        are removed, and expressions are not evaluated. Invalid entries and
+        file failures warn and continue without logging values.
+
         A selected profile may include an env or Environment object. Supported
         scalar values are converted to strings and assigned to the current
         process, overwriting existing values. Child PowerShell command sessions
