@@ -135,10 +135,14 @@ session — most steps are skipped outside WinPE (only those with
 ### A USB profile isn't applied
 
 ```powershell
-Get-ChildItem -Path *:\WinpeStartup\profiles\*.json
+Get-ChildItem -Path '*:\WinpeStartup\profiles' -File -Filter '*.json'
+Get-ChildItem -Path '*:\WinpeStartup\profiles' -Directory |
+    ForEach-Object { Join-Path $_.FullName 'winpestartup.json' } |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
 ```
 
-- Profile must be at `<drive>:\WinpeStartup\profiles\*.json` — exact path.
+- New profiles must be at `<drive>:\WinpeStartup\profiles\<ProfileName>\winpestartup.json`.
+- Legacy `<drive>:\WinpeStartup\profiles\<ProfileName>.json` files are also supported.
 - File must parse as JSON (after stripping `//` and `/* */` comments). Validate on Windows:
   ```powershell
   Get-Content profile.json -Raw |

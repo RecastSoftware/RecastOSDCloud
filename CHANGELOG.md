@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- WinpeStartup profile discovery now supports `<ProfileName>\winpestartup.json` folders while retaining support for legacy root-level JSON profiles.
+
 ## 26.10.4.1 - October 4, 2026
 
 ### Changed

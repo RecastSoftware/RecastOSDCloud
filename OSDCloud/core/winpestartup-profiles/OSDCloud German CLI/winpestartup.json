@@ -1,0 +1,12 @@
+{
+  "env": {
+    "WINPESTARTUP_AUTHOR": "OSDeploy",
+    "WINPESTARTUP_PROFILE": "OSDCloud German CLI"
+  },
+  "Invoke-WinpeStartup:InvokeMainCommand": [
+    "Show-OSDCloudDeviceInfo",
+    "Deploy-OSDCloud -OSLanguage de-de -CLI"
+  ],
+  "Invoke-WinpeStartup:InvokeMainCommandNoExit": true,
+  "Invoke-WinpeStartup:InvokeMainCommandEA": "Continue"
+}

@@ -33,17 +33,18 @@ passed on the `Invoke-WinpeStartup` command line override both.
 
 ## How to create a profile
 
-### 1. Drop a file on USB
+### 1. Add a profile folder on USB
 
-Place a JSON file at:
+Place the JSON file inside a profile-named folder:
 
 ```
-<USB drive>:\WinpeStartup\profiles\<anything>.json
+<USB drive>:\WinpeStartup\profiles\<ProfileName>\winpestartup.json
 ```
 
 Any partition on any drive connected at boot is scanned. The OSDCloud USB's
 NTFS data partition (`OSDCloud` label, created by
 `New-OSDeployBootUSB`) is the usual home for it.
+Legacy `<ProfileName>.json` files directly in `profiles` remain supported.
 
 - If exactly **one** profile is found, it is applied silently.
 - If **multiple** profiles are found, a numbered menu is shown and the
@@ -167,7 +168,7 @@ Empty `InvokeMainCommand` means startup runs but no deployment is triggered
 On any Windows machine with the module installed:
 
 ```powershell
-Get-Content '<USB>:\WinpeStartup\profiles\mysite.json' -Raw |
+Get-Content '<USB>:\WinpeStartup\profiles\mysite\winpestartup.json' -Raw |
     ForEach-Object { $_ -replace '//[^\r\n]*','' -replace '/\*.*?\*/','' } |
     ConvertFrom-Json
 ```

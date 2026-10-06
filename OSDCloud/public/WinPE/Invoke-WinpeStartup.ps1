@@ -450,30 +450,7 @@ function Invoke-WinpeStartup {
         Initialize-WinpeStartupMain
         Start-Sleep -Seconds 3
 
-        $candidateProfiles = [System.Collections.Generic.List[object]]::new()
-
-        foreach ($driveLetter in [char[]](67..90)) {
-            $profileRoot = '{0}:\WinpeStartup\profiles' -f $driveLetter
-
-            if (-not (Test-Path -LiteralPath $profileRoot -PathType Container)) {
-                continue
-            }
-
-            try {
-                $profileFiles = Get-ChildItem -LiteralPath $profileRoot -Filter '*.json' -File -ErrorAction Stop | Sort-Object FullName
-
-                foreach ($profileFile in $profileFiles) {
-                    [void]$candidateProfiles.Add([pscustomobject]@{
-                        Index   = 0
-                        Profile = $profileFile.BaseName
-                        Path    = $profileFile.FullName
-                    })
-                }
-            }
-            catch {
-                Write-Verbose "Invoke-WinpeStartup: Unable to enumerate '$profileRoot': $($_.Exception.Message)"
-            }
-        }
+        $candidateProfiles = @(Get-WinpeStartupProfileCandidates)
 
         if ($candidateProfiles.Count -gt 0) {
             # Force array semantics so .Count and indexing behave reliably on PS 5.1 even with a single item.
@@ -492,12 +469,10 @@ function Invoke-WinpeStartup {
             }
             else {
                 Write-Host ''
-                Write-Host 'WinpeStartup Profiles:'
+                Write-Host -ForegroundColor Cyan 'WinpeStartup Profiles:'
                 $orderedProfiles |
                     Select-Object Index, Profile, Path |
-                    Format-Table -AutoSize |
-                    Out-String |
-                    Write-Host
+                    Format-Table -AutoSize | Out-String | Write-Host
 
                 while (-not $selectedProfile) {
                     $selection = Read-Host 'Select a profile by number, or press Enter to cancel'
