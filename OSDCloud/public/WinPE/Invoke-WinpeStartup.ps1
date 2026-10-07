@@ -11,6 +11,7 @@ function Invoke-WinpeStartup {
         apply a startup profile, and then run startup steps in order including
         environment setup, drivers, files, hardware checks, connectivity, module
         updates, script execution, and optional URL/command invocations.
+        Startup output is transcribed to X:\Windows\Temp\winpestartup.log.
 
         Environment setup imports literal NAME=VALUE entries from
         X:\WinpeStartup\core\*\*.env, including hidden .env files, in sorted
@@ -183,11 +184,26 @@ function Invoke-WinpeStartup {
     begin {
         $Error.Clear()
         $skipExecution = $false
+        $startupTranscriptStarted = $false
 
         if ($env:SystemDrive -ne 'X:') {
             Write-Warning 'Invoke-WinpeStartup: Not running in WinPE (SystemDrive is not X:). Exiting.'
             $skipExecution = $true
             return
+        }
+
+        $startupLogPath = 'X:\Windows\Temp\winpestartup.log'
+        try {
+            $startupLogDirectory = Split-Path -Path $startupLogPath -Parent
+            if (-not (Test-Path -LiteralPath $startupLogDirectory -PathType Container)) {
+                New-Item -Path $startupLogDirectory -ItemType Directory -Force -ErrorAction Stop | Out-Null
+            }
+
+            $null = Start-Transcript -Path $startupLogPath -Force -ErrorAction Stop
+            $startupTranscriptStarted = $true
+        }
+        catch {
+            Write-Warning "Invoke-WinpeStartup: Failed to start log '$startupLogPath': $($_.Exception.Message)"
         }
 
         $switchLikeParameters = @(
@@ -822,7 +838,17 @@ function Invoke-WinpeStartup {
     }
 
     end {
-        if ($skipExecution) { return }
-        Write-Verbose 'Invoke-WinpeStartup: Complete'
+        if (-not $skipExecution) {
+            Write-Verbose 'Invoke-WinpeStartup: Complete'
+        }
+
+        if ($startupTranscriptStarted) {
+            try {
+                $null = Stop-Transcript -ErrorAction Stop
+            }
+            catch {
+                Write-Warning "Invoke-WinpeStartup: Failed to stop log '$startupLogPath': $($_.Exception.Message)"
+            }
+        }
     }
 }
