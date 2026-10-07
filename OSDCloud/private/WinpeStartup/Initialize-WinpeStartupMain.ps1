@@ -42,8 +42,8 @@ function Initialize-WinpeStartupMain {
 
     process {
         if ($skipExecution) { return }
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize wpeinit"
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize wpeutil"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize winpe"
+        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize wpeutil"
         Write-Verbose 'Running wpeinit.exe'
         Invoke-WpeInit
         Start-Sleep -Seconds 2 # Wait for wpeinit to complete before running wpeutil commands
@@ -63,7 +63,7 @@ function Initialize-WinpeStartupMain {
 
         Write-Verbose 'Running wpeutil UpdateBootInfo'
         Invoke-WpeUtil -Command 'UpdateBootInfo'
-        Start-Sleep -Seconds 2 # Wait for Set-WinpeStartupUSBDriveLetter to complete before proceeding
+        Start-Sleep -Seconds 2 # Wait for wpeutil UpdateBootInfo to complete before proceeding
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize network"
         ipconfig /release | Out-Null

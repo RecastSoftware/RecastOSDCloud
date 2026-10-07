@@ -11,6 +11,21 @@ function Invoke-WinpeStartup {
         apply a startup profile, and then run startup steps in order including
         environment setup, drivers, files, hardware checks, connectivity, module
         updates, script execution, and optional URL/command invocations.
+        Startup output is transcribed to X:\Windows\Temp\winpestartup.log.
+
+        Environment setup imports literal NAME=VALUE entries from
+        X:\WinpeStartup\core\*\*.env, including hidden .env files, in sorted
+        full-path order without searching deeper folders. Core entries are
+        process-scoped defaults; shell profile variables take precedence.
+        Blank lines and full-line # comments are ignored, matching outer quotes
+        are removed, and expressions are not evaluated. Invalid entries and
+        file failures warn and continue without logging values.
+
+        Environment setup also imports X:\WinpeStartup\core\*\winpe-reg\*.reg
+        into the WinPE registry using reg.exe import, then adds certificates from
+        X:\WinpeStartup\core\*\winpe-root-cer\*.cer to the local machine Root
+        store using certutil.exe -addstore root. Files are sorted by full path
+        within each type; discovery and import failures warn and continue.
 
         A selected profile may include an env or Environment object. Supported
         scalar values are converted to strings and assigned to the current
@@ -169,11 +184,26 @@ function Invoke-WinpeStartup {
     begin {
         $Error.Clear()
         $skipExecution = $false
+        $startupTranscriptStarted = $false
 
         if ($env:SystemDrive -ne 'X:') {
             Write-Warning 'Invoke-WinpeStartup: Not running in WinPE (SystemDrive is not X:). Exiting.'
             $skipExecution = $true
             return
+        }
+
+        $startupLogPath = 'X:\Windows\Temp\winpestartup.log'
+        try {
+            $startupLogDirectory = Split-Path -Path $startupLogPath -Parent
+            if (-not (Test-Path -LiteralPath $startupLogDirectory -PathType Container)) {
+                New-Item -Path $startupLogDirectory -ItemType Directory -Force -ErrorAction Stop | Out-Null
+            }
+
+            $null = Start-Transcript -Path $startupLogPath -Force -ErrorAction Stop
+            $startupTranscriptStarted = $true
+        }
+        catch {
+            Write-Warning "Invoke-WinpeStartup: Failed to start log '$startupLogPath': $($_.Exception.Message)"
         }
 
         $switchLikeParameters = @(
@@ -450,30 +480,7 @@ function Invoke-WinpeStartup {
         Initialize-WinpeStartupMain
         Start-Sleep -Seconds 3
 
-        $candidateProfiles = [System.Collections.Generic.List[object]]::new()
-
-        foreach ($driveLetter in [char[]](67..90)) {
-            $profileRoot = '{0}:\WinpeStartup\profiles' -f $driveLetter
-
-            if (-not (Test-Path -LiteralPath $profileRoot -PathType Container)) {
-                continue
-            }
-
-            try {
-                $profileFiles = Get-ChildItem -LiteralPath $profileRoot -Filter '*.json' -File -ErrorAction Stop | Sort-Object FullName
-
-                foreach ($profileFile in $profileFiles) {
-                    [void]$candidateProfiles.Add([pscustomobject]@{
-                        Index   = 0
-                        Profile = $profileFile.BaseName
-                        Path    = $profileFile.FullName
-                    })
-                }
-            }
-            catch {
-                Write-Verbose "Invoke-WinpeStartup: Unable to enumerate '$profileRoot': $($_.Exception.Message)"
-            }
-        }
+        $candidateProfiles = @(Get-WinpeStartupProfileCandidates)
 
         if ($candidateProfiles.Count -gt 0) {
             # Force array semantics so .Count and indexing behave reliably on PS 5.1 even with a single item.
@@ -492,12 +499,10 @@ function Invoke-WinpeStartup {
             }
             else {
                 Write-Host ''
-                Write-Host 'WinpeStartup Profiles:'
+                Write-Host -ForegroundColor Cyan 'WinpeStartup Profiles:'
                 $orderedProfiles |
                     Select-Object Index, Profile, Path |
-                    Format-Table -AutoSize |
-                    Out-String |
-                    Write-Host
+                    Format-Table -AutoSize | Out-String | Write-Host
 
                 while (-not $selectedProfile) {
                     $selection = Read-Host 'Select a profile by number, or press Enter to cancel'
@@ -644,6 +649,7 @@ function Invoke-WinpeStartup {
     process {
         if ($skipExecution) { return }
 
+        try {
         # On Screen Keyboard if one is not detected
         if (-not $SkipOnScreenKeyboard) {
             Invoke-WinpeStartupManager OSK
@@ -830,10 +836,33 @@ function Invoke-WinpeStartup {
                 }
             }
         }
+        }
+        finally {
+            if ($startupTranscriptStarted) {
+                try {
+                    $null = Stop-Transcript -ErrorAction Stop
+                }
+                catch {
+                    Write-Warning "Invoke-WinpeStartup: Failed to stop log '$startupLogPath': $($_.Exception.Message)"
+                }
+                $startupTranscriptStarted = $false
+            }
+        }
     }
 
     end {
-        if ($skipExecution) { return }
-        Write-Verbose 'Invoke-WinpeStartup: Complete'
+        if (-not $skipExecution) {
+            Write-Verbose 'Invoke-WinpeStartup: Complete'
+        }
+
+        if ($startupTranscriptStarted) {
+            try {
+                $null = Stop-Transcript -ErrorAction Stop
+            }
+            catch {
+                Write-Warning "Invoke-WinpeStartup: Failed to stop log '$startupLogPath': $($_.Exception.Message)"
+            }
+            $startupTranscriptStarted = $false
+        }
     }
 }

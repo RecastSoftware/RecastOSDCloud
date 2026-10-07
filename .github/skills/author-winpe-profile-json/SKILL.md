@@ -9,8 +9,8 @@ Create profiles that configure `Invoke-WinpeStartup` without embedding workflow 
 
 ## Profile location and discovery
 
-- Store bundled profiles in `OSDCloud/core/winpestartup-profiles/`.
-- Use a descriptive `.json` filename. The startup function discovers profile files from `WinpeStartup\Profiles` on attached drives.
+- Store bundled profiles in a named folder under `OSDCloud/core/winpestartup-profiles/`, with the settings in `winpestartup.json`.
+- Use a descriptive folder name. The startup function discovers `winpestartup.json` profile folders and legacy root-level JSON files from `WinpeStartup\Profiles` on attached drives.
 - A profile is a flat map of parameter names to scalar values or arrays, with one supported nested object: the top-level `Environment` section.
 - Prefer standard JSON. The loader tolerates comments, but comments are unnecessary and can make external validation fail.
 
@@ -108,7 +108,7 @@ Use an unprefixed top-level `Environment` object to set process-scoped environme
 5. Parse the edited file with PowerShell 5.1:
 
 ```powershell
-$profile = Get-Content -LiteralPath '.\OSDCloud\core\winpestartup-profiles\<profile>.json' -Raw | ConvertFrom-Json
+$profile = Get-Content -LiteralPath '.\OSDCloud\core\winpestartup-profiles\<profile>\winpestartup.json' -Raw | ConvertFrom-Json
 $profile | Out-Null
 ```
 

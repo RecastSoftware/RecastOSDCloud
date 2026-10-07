@@ -56,8 +56,11 @@ Module defaults are read from the OSDCloud PSDefaultParameterValues JSON file. K
 Startup profiles are JSON files under this layout on any attached drive:
 
 ```text
-H:\WinpeStartup\profiles\BranchOffice.json
+H:\WinpeStartup\profiles\BranchOffice\winpestartup.json
 ```
+
+Legacy root-level files such as `H:\WinpeStartup\profiles\BranchOffice.json`
+are still discovered.
 
 Profiles may use either prefixed keys, such as `Invoke-WinpeStartup:SkipWiFi`, or plain splat-style keys, such as `SkipWiFi`. That makes profiles easier to read while still supporting the same parameters.
 
