@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Added WinpeStartup logging to `X:\Windows\Temp\winpestartup.log`; transcript start and stop failures warn without preventing startup.
-- Import registry files from `X:\WinpeStartup\core\winpe-reg\*.reg` and certificates from `X:\WinpeStartup\core\winpe-root-cer\*.cer` during environment setup. Files are processed in sorted path order, and discovery, import, or launch failures warn and continue.
+- Import registry files from `X:\WinpeStartup\core\*\winpe-reg\*.reg` and certificates from `X:\WinpeStartup\core\*\winpe-root-cer\*.cer` during environment setup. Files are processed in sorted path order, and discovery, import, or launch failures warn and continue.
 - Import process environment defaults from `X:\WinpeStartup\core\*\*.env`, including hidden `.env` files, in sorted path order before shell and selected-profile overrides. Entries use literal single-line assignments; invalid entries and file failures warn and continue without logging values.
 - Added tests for profile discovery, environment defaults, startup logging, and registry and certificate imports.
 

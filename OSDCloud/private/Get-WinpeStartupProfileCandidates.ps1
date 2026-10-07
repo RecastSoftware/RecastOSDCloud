@@ -1,7 +1,24 @@
 function Get-WinpeStartupProfileCandidates {
+    <#
+    .SYNOPSIS
+        Finds WinpeStartup profiles on attached drives.
+
+    .DESCRIPTION
+        Discovers folder-based startup profiles and legacy root-level JSON
+        profiles from WinpeStartup\profiles directories on attached drives.
+
+    .EXAMPLE
+        Get-WinpeStartupProfileCandidates
+
+        Returns the discovered profile names and paths.
+
+    .NOTES
+        Used by Invoke-WinpeStartup to locate startup profiles.
+    #>
     [CmdletBinding()]
     param ()
 
+    $Error.Clear()
     $candidateProfiles = [System.Collections.Generic.List[object]]::new()
 
     foreach ($driveLetter in [char[]](67..90)) {

@@ -649,6 +649,7 @@ function Invoke-WinpeStartup {
     process {
         if ($skipExecution) { return }
 
+        try {
         # On Screen Keyboard if one is not detected
         if (-not $SkipOnScreenKeyboard) {
             Invoke-WinpeStartupManager OSK
@@ -835,6 +836,18 @@ function Invoke-WinpeStartup {
                 }
             }
         }
+        }
+        finally {
+            if ($startupTranscriptStarted) {
+                try {
+                    $null = Stop-Transcript -ErrorAction Stop
+                }
+                catch {
+                    Write-Warning "Invoke-WinpeStartup: Failed to stop log '$startupLogPath': $($_.Exception.Message)"
+                }
+                $startupTranscriptStarted = $false
+            }
+        }
     }
 
     end {
@@ -849,6 +862,7 @@ function Invoke-WinpeStartup {
             catch {
                 Write-Warning "Invoke-WinpeStartup: Failed to stop log '$startupLogPath': $($_.Exception.Message)"
             }
+            $startupTranscriptStarted = $false
         }
     }
 }

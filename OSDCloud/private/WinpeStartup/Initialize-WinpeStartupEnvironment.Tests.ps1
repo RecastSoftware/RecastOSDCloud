@@ -7,11 +7,33 @@ BeforeAll {
     . "$PSScriptRoot\Initialize-WinpeStartupMain.ps1"
 
     function New-CoreEnvironmentFixture {
+        <#
+        .SYNOPSIS
+            Creates a Core environment test fixture.
+
+        .DESCRIPTION
+            Creates a file under the test WinpeStartup Core directory and
+            returns its path.
+
+        .PARAMETER RelativePath
+            Path of the fixture file relative to the Core directory.
+
+        .PARAMETER Lines
+            Content lines to write to the fixture file.
+
+        .EXAMPLE
+            New-CoreEnvironmentFixture -RelativePath 'main\.env' -Lines @('SETTING=value')
+
+        .NOTES
+            Used by Initialize-WinpeStartupEnvironment tests.
+        #>
+        [CmdletBinding()]
         param (
             [string]$RelativePath,
             [string[]]$Lines
         )
 
+        $Error.Clear()
         $path = Join-Path -Path $fixtureRoot -ChildPath "WinpeStartup\core\$RelativePath"
         [System.IO.Directory]::CreateDirectory((Split-Path -Path $path -Parent)) | Out-Null
         Set-Content -LiteralPath $path -Value $Lines -Encoding UTF8
@@ -521,5 +543,64 @@ Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
 
         $warnings.Count | Should -Be 0
         Should -Invoke Start-Process -Times 0 -Exactly
+    }
+
+    Describe 'Invoke-WinpeStartup transcript lifecycle' {
+        BeforeEach {
+            $script:OSDCloudPSDefaultParameterValuesPath = Join-Path -Path $fixtureRoot -ChildPath 'absent-defaults.json'
+            Mock Initialize-WinpeStartupEnvironment {}
+            Mock Initialize-WinpeStartupDrivers {}
+            Mock Initialize-WinpeStartupFiles {}
+            Mock Initialize-WinpeStartupMain {}
+            Mock Get-WinpeStartupProfileCandidates { @() }
+            Mock Start-Sleep {}
+            Mock Start-Transcript {}
+            Mock Stop-Transcript {}
+        }
+
+        It 'stops the transcript after successful startup' {
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud
+
+            Should -Invoke Start-Transcript -Times 1 -Exactly -ParameterFilter {
+                $Path -eq 'X:\Windows\Temp\winpestartup.log' -and $Force -and $ErrorAction -eq 'Stop'
+            }
+            Should -Invoke Stop-Transcript -Times 1 -Exactly -ParameterFilter { $ErrorAction -eq 'Stop' }
+        }
+
+        It 'continues startup when starting the transcript fails' {
+            Mock Start-Transcript { throw 'Synthetic transcript start failure' }
+            $warnings = @()
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -WarningVariable warnings -WarningAction SilentlyContinue
+
+            ($warnings | Out-String) | Should -Match 'Failed to start log'
+            Should -Invoke Stop-Transcript -Times 0 -Exactly
+            Should -Invoke Initialize-WinpeStartupMain -Times 1 -Exactly
+        }
+
+        It 'warns when stopping the transcript fails' {
+            Mock Stop-Transcript { throw 'Synthetic transcript stop failure' }
+            $warnings = @()
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -WarningVariable warnings -WarningAction SilentlyContinue
+
+            ($warnings | Out-String) | Should -Match 'Failed to stop log'
+            Should -Invoke Stop-Transcript -Times 1 -Exactly
+        }
+
+        It 'stops the transcript when a startup command terminates with an error' {
+            Mock Start-Process { throw 'Synthetic process launch failure' } -ParameterFilter {
+                $FilePath -eq 'powershell.exe'
+            }
+
+            {
+                Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                    -InvokeStartupCommand 'Write-Output test' -InvokeStartupCommandEA Stop
+            } | Should -Throw
+
+            Should -Invoke Stop-Transcript -Times 1 -Exactly
+        }
     }
 }
