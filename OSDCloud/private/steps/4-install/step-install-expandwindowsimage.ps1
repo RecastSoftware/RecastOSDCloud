@@ -64,7 +64,7 @@ function step-install-expandwindowsimage {
             ":: RecastOSDCloud $(Get-Date -format s)" | Out-File -FilePath 'C:\Windows\Setup\Scripts\OOBE.cmd' -Append -Encoding ascii -Width 2000 -Force -ErrorAction Stop
         }
         catch {
-            Write-Warning "[$(Get-Date -format s)] Expand-WindowsImage failed."
+            Write-Warning "[$(Get-Date -format s)] Windows image expansion or setup script creation failed."
             Write-Warning "[$(Get-Date -format s)] $_"
             Write-Warning 'Press Ctrl+C to exit OSDCloud'
             Start-Sleep -Seconds 86400
