@@ -6,7 +6,7 @@ OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operatin
 
 ## Overview
 
-- Current repository module version: `26.10.6.1`.
+- Current repository module version: `26.10.10.1`.
 - Defaults to Windows 11 26H2 for amd64 and arm64 deployments.
 - Focused on Windows deployment workflows driven by PowerShell.
 - Supports WinpeStartup helpers and deployment UX options.
@@ -14,13 +14,13 @@ OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operatin
 
 ---
 
-## What's New in 26.10.6.1
+## What's New in 26.10.10.1
 
-Released October 6, 2026.
+Released October 10, 2026.
 
-- **Improved startup configuration:** WinpeStartup supports folder-based profiles, `.env` environment defaults, and importing registry and certificate files during environment setup.
-- **Startup logging:** Startup output is transcribed to `X:\Windows\Temp\winpestartup.log`.
-- **Profile cleanup:** Removed the obsolete German CLI startup profile.
+- **Expanded device information:** `Show-OSDCloudDeviceInfo` displays device and BIOS details, processor and memory configuration, disk drives, and network adapters with IPv4 addresses.
+- **Richer hardware inventory:** OSDCore collects physical memory module details and includes IPv4 addresses in network adapter inventory; memory below 6 GB is flagged with a warning.
+- **Clearer time-sync reporting:** Status messages now identify the clock as "Device DateTime."
 
 See [CHANGELOG.md](CHANGELOG.md) for the complete release history and [WinpeStartup documentation](docs/about_winpestartup.md) for startup configuration.
 
