@@ -23,6 +23,15 @@ function Initialize-OSDCoreDevice {
         before workflow execution so downstream steps can rely on a consistent
         device state snapshot.
 
+        The snapshot includes all hardware properties in the Processors,
+        DiskDrives, and NetworkAdapters inventories for display consumers,
+        excluding CIM infrastructure metadata to keep diagnostic JSON serializable.
+        It also includes raw TotalPhysicalMemory bytes and NativeOSArchitecture
+        (without overrides). NetworkAdapters includes IPv4Addresses matched by
+        adapter index from the collected IP-enabled network configurations.
+        PhysicalMemory includes the installed memory module inventory, including
+        Speed and ConfiguredClockSpeed, without CIM infrastructure metadata.
+
     .EXAMPLE
     Initialize-OSDCoreDevice
 
@@ -55,6 +64,18 @@ function Initialize-OSDCoreDevice {
         - Updates global state in $global:OSDCoreDevice.
 
         Changelog:
+        - 2026-10-10 | pending | Collect physical memory module inventory.
+            Added Win32_PhysicalMemory diagnostics and the PhysicalMemory snapshot
+            array for memory speed and installed DIMM count display.
+        - 2026-10-10 | pending | Include per-adapter IPv4 addresses for device display.
+            Matched existing network configurations by adapter index and retained
+            only IPv4 addresses without issuing additional hardware queries.
+        - 2026-10-10 | pending | Prevent hardware inventory JSON truncation.
+            Excluded CIM infrastructure metadata from display inventory snapshots
+            while retaining all hardware properties and complete per-class logs.
+        - 2026-10-10 | pending | Expose existing hardware inventory for device display.
+            Added complete processor, disk drive, and network adapter arrays,
+            raw memory bytes, and native OS architecture without additional queries.
         - 2026-08-13 | pending | Add OSDeploy identity and license properties.
             Added nullable idOSDeployDevice, idRegisteredEmail, and idRegisteredLicense values
             from WinPE environment variables or local license discovery.
@@ -236,6 +257,16 @@ function Initialize-OSDCoreDevice {
     $classWin32OperatingSystem = Get-CimInstance -ClassName Win32_OperatingSystem | Select-Object -Property *
     $classWin32OperatingSystem | Out-File (Join-Path -Path $LogsPath -ChildPath 'Win32_OperatingSystem.txt') -Width 4096 -Force
     $OSArchitecture = $classWin32OperatingSystem.OSArchitecture | ConvertTo-TrimmedString
+    #=================================================
+    # Win32_PhysicalMemory
+    $classWin32PhysicalMemory = @()
+    try {
+        $classWin32PhysicalMemory = @(Get-CimInstance -ClassName Win32_PhysicalMemory -ErrorAction Stop | Select-Object -Property *)
+    }
+    catch {
+        Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to query Win32_PhysicalMemory: $($_.Exception.Message)"
+    }
+    $classWin32PhysicalMemory | Out-File (Join-Path -Path $LogsPath -ChildPath 'Win32_PhysicalMemory.txt') -Width 4096 -Force
     #=================================================
     # Win32_PnPEntity
     $classWin32PnPEntity = Get-CimInstance -ClassName Win32_PnPEntity | Select-Object -Property *
@@ -765,6 +796,7 @@ function Initialize-OSDCoreDevice {
         ComputerSystemProduct    = [System.String]$ComputerSystemProduct
         ComputerSystemSKU        = [System.String]$ComputerSystemSKU
         ComputerSystemType       = [System.String]$ComputerSystemType
+        DiskDrives               = @($classWin32DiskDrive | Where-Object { $null -ne $_ } | Select-Object -Property * -ExcludeProperty CimClass, CimInstanceProperties, CimSystemProperties)
         HardwareHash             = [System.String]$HardwareHash
         IsAutopilotSpec          = [System.Boolean]$IsAutopilotSpec
         IsDesktop                = [System.Boolean]$IsDesktop
@@ -782,15 +814,34 @@ function Initialize-OSDCoreDevice {
         LocalDisk                = $LocalDisk
         LocalPartition           = $LocalPartition
         LocalVolume              = $LocalVolume
+        NativeOSArchitecture     = $classWin32OperatingSystem.OSArchitecture
         NetGateways              = $NetGateways
         NetIPAddress             = $NetIPAddress
         NetMacAddress            = $NetMacAddress
+        NetworkAdapters          = @($classWin32NetworkAdapter | Where-Object { $null -ne $_ } |
+            Select-Object -Property * -ExcludeProperty CimClass, CimInstanceProperties, CimSystemProperties |
+                ForEach-Object {
+                    $adapterIndex = $_.Index
+                    $ipv4Addresses = [string[]]@($classWin32NetworkAdapterConfiguration |
+                        Where-Object { $null -ne $adapterIndex -and $_.Index -eq $adapterIndex } |
+                        ForEach-Object { $_.IPAddress } |
+                        Where-Object {
+                            $address = $null
+                            [System.Net.IPAddress]::TryParse($_, [ref]$address) -and
+                            $address.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork
+                        })
+                    $_ | Add-Member -NotePropertyName IPv4Addresses -NotePropertyValue $ipv4Addresses -PassThru
+                }
+            )
         OSArchitecture           = $OSArchitecture
         OSVersion                = $classWin32OperatingSystem.Version
+        PhysicalMemory           = @($classWin32PhysicalMemory | Where-Object { $null -ne $_ } | Select-Object -Property * -ExcludeProperty CimClass, CimInstanceProperties, CimSystemProperties)
         ProcessorArchitecture    = $ProcessorArchitecture
+        Processors               = @($classWin32Processor | Where-Object { $null -ne $_ } | Select-Object -Property * -ExcludeProperty CimClass, CimInstanceProperties, CimSystemProperties)
         SerialNumber             = $SerialNumber
         SystemFirmwareHardwareId = $SystemFirmwareHardwareId
         TimeZone                 = $classWin32TimeZone.StandardName
+        TotalPhysicalMemory      = $classWin32ComputerSystem.TotalPhysicalMemory
         TotalPhysicalMemoryGB    = $TotalPhysicalMemoryGB
         TpmIsActivated           = $DeviceTpmIsActivated
         TpmIsEnabled             = $DeviceTpmIsEnabled
@@ -809,7 +860,6 @@ function Initialize-OSDCoreDevice {
         idRegisteredEmail        = $idRegisteredEmail
         idRegisteredLicense      = $idRegisteredLicense
     }
-    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreDevice"
     #=================================================
     # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
     $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'

@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.10.10.1 - October 10, 2026
+
+### Added
+
+- Expanded the OSDCore device inventory with processor, physical memory, and network adapter IPv4 details, and added a physical memory diagnostic log.
+- Expanded `Show-OSDCloudDeviceInfo` to display device and BIOS identity, processor details, memory capacity and configuration, disk drives, and network adapters with IPv4 addresses. Warn when physical memory is below 6 GB; serial number and UUID remain suppressed for privacy.
+- Added tests for hardware inventory collection and device information display, including initialization and unavailable-data scenarios.
+
+### Changed
+
+- Renamed time synchronization status messages from "System DateTime" to "Device DateTime" for clearer reporting.
+- Module version bumped from `26.10.6.1` to `26.10.10.1`.
+
 ## 26.10.6.1 - October 6, 2026
 
 ### Added
