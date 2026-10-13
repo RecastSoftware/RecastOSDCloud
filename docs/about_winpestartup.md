@@ -87,6 +87,95 @@ If exactly one profile is found, OSDCloud selects it automatically. If several p
 
 Explicit parameters passed to `Invoke-WinpeStartup` take precedence over JSON values. That rule is important: a profile can supply defaults, but a real command-line choice from the operator should not be silently overridden.
 
+## Creating profiles with PowerShell
+
+`New-WinpeStartupProfile` is available in both full Windows and WinPE. It creates
+`<ProfileName>\winpestartup.json` in **both** available destination types:
+
+- `C:\ProgramData\OSDeployCore\boot-assets\winpestartup-profiles`, only if this
+  shared Boot-Assets folder already exists. Run PowerShell as administrator to
+  write here. The cmdlet does not create the shared root.
+- `<DriveLetter>:\WinpeStartup\Profiles` on each mounted, writable USB volume
+  with the exact label `OSDCloud`. The actual drive letter is detected; it is not
+  required to be `F:`. USB-only saves do not require elevation.
+
+Missing destination subfolders are created. `ProfileName` must be a single valid
+Windows folder name, not a path or reserved device name.
+
+```powershell
+New-WinpeStartupProfile -ProfileName 'Deploy-And-Restart' `
+    -InvokeMainCommand 'Show-OSDCloudDeviceInfo', 'Deploy-OSDCloud' `
+    -InvokeMainCommandEA Stop `
+    -InvokeShutdownCommand 'Restart-Computer -Force' `
+    -PassThru
+```
+
+All 16 settings accepted by `Invoke-WinpeStartup` are available as parameters,
+including the three command phases, their `NoExit` and `EA` settings, additional
+modules, and skip/display switches. Every generated JSON includes all 16 settings
+with `Invoke-WinpeStartup:` prefixes and an `Environment` object. Defaults are
+loaded from the module's `PSDefaultParameterValues.json`, then overlaid with the
+bundled OSDCloud `winpestartup.json`. This includes the default main commands
+`Show-OSDCloudDeviceInfo` and `Deploy-OSDCloud`, main `NoExit` enabled, and the
+generated author/profile environment values. Supplied parameters override these
+defaults; explicit false switches and empty arrays are preserved:
+
+```powershell
+New-WinpeStartupProfile -ProfileName 'BranchOffice' `
+    -SkipWiFi:$false -InstallModule @() `
+    -Environment @{ OSDCLOUD_SITE = 'BranchOffice'; OSDCLOUD_DEPLOYMENT_RING = 2 }
+```
+
+`Environment` is stored as an unprefixed object. It accepts non-empty variable
+names without `=` or null characters and string, finite numeric, or boolean
+values. Nulls, arrays, and nested objects are rejected before any files are
+written. `Environment` appears first in the JSON, followed by display/skip settings,
+modules, and the startup, main, and shutdown groups. Each command group is ordered
+as command, error action, and NoExit.
+
+`WINPESTARTUP_AUTHOR` is always the current username running the cmdlet, and
+`WINPESTARTUP_PROFILE` is always `ProfileName`. These two properties appear first
+inside `Environment` and cannot be overridden through `-Environment`. A supplied
+hashtable replaces other bundled environment values; `-Environment @{}` retains
+only the generated metadata. The caller's hashtable is not modified.
+Creation never changes the author's environment or executes stored
+commands. Profiles are plaintext: do not store secrets.
+
+To create a complete editable profile using the bundled OSDCloud defaults,
+supply only its name:
+
+```powershell
+New-WinpeStartupProfile -ProfileName 'Runtime-Defaults'
+```
+
+All configurable properties are written, including false booleans and empty
+arrays. An explicitly empty command or module array clears that default collection.
+Unlike an omitted property in a hand-authored profile, generated properties
+explicitly override future runtime defaults.
+
+Each successfully written copy opens in Notepad for editing, without waiting
+for the editor to close. If multiple destinations were saved, each copy opens
+separately; edits are not synchronized between copies. A Notepad launch failure
+is reported as an error but does not remove the saved profile.
+
+Existing profiles are not replaced unless `-Force` is supplied. Use `-WhatIf`
+to preview destinations without creating directories, writing files, or opening
+Notepad, or
+`-Confirm` to approve each destination. `-Force` does not bypass these controls
+or filesystem permissions.
+
+```powershell
+New-WinpeStartupProfile -ProfileName 'BranchOffice' -SkipWiFi -Force -WhatIf
+```
+
+Destination failures are reported as errors and other destinations are still
+attempted by default, including USB saves when Boot-Assets cannot be written
+without elevation. Successful saves are not rolled back if another destination
+fails. `-ErrorAction Stop` stops on the first reported error. No usable
+destinations, or failure of every attempted save, produces a terminating error.
+Without `-PassThru` there is no success-stream output; with it, each successful
+save returns a `System.IO.FileInfo`.
+
 ## Command hooks
 
 `Invoke-WinpeStartup` supports three command phases:

@@ -62,6 +62,7 @@ Deploy-OSDCloud
 | `Deploy-OSDCloud` | Starts an OS deployment workflow (GUI or CLI mode). |
 | `Get-OSDCloudModulePath` | Returns the module installation directory. |
 | `Get-OSDCloudModuleVersion` | Returns the loaded module version. |
+| `New-WinpeStartupProfile` | Creates startup profile JSON in existing Boot-Assets and on writable OSDCloud USB volumes. |
 | `Show-OSDCloudDeviceInfo` | Displays device hardware and environment information. |
 | `Start-OSDCloudExplorer` | Opens a WinForms file browser (useful in WinPE/WinRE). |
 
