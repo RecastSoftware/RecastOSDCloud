@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.10.13.1 - October 13, 2026
+
+### Added
+
+- Added `New-WinpeStartupProfile` to author named startup profiles in existing Boot-Assets and on writable USB volumes labeled OSDCloud. Writes all startup settings using bundled OSDCloud defaults in grouped property order, records the current username and profile name in environment metadata, opens saved profiles in Notepad, and supports safe replacement with `-Force` and `-WhatIf`/`-Confirm`.
+- Added focused tests for profile serialization, destination discovery, permissions, overwrite protection, and module exports.
+
+### Changed
+
+- Module version bumped from `26.10.10.1` to `26.10.13.1`.
+
 ## 26.10.10.1 - October 10, 2026
 
 ### Added

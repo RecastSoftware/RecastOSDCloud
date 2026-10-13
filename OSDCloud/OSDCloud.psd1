@@ -7,7 +7,7 @@
 @{
     # --- Identity ---
     RootModule           = 'OSDCloud.psm1'
-    ModuleVersion        = '26.10.10.1'
+    ModuleVersion        = '26.10.13.1'
     CompatiblePSEditions = @('Core', 'Desktop')
     GUID                 = '2fbd5c65-79c7-4561-9a2e-c4a4eebc89c7'
 
@@ -31,6 +31,7 @@ Windows 11 26H2 GA Release
         'Deploy-OSDCloud',
         'Get-OSDCloudModulePath',
         'Get-OSDCloudModuleVersion',
+        'New-WinpeStartupProfile',
         'Show-OSDCloudDeviceInfo',
         'Start-OSDCloudExplorer',
         # WinPE

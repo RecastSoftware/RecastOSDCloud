@@ -6,7 +6,7 @@ OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operatin
 
 ## Overview
 
-- Current repository module version: `26.10.10.1`.
+- Current repository module version: `26.10.13.1`.
 - Defaults to Windows 11 26H2 for amd64 and arm64 deployments.
 - Focused on Windows deployment workflows driven by PowerShell.
 - Supports WinpeStartup helpers and deployment UX options.
@@ -14,13 +14,11 @@ OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operatin
 
 ---
 
-## What's New in 26.10.10.1
+## What's New in 26.10.13.1
 
-Released October 10, 2026.
+Released October 13, 2026.
 
-- **Expanded device information:** `Show-OSDCloudDeviceInfo` displays device and BIOS details, processor and memory configuration, disk drives, and network adapters with IPv4 addresses.
-- **Richer hardware inventory:** OSDCore collects physical memory module details and includes IPv4 addresses in network adapter inventory; memory below 6 GB is flagged with a warning.
-- **Clearer time-sync reporting:** Status messages now identify the clock as "Device DateTime."
+- **Create WinpeStartup profiles:** `New-WinpeStartupProfile` authors named startup profiles in existing Boot-Assets folders and writable OSDCloud USB volumes, using bundled defaults and safe replacement options.
 
 See [CHANGELOG.md](CHANGELOG.md) for the complete release history and [WinpeStartup documentation](docs/about_winpestartup.md) for startup configuration.
 
@@ -62,6 +60,7 @@ Deploy-OSDCloud
 | `Deploy-OSDCloud` | Starts an OS deployment workflow (GUI or CLI mode). |
 | `Get-OSDCloudModulePath` | Returns the module installation directory. |
 | `Get-OSDCloudModuleVersion` | Returns the loaded module version. |
+| `New-WinpeStartupProfile` | Creates startup profile JSON in existing Boot-Assets and on writable OSDCloud USB volumes. |
 | `Show-OSDCloudDeviceInfo` | Displays device hardware and environment information. |
 | `Start-OSDCloudExplorer` | Opens a WinForms file browser (useful in WinPE/WinRE). |
 
