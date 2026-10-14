@@ -45,7 +45,11 @@ function Resolve-OSDCoreModelDriversPath {
             Write-Warning "[$(Get-Date -format s)] Cannot determine ModelDrivers source disk: $($CacheObject.FullName)"
             return
         }
-        $localDisks = @(Get-DeviceLocalDisk -ErrorAction Stop)
+        $localDisks = @(Get-Disk -ErrorAction Stop |
+            Where-Object {
+                $_.IsOffline -eq $false -and $_.OperationalStatus -ne 'No Media' -and
+                $_.BusType -notin 'File Backed Virtual', 'MAX', 'Microsoft Reserved', 'USB', 'Virtual'
+            })
         if (@($localDisks | Where-Object { $null -eq $_.Number -or $null -eq $_.IsBoot }).Count -gt 0) {
             Write-Warning "[$(Get-Date -format s)] Cannot determine which local disks will be cleared. Excluding ModelDrivers source: $($CacheObject.FullName)"
             return
