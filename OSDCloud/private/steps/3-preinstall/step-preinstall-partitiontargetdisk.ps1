@@ -1,14 +1,14 @@
 function step-preinstall-partitiontargetdisk {
     [CmdletBinding()]
     param (
-        [System.String]
+        [System.Boolean]
         $RecoveryPartitionForce = $global:OSDCloudWorkflowInvoke.RecoveryPartition.Force,
 
-        [System.String]
+        [System.Boolean]
         $RecoveryPartitionSkip = $global:OSDCloudWorkflowInvoke.RecoveryPartition.Skip,
 
-        [Int32]
-        $DiskNumber = $global:OSDCloudWorkflowInvoke.DiskPartition.DiskNumber
+        [System.Nullable[System.Int32]]
+        $DiskNumber = $global:OSDCloudWorkflowInvoke.DeploymentDisk.DiskNumber
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
@@ -34,7 +34,12 @@ function step-preinstall-partitiontargetdisk {
     if ($RecoveryPartition -eq $false) {
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT disk without recovery partition."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Recovery Partition will not be created. OK."
-        New-OSDCloudDisk -PartitionStyle GPT -NoRecoveryPartition -Force -ErrorAction Stop
+        if ($null -ne $DiskNumber) {
+            New-OSDCloudDisk -PartitionStyle GPT -DiskNumber $DiskNumber -NoRecoveryPartition -Force -ErrorAction Stop
+        }
+        else {
+            New-OSDCloudDisk -PartitionStyle GPT -NoRecoveryPartition -Force -ErrorAction Stop
+        }
         Write-Host "=========================================================================" -ForegroundColor DarkCyan
         Write-Host "| SYSTEM | MSR |                    WINDOWS                             |" -ForegroundColor DarkCyan
         Write-Host "=========================================================================" -ForegroundColor DarkCyan
@@ -42,7 +47,7 @@ function step-preinstall-partitiontargetdisk {
     else {
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT disk with 2000MB recovery partition."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] 2GB Recovery Partition will be created. OK."
-        if ($DiskNumber) {
+        if ($null -ne $DiskNumber) {
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] New-OSDCloudDisk target DiskNumber: $DiskNumber"
             New-OSDCloudDisk -PartitionStyle GPT -DiskNumber $DiskNumber -SizeRecovery 2000MB -Force -ErrorAction Stop
         }
