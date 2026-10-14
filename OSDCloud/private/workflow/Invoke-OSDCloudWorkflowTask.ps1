@@ -28,9 +28,7 @@ function Invoke-OSDCloudWorkflowTask {
     $global:OSDCloudWorkflowInvoke = $null
     $global:OSDCloudWorkflowInvoke = [ordered]@{
         DeploymentDisk            = $global:OSDCloudDeploy.DeploymentDisk
-        DiskPartition             = [pscustomobject]@{
-            DiskNumber = $global:OSDCloudDeploy.DeploymentDiskNumber
-        }
+        DeploymentDiskNumber      = $global:OSDCloudDeploy.DeploymentDiskNumber
         FileInfoWindowsImage       = $null
         DriverPackCacheObject      = $global:OSDCloudDeploy.DriverPackCacheObject
         DriverPackName             = $global:OSDCloudDeploy.DriverPackName

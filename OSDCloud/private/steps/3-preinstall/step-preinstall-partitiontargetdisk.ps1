@@ -8,7 +8,7 @@ function step-preinstall-partitiontargetdisk {
         $RecoveryPartitionSkip = $global:OSDCloudWorkflowInvoke.RecoveryPartition.Skip,
 
         [System.Nullable[System.Int32]]
-        $DiskNumber = $global:OSDCloudWorkflowInvoke.DeploymentDisk.DiskNumber
+        $DiskNumber = $global:OSDCloudWorkflowInvoke.DeploymentDiskNumber
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
