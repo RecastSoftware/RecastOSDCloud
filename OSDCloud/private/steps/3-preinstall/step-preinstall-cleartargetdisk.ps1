@@ -1,32 +1,74 @@
 function step-preinstall-cleartargetdisk {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param (
-        # We should always confirm to Clear-Disk as this is destructive
-        [System.Boolean]
-        $Confirm = $true
+        [System.Nullable[System.Int32]]
+        $DiskNumber = $global:OSDCloudWorkflowInvoke.DeploymentDisk.DiskNumber
     )
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Initial Confirm: $Confirm"
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Force: $($global:OSDCloudWorkflowInvoke.Force)"
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] LocalDisk count: $(@($global:OSDCoreDevice.LocalDisk).Count)"
+    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DiskNumber: $DiskNumber"
 
     if ($global:OSDCloudWorkflowInvoke.Force -eq $true) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Force is enabled; Clear-Disk confirmation will be disabled."
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Force was specified. Clear-Disk confirmation prompts are disabled"
-        $Confirm = $false
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Force is enabled; disk-clearing confirmation will be disabled."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Force was specified. Disk-clearing confirmation prompts are disabled"
+        if (-not $PSBoundParameters.ContainsKey('Confirm')) {
+            $ConfirmPreference = 'None'
+        }
     }
 
-    # If Confirm is set to false, we need to check if there are multiple disks
-    if (($Confirm -eq $false) -and ($global:OSDCloudWorkflowInvoke.Force -ne $true) -and (@($global:OSDCoreDevice.LocalDisk).Count -ge 2)) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Multiple fixed disks detected without Force; re-enabling confirmation."
-        Write-Warning "[$(Get-Date -format s)] OSDCloud has detected more than 1 Fixed Disk is installed. Clear-Disk with Confirm is required"
-        $Confirm = $true
+    if ($env:SystemDrive -ne 'X:') {
+        Write-Warning "[$($MyInvocation.MyCommand.Name)] Disk clearing is only supported in WinPE; no disks were cleared."
+        return
     }
 
-    Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Calling Clear-DeviceLocalDisk with Confirm=$Confirm."
-    Clear-DeviceLocalDisk -Force -NoResults -Confirm:$Confirm -ErrorAction Stop
+    $LocalDisks = @(
+        Get-Disk -ErrorAction Stop |
+            Where-Object {
+                ($_.IsOffline -eq $false) -and
+                ($_.OperationalStatus -ne 'No Media') -and
+                ($_.BusType -notin @('File Backed Virtual', 'MAX', 'Microsoft Reserved', 'USB', 'Virtual')) -and
+                ($_.IsBoot -eq $false)
+            } |
+            Sort-Object -Property Number
+    )
+
+    if ($null -ne $DiskNumber) {
+        $TargetDisks = @($LocalDisks | Where-Object { $_.Number -eq $DiskNumber })
+        if ($TargetDisks.Count -eq 0) {
+            Write-Warning "[$($MyInvocation.MyCommand.Name)] Disk $DiskNumber is not an eligible non-boot local disk; no disks were cleared."
+            return
+        }
+    }
+    elseif ($LocalDisks.Count -eq 1) {
+        $TargetDisks = @($LocalDisks)
+    }
+    elseif ($LocalDisks.Count -gt 1) {
+        Write-Warning "[$($MyInvocation.MyCommand.Name)] Multiple eligible local disks were detected. Specify DiskNumber to select the deployment disk; no disks were cleared."
+        return
+    }
+    else {
+        Write-Warning "[$($MyInvocation.MyCommand.Name)] No eligible non-boot local disks were detected; no disks were cleared."
+        return
+    }
+
+    foreach ($Disk in $TargetDisks) {
+        $TargetDescription = "Disk $($Disk.Number) $($Disk.BusType) $([int]($Disk.Size / 1000000000))GB $($Disk.FriendlyName)"
+        if ($PSCmdlet.ShouldProcess($TargetDescription, 'Clean disk with DiskPart')) {
+            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Cleaning Disk $($Disk.Number) with DiskPart."
+            $DiskPartCommands = @(
+                "select disk $($Disk.Number)"
+                'clean'
+                'exit'
+            )
+            $DiskPartOutput = $DiskPartCommands | diskpart.exe
+            $DiskPartExitCode = $LASTEXITCODE
+            if (($null -ne $DiskPartExitCode) -and ($DiskPartExitCode -ne 0)) {
+                throw "DiskPart failed to clean disk $($Disk.Number) with exit code $DiskPartExitCode. $DiskPartOutput"
+            }
+        }
+    }
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] End"
     #=================================================
