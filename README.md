@@ -2,15 +2,23 @@
 
 [![PSGallery Version](https://img.shields.io/powershellgallery/v/OSDCloud.svg?style=flat&logo=powershell&label=PSGallery%20Version)](https://www.powershellgallery.com/packages/OSDCloud) [![PSGallery Downloads](https://img.shields.io/powershellgallery/dt/OSDCloud.svg?style=flat&logo=powershell&label=PSGallery%20Downloads)](https://www.powershellgallery.com/packages/OSDCloud) [![PowerShell](https://img.shields.io/badge/PowerShell-5.1-blue?style=flat&logo=powershell)](https://www.powershellgallery.com/packages/OSDCloud)
 
-OSDCloud is a PowerShell module for deploying Windows with cloud-hosted operating system and driver content.
+> A PowerShell module for deploying Windows with cloud-hosted operating system and driver content, with guided deployment workflows and WinPE startup automation.
 
-## Overview
+| | |
+| --- | --- |
+| **Author** | David Segura |
+| **Company** | Recast Software |
+| **Version** | 26.10.13.1 |
+| **PS Editions** | CompatiblePSEditions: Core, Desktop (manifest) |
+| **License** | See [LICENSE](LICENSE) |
 
-- Current repository module version: `26.10.13.1`.
-- Defaults to Windows 11 26H2 for amd64 and arm64 deployments.
-- Focused on Windows deployment workflows driven by PowerShell.
-- Supports WinpeStartup helpers and deployment UX options.
-- Provides cmdlets for device info, Wi-Fi setup, and module updates in PE.
+---
+
+## What Is OSDCloud?
+
+**Simple explanation:** OSDCloud helps deploy Windows to supported devices using operating system images and drivers hosted in the cloud. Operators can configure deployments through a graphical or command-line experience, then use WinPE startup tools to prepare devices and complete deployment.
+
+**Technical explanation:** OSDCloud is a PowerShell module for Windows deployment workflows across amd64 and arm64 devices, defaulting to Windows 11 26H2. It provides deployment UX options, operating system and driver catalogs, device information and Wi-Fi utilities, and WinpeStartup automation for WinPE environments.
 
 ---
 
@@ -24,22 +32,32 @@ See [CHANGELOG.md](CHANGELOG.md) for the complete release history and [WinpeStar
 
 ---
 
-## Requirements
+## Installation
 
-- PowerShell 5.1 or PowerShell 7+ on Windows
-- Windows or WinPE environment (for PE-specific cmdlets)
+The module source lives under the [OSDCloud/](OSDCloud/) subfolder of this repository.
 
-## Install
+### From source
 
 ```powershell
-# In WinPE
-Install-Module -Name OSDCloud -SkipPublisherCheck -Force
+git clone https://github.com/RecastSoftware/RecastOSDCloud.git
+Import-Module .\RecastOSDCloud\OSDCloud\OSDCloud.psd1 -Force
+```
 
-# In Windows (elevated session)
+### From the PowerShell Gallery
+
+Install the module in WinPE:
+
+```powershell
+Install-Module -Name OSDCloud -SkipPublisherCheck -Force
+```
+
+Install for all users from an elevated Windows session:
+
+```powershell
 Install-Module -Name OSDCloud -Scope AllUsers
 ```
 
-## Quick start
+## Quick Start
 
 ```powershell
 Import-Module OSDCloud
@@ -110,6 +128,13 @@ WinpeStartup cmdlets are currently documented through in-module help. In WinPE, 
 
 - [PowerShell Gallery — OSDCloud](https://www.powershellgallery.com/packages/OSDCloud)
 - [GitHub Issues](https://github.com/OSDeploy/OSDCloud/issues)
+
+## Requirements
+
+| Requirement | Details |
+|---|---|
+| PowerShell | 5.1 or later on Windows |
+| Operating environment | Windows; PE-specific cmdlets require WinPE |
 
 ## Release notes
 
