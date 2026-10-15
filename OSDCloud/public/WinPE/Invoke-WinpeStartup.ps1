@@ -32,6 +32,21 @@ function Invoke-WinpeStartup {
         process, overwriting existing values. Child PowerShell command sessions
         inherit the resulting environment.
 
+        After valid profile JSON and its environment section are applied, a
+        selected folder-based profile imports immediate *.env files (including
+        hidden .env), winpe-reg\*.reg, and winpe-root-cer\*.cer using the same
+        rules as Core. Profile environment files override Core, shell defaults,
+        and profile JSON environment values. Profile registry imports follow
+        Core imports and can overwrite their keys; root certificates are added
+        to the same machine Root store. Other profiles are not processed.
+        Legacy root-level JSON profiles remain JSON-only.
+
+        Core and selected-profile asset files require a valid Recast license
+        (Get-OSDCoreLicense IsValid). Without one, asset discovery and imports
+        are skipped without errors, warnings, or asset summaries. Profile JSON
+        loading, its env/Environment section, and built-in shell setup are not
+        license-gated.
+
         This function only runs in WinPE where SystemDrive is X:. If it is called
         outside WinPE, it writes a warning and exits without running startup steps.
 
@@ -192,6 +207,7 @@ function Invoke-WinpeStartup {
             return
         }
 
+        $startupSystemDrive = $env:SystemDrive
         $startupLogPath = 'X:\Windows\Temp\winpestartup.log'
         try {
             $startupLogDirectory = Split-Path -Path $startupLogPath -Parent
@@ -641,6 +657,10 @@ function Invoke-WinpeStartup {
 
         if ($selectedProfile -and $environmentProperty) {
             Set-WinpeStartupProfileEnvironment -InputObject $profileEnvironment -SourceName $selectedProfile.Path
+        }
+
+        if ($selectedProfile -and $selectedProfile.AssetPath) {
+            Import-WinpeStartupAssets -Path $selectedProfile.AssetPath -SystemDrive $startupSystemDrive
         }
 
         Write-Verbose 'Invoke-WinpeStartup: Starting full WinpeStartup sequence'

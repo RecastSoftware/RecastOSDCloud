@@ -1,4 +1,7 @@
 BeforeAll {
+    . "$PSScriptRoot\..\core-license\Get-OSDCoreLicense.ps1"
+    . "$PSScriptRoot\Test-WinpeStartupAssetLicense.ps1"
+    . "$PSScriptRoot\Import-WinpeStartupAssets.ps1"
     . "$PSScriptRoot\Initialize-WinpeStartupEnvironment.ps1"
     . "$PSScriptRoot\..\..\public\WinPE\Invoke-WinpeStartup.ps1"
     . "$PSScriptRoot\..\Get-WinpeStartupProfileCandidates.ps1"
@@ -39,6 +42,33 @@ BeforeAll {
         Set-Content -LiteralPath $path -Value $Lines -Encoding UTF8
         return $path
     }
+
+    function New-ProfileAssetFixture {
+        <#
+        .SYNOPSIS
+            Creates an asset in the selected profile folder.
+        .DESCRIPTION
+            Writes synthetic asset content without invoking native import tools.
+        .PARAMETER RelativePath
+            File path relative to the selected profile folder.
+        .PARAMETER Lines
+            Synthetic file contents.
+        .EXAMPLE
+            New-ProfileAssetFixture '.env' @('WSCORE_TEST_PROFILE=value')
+        .NOTES
+            Used by selected-profile asset tests.
+        #>
+        [CmdletBinding()]
+        param (
+            [string]$RelativePath,
+            [string[]]$Lines
+        )
+        $Error.Clear()
+        $path = Join-Path -Path $selectedAssetPath -ChildPath $RelativePath
+        [System.IO.Directory]::CreateDirectory((Split-Path -Path $path -Parent)) | Out-Null
+        Set-Content -LiteralPath $path -Value $Lines -Encoding UTF8
+        return $path
+    }
 }
 
 Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
@@ -56,6 +86,7 @@ Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
             return "$($Path.TrimEnd('\'))\$ChildPath"
         } -ParameterFilter { $Path -like 'X:*' }
         Mock New-Item {}
+        Mock Get-OSDCoreLicense { [pscustomobject]@{ IsValid = $true } }
         Mock Set-ItemProperty {}
         Mock Write-Host {}
         Mock Start-Process { [pscustomobject]@{ ExitCode = 0 } }
@@ -543,6 +574,419 @@ Describe 'Initialize-WinpeStartupEnvironment Core environment files' {
 
         $warnings.Count | Should -Be 0
         Should -Invoke Start-Process -Times 0 -Exactly
+    }
+
+    Describe 'Unlicensed WinpeStartup assets' {
+        BeforeEach {
+            $selectedAssetPath = Join-Path $fixtureRoot 'WinpeStartup\profiles\Selected profile'
+            $profilePath = Join-Path $selectedAssetPath 'winpestartup.json'
+            New-ProfileAssetFixture 'winpestartup.json' @(
+                '{"Environment":{"WSCORE_TEST_UNLICENSED":"json"},"Invoke-WinpeStartup:InvokeStartupCommand":"Write-Output synthetic"}'
+            ) | Out-Null
+            New-ProfileAssetFixture '.env' @('WSCORE_TEST_UNLICENSED=unexpected-profile') | Out-Null
+            New-ProfileAssetFixture 'winpe-reg\settings.reg' @('synthetic') | Out-Null
+            New-ProfileAssetFixture 'winpe-root-cer\root.cer' @('synthetic') | Out-Null
+            New-CoreEnvironmentFixture 'main\.env' @('WSCORE_TEST_UNLICENSED=unexpected-core') | Out-Null
+            New-CoreEnvironmentFixture 'main\winpe-reg\settings.reg' @('synthetic') | Out-Null
+            New-CoreEnvironmentFixture 'main\winpe-root-cer\root.cer' @('synthetic') | Out-Null
+            $script:OSDCloudPSDefaultParameterValuesPath = Join-Path $fixtureRoot 'absent-defaults.json'
+            Mock Get-OSDCoreLicense { $null }
+            Mock Get-WinpeStartupProfileCandidates {
+                [pscustomobject]@{ Profile = 'Selected'; Path = $profilePath; AssetPath = $selectedAssetPath; Index = 0 }
+            }
+            Mock Initialize-WinpeStartupDrivers {}
+            Mock Initialize-WinpeStartupFiles {}
+            Mock Initialize-WinpeStartupMain {}
+            Mock Start-Sleep {}
+            Mock Start-Transcript {}
+            Mock Stop-Transcript {}
+            Mock Get-ChildItem { throw 'Unlicensed asset discovery must not run' }
+            Mock Get-Content { throw 'Unlicensed asset reads must not run' } -ParameterFilter {
+                $LiteralPath -like '*.env'
+            }
+            Mock Get-Content { [System.IO.File]::ReadAllText($LiteralPath) } -ParameterFilter {
+                $LiteralPath -eq $profilePath
+            }
+        }
+
+        It 'retains JSON settings and shell setup for <State> licensing with <SelectionMode>' -TestCases @(
+            @{ State = 'missing'; SelectionMode = 'automatic' }
+            @{ State = 'invalid'; SelectionMode = 'automatic' }
+            @{ State = 'failed lookup'; SelectionMode = 'automatic' }
+            @{ State = 'missing'; SelectionMode = 'menu' }
+            @{ State = 'invalid'; SelectionMode = 'menu' }
+            @{ State = 'failed lookup'; SelectionMode = 'menu' }
+            @{ State = 'missing'; SelectionMode = 'legacy' }
+        ) {
+            param ($State, $SelectionMode)
+            if ($State -eq 'invalid') {
+                Mock Get-OSDCoreLicense { [pscustomobject]@{ IsValid = $false; Email = 'synthetic@example.invalid' } }
+            }
+            elseif ($State -eq 'failed lookup') {
+                Mock Get-OSDCoreLicense { throw 'Synthetic lookup failure' }
+            }
+            if ($SelectionMode -eq 'menu') {
+                Mock Get-WinpeStartupProfileCandidates {
+                    @(
+                        [pscustomobject]@{ Profile = 'Selected'; Path = $profilePath; AssetPath = $selectedAssetPath; Index = 0 }
+                        [pscustomobject]@{ Profile = 'ZOther'; Path = "$profilePath.other"; AssetPath = "$selectedAssetPath.other"; Index = 0 }
+                    )
+                }
+                Mock Read-Host { '1' }
+            }
+            elseif ($SelectionMode -eq 'legacy') {
+                Mock Get-WinpeStartupProfileCandidates {
+                    [pscustomobject]@{ Profile = 'Legacy'; Path = $profilePath; Index = 0 }
+                }
+            }
+            $output = @(Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -ErrorAction Stop 2>&1 3>&1)
+
+            $output.Count | Should -Be 0
+            $env:WSCORE_TEST_UNLICENSED | Should -Be 'json'
+            $env:USERPROFILE | Should -Be 'X:\windows\system32\config\systemprofile'
+            Should -Invoke New-Item -Times 6 -Exactly -ParameterFilter { $Path -ne 'X:\Windows\Temp' }
+            Should -Invoke Set-ItemProperty -Times 2 -Exactly
+            Should -Invoke Initialize-WinpeStartupMain -Times 1 -Exactly
+            Should -Invoke Get-Content -Times 1 -Exactly -ParameterFilter { $LiteralPath -eq $profilePath }
+            Should -Invoke Get-Content -Times 0 -Exactly -ParameterFilter { $LiteralPath -like '*.env' }
+            Should -Invoke Get-ChildItem -Times 0 -Exactly
+            Should -Invoke Start-Process -Times 0 -Exactly -ParameterFilter { $FilePath -in @('reg.exe', 'certutil.exe') }
+            Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { $FilePath -eq 'powershell.exe' }
+            Should -Invoke Write-Host -Times 0 -Exactly -ParameterFilter {
+                $Object -match '\[(PASS|FAIL)\] Initialize (env|registry|certificates)'
+            }
+        }
+
+        It 'quietly gates direct importer calls before discovery and status output' {
+            $warnings = @()
+            $importErrors = @()
+
+            $output = @(Import-WinpeStartupAssets -Path $selectedAssetPath -DiscoverySucceeded $false `
+                -WarningVariable warnings -ErrorVariable importErrors -ErrorAction Stop)
+
+            $output.Count | Should -Be 0
+            $warnings.Count | Should -Be 0
+            $importErrors.Count | Should -Be 0
+            Should -Invoke Get-ChildItem -Times 0 -Exactly
+            Should -Invoke Get-Content -Times 0 -Exactly
+            Should -Invoke Start-Process -Times 0 -Exactly
+            Should -Invoke Write-Host -Times 0 -Exactly
+        }
+    }
+
+    Describe 'Selected WinpeStartup profile assets' {
+        BeforeEach {
+            $selectedAssetPath = Join-Path $fixtureRoot 'WinpeStartup\profiles\Selected profile'
+            $profilePath = Join-Path $selectedAssetPath 'winpestartup.json'
+            New-ProfileAssetFixture 'winpestartup.json' @('{}') | Out-Null
+            $script:OSDCloudPSDefaultParameterValuesPath = Join-Path $fixtureRoot 'absent-defaults.json'
+            Mock Get-WinpeStartupProfileCandidates {
+                [pscustomobject]@{ Profile = 'Selected profile'; Path = $profilePath; AssetPath = $selectedAssetPath; Index = 0 }
+            }
+            Mock Initialize-WinpeStartupDrivers {}
+            Mock Initialize-WinpeStartupFiles {}
+            Mock Initialize-WinpeStartupMain {}
+            Mock Start-Sleep {}
+            Mock Start-Transcript {}
+            Mock Stop-Transcript {}
+        }
+
+        It 'applies Core, shell, JSON, then profile files before native imports and child commands' {
+            New-CoreEnvironmentFixture 'main\.env' @(
+                'WSCORE_TEST_PRECEDENCE=core'
+                'WSCORE_TEST_CORE_ONLY=retained'
+                'USERPROFILE=core-shell'
+                'SystemDrive=core-override'
+            ) | Out-Null
+            $coreRegistry = New-CoreEnvironmentFixture 'main\winpe-reg\core.reg' @('synthetic')
+            $coreCertificate = New-CoreEnvironmentFixture 'main\winpe-root-cer\core.cer' @('synthetic')
+            New-ProfileAssetFixture 'winpestartup.json' @(
+                '{"Environment":{"WSCORE_TEST_PRECEDENCE":"json","WSCORE_TEST_JSON_ONLY":"retained","USERPROFILE":"json-shell","SystemDrive":"json-override"}}'
+            ) | Out-Null
+            New-ProfileAssetFixture '.env' @(
+                'WSCORE_TEST_PRECEDENCE=profile-file'
+                'USERPROFILE=profile-file-shell'
+            ) | Out-Null
+            $profileRegistry = New-ProfileAssetFixture 'winpe-reg\profile file.reg' @('synthetic')
+            $profileCertificate = New-ProfileAssetFixture 'winpe-root-cer\profile file.cer' @('synthetic')
+            $calls = [System.Collections.Generic.List[object]]::new()
+            Mock Start-Process {
+                $calls.Add([pscustomobject]@{
+                    Tool = $FilePath
+                    Arguments = $ArgumentList
+                    Value = $env:WSCORE_TEST_PRECEDENCE
+                    Shell = $env:USERPROFILE
+                })
+                [pscustomobject]@{ ExitCode = 0 }
+            }
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -InvokeStartupCommand 'Write-Output synthetic' -InvokeMainCommand 'Write-Output synthetic' `
+                -InvokeShutdownCommand 'Write-Output synthetic'
+
+            $calls.Count | Should -Be 7
+            $calls[0].Arguments[-1] | Should -Be "`"$coreRegistry`""
+            $calls[1].Arguments[-1] | Should -Be "`"$coreCertificate`""
+            $calls[0].Value | Should -Be 'core'
+            $calls[0].Shell | Should -Be 'X:\windows\system32\config\systemprofile'
+            $calls[2].Arguments[-1] | Should -Be "`"$profileRegistry`""
+            $calls[3].Arguments[-1] | Should -Be "`"$profileCertificate`""
+            foreach ($call in $calls.GetRange(2, 5)) {
+                $call.Value | Should -Be 'profile-file'
+                $call.Shell | Should -Be 'profile-file-shell'
+            }
+            @($calls | Where-Object Tool -eq 'powershell.exe').Count | Should -Be 3
+            $env:WSCORE_TEST_CORE_ONLY | Should -Be 'retained'
+            $env:WSCORE_TEST_JSON_ONLY | Should -Be 'retained'
+            $env:SystemDrive | Should -Be 'json-override'
+            Should -Invoke Set-ItemProperty -Times 2 -Exactly
+            Should -Invoke Stop-Transcript -Times 1 -Exactly
+        }
+
+        It 'loads only selected immediate assets including hidden files in sorted order' {
+            $envFile = New-ProfileAssetFixture '.env' @('WSCORE_TEST_PROFILE_ORDER=first')
+            New-ProfileAssetFixture 'application.env' @('WSCORE_TEST_PROFILE_ORDER=last') | Out-Null
+            $registryA = New-ProfileAssetFixture 'winpe-reg\a file.reg' @('synthetic')
+            $registryZ = New-ProfileAssetFixture 'winpe-reg\z.reg' @('synthetic')
+            $certificateA = New-ProfileAssetFixture 'winpe-root-cer\a.cer' @('synthetic')
+            $certificateZ = New-ProfileAssetFixture 'winpe-root-cer\z.cer' @('synthetic')
+            New-ProfileAssetFixture 'nested\unexpected.env' @('WSCORE_TEST_EXCLUDED=unexpected') | Out-Null
+            New-ProfileAssetFixture 'winpe-reg\nested\unexpected.reg' @('synthetic') | Out-Null
+            New-ProfileAssetFixture 'winpe-root-cer\nested\unexpected.cer' @('synthetic') | Out-Null
+            New-ProfileAssetFixture 'unexpected.reg' @('synthetic') | Out-Null
+            New-ProfileAssetFixture 'unexpected.cer' @('synthetic') | Out-Null
+            New-ProfileAssetFixture 'winpe-reg\unexpected.txt' @('synthetic') | Out-Null
+            New-ProfileAssetFixture '..\Unselected\.env' @('WSCORE_TEST_EXCLUDED=unexpected') | Out-Null
+            New-ProfileAssetFixture '..\Unselected\winpe-reg\unexpected.reg' @('synthetic') | Out-Null
+            New-ProfileAssetFixture '..\Unselected\winpe-root-cer\unexpected.cer' @('synthetic') | Out-Null
+            foreach ($path in @($envFile, $registryA, $certificateA, $selectedAssetPath)) {
+                [System.IO.File]::SetAttributes($path, [System.IO.FileAttributes]::Hidden)
+            }
+            $calls = [System.Collections.Generic.List[string]]::new()
+            Mock Start-Process {
+                $env:WSCORE_TEST_PROFILE_ORDER | Should -Be 'last'
+                $calls.Add("$FilePath $($ArgumentList -join ' ')")
+                [pscustomobject]@{ ExitCode = 0 }
+            }
+            Mock Get-WinpeStartupProfileCandidates {
+                @(
+                    [pscustomobject]@{ Profile = 'Selected profile'; Path = $profilePath; AssetPath = $selectedAssetPath; Index = 0 }
+                    [pscustomobject]@{ Profile = 'Unselected'; Path = (Join-Path (Split-Path $selectedAssetPath -Parent) 'Unselected\winpestartup.json'); AssetPath = (Join-Path (Split-Path $selectedAssetPath -Parent) 'Unselected'); Index = 0 }
+                )
+            }
+            Mock Read-Host { '1' }
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud
+
+            $env:WSCORE_TEST_PROFILE_ORDER | Should -Be 'last'
+            $env:WSCORE_TEST_EXCLUDED | Should -BeNullOrEmpty
+            $calls.Count | Should -Be 4
+            $calls[0] | Should -Be "reg.exe import `"$registryA`""
+            $calls[1] | Should -Be "reg.exe import `"$registryZ`""
+            $calls[2] | Should -Be "certutil.exe -addstore root `"$certificateA`""
+            $calls[3] | Should -Be "certutil.exe -addstore root `"$certificateZ`""
+        }
+
+        It 'keeps JSON environment values when profile assets are missing' {
+            New-ProfileAssetFixture 'winpestartup.json' @('{"env":{"WSCORE_TEST_PRECEDENCE":"json"}}') | Out-Null
+            $warnings = @()
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -WarningVariable warnings -WarningAction SilentlyContinue
+
+            $env:WSCORE_TEST_PRECEDENCE | Should -Be 'json'
+            $warnings.Count | Should -Be 0
+            Should -Invoke Start-Process -Times 0 -Exactly
+        }
+
+        It 'skips assets for legacy root-level <FileName> profiles' -TestCases @(
+            @{ FileName = 'Legacy.json' }
+            @{ FileName = 'winpestartup.json' }
+        ) {
+            param ($FileName)
+            $legacyPath = Join-Path (Split-Path $selectedAssetPath -Parent) $FileName
+            Set-Content -LiteralPath $legacyPath -Value '{"env":{"WSCORE_TEST_PRECEDENCE":"legacy"}}'
+            New-ProfileAssetFixture '..\.env' @('WSCORE_TEST_PRECEDENCE=unexpected') | Out-Null
+            New-ProfileAssetFixture '..\winpe-reg\unexpected.reg' @('synthetic') | Out-Null
+            New-ProfileAssetFixture '..\winpe-root-cer\unexpected.cer' @('synthetic') | Out-Null
+            Mock Get-WinpeStartupProfileCandidates {
+                [pscustomobject]@{ Profile = 'Legacy'; Path = $legacyPath; Index = 0 }
+            }
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud
+
+            $env:WSCORE_TEST_PRECEDENCE | Should -Be 'legacy'
+            Should -Invoke Start-Process -Times 0 -Exactly
+        }
+
+        It 'does not import profile assets when no profile is discovered' {
+            New-ProfileAssetFixture '.env' @('WSCORE_TEST_EXCLUDED=unexpected') | Out-Null
+            Mock Get-WinpeStartupProfileCandidates { @() }
+            Mock Import-WinpeStartupAssets {} -ParameterFilter { $Path -contains $selectedAssetPath }
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud
+
+            $env:WSCORE_TEST_EXCLUDED | Should -BeNullOrEmpty
+            Should -Invoke Import-WinpeStartupAssets -Times 0 -Exactly -ParameterFilter { $Path -contains $selectedAssetPath }
+        }
+
+        It 'does not import selected assets for invalid JSON <Content>' -TestCases @(
+            @{ Content = '{invalid' }
+            @{ Content = '{"env":{},"Environment":{}}' }
+        ) {
+            param ($Content)
+            New-ProfileAssetFixture 'winpestartup.json' @($Content) | Out-Null
+            Mock Import-WinpeStartupAssets {} -ParameterFilter { $Path -contains $selectedAssetPath }
+            $warnings = @()
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -WarningVariable warnings -WarningAction SilentlyContinue
+
+            ($warnings | Out-String) | Should -Match 'Failed to load profile'
+            Should -Invoke Import-WinpeStartupAssets -Times 0 -Exactly -ParameterFilter { $Path -contains $selectedAssetPath }
+        }
+
+        It 'does not import profile assets after cancellation with <Selection>' -TestCases @(
+            @{ Selection = '' }
+            @{ Selection = 'q' }
+        ) {
+            param ($Selection)
+            Mock Get-WinpeStartupProfileCandidates {
+                @(
+                    [pscustomobject]@{ Profile = 'Selected'; Path = $profilePath; AssetPath = $selectedAssetPath; Index = 0 }
+                    [pscustomobject]@{ Profile = 'Other'; Path = "$profilePath.other"; AssetPath = "$selectedAssetPath.other"; Index = 0 }
+                )
+            }
+            Mock Read-Host { $Selection }
+            Mock Import-WinpeStartupAssets {} -ParameterFilter { $Path -contains $selectedAssetPath }
+            $warnings = @()
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -WarningVariable warnings -WarningAction SilentlyContinue
+
+            ($warnings | Out-String) | Should -Match 'Profile selection cancelled'
+            Should -Invoke Import-WinpeStartupAssets -Times 0 -Exactly -ParameterFilter { $Path -contains $selectedAssetPath }
+        }
+
+        It 'continues profile imports after <Failure> without exposing environment values' -TestCases @(
+            @{ Failure = 'environment discovery' }
+            @{ Failure = 'environment read' }
+            @{ Failure = 'registry discovery' }
+            @{ Failure = 'registry launch' }
+            @{ Failure = 'registry exit' }
+            @{ Failure = 'certificate discovery' }
+            @{ Failure = 'certificate launch' }
+            @{ Failure = 'certificate exit' }
+        ) {
+            param ($Failure)
+            $environmentPath = New-ProfileAssetFixture '.env' @('WSCORE_TEST_FAILURE=synthetic-private-value')
+            New-ProfileAssetFixture 'z.env' @('WSCORE_TEST_SURVIVOR=retained') | Out-Null
+            $registryPath = New-ProfileAssetFixture 'winpe-reg\a.reg' @('synthetic')
+            New-ProfileAssetFixture 'winpe-reg\z.reg' @('synthetic') | Out-Null
+            $certificatePath = New-ProfileAssetFixture 'winpe-root-cer\a.cer' @('synthetic')
+            New-ProfileAssetFixture 'winpe-root-cer\z.cer' @('synthetic') | Out-Null
+            switch ($Failure) {
+                'environment discovery' {
+                    Mock Get-ChildItem { throw 'Synthetic discovery failure' } -ParameterFilter {
+                        $LiteralPath -eq $selectedAssetPath -and $Filter -eq '*.env'
+                    }
+                }
+                'environment read' {
+                    Mock Get-Content { throw 'Synthetic read failure' } -ParameterFilter { $LiteralPath -eq $environmentPath }
+                }
+                'registry discovery' {
+                    Mock Get-ChildItem { throw 'Synthetic discovery failure' } -ParameterFilter {
+                        $LiteralPath -eq (Join-Path $selectedAssetPath 'winpe-reg')
+                    }
+                }
+                'certificate discovery' {
+                    Mock Get-ChildItem { throw 'Synthetic discovery failure' } -ParameterFilter {
+                        $LiteralPath -eq (Join-Path $selectedAssetPath 'winpe-root-cer')
+                    }
+                }
+                default {
+                    Mock Start-Process {
+                        if ($Failure -like '*launch') {
+                            throw 'Synthetic launch failure'
+                        }
+                        [pscustomobject]@{ ExitCode = 1 }
+                    } -ParameterFilter {
+                        ($Failure -like 'registry*' -and $ArgumentList[-1] -eq "`"$registryPath`"") -or
+                        ($Failure -like 'certificate*' -and $ArgumentList[-1] -eq "`"$certificatePath`"")
+                    }
+                }
+            }
+            $warnings = @()
+
+            $messages = @(Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -InvokeStartupCommand 'Write-Output synthetic' -ErrorAction Stop -Verbose `
+                -WarningVariable warnings -WarningAction SilentlyContinue 4>&1)
+
+            $warnings.Count | Should -BeGreaterThan 0
+            ($warnings | Out-String) | Should -Not -Match 'synthetic-private-value'
+            ($messages | Out-String) | Should -Not -Match 'synthetic-private-value'
+            Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { $FilePath -eq 'powershell.exe' }
+            if ($Failure -ne 'environment discovery') {
+                $env:WSCORE_TEST_SURVIVOR | Should -Be 'retained'
+            }
+            if ($Failure -notlike 'registry*') {
+                Should -Invoke Start-Process -Times 2 -Exactly -ParameterFilter { $FilePath -eq 'reg.exe' }
+            }
+            if ($Failure -notlike 'certificate*') {
+                Should -Invoke Start-Process -Times 2 -Exactly -ParameterFilter { $FilePath -eq 'certutil.exe' }
+            }
+            if ($Failure -like 'registry *' -and $Failure -ne 'registry discovery') {
+                Should -Invoke Start-Process -Times 2 -Exactly -ParameterFilter { $FilePath -eq 'reg.exe' }
+            }
+            if ($Failure -like 'certificate *' -and $Failure -ne 'certificate discovery') {
+                Should -Invoke Start-Process -Times 2 -Exactly -ParameterFilter { $FilePath -eq 'certutil.exe' }
+            }
+        }
+
+        It 'warns for invalid profile environment entries and continues with literal valid assignments' {
+            New-ProfileAssetFixture '.env' @(
+                'not-an-assignment'
+                'WSCORE_TEST_INVALID="unclosed synthetic-private-value'
+                'WSCORE_TEST_LITERAL=$env:SystemDrive'
+                'WSCORE_TEST_SURVIVOR=retained'
+            ) | Out-Null
+            $warnings = @()
+
+            Invoke-WinpeStartup -SkipOnScreenKeyboard -SkipWiFi -SkipIPConfig -SkipUpdateOSDCloud `
+                -WarningVariable warnings -WarningAction SilentlyContinue
+
+            $warnings.Count | Should -Be 2
+            ($warnings | Out-String) | Should -Match 'at line 1'
+            ($warnings | Out-String) | Should -Match 'at line 2'
+            ($warnings | Out-String) | Should -Not -Match 'synthetic-private-value'
+            $env:WSCORE_TEST_LITERAL | Should -Be '$env:SystemDrive'
+            $env:WSCORE_TEST_SURVIVOR | Should -Be 'retained'
+        }
+
+        It 'passes profile file values to a real child process without machine persistence' {
+            $machineBefore = [System.Environment]::GetEnvironmentVariable('WSCORE_TEST_CHILD', 'Machine')
+            New-ProfileAssetFixture '.env' @('WSCORE_TEST_CHILD=profile-child') | Out-Null
+            Import-WinpeStartupAssets -Path $selectedAssetPath
+
+            $encodedCommand = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes('$env:WSCORE_TEST_CHILD'))
+            $childValue = & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -EncodedCommand $encodedCommand
+
+            $childValue | Should -Be 'profile-child'
+            [System.Environment]::GetEnvironmentVariable('WSCORE_TEST_CHILD', 'Machine') | Should -Be $machineBefore
+        }
+
+        It 'does not import assets outside WinPE' {
+            $env:SystemDrive = 'C:'
+            Mock Get-ChildItem {}
+            $warnings = @()
+
+            Import-WinpeStartupAssets -Path $selectedAssetPath -WarningVariable warnings -WarningAction SilentlyContinue
+
+            ($warnings | Out-String) | Should -Match 'Not running in WinPE'
+            Should -Invoke Get-ChildItem -Times 0 -Exactly
+            Should -Invoke Start-Process -Times 0 -Exactly
+        }
     }
 
     Describe 'Invoke-WinpeStartup transcript lifecycle' {
