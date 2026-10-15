@@ -8,12 +8,18 @@ function Update-OSDCloudCoreCatalogOS {
 		catalog, verifies the downloaded CAB size and SHA256 digest, and validates the
 		extracted catalog before changing persistent content.
 
+		Requires the selected Get-OSDCoreLicense license to have IsValid equal to true.
+		Missing, invalid, or failed license lookups quietly skip all update work.
+		License lookup failures produce only a generic verbose diagnostic.
+
 		Publishes the validated catalog to the module operating system catalog directory using
 		the build and release timestamp from its ESD filenames, for example
 		26200.9457.260913-0221.xml. The catalog is also copied to
-		OSDCloud\catalogs\operatingsystems on each writable drive letter that already contains
-		an OSDCloud directory. Existing module catalogs remain in place, and an existing module
+		OSDCloud\catalogs\operatingsystems on each writable, online USB volume labeled
+		OSDCloud, creating missing folders. Only the downloaded catalog is synchronized.
+		Existing module catalogs remain in place, and an existing module
 		catalog name is never overwritten with different content.
+		Displays the full destination path after each successful module or USB save.
 
 		Any prerequisite, download, validation, or module publication failure is reported as a
 		warning and does not produce a terminating error. A failure to update one external drive
@@ -66,6 +72,19 @@ function Update-OSDCloudCoreCatalogOS {
 	$ErrorActionPreference = 'Stop'
 	$functionName = $MyInvocation.MyCommand.Name
 	Write-Verbose "[$(Get-Date -format s)] [$functionName] Start"
+
+	try {
+		$license = Get-OSDCoreLicense -ErrorAction Stop -WarningAction SilentlyContinue -Verbose:$false
+	}
+	catch {
+		Write-Verbose "[$(Get-Date -format s)] [$functionName] License lookup failed; catalog update disabled."
+		return
+	}
+	if ($null -eq $license -or $license.IsValid -ne $true) {
+		return
+	}
+
+	Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast: OSDCloud is updating the OS catalog."
 
 	$metadataUri = 'https://fe3.delivery.mp.microsoft.com/UpdateMetadataService/updates/search/v1/bydeviceinfo'
 	$products = 'PN=Windows.Products.Cab.amd64&V=0.0.0.0'
@@ -339,17 +358,36 @@ function Update-OSDCloudCoreCatalogOS {
 			[System.IO.File]::Move($stagedModulePath, $moduleCatalogPath)
 			$stagedModulePath = $null
 			$published = $true
+			Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Saving OS catalog to module: $moduleCatalogPath"
 		}
 
 		$driveCatalogPaths = @()
-		$eligibleDrives = @(
-			Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue |
-			Where-Object { $_.Root -match '^[A-Z]:\\$' } |
-			Where-Object { Test-Path -LiteralPath (Join-Path $_.Root 'OSDCloud') -PathType Container }
-		)
+		$eligibleDrives = @()
+		try {
+			$eligibleDrives = @(Get-Volume -ErrorAction Stop |
+				Where-Object { $_.FileSystemLabel -eq 'OSDCloud' -and $_.DriveLetter })
+		}
+		catch {
+			Write-Warning "[$(Get-Date -format s)] [$functionName] Unable to discover OSDCloud USB volumes: $($_.Exception.Message)"
+		}
 
 		foreach ($drive in $eligibleDrives) {
-			$driveCatalogDirectory = Join-Path $drive.Root 'OSDCloud\catalogs\operatingsystems'
+			try {
+				$partition = Get-Partition -DriveLetter $drive.DriveLetter -ErrorAction Stop
+				$disk = Get-Disk -Number $partition.DiskNumber -ErrorAction Stop
+				if ($disk.BusType -ne 'USB') {
+					continue
+				}
+				if ($disk.IsReadOnly -or $disk.IsOffline -or $partition.IsReadOnly -or $partition.IsOffline) {
+					Write-Warning "[$(Get-Date -format s)] [$functionName] Skipping unavailable or read-only OSDCloud USB volume '$($drive.DriveLetter):'."
+					continue
+				}
+			}
+			catch {
+				Write-Warning "[$(Get-Date -format s)] [$functionName] Unable to inspect OSDCloud USB volume '$($drive.DriveLetter):': $($_.Exception.Message)"
+				continue
+			}
+			$driveCatalogDirectory = Join-Path "$($drive.DriveLetter):\" 'OSDCloud\catalogs\operatingsystems'
 			$driveCatalogPath = Join-Path $driveCatalogDirectory $destinationName
 			if (-not $PSCmdlet.ShouldProcess($driveCatalogPath, 'Synchronize the OS catalog')) {
 				continue
@@ -364,6 +402,7 @@ function Update-OSDCloudCoreCatalogOS {
 				Move-Item -LiteralPath $stagedDrivePath -Destination $driveCatalogPath -Force
 				$stagedDrivePaths = @($stagedDrivePaths | Where-Object { $_ -ne $stagedDrivePath })
 				$driveCatalogPaths += $driveCatalogPath
+				Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Saving OS catalog to USB: $driveCatalogPath"
 			}
 			catch {
 				Write-Warning "[$(Get-Date -format s)] [$functionName] Unable to synchronize the operating system catalog to '$driveCatalogPath': $($_.Exception.Message)"

@@ -13,6 +13,8 @@ function Get-OSDCoreLicense {
 	3) support@recastsoftware.com fallback
 	4) Empty or null email
 	Expired licenses are still eligible for selection.
+	Returns no license while OSDCoreLicense.IsIncognito is true, without
+	discovering or reading saved licenses. An explicit Path does not bypass this.
 
 	.PARAMETER Path
 	The directory path to search for .license2 files.
@@ -55,6 +57,10 @@ function Get-OSDCoreLicense {
 		[Parameter()]
 		[string]$PreferredEmail
 	)
+
+	if ($global:OSDCoreLicense.IsIncognito -eq $true) {
+		return $null
+	}
 
 	if (-not (Test-Path -Path $Path -PathType Container)) {
 		try {

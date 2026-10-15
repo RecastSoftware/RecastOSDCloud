@@ -175,6 +175,12 @@ function Initialize-DeployOSDCloud {
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreDriverPacks"
     #=================================================
     # CoreOperatingSystems
+    try {
+        $null = Update-OSDCloudCoreCatalogOS -Confirm:$false
+    }
+    catch {
+        Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Unable to update the OS catalog. Using existing catalogs. $($_.Exception.Message)"
+    }
     $global:OSDCoreOperatingSystems = Get-OSDCoreOperatingSystems |
     Where-Object { ($_.Architecture -match $processorArchitecture) -or ($_.OSArchitecture -match $processorArchitecture) }
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ready: OSDCoreOperatingSystems"

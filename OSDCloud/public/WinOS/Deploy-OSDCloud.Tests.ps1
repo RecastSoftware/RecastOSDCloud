@@ -4,6 +4,8 @@ BeforeAll {
         param ($ModuleRoot)
         . "$ModuleRoot\public\WinOS\Deploy-OSDCloud.ps1"
         . "$ModuleRoot\private\Initialize-DeployOSDCloud.ps1"
+        . "$ModuleRoot\private\Update-OSDCloudCoreCatalogOS.ps1"
+        . "$ModuleRoot\private\core-license\Get-OSDCoreLicense.ps1"
         function Get-OSDCloudWorkflowRuntimeParameter {
             [CmdletBinding()]
             param ($ModuleBase, $WorkflowName, $ProcessorArchitecture)
@@ -100,14 +102,43 @@ Describe 'Deploy-OSDCloud disk parameters' {
         } -ModuleName DiskParameterDeploymentTests
         Deploy-OSDCloud -CLI -Incognito
         $global:OSDCoreLicense.IsRegistered | Should -BeFalse
+        $global:OSDCoreLicense.IsIncognito | Should -BeTrue
         Deploy-OSDCloud -CLI
         $global:OSDCoreLicense.IsRegistered | Should -BeTrue
+        $global:OSDCoreLicense.IsIncognito | Should -BeFalse
         Should -Invoke Initialize-OSDCoreLicense -ModuleName DiskParameterDeploymentTests -Times 2 -Exactly
     }
 
     It 'does not override normal registration when Incognito is explicitly false' {
         Deploy-OSDCloud -CLI -Incognito:$false
         $global:OSDCoreLicense.IsRegistered | Should -BeTrue
+        $global:OSDCoreLicense.IsIncognito | Should -BeFalse
+    }
+
+    It 'skips real OS catalog updates with no discovery during Incognito: CLI=<CLI>' -TestCases @(
+        @{ CLI = $true }
+        @{ CLI = $false }
+    ) {
+        param ($CLI)
+        Mock Invoke-RestMethod { throw 'Unexpected catalog request' } -ModuleName DiskParameterDeploymentTests
+        Mock Invoke-WebRequest { throw 'Unexpected catalog download' } -ModuleName DiskParameterDeploymentTests
+        Mock Get-Volume { throw 'Unexpected USB discovery' } -ModuleName DiskParameterDeploymentTests
+        Mock Get-ChildItem { throw 'Unexpected license/catalog discovery' } -ModuleName DiskParameterDeploymentTests
+        Mock Initialize-DeployOSDCloud {
+            $global:OSDCoreLicense.IsIncognito | Should -BeTrue
+            Get-OSDCoreLicense | Should -BeNullOrEmpty
+            Update-OSDCloudCoreCatalogOS | Should -BeNullOrEmpty
+        } -ModuleName DiskParameterDeploymentTests
+        Deploy-OSDCloud -CLI:$CLI -Incognito -WarningVariable warnings
+        @($warnings).Count | Should -Be 0
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
+        Should -Invoke Invoke-RestMethod -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Invoke-WebRequest -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Get-Volume -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Get-ChildItem -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Write-Host -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly -ParameterFilter {
+            $Object -like '*updating the OS catalog*' -or $Object -like '*OS catalog saved to*'
+        }
     }
 
     It 'skips registered keyboard language conversion in Incognito mode' {

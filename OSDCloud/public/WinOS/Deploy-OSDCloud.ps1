@@ -34,8 +34,8 @@ function Deploy-OSDCloud {
         current console session.
 
     .PARAMETER Incognito
-        Forces the initialized OSDCoreLicense.IsRegistered state to false for
-        unlicensed testing, even when a registered license is present. Does not
+        Simulates no Recast license by forcing IsRegistered to false and making
+        Get-OSDCoreLicense return no license without reading saved licenses. Does not
         modify the saved license or disable analytics. Applies to CLI and GUI
         launches; the next launch without this switch reloads normal license state.
 
@@ -108,7 +108,7 @@ function Deploy-OSDCloud {
     .EXAMPLE
         Deploy-OSDCloud -CLI -Incognito
 
-        Runs the default workflow with IsRegistered forced to false, exercising
+        Runs the default workflow with no license available, exercising
         unregistered behavior without changing the saved license.
 
     .EXAMPLE
@@ -331,14 +331,16 @@ function Deploy-OSDCloud {
         #=================================================
         # Initialize OSD
         Initialize-OSDCoreLicense
+        $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $Incognito.IsPresent -Force
         if ($Incognito.IsPresent) {
             $global:OSDCoreLicense.IsRegistered = $false
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [INFO] Incognito: IsRegistered is forced to false for unlicensed testing."
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [INFO] Incognito: No Recast license is available and IsRegistered is forced to false for unlicensed testing."
         }
         Initialize-OSDCoreDevice
         # Device initialization can refresh license state when license details are missing.
         if ($Incognito.IsPresent) {
             $global:OSDCoreLicense.IsRegistered = $false
+            $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $true -Force
         }
         #=================================================
         # OSDCoreDevice Manufacturer, Model, Product overrides

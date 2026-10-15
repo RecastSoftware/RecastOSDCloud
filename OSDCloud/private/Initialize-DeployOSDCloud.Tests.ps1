@@ -1,5 +1,6 @@
 BeforeAll {
     . "$PSScriptRoot\Initialize-DeployOSDCloud.ps1"
+    . "$PSScriptRoot\Update-OSDCloudCoreCatalogOS.ps1"
     . "$PSScriptRoot\..\public\WinOS\Deploy-OSDCloud.ps1"
     . "$PSScriptRoot\core-license\Initialize-OSDCoreLicense.ps1"
     . "$PSScriptRoot\core-device\Initialize-OSDCoreDevice.ps1"
@@ -64,6 +65,7 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         }
         $global:OSDCloudWorkflowTasks = @([pscustomobject]@{ name = 'OSDCloud'; steps = @() })
         Mock Initialize-OSDCoreCache {}
+        Mock Update-OSDCloudCoreCatalogOS {}
         Mock Initialize-OSDCoreLicense { $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = $true } }
         Mock Initialize-OSDCoreDevice {}
         Mock Invoke-OSDCloudWorkflowTask {}
@@ -89,6 +91,46 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         Mock Remove-Item {}
         Mock Get-FileHash { throw 'Unexpected archive hashing' }
         Mock Write-Host {}
+    }
+
+    It 'refreshes before loading OS choices for <Architecture>' -TestCases @(
+        @{ Architecture = 'amd64' }
+        @{ Architecture = 'arm64' }
+    ) {
+        param ($Architecture)
+        $script:catalogRefreshed = $false
+        Mock Update-OSDCloudCoreCatalogOS {
+            $script:catalogRefreshed = $true
+            [pscustomobject]@{ Published = $true }
+        }
+        Mock Get-OSDCoreOperatingSystems {
+            $script:catalogRefreshed | Should -BeTrue
+            [pscustomobject]@{
+                OperatingSystem = 'Windows 11 25H2'; OSActivation = 'Retail'; OSLanguageCode = 'en-us'
+                OSArchitecture = $global:OSDCoreDevice.ProcessorArchitecture
+                OSBuild = '26200'; OSBuildVersion = '26200.9999'
+            }
+        }
+        $result = @(Initialize-DeployOSDCloud -ProcessorArchitecture $Architecture)
+        $result | Where-Object { $_.PSObject.Properties.Name -contains 'Published' } | Should -BeNullOrEmpty
+        $global:OSDCloudDeploy.OSBuildVersion | Should -Be '26200.9999'
+        Should -Invoke Update-OSDCloudCoreCatalogOS -Times 1 -Exactly -ParameterFilter { $Confirm -eq $false }
+    }
+
+    It 'continues loading existing catalogs when the updater <Behavior>' -TestCases @(
+        @{ Behavior = 'skips' }
+        @{ Behavior = 'warns' }
+        @{ Behavior = 'throws' }
+    ) {
+        param ($Behavior)
+        Mock Update-OSDCloudCoreCatalogOS {
+            if ($Behavior -eq 'warns') { Write-Warning 'Synthetic update failure' }
+            if ($Behavior -eq 'throws') { throw 'Synthetic update exception' }
+        }
+        Initialize-DeployOSDCloud -WarningVariable warnings -WarningAction SilentlyContinue
+        $global:OSDCloudDeploy.OSBuildVersion | Should -Be '26200.9457'
+        @($warnings).Count | Should -Be $(if ($Behavior -eq 'skips') { 0 } else { 1 })
+        Should -Invoke Get-OSDCoreOperatingSystems -Times 1 -Exactly
     }
 
     It 'defaults to ModelDrivers and retains OEM fallback without testing its URL or archive' {

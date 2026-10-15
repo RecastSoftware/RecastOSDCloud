@@ -37,6 +37,36 @@ Non-default workflows display a warning. Use
 
 ## Change OS, edition, or language
 
+### Automatic OS catalog refresh
+
+Each deployment initialization calls `Update-OSDCloudCoreCatalogOS` before loading
+OS choices. Automatic and direct updater calls require a valid Recast license
+(`Get-OSDCoreLicense` reports `IsValid = true`), not merely registration.
+Missing, invalid, or failed license lookups quietly skip the refresh. Licensed
+attempts display `Recast: OSDCloud is updating the OS catalog.` Update failures
+warn and deployment continues with existing catalogs.
+
+The updater validates the downloaded Windows 11 catalog and adds it to the
+running module's `core\operatingsystems` directory without removing older catalogs.
+The updated catalog is available to the current deployment without reimporting
+the module; workflow OS choices and supported build mappings remain unchanged.
+
+Only the freshly validated catalog is also copied to online, writable USB volumes
+labeled **OSDCloud**, at
+`<USBDriveLetter>:\OSDCloud\catalogs\operatingsystems`. Missing destination folders
+are created. Other drives are not copy destinations, and a failed USB copy warns
+without blocking copies to other eligible USB volumes.
+After each successful save, the updater displays the full catalog file path,
+identifying whether it was saved to the module or a USB volume. Failed writes
+and `-WhatIf` previews do not report a successful save.
+
+Catalog indexing checks this path on mounted drives, along with module and
+ProgramData catalogs. Reading cached catalogs does not require a license or
+writable media. The latest revision per major build is used, with module catalogs
+preferred when an external catalog has the same revision.
+
+### Configure OS choices
+
 These choices live in `workflow/<workflow>/os-amd64.json` and
 `workflow/<workflow>/os-arm64.json`. The UX reads them at runtime.
 
@@ -73,11 +103,14 @@ the defaults below (including automatic OS sizing). No customization means no
 registration warning. `DiskNumber` remains available without registration.
 
 To exercise unregistered behavior on a registered device, use
-`Deploy-OSDCloud -CLI -Incognito` (or omit `-CLI` for the GUI). This forces
-`IsRegistered = false` for testing without modifying the saved license.
+`Deploy-OSDCloud -CLI -Incognito` (or omit `-CLI` for the GUI). This sets
+`OSDCoreLicense.IsIncognito = true` and forces `IsRegistered = false` for testing
+without modifying the saved license. While active, `Get-OSDCoreLicense` returns
+no license without discovering or reading saved licenses, so license-gated
+features such as OS catalog refresh quietly skip their work.
 Registration-only features use their unregistered behavior; disk overrides
 warn and fall back to defaults. It does not disable analytics. The next launch
-without `-Incognito` reloads normal registration.
+without `-Incognito` clears the simulation and reloads normal license state.
 
 ```powershell
 Deploy-OSDCloud -CLI -DiskNumber 0 -DiskLabelOS 'Windows' -DiskLabelRecovery 'WinRE' `

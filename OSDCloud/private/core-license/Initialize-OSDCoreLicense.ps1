@@ -7,6 +7,8 @@ function Initialize-OSDCoreLicense {
     Retrieves the selected Recast Core license and stores it in
     $global:OSDCoreLicense. The IsRegistered property is true when the
     selected license has an email address; otherwise it is false.
+    Clears the previous IsIncognito simulation before reading saved licenses.
+    IsIncognito records whether license discovery is disabled for testing.
 
     .OUTPUTS
     None. This function updates $global:OSDCoreLicense.
@@ -23,6 +25,9 @@ function Initialize-OSDCoreLicense {
     param ()
 
     $Error.Clear()
+    if ($null -ne $global:OSDCoreLicense) {
+        $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $false -Force
+    }
     $license = Get-OSDCoreLicense
     $classWin32ComputerSystemProduct = Get-CimInstance -ClassName Win32_ComputerSystemProduct
     $deviceUUID = [System.String]$classWin32ComputerSystemProduct.UUID
@@ -34,6 +39,7 @@ function Initialize-OSDCoreLicense {
     $global:OSDCoreLicense = [pscustomobject]@{
         EndpointSHA  = [System.String]$EndpointSHA
         IsRegistered = -not [string]::IsNullOrWhiteSpace([string]$license.Email)
+        IsIncognito  = $false
         License      = $license
     }
 
