@@ -28,9 +28,12 @@ function Invoke-OSDCloudWorkflowTask {
     $global:OSDCloudWorkflowInvoke = $null
     $global:OSDCloudWorkflowInvoke = [ordered]@{
         DeploymentDisk            = $global:OSDCloudDeploy.DeploymentDisk
-        DiskPartition             = [pscustomobject]@{
-            DiskNumber = $global:OSDCloudDeploy.DeploymentDiskNumber
-        }
+        DeploymentDiskNumber      = $global:OSDCloudDeploy.DeploymentDiskNumber
+        DiskLabelOS                = $global:OSDCloudDeploy.DiskLabelOS
+        DiskLabelRecovery          = $global:OSDCloudDeploy.DiskLabelRecovery
+        DiskSizeSystem             = $global:OSDCloudDeploy.DiskSizeSystem
+        DiskSizeOS                 = $global:OSDCloudDeploy.DiskSizeOS
+        DiskSizeRecovery           = $global:OSDCloudDeploy.DiskSizeRecovery
         FileInfoWindowsImage       = $null
         DriverPackCacheObject      = $global:OSDCloudDeploy.DriverPackCacheObject
         DriverPackName             = $global:OSDCloudDeploy.DriverPackName
@@ -60,6 +63,32 @@ function Invoke-OSDCloudWorkflowTask {
         WindowsImagePath           = $null
         WinpeRestart               = [bool]$workflowSettingsUser.WinpeRestart
         WinpeShutdown              = [bool]$workflowSettingsUser.WinpeShutdown
+    }
+    $diskSteps = @($global:OSDCloudDeploy.WorkflowTaskObject.steps | Where-Object {
+        $_.command -in @('step-preinstall-cleartargetdisk', 'step-preinstall-partitiontargetdisk') -and
+        $_.skip -ne $true -and $_.disable -ne $true
+    })
+    $partitionSteps = @($diskSteps | Where-Object { $_.command -eq 'step-preinstall-partitiontargetdisk' })
+    if ($partitionSteps.Count -gt 0) {
+        $diskSteps = $partitionSteps
+    }
+    foreach ($diskStep in $diskSteps) {
+        $resolveParameters = @{ Settings = $global:OSDCloudWorkflowInvoke }
+        if ($diskStep.command -eq 'step-preinstall-partitiontargetdisk' -and $null -ne $diskStep.parameters) {
+            foreach ($parameterName in 'RecoveryPartitionForce', 'RecoveryPartitionSkip') {
+                if ($diskStep.parameters.PSObject.Properties[$parameterName]) {
+                    $resolveParameters[$parameterName] = $diskStep.parameters.$parameterName
+                }
+            }
+        }
+        $diskParameters = Get-OSDCloudDiskParameters @resolveParameters
+        $targetDisk = $global:OSDCloudWorkflowInvoke.DeploymentDisk
+        if ($null -ne $diskStep.parameters.DiskNumber) {
+            $targetDisk = $global:OSDCoreDevice.LocalDisk | Where-Object {
+                $_.Number -eq $diskStep.parameters.DiskNumber -or $_.DiskNumber -eq $diskStep.parameters.DiskNumber
+            } | Select-Object -First 1
+        }
+        Test-OSDCloudDiskLayout -DiskSize $targetDisk.Size @diskParameters
     }
     #=================================================
     #region OSDCloud Deployment Analytics

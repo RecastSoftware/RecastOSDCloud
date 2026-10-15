@@ -19,6 +19,7 @@ At a high level, the startup flow does this:
 | Initialize WinPE | Runs `wpeinit`, disables the firewall, updates boot info, normalizes USB drive letters, renews networking, and opens a minimized PowerShell session. | Establishes hardware, networking, and predictable removable-drive layout before later steps run. |
 | Select a profile | Scans `WinpeStartup\profiles` on attached drives for JSON profiles. A single profile is selected automatically; multiple profiles are shown as a menu. | Lets one USB drive hold site, customer, or workflow-specific startup settings. |
 | Apply parameters | Merges defaults, profile values, and explicit caller parameters. Explicit caller parameters win. | Keeps the configuration flexible while preserving operator intent. |
+| Apply profile assets | Imports environment files, registry files, and root certificates from the selected profile folder after its JSON environment values. | Lets profile-specific settings override Core without affecting other profiles. |
 | Run startup actions | Optionally launches the on-screen keyboard, device views, Wi-Fi connection UI, IP configuration display, module updates, and startup/main/shutdown commands. | Handles the common things a technician needs immediately after WinPE starts. |
 
 ## The basic flow
@@ -82,6 +83,68 @@ A profile may also include an unprefixed `Environment` object:
 Environment values must be strings, numbers, or booleans. OSDCloud converts each value to a string and sets it in the current WinPE process after the profile is selected. Existing variables with the same name are overwritten, and the startup, main, and shutdown child PowerShell processes inherit the resulting environment. The values last only for the current process tree; they are not written to the machine environment or registry.
 
 Null values, arrays, nested objects, and invalid variable names produce a warning and are skipped. Other valid environment entries and profile settings continue to apply. Environment values are not written to the console or verbose output.
+
+### Profile asset files
+
+Importing `.env`, `.reg`, and `.cer` assets from **both Core and the selected
+profile requires a valid Recast license**, using the existing
+`Get-OSDCoreLicense` `IsValid` result, not registration status alone. Without a
+valid license, asset discovery and imports are skipped silently: no errors,
+warnings, registration prompts, or asset pass/fail summaries. License lookup
+failures also skip imports, with only a generic verbose diagnostic.
+
+Profile discovery, selection, and loading of `winpestartup.json` remain available
+regardless of license state, including JSON `Environment`/`env` assignments and
+startup command settings. Built-in shell initialization, supplemental driver
+loading, and file copying are not gated by this asset-import feature.
+
+A folder-based profile can carry the same asset types as Core:
+
+```text
+H:\WinpeStartup\profiles\BranchOffice\
+    winpestartup.json
+    .env
+    application.env
+    winpe-reg\
+        settings.reg
+    winpe-root-cer\
+        organization.cer
+```
+
+With a valid license, only the selected profile folder is processed, after its
+JSON loads successfully and its `Environment` (or `env`) section is applied.
+OSDCloud imports:
+
+1. Immediate `*.env` files, including hidden `.env` files.
+2. Immediate `winpe-reg\*.reg` files using `reg.exe import`.
+3. Immediate `winpe-root-cer\*.cer` files using `certutil.exe -addstore root`.
+
+Files are sorted by full path within each type, include hidden files, and are
+not discovered recursively. Missing asset folders are allowed. Invalid entries,
+discovery failures, and import failures for licensed imports warn and continue with remaining assets
+and startup actions. Native tool output is suppressed, and each discovered asset
+type produces a pass/fail summary.
+
+Environment precedence, from lowest to highest, is **Core environment files,
+built-in shell variables, profile JSON environment values, then profile
+environment files**. Later files and later assignments within a file win.
+Environment files use literal single-line `NAME=VALUE` entries: blank lines and
+full-line `#` comments are ignored, surrounding whitespace and matching outer
+quotes are removed, and embedded equals signs are preserved. Expressions,
+variable references, escapes, and inline comments are not expanded. Multiline
+values and `export` syntax are unsupported. Assignments affect only the current
+process and its children, not the machine environment. Empty values follow the
+runtime's semantics (removal in Windows PowerShell 5.1). Values are not logged;
+files remain plaintext, so do not store secrets in profiles.
+
+Profile registry imports run after Core and can overwrite existing registry
+values. Certificates are added to the local machine Root store for the current
+WinPE session; only include certificates you intend to trust.
+
+Legacy root-level JSON profiles remain JSON-only: assets beside them in the
+shared `profiles` directory are not imported. No assets from unselected profiles
+are processed, and cancellation or invalid profile JSON prevents profile asset
+imports. Profile folders do not add driver loading or arbitrary file copying.
 
 If exactly one profile is found, OSDCloud selects it automatically. If several profiles are found, OSDCloud shows a numbered list and lets the operator choose. Pressing Enter or typing `q` cancels the profile selection and stops the remaining startup sequence.
 
@@ -212,7 +275,7 @@ The same USB drive can provide more than a boot image. With a `WinpeStartup` fol
 |---|---|
 | `WinpeStartup\Drivers` | Supplemental `.inf` drivers loaded into WinPE. |
 | `WinpeStartup\Files` | Files copied into the WinPE RAM disk. |
-| `WinpeStartup\profiles` | JSON startup profiles selected at boot. |
+| `WinpeStartup\profiles` | JSON startup profiles and their optional environment, registry, and root-certificate assets selected at boot. |
 
 That lets a technician adapt one boot image to different sites or hardware without rebuilding the image every time.
 
@@ -271,6 +334,7 @@ The main entry point is [OSDCloud/public/WinPE/Invoke-WinpeStartup.ps1](../OSDCl
 The private helper functions live under [OSDCloud/private/WinpeStartup](../OSDCloud/private/WinpeStartup). The most important pieces are:
 
 - [Initialize-WinpeStartupEnvironment.ps1](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupEnvironment.ps1) for shell folders, environment variables, and execution policy.
+- [Import-WinpeStartupAssets.ps1](../OSDCloud/private/WinpeStartup/Import-WinpeStartupAssets.ps1) for shared Core and selected-profile environment, registry, and root-certificate imports.
 - [Initialize-WinpeStartupDrivers.ps1](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupDrivers.ps1) for supplemental driver loading.
 - [Initialize-WinpeStartupFiles.ps1](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupFiles.ps1) for copying startup files into the RAM disk.
 - [Initialize-WinpeStartupMain.ps1](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupMain.ps1) for `wpeinit`, `wpeutil`, drive-letter cleanup, and network refresh.

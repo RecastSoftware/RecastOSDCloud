@@ -62,6 +62,7 @@ function step-install-expandwindowsimage {
             ":: RecastOSDCloud $(Get-Date -format s)" | Out-File -FilePath $setupCompletePath -Append -Encoding ascii -Width 2000 -Force -ErrorAction Stop
             # Create OOBE.cmd
             ":: RecastOSDCloud $(Get-Date -format s)" | Out-File -FilePath 'C:\Windows\Setup\Scripts\OOBE.cmd' -Append -Encoding ascii -Width 2000 -Force -ErrorAction Stop
+            # "reg add `"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\TimeZoneInformation`" /v RealTimeIsUniversal /t REG_DWORD /d 1 /f" | Out-File -FilePath 'C:\Windows\Setup\Scripts\OOBE.cmd' -Append -Encoding ascii -Width 2000 -Force -ErrorAction Stop
         }
         catch {
             Write-Warning "[$(Get-Date -format s)] Windows image expansion or setup script creation failed."

@@ -1,6 +1,5 @@
 BeforeAll {
     . "$PSScriptRoot\Resolve-OSDCoreModelDriversPath.ps1"
-    function Get-DeviceLocalDisk { [CmdletBinding()] param () }
 }
 
 Describe 'Resolve-OSDCoreModelDriversPath source safety' {
@@ -14,7 +13,7 @@ Describe 'Resolve-OSDCoreModelDriversPath source safety' {
         }
         Mock Get-Volume { [pscustomobject]@{ DriveLetter = 'F'; UniqueId = 'usb-volume' } }
         Mock Get-Partition { [pscustomobject]@{ DiskNumber = 3 } }
-        Mock Get-DeviceLocalDisk { [pscustomobject]@{ Number = 0; IsBoot = $false } }
+        Mock Get-Disk { [pscustomobject]@{ Number = 0; IsBoot = $false; IsOffline = $false; OperationalStatus = 'Online'; BusType = 'SATA' } }
         Mock Test-Path { $true }
         Mock Get-ChildItem { [pscustomobject]@{ Name = 'driver.inf' } }
     }
@@ -27,9 +26,9 @@ Describe 'Resolve-OSDCoreModelDriversPath source safety' {
     }
 
     It 'excludes a source on any disk that will be erased, including a non-target disk' {
-        Mock Get-DeviceLocalDisk {
-            [pscustomobject]@{ Number = 0; IsBoot = $false }
-            [pscustomobject]@{ Number = 3; IsBoot = $false }
+        Mock Get-Disk {
+            [pscustomobject]@{ Number = 0; IsBoot = $false; IsOffline = $false; OperationalStatus = 'Online'; BusType = 'SATA' }
+            [pscustomobject]@{ Number = 3; IsBoot = $false; IsOffline = $false; OperationalStatus = 'Online'; BusType = 'SATA' }
         }
         Resolve-OSDCoreModelDriversPath -CacheObject $entry -WarningVariable messages -WarningAction SilentlyContinue | Should -BeNullOrEmpty
         "$messages" | Should -Match 'disk 3.*will be cleared'
@@ -37,7 +36,12 @@ Describe 'Resolve-OSDCoreModelDriversPath source safety' {
     }
 
     It 'does not exclude a boot disk that the clear helper will skip' {
-        Mock Get-DeviceLocalDisk { [pscustomobject]@{ Number = 3; IsBoot = $true } }
+        Mock Get-Disk { [pscustomobject]@{ Number = 3; IsBoot = $true; IsOffline = $false; OperationalStatus = 'Online'; BusType = 'SATA' } }
+        Resolve-OSDCoreModelDriversPath -CacheObject $entry | Should -Not -BeNullOrEmpty
+    }
+
+    It 'does not consider USB disks among the disks that will be cleared' {
+        Mock Get-Disk { [pscustomobject]@{ Number = 3; IsBoot = $false; IsOffline = $false; OperationalStatus = 'Online'; BusType = 'USB' } }
         Resolve-OSDCoreModelDriversPath -CacheObject $entry | Should -Not -BeNullOrEmpty
     }
 
@@ -70,13 +74,13 @@ Describe 'Resolve-OSDCoreModelDriversPath source safety' {
     }
 
     It 'reports failed disk enumeration instead of assuming safety' {
-        Mock Get-DeviceLocalDisk { throw 'Storage unavailable' }
+        Mock Get-Disk { throw 'Storage unavailable' }
         Resolve-OSDCoreModelDriversPath -CacheObject $entry -WarningVariable messages -WarningAction SilentlyContinue | Should -BeNullOrEmpty
         "$messages" | Should -Match 'Storage unavailable'
     }
 
     It 'excludes sources when local disk metadata is incomplete' {
-        Mock Get-DeviceLocalDisk { [pscustomobject]@{ IsBoot = $false } }
+        Mock Get-Disk { [pscustomobject]@{ IsBoot = $false; IsOffline = $false; OperationalStatus = 'Online'; BusType = 'SATA' } }
         Resolve-OSDCoreModelDriversPath -CacheObject $entry -WarningVariable messages -WarningAction SilentlyContinue | Should -BeNullOrEmpty
         "$messages" | Should -Match 'Cannot determine which local disks will be cleared'
         Should -Invoke Get-ChildItem -Times 0 -Exactly

@@ -13,8 +13,10 @@ Starts an OSDCloud operating system deployment.
 ## SYNTAX
 
 ```
-Deploy-OSDCloud [[-WorkflowName] <String>] [-CLI] [-Force] [-ProfileName <String>]
- [-DiskNumber <UInt32>] [-ProgressAction <ActionPreference>] [-OperatingSystem <String>] [-OSEdition <String>]
+Deploy-OSDCloud [[-WorkflowName] <String>] [-CLI] [-Incognito] [-Force] [-ProfileName <String>]
+ [-DiskNumber <UInt32>] [-DiskLabelOS <String>] [-DiskLabelRecovery <String>]
+ [-DiskSizeSystem <UInt64>] [-DiskSizeOS <UInt64>] [-DiskSizeRecovery <UInt64>]
+ [-ProgressAction <ActionPreference>] [-OperatingSystem <String>] [-OSEdition <String>]
  [-OSActivation <String>] [-OSLanguageCode <String>] [-Task <String>] [<CommonParameters>]
 ```
 
@@ -28,6 +30,13 @@ current console session.
 
 In addition to the static parameters documented here, workflow-specific runtime
 parameters are added dynamically from the selected workflow definition.
+
+`DiskLabelOS`, `DiskLabelRecovery`, `DiskSizeSystem`, `DiskSizeOS`, and
+`DiskSizeRecovery` require `Initialize-OSDCoreLicense` to report
+`IsRegistered = true`. Otherwise, supplying any of these parameters produces
+one warning and deployment continues with default labels and sizes. No warning
+is emitted when none are supplied. `DiskNumber` does not require registration.
+Parameter-binding validation still applies before the license check.
 
 OSDCloud collects anonymous analytic data about the deployment environment and
 system configuration to help improve the product.
@@ -83,6 +92,26 @@ Deploy-OSDCloud -CLI -DiskNumber 1
 
 Runs the default OSDCloud workflow immediately and deploys to local disk 1.
 
+### EXAMPLE 7
+```powershell
+Deploy-OSDCloud -CLI -DiskNumber 0 -DiskLabelOS 'Windows' -DiskLabelRecovery 'WinRE' `
+    -DiskSizeSystem 1GB -DiskSizeOS 100GB -DiskSizeRecovery 2GB
+```
+
+On registered devices, creates a fixed 100GB Windows partition, a 1GB system partition, the standard
+16MB MSR, and (when enabled by the workflow) a 2GB recovery partition.
+Additional disk space remains unallocated. The same overrides work without
+`-CLI`; GUI controls are unchanged.
+Unregistered devices display one warning and use the default layout.
+
+### EXAMPLE 8
+```powershell
+Deploy-OSDCloud -CLI -Incognito
+```
+
+Runs with `OSDCoreLicense.IsRegistered` forced to false for unlicensed testing.
+The saved license is unchanged. The same switch works for GUI launches.
+
 ## PARAMETERS
 
 ### -WorkflowName
@@ -105,6 +134,26 @@ Accept wildcard characters: False
 ### -CLI
 Skips the graphical UX and runs the deployment workflow immediately in the
 current console session.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Incognito
+Forces the initialized `OSDCoreLicense.IsRegistered` state to false for
+unlicensed testing, even when a registered license is present. Registration-only
+features, including disk customization, follow their unregistered behavior.
+Does not modify the saved license or disable analytics. The in-memory state
+remains unregistered until license initialization runs again; the next
+`Deploy-OSDCloud` launch without this switch reloads normal license state.
 
 ```yaml
 Type: SwitchParameter
@@ -166,6 +215,105 @@ Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
+
+### -DiskLabelOS
+Volume label for the Windows NTFS partition. Defaults to `OS`.
+Customization requires registration; otherwise the default is used.
+Labels must be nonblank and at most 32 characters. Control characters and
+`\ / : * ? " < > | + , ; = [ ]` are not accepted.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: OS
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DiskLabelRecovery
+Volume label for the recovery NTFS partition. Defaults to `Recovery`.
+Customization requires registration; otherwise the default is used.
+Uses the same label validation as `DiskLabelOS`. Does not enable recovery
+when disabled by VM detection or workflow settings.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: Recovery
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DiskSizeSystem
+System partition size in bytes, from `100MB` through `3000MB` inclusive.
+Defaults to `500MB`. The standard deployment remains GPT with a 16MB MSR.
+Customization requires registration; otherwise the default is used.
+
+```yaml
+Type: UInt64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 500MB
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DiskSizeOS
+Fixed Windows partition size in bytes, at least `32GB`. When omitted, Windows
+uses the remaining space after reserving recovery. Explicit zero is invalid.
+When supplied, recovery uses `DiskSizeRecovery` and excess space remains
+unallocated; no additional data partition is created.
+Customization requires registration; otherwise automatic sizing is used.
+
+```yaml
+Type: UInt64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None (automatic sizing)
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DiskSizeRecovery
+Recovery partition size in bytes, from `350MB` through `80000MB` inclusive.
+Defaults to `2000MB`. Does not change recovery creation policy: VM detection
+or skip disables recovery, and force takes precedence over both.
+Customization requires registration; otherwise the default is used.
+
+```yaml
+Type: UInt64
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 2000MB
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+Size parameters accept PowerShell binary-unit expressions such as `500MB`,
+`2GB`, or `100GB` (1MB = 1,048,576 bytes). Plain numbers represent bytes.
+Invalid labels, out-of-range sizes, and layouts that exceed target disk
+capacity fail before disk clearing. Unregistered deployments discard valid
+customization overrides before capacity checks and validate the default layout
+instead; malformed or out-of-range input still fails parameter binding.
+Capacity checks include system, MSR,
+enabled recovery, and alignment/metadata allowance.
 
 ### -OperatingSystem
 {{ Fill OperatingSystem Description }}

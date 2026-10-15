@@ -12,6 +12,14 @@ function Deploy-OSDCloud {
         In addition to the static parameters documented here, workflow-specific runtime
         parameters are added dynamically from the selected workflow definition.
 
+        DiskLabelOS, DiskLabelRecovery, DiskSizeSystem, DiskSizeOS, and
+        DiskSizeRecovery require a valid Recast license through Test-OSDCoreLicense
+        (the selected Get-OSDCoreLicense result must have IsValid equal to true).
+        Otherwise, explicitly supplied customization parameters trigger
+        one warning and deployment uses default partition labels and sizes.
+        DiskNumber remains available without a license. Parameter-binding
+        validation still applies before the license check.
+
         OSDCloud collects anonymous analytic data about the deployment environment and
         system configuration to help improve the product. No personally identifiable
         information (PII) is collected. By using OSDCloud you consent to this collection
@@ -25,6 +33,12 @@ function Deploy-OSDCloud {
     .PARAMETER CLI
         Skips the graphical UX and runs the deployment workflow immediately in the
         current console session.
+
+    .PARAMETER Incognito
+        Simulates no Recast license by forcing IsRegistered to false and making
+        Get-OSDCoreLicense return no license without reading saved licenses. Does not
+        modify the saved license or disable analytics. Applies to CLI and GUI
+        launches; the next launch without this switch reloads normal license state.
 
     .PARAMETER PostAction
         Specifies what to do after the workflow completes successfully. Restart and
@@ -43,9 +57,36 @@ function Deploy-OSDCloud {
         Specifies the local disk number to use for deployment. The disk number must
         exist in the local disk inventory detected by OSDCloud.
 
+    .PARAMETER DiskLabelOS
+        NTFS volume label for the Windows partition. Defaults to 'OS'.
+        Must be nonblank, at most 32 characters, and contain no invalid label characters.
+        Customization requires a valid Recast license; otherwise the default is used.
+
+    .PARAMETER DiskLabelRecovery
+        NTFS volume label for the recovery partition. Defaults to 'Recovery'.
+        Does not enable a recovery partition when recovery is skipped.
+        Customization requires a valid Recast license; otherwise the default is used.
+
+    .PARAMETER DiskSizeSystem
+        System partition size in bytes, from 100MB through 3000MB. Defaults to 500MB.
+        Customization requires a valid Recast license; otherwise the default is used.
+
+    .PARAMETER DiskSizeOS
+        Fixed Windows partition size in bytes, at least 32GB. When omitted, Windows
+        uses the remaining space after reserving recovery. When supplied, excess
+        space remains unallocated and recovery uses DiskSizeRecovery.
+        Customization requires a valid Recast license; otherwise automatic sizing is used.
+
+    .PARAMETER DiskSizeRecovery
+        Recovery partition size in bytes, from 350MB through 80000MB. Defaults to
+        2000MB. Does not change the workflow's recovery skip/force rules.
+        Customization requires a valid Recast license; otherwise the default is used.
+
     .PARAMETER KeyboardLayout
         Overrides the detected keyboard layout value used to infer OSLanguageCode
-        when OSLanguageCode is not explicitly provided.
+        when OSLanguageCode is not explicitly provided. Automatic inference requires
+        a valid Recast license through Test-OSDCoreLicense; otherwise en-US is used
+        without a warning. Explicit OSLanguageCode selection does not require a license.
 
     .PARAMETER ProcessorArchitecture
         Mock/testing processor architecture override used to validate ARM64 workflow
@@ -66,6 +107,12 @@ function Deploy-OSDCloud {
         Deploy-OSDCloud -CLI
 
         Runs the default OSDCloud workflow immediately without the graphical UX.
+
+    .EXAMPLE
+        Deploy-OSDCloud -CLI -Incognito
+
+        Runs the default workflow with no license available, exercising
+        unregistered behavior without changing the saved license.
 
     .EXAMPLE
         Deploy-OSDCloud -CLI -PostAction Restart
@@ -91,6 +138,14 @@ function Deploy-OSDCloud {
         Deploy-OSDCloud -CLI -DiskNumber 1
 
         Runs the default OSDCloud workflow immediately and deploys to local disk 1.
+
+    .EXAMPLE
+        Deploy-OSDCloud -CLI -DiskLabelOS 'Windows' -DiskLabelRecovery 'WinRE' -DiskSizeSystem 1GB -DiskSizeOS 100GB -DiskSizeRecovery 2GB
+
+        With a valid Recast license, customizes the partition labels and sizes,
+        leaving excess space unallocated. Unlicensed devices warn and use defaults.
+        Size expressions use PowerShell binary units. The same parameters work
+        without -CLI; no new graphical controls are added.
 
     .EXAMPLE
         Deploy-OSDCloud -WorkflowName 'latest' -SkipWorkflowVerification
@@ -120,6 +175,10 @@ function Deploy-OSDCloud {
         [System.Management.Automation.SwitchParameter]
         $CLI,
 
+        [Parameter(Mandatory = $false, HelpMessage = 'Forces unregistered license state for testing.')]
+        [System.Management.Automation.SwitchParameter]
+        $Incognito,
+
         [Parameter(Mandatory = $false, HelpMessage = 'Action to take after the workflow completes successfully.')]
         [ValidateSet('Restart', 'Shutdown', 'Quit', 'Exit')]
         [System.String]
@@ -128,6 +187,28 @@ function Deploy-OSDCloud {
         [Parameter(Mandatory = $false, HelpMessage = 'Optional local disk number to use as the deployment target.')]
         [System.UInt32]
         $DiskNumber,
+
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
+        [System.String]
+        $DiskLabelOS = 'OS',
+
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
+        [System.String]
+        $DiskLabelRecovery = 'Recovery',
+
+        [ValidateRange(100MB, 3000MB)]
+        [System.UInt64]
+        $DiskSizeSystem = 500MB,
+
+        [ValidateRange(32GB, [System.UInt64]::MaxValue)]
+        [System.UInt64]
+        $DiskSizeOS,
+
+        [ValidateRange(350MB, 80000MB)]
+        [System.UInt64]
+        $DiskSizeRecovery = 2000MB,
 
         [Parameter(Mandatory = $false)]
         [System.Management.Automation.SwitchParameter]
@@ -204,6 +285,7 @@ function Deploy-OSDCloud {
     }
 
     end {
+        $Error.Clear()
         #=================================================
         $ModuleVersion = $($MyInvocation.MyCommand.Module.Version)
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($MyInvocation.MyCommand.ModuleName) Module: $ModuleVersion"
@@ -252,7 +334,17 @@ function Deploy-OSDCloud {
         #=================================================
         # Initialize OSD
         Initialize-OSDCoreLicense
+        $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $Incognito.IsPresent -Force
+        if ($Incognito.IsPresent) {
+            $global:OSDCoreLicense.IsRegistered = $false
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [INFO] Incognito: No Recast license is available and IsRegistered is forced to false for unlicensed testing."
+        }
         Initialize-OSDCoreDevice
+        # Device initialization can refresh license state when license details are missing.
+        if ($Incognito.IsPresent) {
+            $global:OSDCoreLicense.IsRegistered = $false
+            $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $true -Force
+        }
         #=================================================
         # OSDCoreDevice Manufacturer, Model, Product overrides
         if ($OSDManufacturer -and -not [string]::IsNullOrWhiteSpace($OSDManufacturer)) {
@@ -290,16 +382,17 @@ function Deploy-OSDCloud {
         }
 
         if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
+            $canInferOSLanguage = Test-OSDCoreLicense
             $languageKeyboardLayout = if ($PSBoundParameters.ContainsKey('KeyboardLayout')) { $KeyboardLayout } else { $global:OSDCoreDevice.KeyboardLayout }
 
-            if ($global:OSDCoreLicense.IsRegistered -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
+            if ($canInferOSLanguage -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
                 $resolvedOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $languageKeyboardLayout -FallbackLanguageCode 'en-US'
                 Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast: OSDCloud has set the OSLanguageCode to $resolvedOSLanguageCode based on the KeyboardLayout [$languageKeyboardLayout]."
             }
             else {
                 $resolvedOSLanguageCode = 'en-US'
-                if (-not $global:OSDCoreLicense.IsRegistered) {
-                    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping OSLanguageCode keyboard conversion because OSDCloud is not registered."
+                if (-not $canInferOSLanguage) {
+                    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping OSLanguageCode keyboard conversion because no valid Recast license is available."
                 }
             }
         }

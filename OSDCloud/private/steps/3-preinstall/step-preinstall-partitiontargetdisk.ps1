@@ -1,55 +1,42 @@
 function step-preinstall-partitiontargetdisk {
     [CmdletBinding()]
     param (
-        [System.String]
+        [System.Boolean]
         $RecoveryPartitionForce = $global:OSDCloudWorkflowInvoke.RecoveryPartition.Force,
 
-        [System.String]
+        [System.Boolean]
         $RecoveryPartitionSkip = $global:OSDCloudWorkflowInvoke.RecoveryPartition.Skip,
 
-        [Int32]
-        $DiskNumber = $global:OSDCloudWorkflowInvoke.DiskPartition.DiskNumber
+        [System.Nullable[System.Int32]]
+        $DiskNumber = $global:OSDCloudWorkflowInvoke.DeploymentDiskNumber
     )
     #=================================================
+    $Error.Clear()
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] DiskNumber: $DiskNumber"
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] RecoveryPartitionForce: $RecoveryPartitionForce; RecoveryPartitionSkip: $RecoveryPartitionSkip; IsVM: $IsVM"
 
-    # Mental Math
-    $RecoveryPartition = $true
-    if ($IsVM -eq $true) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Virtual machine detected; recovery partition disabled unless forced."
-        $RecoveryPartition = $false
+    $diskParameters = Get-OSDCloudDiskParameters -Settings $global:OSDCloudWorkflowInvoke `
+        -RecoveryPartitionForce $RecoveryPartitionForce -RecoveryPartitionSkip $RecoveryPartitionSkip
+    if ($null -ne $DiskNumber) {
+        $diskParameters.DiskNumber = $DiskNumber
     }
-    if ($RecoveryPartitionSkip) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] RecoveryPartitionSkip requested; recovery partition disabled."
-        $RecoveryPartition = $false
-    }
-    if ($RecoveryPartitionForce) {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] RecoveryPartitionForce requested; recovery partition enabled."
-        $RecoveryPartition = $true
-    }
+    $diskParameters.Force = $true
+    $diskParameters.ErrorAction = 'Stop'
 
-    if ($RecoveryPartition -eq $false) {
+    if ($diskParameters.NoRecoveryPartition) {
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT disk without recovery partition."
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Recovery Partition will not be created. OK."
-        New-OSDCloudDisk -PartitionStyle GPT -NoRecoveryPartition -Force -ErrorAction Stop
+        New-OSDCloudDisk @diskParameters
         Write-Host "=========================================================================" -ForegroundColor DarkCyan
         Write-Host "| SYSTEM | MSR |                    WINDOWS                             |" -ForegroundColor DarkCyan
         Write-Host "=========================================================================" -ForegroundColor DarkCyan
     }
     else {
-        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT disk with 2000MB recovery partition."
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] 2GB Recovery Partition will be created. OK."
-        if ($DiskNumber) {
-            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] New-OSDCloudDisk target DiskNumber: $DiskNumber"
-            New-OSDCloudDisk -PartitionStyle GPT -DiskNumber $DiskNumber -SizeRecovery 2000MB -Force -ErrorAction Stop
-        }
-        else {
-            Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] New-OSDCloudDisk will use its default target disk selection."
-            New-OSDCloudDisk -PartitionStyle GPT -SizeRecovery 2000MB -Force -ErrorAction Stop
-        }
+        Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT disk with $($diskParameters.SizeRecovery) byte recovery partition."
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($diskParameters.SizeRecovery / 1MB)MB Recovery Partition will be created. OK."
+        New-OSDCloudDisk @diskParameters
         Write-Host "=========================================================================" -ForegroundColor DarkCyan
         Write-Host "| SYSTEM | MSR |                    WINDOWS                  | RECOVERY |" -ForegroundColor DarkCyan
         Write-Host "=========================================================================" -ForegroundColor DarkCyan

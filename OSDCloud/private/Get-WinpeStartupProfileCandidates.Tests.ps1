@@ -46,6 +46,10 @@ Describe 'Get-WinpeStartupProfileCandidates' {
             Should -Be (Join-Path (Join-Path 'C:\WinpeStartup\profiles' 'BranchOffice') 'winpestartup.json')
         ($profiles | Where-Object Profile -eq 'Legacy').Path |
             Should -Be (Join-Path 'C:\WinpeStartup\profiles' 'Legacy.json')
+        ($profiles | Where-Object Profile -eq 'BranchOffice').AssetPath |
+            Should -Be (Join-Path 'C:\WinpeStartup\profiles' 'BranchOffice')
+        ($profiles | Where-Object Profile -eq 'Legacy').PSObject.Properties.Name |
+            Should -Not -Contain 'AssetPath'
         Should -Invoke Get-ChildItem -Times 2 -Exactly -ParameterFilter { $LiteralPath -eq 'C:\WinpeStartup\profiles' }
     }
 }

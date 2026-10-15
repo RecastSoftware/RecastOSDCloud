@@ -37,12 +37,54 @@ Non-default workflows display a warning. Use
 
 ## Change OS, edition, or language
 
+### Automatic OS catalog refresh
+
+Each deployment initialization calls `Update-OSDCloudCoreCatalogOS` before loading
+OS choices. Automatic and direct updater calls require a valid Recast license
+(`Get-OSDCoreLicense` reports `IsValid = true`), not merely registration.
+Missing, invalid, or failed license lookups quietly skip the refresh. Licensed
+attempts display `Recast: OSDCloud is updating the OS catalog.` Update failures
+warn and deployment continues with existing catalogs.
+
+The updater validates the downloaded Windows 11 catalog and adds it to the
+running module's `core\operatingsystems` directory without removing older catalogs.
+The updated catalog is available to the current deployment without reimporting
+the module; workflow OS choices and supported build mappings remain unchanged.
+
+Only the freshly validated catalog is also copied to online, writable USB volumes
+labeled **OSDCloud**, at
+`<USBDriveLetter>:\OSDCloud\catalogs\operatingsystems`. Missing destination folders
+are created. Other drives are not copy destinations, and a failed USB copy warns
+without blocking copies to other eligible USB volumes.
+After each successful save, the updater displays the full catalog file path,
+identifying whether it was saved to the module or a USB volume. Failed writes
+and `-WhatIf` previews do not report a successful save.
+
+Catalog indexing checks this path on mounted drives, along with module and
+ProgramData catalogs. Reading cached catalogs does not require a license or
+writable media. The latest revision per major build is used, with module catalogs
+preferred when an external catalog has the same revision.
+
+### Configure OS choices
+
 These choices live in `workflow/<workflow>/os-amd64.json` and
 `workflow/<workflow>/os-arm64.json`. The UX reads them at runtime.
 
 ### Operator-driven (one-off)
 
 Just pick a different option in the UX before clicking Start.
+
+### Automatic language selection from keyboard layout
+
+When `-OSLanguageCode` is omitted, `Deploy-OSDCloud` can set it from the
+detected keyboard layout or a supplied `-KeyboardLayout` value. This inference
+requires a valid Recast license through the shared `Test-OSDCoreLicense` check;
+registration alone is insufficient. Missing, invalid, or failed license lookups
+skip conversion and use `en-US` without warnings or a language-selection success
+message. `-Incognito` uses the same unlicensed fallback.
+
+Explicit `-OSLanguageCode` selection and manual language selection in the GUI
+remain available without a license.
 
 ### Policy change (everyone gets it)
 
@@ -61,6 +103,64 @@ to Enterprise + en-gb:
 Restrict `values` to one entry to force a choice without showing alternatives.
 
 ARM64 has fewer editions (no N or Education variants) — see [guide 7](07-arm64-devices.md).
+
+## Customize disk labels and partition sizes
+
+Pass disk overrides to `Deploy-OSDCloud` for either CLI or GUI launches:
+
+These five customization parameters require a valid Recast license:
+the shared `Test-OSDCoreLicense` check requires the selected `Get-OSDCoreLicense`
+result to have `IsValid = true`, just like automatic catalog refresh and
+WinpeStartup asset imports. Registration alone does not qualify. Missing,
+invalid, or failed license lookups deny customization. Without a valid license,
+explicitly supplied customization produces one warning and deployment uses
+the defaults below (including automatic OS sizing). No customization means no
+license warning. `DiskNumber` remains available without a license.
+
+To exercise unlicensed behavior on a licensed device, use
+`Deploy-OSDCloud -CLI -Incognito` (or omit `-CLI` for the GUI). This sets
+`OSDCoreLicense.IsIncognito = true` and forces `IsRegistered = false` for testing
+without modifying the saved license. While active, `Get-OSDCoreLicense` returns
+no license without discovering or reading saved licenses, so license-gated
+features such as OS catalog refresh quietly skip their work.
+Disk overrides warn and fall back to defaults; unrelated registration-only
+features use their unregistered behavior. It does not disable analytics.
+The next launch without `-Incognito` clears the simulation and reloads normal
+license state.
+
+```powershell
+Deploy-OSDCloud -CLI -DiskNumber 0 -DiskLabelOS 'Windows' -DiskLabelRecovery 'WinRE' `
+    -DiskSizeSystem 1GB -DiskSizeOS 100GB -DiskSizeRecovery 2GB
+```
+
+| Parameter | Default | Accepted values |
+|---|---|---|
+| `DiskLabelOS` | `OS` | Nonblank label, up to 32 characters |
+| `DiskLabelRecovery` | `Recovery` | Nonblank label, up to 32 characters |
+| `DiskSizeSystem` | `500MB` | `100MB` through `3000MB` |
+| `DiskSizeOS` | Automatic | At least `32GB` when supplied |
+| `DiskSizeRecovery` | `2000MB` | `350MB` through `80000MB` |
+
+Sizes are bytes; use PowerShell expressions such as `500MB` or `100GB`.
+Plain numbers are not interpreted as megabytes. Labels cannot contain control
+characters or `\ / : * ? " < > | + , ; = [ ]`.
+
+Omitting `DiskSizeOS` keeps the existing automatic layout: Windows uses the
+remaining space after reserving recovery. Supplying it creates a fixed-size
+Windows partition, gives recovery its requested size, and leaves extra space
+unallocated. The GPT layout, 16MB MSR, drive letters, and recovery attributes
+are unchanged.
+
+Recovery labels/sizes do not enable recovery. VM detection and workflow skip
+disable recovery unless force is set. Invalid values and layouts that cannot
+fit the target disk are rejected before disk clearing, including an allowance
+for partition alignment and disk metadata.
+Malformed or out-of-range input still fails parameter binding when unlicensed.
+Otherwise valid unlicensed customization requests are ignored before capacity checks;
+the default layout is checked instead.
+
+These overrides remain effective when launched without `-CLI`. No new GUI
+controls or persisted profile settings are included.
 
 ## Skip or enable individual steps
 

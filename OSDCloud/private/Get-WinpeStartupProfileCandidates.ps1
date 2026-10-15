@@ -6,6 +6,8 @@ function Get-WinpeStartupProfileCandidates {
     .DESCRIPTION
         Discovers folder-based startup profiles and legacy root-level JSON
         profiles from WinpeStartup\profiles directories on attached drives.
+        Folder-based profiles include AssetPath for selected-profile imports.
+        Legacy JSON profiles have no asset folder.
 
     .EXAMPLE
         Get-WinpeStartupProfileCandidates
@@ -36,9 +38,10 @@ function Get-WinpeStartupProfileCandidates {
                 $profileFilePath = Join-Path $profileFolder.FullName 'winpestartup.json'
                 if (Test-Path -LiteralPath $profileFilePath -PathType Leaf) {
                     [void]$candidateProfiles.Add([pscustomobject]@{
-                        Index   = 0
-                        Profile = $profileFolder.Name
-                        Path    = $profileFilePath
+                        Index     = 0
+                        Profile   = $profileFolder.Name
+                        Path      = $profileFilePath
+                        AssetPath = $profileFolder.FullName
                     })
                 }
             }

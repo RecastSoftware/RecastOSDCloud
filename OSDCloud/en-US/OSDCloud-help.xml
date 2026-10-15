@@ -12,11 +12,66 @@
     <maml:description>
       <maml:para>Initializes and runs an OSDCloud deployment workflow. By default, launches the graphical UI (UX) so the operator can configure deployment settings before starting. Use -CLI to skip the UI and immediately begin the workflow in the current console session.</maml:para>
       <maml:para>In addition to the static parameters documented here, workflow-specific runtime parameters are added dynamically from the selected workflow definition.</maml:para>
+      <maml:para>When OSLanguageCode is omitted, automatic language selection from KeyboardLayout or the detected keyboard layout requires a valid Recast license through Test-OSDCoreLicense. Registration alone does not qualify. Missing, invalid, or failed license lookups skip conversion and use en-US without warnings. Explicit OSLanguageCode selection remains available without a license.</maml:para>
+      <maml:para>DiskLabelOS, DiskLabelRecovery, DiskSizeSystem, DiskSizeOS, and DiskSizeRecovery require a valid Recast license through the shared Test-OSDCoreLicense check: the selected Get-OSDCoreLicense result must have IsValid = true. Registration alone does not qualify. Missing, invalid, or failed lookups deny customization. Explicitly supplied customization without a valid license produces one warning and deployment uses default labels OS/Recovery, system size 500MB, recovery size 2000MB, and automatic Windows sizing. No warning is emitted when none are supplied. DiskNumber remains available without a license. Parameter-binding validation still applies before the license check.</maml:para>
       <maml:para>OSDCloud collects anonymous analytic data about the deployment environment and system configuration to help improve the product. No personally identifiable information (PII) is collected. By using OSDCloud you consent to this collection as described in the privacy policy: https://github.com/OSDeploy/OSDCloud/blob/main/PRIVACY.md</maml:para>
     </maml:description>
     <command:syntax>
       <command:syntaxItem>
         <maml:name>Deploy-OSDCloud</maml:name>
+        <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+          <maml:name>Incognito</maml:name>
+          <maml:description>
+            <maml:para>Simulates no Recast license: forces IsRegistered to false and makes Get-OSDCoreLicense return no license without reading saved licenses. Applies to CLI and GUI launches. Does not modify the saved license or disable analytics. The next launch without this switch reloads normal license state.</maml:para>
+          </maml:description>
+          <dev:type><maml:name>SwitchParameter</maml:name><maml:uri /></dev:type>
+          <dev:defaultValue>False</dev:defaultValue>
+        </command:parameter>
+        <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+          <maml:name>DiskLabelOS</maml:name>
+          <maml:description>
+            <maml:para>Windows NTFS volume label. Defaults to OS. Must be nonblank, at most 32 characters, with no control characters or \ / : * ? " &lt; &gt; | + , ; = [ ].</maml:para>
+          </maml:description>
+          <command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+          <dev:type><maml:name>String</maml:name><maml:uri /></dev:type>
+          <dev:defaultValue>OS</dev:defaultValue>
+        </command:parameter>
+        <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+          <maml:name>DiskLabelRecovery</maml:name>
+          <maml:description>
+            <maml:para>Recovery NTFS volume label. Defaults to Recovery. Uses the same validation as DiskLabelOS and does not enable recovery when skipped.</maml:para>
+          </maml:description>
+          <command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+          <dev:type><maml:name>String</maml:name><maml:uri /></dev:type>
+          <dev:defaultValue>Recovery</dev:defaultValue>
+        </command:parameter>
+        <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+          <maml:name>DiskSizeSystem</maml:name>
+          <maml:description>
+            <maml:para>System partition size in bytes, from 100MB through 3000MB. Defaults to 500MB. Accepts PowerShell binary-unit expressions such as 1GB.</maml:para>
+          </maml:description>
+          <command:parameterValue required="true" variableLength="false">UInt64</command:parameterValue>
+          <dev:type><maml:name>UInt64</maml:name><maml:uri /></dev:type>
+          <dev:defaultValue>500MB</dev:defaultValue>
+        </command:parameter>
+        <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+          <maml:name>DiskSizeOS</maml:name>
+          <maml:description>
+            <maml:para>Fixed Windows partition size in bytes, at least 32GB. When omitted, Windows uses the remaining space after reserving recovery. When supplied, recovery uses DiskSizeRecovery and excess space remains unallocated. Explicit zero is invalid.</maml:para>
+          </maml:description>
+          <command:parameterValue required="true" variableLength="false">UInt64</command:parameterValue>
+          <dev:type><maml:name>UInt64</maml:name><maml:uri /></dev:type>
+          <dev:defaultValue>None (automatic sizing)</dev:defaultValue>
+        </command:parameter>
+        <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+          <maml:name>DiskSizeRecovery</maml:name>
+          <maml:description>
+            <maml:para>Recovery partition size in bytes, from 350MB through 80000MB. Defaults to 2000MB. Does not change VM detection or recovery skip/force rules.</maml:para>
+          </maml:description>
+          <command:parameterValue required="true" variableLength="false">UInt64</command:parameterValue>
+          <dev:type><maml:name>UInt64</maml:name><maml:uri /></dev:type>
+          <dev:defaultValue>2000MB</dev:defaultValue>
+        </command:parameter>
         <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="True (ByPropertyName)" position="1" aliases="Name">
           <maml:name>WorkflowName</maml:name>
           <maml:description>
@@ -138,6 +193,60 @@
       </command:syntaxItem>
     </command:syntax>
     <command:parameters>
+      <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+        <maml:name>Incognito</maml:name>
+        <maml:description>
+          <maml:para>Simulates no Recast license: forces IsRegistered to false and makes Get-OSDCoreLicense return no license without reading saved licenses. Applies to CLI and GUI launches. Does not modify the saved license or disable analytics. The next launch without this switch reloads normal license state.</maml:para>
+        </maml:description>
+        <command:parameterValue required="false" variableLength="false">SwitchParameter</command:parameterValue>
+        <dev:type><maml:name>SwitchParameter</maml:name><maml:uri /></dev:type>
+        <dev:defaultValue>False</dev:defaultValue>
+      </command:parameter>
+      <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+        <maml:name>DiskLabelOS</maml:name>
+        <maml:description>
+          <maml:para>Windows NTFS volume label. Defaults to OS. Must be nonblank, at most 32 characters, with no control characters or \ / : * ? " &lt; &gt; | + , ; = [ ].</maml:para>
+        </maml:description>
+        <command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+        <dev:type><maml:name>String</maml:name><maml:uri /></dev:type>
+        <dev:defaultValue>OS</dev:defaultValue>
+      </command:parameter>
+      <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+        <maml:name>DiskLabelRecovery</maml:name>
+        <maml:description>
+          <maml:para>Recovery NTFS volume label. Defaults to Recovery. Uses the same validation as DiskLabelOS and does not enable recovery when skipped.</maml:para>
+        </maml:description>
+        <command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+        <dev:type><maml:name>String</maml:name><maml:uri /></dev:type>
+        <dev:defaultValue>Recovery</dev:defaultValue>
+      </command:parameter>
+      <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+        <maml:name>DiskSizeSystem</maml:name>
+        <maml:description>
+          <maml:para>System partition size in bytes, from 100MB through 3000MB. Defaults to 500MB. Accepts PowerShell binary-unit expressions such as 1GB.</maml:para>
+        </maml:description>
+        <command:parameterValue required="true" variableLength="false">UInt64</command:parameterValue>
+        <dev:type><maml:name>UInt64</maml:name><maml:uri /></dev:type>
+        <dev:defaultValue>500MB</dev:defaultValue>
+      </command:parameter>
+      <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+        <maml:name>DiskSizeOS</maml:name>
+        <maml:description>
+          <maml:para>Fixed Windows partition size in bytes, at least 32GB. When omitted, Windows uses the remaining space after reserving recovery. When supplied, recovery uses DiskSizeRecovery and excess space remains unallocated. Explicit zero is invalid.</maml:para>
+        </maml:description>
+        <command:parameterValue required="true" variableLength="false">UInt64</command:parameterValue>
+        <dev:type><maml:name>UInt64</maml:name><maml:uri /></dev:type>
+        <dev:defaultValue>None (automatic sizing)</dev:defaultValue>
+      </command:parameter>
+      <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="False" position="named" aliases="none">
+        <maml:name>DiskSizeRecovery</maml:name>
+        <maml:description>
+          <maml:para>Recovery partition size in bytes, from 350MB through 80000MB. Defaults to 2000MB. Does not change VM detection or recovery skip/force rules.</maml:para>
+        </maml:description>
+        <command:parameterValue required="true" variableLength="false">UInt64</command:parameterValue>
+        <dev:type><maml:name>UInt64</maml:name><maml:uri /></dev:type>
+        <dev:defaultValue>2000MB</dev:defaultValue>
+      </command:parameter>
       <command:parameter required="false" variableLength="true" globbing="false" pipelineInput="True (ByPropertyName)" position="1" aliases="Name">
         <maml:name>WorkflowName</maml:name>
         <maml:description>
@@ -273,6 +382,7 @@
     <maml:alertSet>
       <maml:alert>
         <maml:para>This command writes deployment status to the host and starts workflow tasks. In GUI mode, workflow execution starts only after the operator clicks Start. Runtime parameters are provided by Get-OSDCloudWorkflowRuntimeParameter.</maml:para>
+        <maml:para>Disk labels and sizes apply to CLI and GUI launches with a valid Recast license without new GUI controls. Unlicensed deployments warn once when customization is supplied and use defaults. Sizes are bytes; PowerShell expressions such as 500MB or 100GB use binary units. Invalid input still fails parameter binding, while otherwise valid unlicensed customization is discarded before capacity checks. Layouts that cannot fit the target disk fail before disk clearing. Capacity checks include system, MSR, enabled recovery, and alignment/metadata allowance.</maml:para>
       </maml:alert>
     </maml:alertSet>
     <command:examples>
