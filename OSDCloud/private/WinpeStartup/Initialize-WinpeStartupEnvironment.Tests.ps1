@@ -1,5 +1,6 @@
 BeforeAll {
     . "$PSScriptRoot\..\core-license\Get-OSDCoreLicense.ps1"
+    . "$PSScriptRoot\..\core-license\Test-OSDCoreLicense.ps1"
     . "$PSScriptRoot\Test-WinpeStartupAssetLicense.ps1"
     . "$PSScriptRoot\Import-WinpeStartupAssets.ps1"
     . "$PSScriptRoot\Initialize-WinpeStartupEnvironment.ps1"

@@ -8,7 +8,7 @@ function Update-OSDCloudCoreCatalogOS {
 		catalog, verifies the downloaded CAB size and SHA256 digest, and validates the
 		extracted catalog before changing persistent content.
 
-		Requires the selected Get-OSDCoreLicense license to have IsValid equal to true.
+		Uses Test-OSDCoreLicense to require the selected Get-OSDCoreLicense license's IsValid result.
 		Missing, invalid, or failed license lookups quietly skip all update work.
 		License lookup failures produce only a generic verbose diagnostic.
 
@@ -73,14 +73,7 @@ function Update-OSDCloudCoreCatalogOS {
 	$functionName = $MyInvocation.MyCommand.Name
 	Write-Verbose "[$(Get-Date -format s)] [$functionName] Start"
 
-	try {
-		$license = Get-OSDCoreLicense -ErrorAction Stop -WarningAction SilentlyContinue -Verbose:$false
-	}
-	catch {
-		Write-Verbose "[$(Get-Date -format s)] [$functionName] License lookup failed; catalog update disabled."
-		return
-	}
-	if ($null -eq $license -or $license.IsValid -ne $true) {
+	if (-not (Test-OSDCoreLicense)) {
 		return
 	}
 
@@ -358,7 +351,7 @@ function Update-OSDCloudCoreCatalogOS {
 			[System.IO.File]::Move($stagedModulePath, $moduleCatalogPath)
 			$stagedModulePath = $null
 			$published = $true
-			Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Saving OS catalog to module: $moduleCatalogPath"
+			Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Saving OS Catalog: $moduleCatalogPath"
 		}
 
 		$driveCatalogPaths = @()
@@ -402,7 +395,7 @@ function Update-OSDCloudCoreCatalogOS {
 				Move-Item -LiteralPath $stagedDrivePath -Destination $driveCatalogPath -Force
 				$stagedDrivePaths = @($stagedDrivePaths | Where-Object { $_ -ne $stagedDrivePath })
 				$driveCatalogPaths += $driveCatalogPath
-				Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Saving OS catalog to USB: $driveCatalogPath"
+				Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Saving USB OS Catalog: $driveCatalogPath"
 			}
 			catch {
 				Write-Warning "[$(Get-Date -format s)] [$functionName] Unable to synchronize the operating system catalog to '$driveCatalogPath': $($_.Exception.Message)"

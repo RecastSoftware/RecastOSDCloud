@@ -13,11 +13,12 @@ function Deploy-OSDCloud {
         parameters are added dynamically from the selected workflow definition.
 
         DiskLabelOS, DiskLabelRecovery, DiskSizeSystem, DiskSizeOS, and
-        DiskSizeRecovery require Initialize-OSDCoreLicense to report IsRegistered
-        as true. Otherwise, explicitly supplied customization parameters trigger
+        DiskSizeRecovery require a valid Recast license through Test-OSDCoreLicense
+        (the selected Get-OSDCoreLicense result must have IsValid equal to true).
+        Otherwise, explicitly supplied customization parameters trigger
         one warning and deployment uses default partition labels and sizes.
-        DiskNumber remains available without registration. Parameter-binding
-        validation still applies before the registration check.
+        DiskNumber remains available without a license. Parameter-binding
+        validation still applies before the license check.
 
         OSDCloud collects anonymous analytic data about the deployment environment and
         system configuration to help improve the product. No personally identifiable
@@ -59,27 +60,27 @@ function Deploy-OSDCloud {
     .PARAMETER DiskLabelOS
         NTFS volume label for the Windows partition. Defaults to 'OS'.
         Must be nonblank, at most 32 characters, and contain no invalid label characters.
-        Customization requires registration; otherwise the default is used.
+        Customization requires a valid Recast license; otherwise the default is used.
 
     .PARAMETER DiskLabelRecovery
         NTFS volume label for the recovery partition. Defaults to 'Recovery'.
         Does not enable a recovery partition when recovery is skipped.
-        Customization requires registration; otherwise the default is used.
+        Customization requires a valid Recast license; otherwise the default is used.
 
     .PARAMETER DiskSizeSystem
         System partition size in bytes, from 100MB through 3000MB. Defaults to 500MB.
-        Customization requires registration; otherwise the default is used.
+        Customization requires a valid Recast license; otherwise the default is used.
 
     .PARAMETER DiskSizeOS
         Fixed Windows partition size in bytes, at least 32GB. When omitted, Windows
         uses the remaining space after reserving recovery. When supplied, excess
         space remains unallocated and recovery uses DiskSizeRecovery.
-        Customization requires registration; otherwise automatic sizing is used.
+        Customization requires a valid Recast license; otherwise automatic sizing is used.
 
     .PARAMETER DiskSizeRecovery
         Recovery partition size in bytes, from 350MB through 80000MB. Defaults to
         2000MB. Does not change the workflow's recovery skip/force rules.
-        Customization requires registration; otherwise the default is used.
+        Customization requires a valid Recast license; otherwise the default is used.
 
     .PARAMETER KeyboardLayout
         Overrides the detected keyboard layout value used to infer OSLanguageCode
@@ -139,8 +140,8 @@ function Deploy-OSDCloud {
     .EXAMPLE
         Deploy-OSDCloud -CLI -DiskLabelOS 'Windows' -DiskLabelRecovery 'WinRE' -DiskSizeSystem 1GB -DiskSizeOS 100GB -DiskSizeRecovery 2GB
 
-        On registered devices, customizes the partition labels and sizes, leaving
-        excess space unallocated. Unregistered devices warn and use defaults.
+        With a valid Recast license, customizes the partition labels and sizes,
+        leaving excess space unallocated. Unlicensed devices warn and use defaults.
         Size expressions use PowerShell binary units. The same parameters work
         without -CLI; no new graphical controls are added.
 

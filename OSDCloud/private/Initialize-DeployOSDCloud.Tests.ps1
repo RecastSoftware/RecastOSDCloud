@@ -3,6 +3,8 @@ BeforeAll {
     . "$PSScriptRoot\Update-OSDCloudCoreCatalogOS.ps1"
     . "$PSScriptRoot\..\public\WinOS\Deploy-OSDCloud.ps1"
     . "$PSScriptRoot\core-license\Initialize-OSDCoreLicense.ps1"
+    . "$PSScriptRoot\core-license\Get-OSDCoreLicense.ps1"
+    . "$PSScriptRoot\core-license\Test-OSDCoreLicense.ps1"
     . "$PSScriptRoot\core-device\Initialize-OSDCoreDevice.ps1"
     . "$PSScriptRoot\workflow\Invoke-OSDCloudWorkflowTask.ps1"
     . "$PSScriptRoot\workflow\Invoke-OSDCloudWorkflowUI.ps1"
@@ -53,6 +55,10 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         }
         $global:OSDCloudEnv = $null
         $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = $true }
+        $script:licenseResult = [pscustomobject]@{ IsValid = $true }
+        Mock Get-OSDCoreLicense {
+            if ($global:OSDCoreLicense.IsIncognito -ne $true) { $script:licenseResult }
+        }
         $global:ModuleCoreDriverPacks = @([pscustomobject]@{
             Name = 'OEM pack'; SystemId = '8CD1'; OSArchitecture = 'amd64'; FileName = 'pack.cab'
             Url = 'https://example.invalid/pack.cab'; HashMD5 = 'not-used-for-modeldrivers'
@@ -171,8 +177,13 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         Should -Invoke Initialize-OSDCloudWorkflowTasks -Times 0 -Exactly
     }
 
-    It 'falls back for all unregistered overrides with exactly one warning' {
-        $global:OSDCoreLicense.IsRegistered = $false
+    It 'falls back for all overrides with exactly one warning for <Case>' -TestCases @(
+        @{ Case = 'invalid registered license'; License = [pscustomobject]@{ IsValid = $false } }
+        @{ Case = 'missing registered license'; License = $null }
+        @{ Case = 'registration only'; License = [pscustomobject]@{ IsRegistered = $true } }
+    ) {
+        param ($License)
+        $script:licenseResult = $License
         Initialize-DeployOSDCloud -DiskNumber 0 -DiskLabelOS Windows -DiskLabelRecovery WinRE `
             -DiskSizeSystem 1GB -DiskSizeOS 100GB -DiskSizeRecovery 3GB `
             -WarningVariable warnings -WarningAction SilentlyContinue
@@ -185,11 +196,11 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         $diskParameters = Get-OSDCloudDiskParameters -Settings $global:OSDCloudDeploy
         $diskParameters.ContainsKey('SizeWindows') | Should -BeFalse
         @($warnings).Count | Should -Be 1
-        "$warnings" | Should -Match 'registration.*default partition labels and sizes'
+        "$warnings" | Should -Match 'valid Recast license.*default partition labels and sizes'
         Should -Invoke Initialize-OSDCoreLicense -Times 0 -Exactly
     }
 
-    It 'warns once for each explicitly supplied unregistered customization: <Name>' -TestCases @(
+    It 'warns once for each explicitly supplied unlicensed customization: <Name>' -TestCases @(
         @{ Name = 'DiskLabelOS'; Value = 'Windows' }
         @{ Name = 'DiskLabelRecovery'; Value = 'WinRE' }
         @{ Name = 'DiskSizeSystem'; Value = 1GB }
@@ -199,7 +210,7 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         @{ Name = 'DiskSizeSystem'; Value = 500MB }
     ) {
         param ($Name, $Value)
-        $global:OSDCoreLicense.IsRegistered = $false
+        $script:licenseResult = $null
         $parameters = @{ $Name = $Value }
         Initialize-DeployOSDCloud @parameters -WarningVariable warnings -WarningAction SilentlyContinue
         @($warnings).Count | Should -Be 1
@@ -213,6 +224,7 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
 
     It 'does not warn or gate DiskNumber without customization parameters' {
         $global:OSDCoreLicense.IsRegistered = $false
+        $script:licenseResult = $null
         $global:OSDCoreDevice.LocalDisk += [pscustomobject]@{ Number = 1; FriendlyName = 'Second disk'; Size = 100GB }
         Initialize-DeployOSDCloud -DiskNumber 1 -WarningVariable warnings
         @($warnings).Count | Should -Be 0
@@ -220,16 +232,17 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         Should -Invoke Initialize-OSDCoreLicense -Times 0 -Exactly
     }
 
-    It 'initializes missing license state and uses its registration result: registered=<Registered>' -TestCases @(
-        @{ Registered = $true }
-        @{ Registered = $false }
+    It 'initializes missing license state and checks validity: valid=<Valid>' -TestCases @(
+        @{ Valid = $true }
+        @{ Valid = $false }
     ) {
-        param ($Registered)
+        param ($Valid)
         $global:OSDCoreLicense = $null
-        Mock Initialize-OSDCoreLicense { $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = $Registered } }
+        $script:licenseResult = [pscustomobject]@{ IsValid = $Valid }
+        Mock Initialize-OSDCoreLicense { $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = -not $Valid } }
         Initialize-DeployOSDCloud -DiskSizeOS 32GB -WarningVariable warnings -WarningAction SilentlyContinue
         Should -Invoke Initialize-OSDCoreLicense -Times 1 -Exactly
-        if ($Registered) {
+        if ($Valid) {
             $global:OSDCloudDeploy.DiskSizeOS | Should -Be 32GB
             @($warnings).Count | Should -Be 0
         }
@@ -239,11 +252,27 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         }
     }
 
-    It 'does not grant customization for a license object missing registration' {
+    It 'allows valid licenses even when global registration is missing' {
         $global:OSDCoreLicense = [pscustomobject]@{}
-        Initialize-DeployOSDCloud -DiskSizeOS 100GB -WarningVariable warnings -WarningAction SilentlyContinue
+        Initialize-DeployOSDCloud -DiskSizeOS 32GB -WarningVariable warnings
+        $global:OSDCloudDeploy.DiskSizeOS | Should -Be 32GB
+        @($warnings).Count | Should -Be 0
+    }
+
+    It 'falls back once on lookup failure without exposing exception details' {
+        Mock Get-OSDCoreLicense { throw 'synthetic-private-license-data' }
+        $output = @(Initialize-DeployOSDCloud -DiskSizeOS 100GB -Verbose -WarningVariable warnings 4>&1 3>&1)
         $global:OSDCloudDeploy.DiskSizeOS | Should -BeNullOrEmpty
         @($warnings).Count | Should -Be 1
+        "$output" | Should -Not -Match 'synthetic-private-license-data'
+        "$output" | Should -Match 'License lookup failed'
+    }
+
+    It 'does not warn on failed entitlement lookup when customization is omitted' {
+        Mock Get-OSDCoreLicense { throw 'synthetic-private-license-data' }
+        Initialize-DeployOSDCloud -WarningVariable warnings
+        @($warnings).Count | Should -Be 0
+        $global:OSDCloudDeploy.DiskSizeOS | Should -BeNullOrEmpty
     }
 
     It 'surfaces license initialization failure without proceeding' {
@@ -260,20 +289,21 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         Should -Invoke Initialize-OSDCoreCache -Times 0 -Exactly
     }
 
-    It 'uses the real shared gate for public deployment: CLI=<CLI>, registered=<Registered>' -TestCases @(
-        @{ CLI = $true; Registered = $true }
-        @{ CLI = $false; Registered = $true }
-        @{ CLI = $true; Registered = $false }
-        @{ CLI = $false; Registered = $false }
+    It 'uses the real shared gate for public deployment: CLI=<CLI>, valid=<Valid>' -TestCases @(
+        @{ CLI = $true; Valid = $true }
+        @{ CLI = $false; Valid = $true }
+        @{ CLI = $true; Valid = $false }
+        @{ CLI = $false; Valid = $false }
     ) {
-        param ($CLI, $Registered)
-        Mock Initialize-OSDCoreLicense { $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = $Registered } }
+        param ($CLI, $Valid)
+        $script:licenseResult = [pscustomobject]@{ IsValid = $Valid }
+        Mock Initialize-OSDCoreLicense { $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = -not $Valid } }
         Deploy-OSDCloud -CLI:$CLI -DiskNumber 0 -DiskLabelOS Windows -DiskLabelRecovery WinRE `
             -DiskSizeSystem 1GB -DiskSizeOS 32GB -DiskSizeRecovery 3GB `
             -WarningVariable warnings -WarningAction SilentlyContinue
         Should -Invoke Initialize-OSDCoreLicense -Times 1 -Exactly
         $global:OSDCloudDeploy.DeploymentDiskNumber | Should -Be 0
-        if ($Registered) {
+        if ($Valid) {
             $global:OSDCloudDeploy.DiskLabelOS | Should -Be 'Windows'
             $global:OSDCloudDeploy.DiskLabelRecovery | Should -Be 'WinRE'
             $global:OSDCloudDeploy.DiskSizeSystem | Should -Be 1GB
@@ -291,7 +321,7 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         }
     }
 
-    It 'applies unregistered disk fallback when Incognito overrides a registered license: CLI=<CLI>' -TestCases @(
+    It 'applies unlicensed disk fallback in Incognito then restores normal licensed behavior: CLI=<CLI>' -TestCases @(
         @{ CLI = $true }
         @{ CLI = $false }
     ) {
@@ -308,6 +338,10 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         $global:OSDCloudDeploy.DeploymentDiskNumber | Should -Be 0
         @($warnings).Count | Should -Be 1
         Should -Invoke Initialize-OSDCoreLicense -Times 1 -Exactly
+        Deploy-OSDCloud -CLI:$CLI -DiskSizeOS 32GB -WarningVariable normalWarnings
+        $global:OSDCoreLicense.IsIncognito | Should -BeFalse
+        $global:OSDCloudDeploy.DiskSizeOS | Should -Be 32GB
+        @($normalWarnings).Count | Should -Be 0
     }
 
     It 'defaults to ModelDrivers when the device has no OEM catalog entry' {

@@ -6,6 +6,7 @@ BeforeAll {
         . "$ModuleRoot\private\Initialize-DeployOSDCloud.ps1"
         . "$ModuleRoot\private\Update-OSDCloudCoreCatalogOS.ps1"
         . "$ModuleRoot\private\core-license\Get-OSDCoreLicense.ps1"
+        . "$ModuleRoot\private\core-license\Test-OSDCoreLicense.ps1"
         function Get-OSDCloudWorkflowRuntimeParameter {
             [CmdletBinding()]
             param ($ModuleBase, $WorkflowName, $ProcessorArchitecture)
@@ -153,6 +154,9 @@ Describe 'Deploy-OSDCloud disk parameters' {
         $namespaces.AddNamespace('command', 'http://schemas.microsoft.com/maml/dev/command/2004/10')
         $namespaces.AddNamespace('maml', 'http://schemas.microsoft.com/maml/2004/10')
         $deployHelp = $helpXml.SelectSingleNode("//command:command[command:details/command:name='Deploy-OSDCloud']", $namespaces)
+        $description = $deployHelp.SelectSingleNode('maml:description', $namespaces).InnerText
+        $description | Should -Match 'valid Recast license.*Test-OSDCoreLicense.*IsValid = true'
+        $description | Should -Not -Match 'require Initialize-OSDCoreLicense to report IsRegistered'
         foreach ($name in 'Incognito', 'DiskLabelOS', 'DiskLabelRecovery', 'DiskSizeSystem', 'DiskSizeOS', 'DiskSizeRecovery') {
             $deployHelp.SelectNodes("command:parameters/command:parameter[maml:name='$name']", $namespaces).Count | Should -Be 1
             $deployHelp.SelectNodes("command:syntax/command:syntaxItem/command:parameter[maml:name='$name']", $namespaces).Count | Should -Be 1

@@ -2,22 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 26.10.15.1 - October 15, 2026
 
 ### Added
 
+- Added a refreshed Windows 11 26H2 OS catalog snapshot for build `26300.9711`.
 - Added full destination-path messages after successful OS catalog saves to the module and each eligible USB volume.
-
-- Added an OS catalog refresh before deployment OS selection, requiring a valid Recast license for automatic and direct `Update-OSDCloudCoreCatalogOS` calls. Missing, invalid, or failed license lookups quietly skip updates; licensed update failures warn and retain existing catalog selection. Validated catalogs are published to the module and copied only to writable, online USB volumes labeled OSDCloud at `OSDCloud\catalogs\operatingsystems`, creating missing folders. Existing external catalog indexing remains ungated, including read-only sources.
-- Added selected WinpeStartup profile-folder imports for `*.env` (including hidden `.env`), `winpe-reg\*.reg`, and `winpe-root-cer\*.cer`, reusing Core import behavior. Core and profile asset imports require a valid Recast license (`IsValid`); missing, invalid, or failed license lookups silently skip discovery and imports. Profile JSON loading, JSON environment values, and built-in shell setup remain ungated. Licensed profile assets run after valid JSON loads; profile environment files override Core, shell defaults, and JSON environment values. Imports are sorted and nonrecursive, warn and continue on failures, and leave legacy root-level JSON profiles JSON-only.
+- Added automatic OS catalog refresh before deployment OS selection. Automatic and direct `Update-OSDCloudCoreCatalogOS` calls require a valid Recast license; missing, invalid, or failed license lookups skip updates. Licensed update failures warn and retain existing catalogs. Validated catalogs are published to the module and copied to writable, online USB volumes labeled OSDCloud at `OSDCloud\catalogs\operatingsystems`. Existing catalog indexing remains available without a license, including read-only sources.
+- Added selected WinpeStartup profile-folder imports for `*.env` (including hidden `.env`), `winpe-reg\*.reg`, and `winpe-root-cer\*.cer`. Core and profile asset imports require a valid Recast license; profile JSON loading, JSON environment values, and built-in shell setup remain available without one. Imports are sorted and nonrecursive, warn and continue on failures, and profile environment files take precedence over Core, shell defaults, and JSON environment values.
 - Added a workspace Recast license-gating skill defining feature gating as requiring a valid Recast license rather than registration status.
-- Added `Deploy-OSDCloud -Incognito` to force `IsRegistered = false` for CLI and GUI unlicensed testing without changing the saved license or analytics behavior. Normal registration is reloaded on the next launch without the switch.
-- Added registered-only `Deploy-OSDCloud` parameters `DiskLabelOS`, `DiskLabelRecovery`, `DiskSizeSystem`, `DiskSizeOS`, and `DiskSizeRecovery` for CLI and GUI launches, preserving existing defaults when omitted. Unregistered deployments warn once when customization is supplied and use default labels/sizes with automatic OS sizing; `DiskNumber` remains ungated. Fixed OS sizing requires at least 32GB, keeps recovery at its requested size, and leaves excess disk space unallocated.
-- Added disk-layout validation before destructive workflow operations and mocked regression tests for parameter propagation, label/size validation, recovery policy, and GPT/MBR partition sizing. GUI controls and profile persistence remain unchanged.
+- Added `Deploy-OSDCloud -Incognito` for testing unregistered behavior in CLI and GUI without changing saved license or analytics state.
+- Added licensed-only CLI and GUI disk customization parameters for OS/recovery labels and system/OS/recovery partition sizes. A valid Recast license is required; registration alone does not qualify. Existing defaults are preserved when omitted; fixed OS sizing requires at least 32GB, preserves the requested recovery size, and leaves excess space unallocated.
+- Added disk-layout validation before destructive workflow operations and expanded target-disk validation, selection, and confirmation handling. Refined GPT/MBR partition sizing and recovery partition handling.
+- Added WinpeStartup configuration options for startup commands and behavior.
 
 ### Fixed
 
-- Fixed `Deploy-OSDCloud -Incognito` to simulate a missing Recast license for license-gated features, including OS catalog refresh, rather than only disabling registration. Saved licenses remain unchanged, and the next normal launch restores license discovery.
+- Standardized catalog refresh, WinpeStartup asset imports, and disk customization on the shared `Test-OSDCoreLicense` validity check. Missing, invalid, or failed license lookups deny access; explicit disk overrides warn once and use defaults, while catalog refresh and startup assets quietly skip.
+- Fixed `Deploy-OSDCloud -Incognito` to simulate a missing Recast license for license-gated features, including OS catalog refresh. The saved license is unchanged, and normal license discovery resumes on the next launch.
+- Fixed disk and USB partition retrieval and deployment disk references across preinstall steps; exclude offline and unsupported disks from disk selection.
+- Fixed Windows image expansion to include a required registry command.
+
+### Changed
+
+- Module version bumped from `26.10.13.1` to `26.10.15.1`.
 
 ## 26.10.13.1 - October 13, 2026
 

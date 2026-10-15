@@ -100,13 +100,13 @@ function Initialize-DeployOSDCloud {
         Initialize-OSDCoreLicense
     }
     $requestedDiskSizeOS = if ($PSBoundParameters.ContainsKey('DiskSizeOS')) { $DiskSizeOS } else { $null }
-    if ($global:OSDCoreLicense.IsRegistered -ne $true) {
+    if (-not (Test-OSDCoreLicense)) {
         $diskCustomizationParameters = @(
             'DiskLabelOS', 'DiskLabelRecovery', 'DiskSizeSystem', 'DiskSizeOS', 'DiskSizeRecovery'
         )
         $requestedDiskCustomization = @($diskCustomizationParameters | Where-Object { $PSBoundParameters.ContainsKey($_) })
         if ($requestedDiskCustomization.Count -gt 0) {
-            Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Disk customization requires OSDCloud registration (IsRegistered = true). Ignoring $($requestedDiskCustomization -join ', ') and using default partition labels and sizes."
+            Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Disk customization requires a valid Recast license (IsValid = true). Ignoring $($requestedDiskCustomization -join ', ') and using default partition labels and sizes."
         }
         $DiskLabelOS = 'OS'
         $DiskLabelRecovery = 'Recovery'

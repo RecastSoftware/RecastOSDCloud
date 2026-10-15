@@ -6,7 +6,7 @@ function Test-WinpeStartupAssetLicense {
         Quietly tests Recast license validity for WinpeStartup asset imports.
 
     .DESCRIPTION
-        Uses the existing Recast license reader's IsValid result, independently
+        Delegates to Test-OSDCoreLicense for the reader's IsValid result, independently
         of registration state. Missing, invalid, or unreadable licenses disable
         asset imports without warnings, errors, or registration guidance.
         Lookup failures produce only a generic verbose diagnostic.
@@ -28,12 +28,5 @@ function Test-WinpeStartupAssetLicense {
     param ()
 
     $Error.Clear()
-    try {
-        $license = Get-OSDCoreLicense -ErrorAction Stop -WarningAction SilentlyContinue -Verbose:$false
-        return ($null -ne $license -and $license.IsValid -eq $true)
-    }
-    catch {
-        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] License lookup failed; asset imports disabled."
-        return $false
-    }
+    return (Test-OSDCoreLicense)
 }

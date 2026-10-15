@@ -5,6 +5,7 @@ BeforeAll {
     @"
 . '$PSScriptRoot\Update-OSDCloudCoreCatalogOS.ps1'
 . '$PSScriptRoot\core-license\Get-OSDCoreLicense.ps1'
+. '$PSScriptRoot\core-license\Test-OSDCoreLicense.ps1'
 "@ | Set-Content -LiteralPath $modulePath
     $fixtureModule = Import-Module $modulePath -Force -PassThru
     $fixtureModule.SessionState.PSVariable.Set('fixtureRoot', $fixtureRoot)
@@ -129,7 +130,7 @@ Describe 'Licensed OS catalog refresh and USB publication' {
         Test-Path $result.ModuleCatalogPath | Should -BeTrue
         Test-Path (Join-Path $catalogRoot '26100.1.260101-1200.xml') | Should -BeTrue
         Should -Invoke Write-Host -ModuleName CatalogRefreshFixture -Times 1 -Exactly -ParameterFilter {
-            $Object -like '*Saving OS catalog to module:*' -and $Object.EndsWith($result.ModuleCatalogPath)
+            $Object -like '*Saving OS Catalog:*' -and $Object.EndsWith($result.ModuleCatalogPath)
         }
         Should -Invoke Write-Host -ModuleName CatalogRefreshFixture -Times 1 -Exactly -ParameterFilter {
             $ForegroundColor -eq 'DarkGreen' -and $Object -like '*Recast: OSDCloud is updating the OS catalog.*'
@@ -154,11 +155,11 @@ Describe 'Licensed OS catalog refresh and USB publication' {
             $files[0].Name | Should -Be "$identity.xml"
             $savedPath = $files[0].FullName
             Should -Invoke Write-Host -ModuleName CatalogRefreshFixture -Times 1 -Exactly -ParameterFilter {
-                $Object -like '*Saving OS catalog to USB:*' -and $Object.EndsWith($savedPath)
+                $Object -like '*Saving USB OS Catalog:*' -and $Object.EndsWith($savedPath)
             }
         }
         Should -Invoke Write-Host -ModuleName CatalogRefreshFixture -Times 0 -Exactly -ParameterFilter {
-            $Object -like '*Saving OS catalog to module:*'
+            $Object -like '*Saving OS Catalog:*'
         }
         Test-Path "$usbRoot\H" | Should -BeFalse
         Should -Invoke Get-Partition -ModuleName CatalogRefreshFixture -Times 2 -Exactly
@@ -230,10 +231,10 @@ Describe 'Licensed OS catalog refresh and USB publication' {
         $result.DriveCatalogPaths[0] | Should -BeLike '*\usb\G\*'
         @($warnings).Count | Should -Be 1
         Should -Invoke Write-Host -ModuleName CatalogRefreshFixture -Times 1 -Exactly -ParameterFilter {
-            $Object -like '*Saving OS catalog to USB:*' -and $Object.EndsWith($result.DriveCatalogPaths[0])
+            $Object -like '*Saving USB OS Catalog:*' -and $Object.EndsWith($result.DriveCatalogPaths[0])
         }
         Should -Invoke Write-Host -ModuleName CatalogRefreshFixture -Times 0 -Exactly -ParameterFilter {
-            $Object -like '*Saving OS catalog to USB:*\usb\F\*'
+            $Object -like '*Saving USB OS Catalog:*\usb\F\*'
         }
     }
 

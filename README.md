@@ -8,7 +8,7 @@
 | --- | --- |
 | **Author** | David Segura |
 | **Company** | Recast Software |
-| **Version** | 26.10.13.1 |
+| **Version** | 26.10.15.1 |
 | **PS Editions** | CompatiblePSEditions: Core, Desktop (manifest) |
 | **License** | See [LICENSE](LICENSE) |
 
@@ -22,13 +22,53 @@
 
 ---
 
-## What's New in 26.10.13.1
+## What's New — Last 30 Days
 
-Released October 13, 2026.
+Release highlights from the last 30 days. See [CHANGELOG.md](CHANGELOG.md) for
+complete release notes and older history.
 
-- **Create WinpeStartup profiles:** `New-WinpeStartupProfile` authors named startup profiles in existing Boot-Assets folders and writable OSDCloud USB volumes, using bundled defaults and safe replacement options.
+- **26.10.15.1 — October 15:** Refreshes the Windows 11 26H2 catalog, adds licensed automatic OS catalog refresh and USB publication, licensed WinpeStartup environment/registry/certificate imports, licensed disk layout customization, `-Incognito` license testing, and safer disk validation and partition handling.
+- **26.10.13.1 — October 13:** Adds `New-WinpeStartupProfile` to create named profiles in existing Boot-Assets folders and writable OSDCloud USB volumes, with bundled defaults and safe replacement options.
+- **26.10.10.1 — October 10:** Expands device inventory and `Show-OSDCloudDeviceInfo` with processor, memory, disk, and network details.
+- **26.10.6.1 — October 6:** Adds WinpeStartup logging, Core environment/registry/certificate imports, and folder-based startup profiles.
+- **26.10.4.1 — October 4:** Standardizes WinpeStartup naming while retaining compatibility aliases.
+- **26.10.2.1 — October 2:** Adds ModelDrivers cache deployment, WinPEDrivers inventory, and configurable post-deployment actions.
+- **26.9.30.1 — September 30:** Unifies operating-system catalog handling and adds parity checks against the OSD module.
+- **26.9.29.1 — September 29:** Adds Windows 11 26H2 deployment support and makes it the default release.
+- **26.9.25.1 — September 25:** Adds operating-system catalog refresh and synchronization, plus centralized Windows build metadata.
+- **26.9.24.1 — September 24:** Adds startup-profile environment variables and catalog discovery from ProgramData and attached OSDCloud drives.
 
-See [CHANGELOG.md](CHANGELOG.md) for the complete release history and [WinpeStartup documentation](docs/about_winpestartup.md) for startup configuration.
+## Licensed Features
+
+### Catalog and startup automation
+
+| Feature | Benefit | Requirement |
+|---|---|---|
+| Automatic OS catalog refresh | Keeps deployment OS choices current by refreshing the catalog before selection and publishing validated catalogs to the module and eligible OSDCloud USB drives. | Valid Recast license |
+| WinpeStartup asset imports | Applies `.env` settings, registry files, and root certificates from Core and the selected folder-based profile during startup. | Valid Recast license |
+
+### Deploy-OSDCloud parameters
+
+These parameters customize disk layout for both CLI and GUI deployments.
+
+| Parameter | Benefit | Requirement |
+|---|---|---|
+| `-DiskLabelOS` | Gives the Windows volume an organization-specific label so operators can identify it in deployment tools and File Explorer. Defaults to `OS`. | Valid Recast license |
+| `-DiskLabelRecovery` | Gives an enabled recovery volume a recognizable label, such as `WinRE`, for maintenance and troubleshooting. Defaults to `Recovery`; does not enable a skipped recovery partition. | Valid Recast license |
+| `-DiskSizeSystem` | Reserves a chosen amount of space for the system partition to meet deployment requirements. Accepts `100MB`–`3000MB`; defaults to `500MB`. | Valid Recast license |
+| `-DiskSizeOS` | Creates a fixed-size Windows partition of at least `32GB`, preserving the requested recovery size and leaving excess disk space unallocated for later use. When omitted, Windows uses the remaining space after reserving recovery. | Valid Recast license |
+| `-DiskSizeRecovery` | Reserves a chosen amount of recovery space to accommodate recovery-image requirements. Accepts `350MB`–`80000MB`; defaults to `2000MB` and preserves the workflow's recovery skip/force rules. | Valid Recast license |
+
+Without a valid license, explicitly supplied disk customization parameters produce
+one warning and deployment uses the default labels and sizes, including automatic
+Windows partition sizing. `-DiskNumber` remains available without a license.
+
+All features in these tables use the shared `Test-OSDCoreLicense` check, requiring
+the selected `Get-OSDCoreLicense` result to have `IsValid = true`; registration
+alone does not qualify. Startup profiles and
+cached OS catalog indexing remain usable without a valid license. See
+[WinpeStartup documentation](docs/about_winpestartup.md) and
+[deployment customization](docs/05-customize-deployment.md) for details.
 
 ---
 
