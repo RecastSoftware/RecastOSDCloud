@@ -84,7 +84,9 @@ function Deploy-OSDCloud {
 
     .PARAMETER KeyboardLayout
         Overrides the detected keyboard layout value used to infer OSLanguageCode
-        when OSLanguageCode is not explicitly provided.
+        when OSLanguageCode is not explicitly provided. Automatic inference requires
+        a valid Recast license through Test-OSDCoreLicense; otherwise en-US is used
+        without a warning. Explicit OSLanguageCode selection does not require a license.
 
     .PARAMETER ProcessorArchitecture
         Mock/testing processor architecture override used to validate ARM64 workflow
@@ -380,16 +382,17 @@ function Deploy-OSDCloud {
         }
 
         if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
+            $canInferOSLanguage = Test-OSDCoreLicense
             $languageKeyboardLayout = if ($PSBoundParameters.ContainsKey('KeyboardLayout')) { $KeyboardLayout } else { $global:OSDCoreDevice.KeyboardLayout }
 
-            if ($global:OSDCoreLicense.IsRegistered -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
+            if ($canInferOSLanguage -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
                 $resolvedOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $languageKeyboardLayout -FallbackLanguageCode 'en-US'
                 Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast: OSDCloud has set the OSLanguageCode to $resolvedOSLanguageCode based on the KeyboardLayout [$languageKeyboardLayout]."
             }
             else {
                 $resolvedOSLanguageCode = 'en-US'
-                if (-not $global:OSDCoreLicense.IsRegistered) {
-                    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping OSLanguageCode keyboard conversion because OSDCloud is not registered."
+                if (-not $canInferOSLanguage) {
+                    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping OSLanguageCode keyboard conversion because no valid Recast license is available."
                 }
             }
         }

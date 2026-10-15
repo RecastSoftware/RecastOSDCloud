@@ -18,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Required a valid Recast license through `Test-OSDCoreLicense` for automatic keyboard-layout-to-`OSLanguageCode` selection, rather than registration alone. Unlicensed deployments quietly use `en-US`; explicit language selection remains ungated. USB cache language inference now relies on the command's shared valid-license gate instead of an additional registration check.
 - Standardized catalog refresh, WinpeStartup asset imports, and disk customization on the shared `Test-OSDCoreLicense` validity check. Missing, invalid, or failed license lookups deny access; explicit disk overrides warn once and use defaults, while catalog refresh and startup assets quietly skip.
 - Fixed `Deploy-OSDCloud -Incognito` to simulate a missing Recast license for license-gated features, including OS catalog refresh. The saved license is unchanged, and normal license discovery resumes on the next launch.
 - Fixed disk and USB partition retrieval and deployment disk references across preinstall steps; exclude offline and unsupported disks from disk selection.

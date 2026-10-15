@@ -19,6 +19,8 @@ function Update-RecastOSDCloudUSBCache {
     .PARAMETER OSLanguageCode
     Operating system language code used for catalog selection.
     If not specified, the value is inferred from the current keyboard layout.
+    This command and its automatic language inference require a valid Recast
+    license through Test-OSDCoreLicense, independently of registration.
 
     .PARAMETER OSActivation
     Operating system activation channel used for catalog selection.
@@ -119,8 +121,7 @@ function Update-RecastOSDCloudUSBCache {
         $WinPEPostAction = 'Quit'
     )
     #=================================================
-    $OSDCoreLicense = Get-OSDCoreLicense
-    if (-not $OSDCoreLicense -or $OSDCoreLicense.IsValid -ne $true) {
+    if (-not (Test-OSDCoreLicense)) {
         # Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] A valid Recast Core license is required."
         Show-OSDCoreLicenseHelp
         return
@@ -185,14 +186,11 @@ function Update-RecastOSDCloudUSBCache {
 
     # Automatically determine default OSLanguageCode from the detected keyboard layout if not explicitly provided.
     if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
-        if ($global:OSDCoreLicense.IsRegistered -and (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction Ignore)) {
+        if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction Ignore) {
             $OSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $global:OSDCoreDevice.KeyboardLayout -FallbackLanguageCode 'en-US'
         }
         else {
             $OSLanguageCode = 'en-US'
-            if (-not $global:OSDCoreLicense.IsRegistered) {
-                Write-Verbose -Message ('[{0}] [{1}] Skipping OSLanguageCode keyboard conversion because OSDCloud is not registered.' -f (Get-Date -format s), $MyInvocation.MyCommand.Name)
-            }
         }
     }
 

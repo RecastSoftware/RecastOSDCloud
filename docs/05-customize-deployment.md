@@ -74,6 +74,18 @@ These choices live in `workflow/<workflow>/os-amd64.json` and
 
 Just pick a different option in the UX before clicking Start.
 
+### Automatic language selection from keyboard layout
+
+When `-OSLanguageCode` is omitted, `Deploy-OSDCloud` can set it from the
+detected keyboard layout or a supplied `-KeyboardLayout` value. This inference
+requires a valid Recast license through the shared `Test-OSDCoreLicense` check;
+registration alone is insufficient. Missing, invalid, or failed license lookups
+skip conversion and use `en-US` without warnings or a language-selection success
+message. `-Incognito` uses the same unlicensed fallback.
+
+Explicit `-OSLanguageCode` selection and manual language selection in the GUI
+remain available without a license.
+
 ### Policy change (everyone gets it)
 
 Edit the JSON for the workflow. For example, default the `default` workflow

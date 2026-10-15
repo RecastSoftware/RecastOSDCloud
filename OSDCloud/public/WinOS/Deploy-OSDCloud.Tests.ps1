@@ -7,10 +7,15 @@ BeforeAll {
         . "$ModuleRoot\private\Update-OSDCloudCoreCatalogOS.ps1"
         . "$ModuleRoot\private\core-license\Get-OSDCoreLicense.ps1"
         . "$ModuleRoot\private\core-license\Test-OSDCoreLicense.ps1"
+        . "$ModuleRoot\private\core\Convert-KeyboardLayoutToLanguageCode.ps1"
         function Get-OSDCloudWorkflowRuntimeParameter {
             [CmdletBinding()]
             param ($ModuleBase, $WorkflowName, $ProcessorArchitecture)
-            return [System.Management.Automation.RuntimeDefinedParameterDictionary]::new()
+            $parameters = [System.Management.Automation.RuntimeDefinedParameterDictionary]::new()
+            $attributes = [System.Collections.ObjectModel.Collection[System.Attribute]]::new()
+            $attributes.Add([System.Management.Automation.ParameterAttribute]::new())
+            $parameters.Add('OSLanguageCode', [System.Management.Automation.RuntimeDefinedParameter]::new('OSLanguageCode', [string], $attributes))
+            return $parameters
         }
         function Initialize-OSDCoreLicense { [CmdletBinding()] param () }
         function Initialize-OSDCoreDevice { [CmdletBinding()] param () }
@@ -38,6 +43,10 @@ Describe 'Deploy-OSDCloud disk parameters' {
         }
         $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = $true }
         $global:OSDCloudDeploy = [pscustomobject]@{ TimeStart = $null }
+        Mock Get-OSDCoreLicense {
+            if ($global:OSDCoreLicense.IsIncognito -ne $true) { [pscustomobject]@{ IsValid = $true } }
+        } -ModuleName DiskParameterDeploymentTests
+        Mock Convert-KeyboardLayoutToLanguageCode { 'fr-FR' } -ModuleName DiskParameterDeploymentTests
         Mock Initialize-OSDCoreLicense {} -ModuleName DiskParameterDeploymentTests
         Mock Initialize-OSDCoreDevice {} -ModuleName DiskParameterDeploymentTests
         Mock Initialize-DeployOSDCloud {} -ModuleName DiskParameterDeploymentTests
@@ -146,6 +155,86 @@ Describe 'Deploy-OSDCloud disk parameters' {
         $global:OSDCoreDevice.KeyboardLayout = '00000409'
         Deploy-OSDCloud -CLI -Incognito
         Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $OSLanguageCode -eq 'en-US' }
+        Should -Invoke Convert-KeyboardLayoutToLanguageCode -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+    }
+
+    It 'infers language with a valid unregistered license: CLI=<CLI>, override=<Override>' -TestCases @(
+        @{ CLI = $true; Override = $false }
+        @{ CLI = $false; Override = $false }
+        @{ CLI = $true; Override = $true }
+        @{ CLI = $false; Override = $true }
+    ) {
+        param ($CLI, $Override)
+        $global:OSDCoreLicense.IsRegistered = $false
+        $global:OSDCoreDevice.KeyboardLayout = '0000040C'
+        $parameters = @{ CLI = $CLI }
+        if ($Override) { $parameters.KeyboardLayout = '0000040C' }
+        Deploy-OSDCloud @parameters -WarningVariable warnings
+        @($warnings).Count | Should -Be 0
+        Should -Invoke Convert-KeyboardLayoutToLanguageCode -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter {
+            $KeyboardLayout -eq '0000040C' -and $FallbackLanguageCode -eq 'en-US'
+        }
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $OSLanguageCode -eq 'fr-FR' }
+        Should -Invoke Write-Host -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter {
+            $Object -like '*has set the OSLanguageCode to fr-FR*'
+        }
+    }
+
+    It 'quietly skips registered language inference for <Case>: CLI=<CLI>' -TestCases @(
+        @{ CLI = $true; Case = 'missing' }
+        @{ CLI = $false; Case = 'missing' }
+        @{ CLI = $true; Case = 'invalid' }
+        @{ CLI = $false; Case = 'invalid' }
+        @{ CLI = $true; Case = 'registration only' }
+        @{ CLI = $false; Case = 'registration only' }
+        @{ CLI = $true; Case = 'failed lookup' }
+        @{ CLI = $false; Case = 'failed lookup' }
+    ) {
+        param ($CLI, $Case)
+        $global:OSDCoreDevice.KeyboardLayout = '0000040C'
+        Mock Get-OSDCoreLicense {
+            switch ($Case) {
+                'missing' { $null }
+                'invalid' { [pscustomobject]@{ IsValid = $false } }
+                'registration only' { [pscustomobject]@{ IsRegistered = $true } }
+                'failed lookup' { throw 'synthetic-private-license-data' }
+            }
+        } -ModuleName DiskParameterDeploymentTests
+        $output = @(Deploy-OSDCloud -CLI:$CLI -KeyboardLayout '0000040C' -Verbose -WarningVariable warnings 4>&1 3>&1 2>&1)
+        @($warnings).Count | Should -Be 0
+        @($output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] }).Count | Should -Be 0
+        "$output" | Should -Not -Match 'synthetic-private-license-data'
+        Should -Invoke Convert-KeyboardLayoutToLanguageCode -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $OSLanguageCode -eq 'en-US' }
+        Should -Invoke Write-Host -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly -ParameterFilter {
+            $Object -like '*has set the OSLanguageCode*'
+        }
+    }
+
+    It 'preserves explicit language selection without checking a license: CLI=<CLI>' -TestCases @(
+        @{ CLI = $true }
+        @{ CLI = $false }
+    ) {
+        param ($CLI)
+        $global:OSDCoreDevice.KeyboardLayout = '0000040C'
+        Mock Get-OSDCoreLicense { throw 'Unexpected license lookup' } -ModuleName DiskParameterDeploymentTests
+        Deploy-OSDCloud -CLI:$CLI -OSLanguageCode 'de-de' -KeyboardLayout '0000040C'
+        Should -Invoke Get-OSDCoreLicense -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Convert-KeyboardLayoutToLanguageCode -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $OSLanguageCode -eq 'de-de' }
+    }
+
+    It 'keeps en-US when the keyboard layout is unavailable with a valid license' {
+        Deploy-OSDCloud -CLI
+        Should -Invoke Convert-KeyboardLayoutToLanguageCode -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $OSLanguageCode -eq 'en-US' }
+    }
+
+    It 'surfaces licensed conversion failures instead of silently using a fallback' {
+        $global:OSDCoreDevice.KeyboardLayout = '0000040C'
+        Mock Convert-KeyboardLayoutToLanguageCode { throw 'Synthetic conversion failure' } -ModuleName DiskParameterDeploymentTests
+        { Deploy-OSDCloud -CLI } | Should -Throw '*Synthetic conversion failure*'
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
     }
 
     It 'documents every new parameter in the bundled external help' {

@@ -49,10 +49,12 @@ complete release notes and older history.
 
 ### Deploy-OSDCloud parameters
 
-These parameters customize disk layout for both CLI and GUI deployments.
+These parameters customize disk layout or infer the OS language for both CLI
+and GUI deployments.
 
 | Parameter | Benefit | Requirement |
 |---|---|---|
+| `-KeyboardLayout` / detected keyboard layout | Automatically sets `OSLanguageCode` from the supplied or detected keyboard layout, reducing manual language selection and helping match Windows to the operator's regional settings. Applies only when `OSLanguageCode` is not explicitly supplied. | Valid Recast license |
 | `-DiskLabelOS` | Gives the Windows volume an organization-specific label so operators can identify it in deployment tools and File Explorer. Defaults to `OS`. | Valid Recast license |
 | `-DiskLabelRecovery` | Gives an enabled recovery volume a recognizable label, such as `WinRE`, for maintenance and troubleshooting. Defaults to `Recovery`; does not enable a skipped recovery partition. | Valid Recast license |
 | `-DiskSizeSystem` | Reserves a chosen amount of space for the system partition to meet deployment requirements. Accepts `100MB`–`3000MB`; defaults to `500MB`. | Valid Recast license |
@@ -62,6 +64,9 @@ These parameters customize disk layout for both CLI and GUI deployments.
 Without a valid license, explicitly supplied disk customization parameters produce
 one warning and deployment uses the default labels and sizes, including automatic
 Windows partition sizing. `-DiskNumber` remains available without a license.
+Automatic keyboard-layout language selection falls back to `en-US` without a
+valid license, with no warning. Explicit `-OSLanguageCode` selection remains
+available without a license.
 
 All features in these tables use the shared `Test-OSDCoreLicense` check, requiring
 the selected `Get-OSDCoreLicense` result to have `IsValid = true`; registration
