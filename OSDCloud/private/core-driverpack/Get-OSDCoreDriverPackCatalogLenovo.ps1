@@ -84,7 +84,7 @@ function Get-OSDCoreDriverPackCatalogLenovo {
                 OperatingSystem = $operatingSystem
                 OSArchitecture  = 'amd64'
                 OSVersion       = $osVersion
-                HashMD5         = $item.crc
+                HashMD5         = $item.md5
             }
             New-Object -TypeName PSObject -Property $objectProperties
         }
