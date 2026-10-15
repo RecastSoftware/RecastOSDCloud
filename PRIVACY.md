@@ -53,7 +53,7 @@ What Data May Be Shared
 -----------------------
 
 - Deployment analytics events include the fields described in the Deployment Analytics section.
-- Connectivity and time checks send standard HTTP HEAD requests to endpoints such as Microsoft connectivity test services or Google, depending on the workflow path.
+- Connectivity checks send standard HTTP HEAD requests to Microsoft's connectivity test service. Time synchronization may send an HTTP HEAD request to Google to read its Date header.
 - Catalog lookups and content downloads send standard HTTP or HTTPS requests to Microsoft, GitHub, OEM, PowerShell Gallery, or other selected content endpoints.
 - User-provided WinpeStartup command URLs may be fetched and executed if configured by the operator.
 - Third-party services you connect to may log network metadata such as IP address, request headers, requested URL, and timestamp.
@@ -64,7 +64,8 @@ External Services
 OSDCloud may interact with external services when you choose to download content, update the module, or run workflows. Those services have their own privacy policies. Examples include:
 
 - **Microsoft Update Catalog and Microsoft download services** - used to query and download operating system images, firmware, drivers, and Surface packages. See the [Microsoft Privacy Statement](https://privacy.microsoft.com/privacystatement).
-- **Microsoft connectivity test services and Google** - used by some startup or time synchronization paths to test internet connectivity or read an HTTP Date header.
+- **Microsoft connectivity test services** - used by startup paths to test internet connectivity.
+- **Google** - used by time synchronization to read an HTTP Date header.
 - **GitHub** - used for project hosting, issue tracking, and raw catalog metadata. See the [GitHub Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement).
 - **PowerShell Gallery** - used for module availability checks and updates. Governed by the Microsoft Privacy Statement.
 - **OEM driver sites** - Dell, HP, Lenovo, Panasonic, Microsoft Surface, and other selected driver pack sources may be queried or downloaded from vendor-hosted servers. Consult each vendor's privacy policy.
