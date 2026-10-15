@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- Added `Deploy-OSDCloud -Incognito` to force `IsRegistered = false` for CLI and GUI unlicensed testing without changing the saved license or analytics behavior. Normal registration is reloaded on the next launch without the switch.
+- Added registered-only `Deploy-OSDCloud` parameters `DiskLabelOS`, `DiskLabelRecovery`, `DiskSizeSystem`, `DiskSizeOS`, and `DiskSizeRecovery` for CLI and GUI launches, preserving existing defaults when omitted. Unregistered deployments warn once when customization is supplied and use default labels/sizes with automatic OS sizing; `DiskNumber` remains ungated. Fixed OS sizing requires at least 32GB, keeps recovery at its requested size, and leaves excess disk space unallocated.
+- Added disk-layout validation before destructive workflow operations and mocked regression tests for parameter propagation, label/size validation, recovery policy, and GPT/MBR partition sizing. GUI controls and profile persistence remain unchanged.
+
 ## 26.10.13.1 - October 13, 2026
 
 ### Added

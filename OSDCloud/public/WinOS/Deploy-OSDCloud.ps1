@@ -12,6 +12,13 @@ function Deploy-OSDCloud {
         In addition to the static parameters documented here, workflow-specific runtime
         parameters are added dynamically from the selected workflow definition.
 
+        DiskLabelOS, DiskLabelRecovery, DiskSizeSystem, DiskSizeOS, and
+        DiskSizeRecovery require Initialize-OSDCoreLicense to report IsRegistered
+        as true. Otherwise, explicitly supplied customization parameters trigger
+        one warning and deployment uses default partition labels and sizes.
+        DiskNumber remains available without registration. Parameter-binding
+        validation still applies before the registration check.
+
         OSDCloud collects anonymous analytic data about the deployment environment and
         system configuration to help improve the product. No personally identifiable
         information (PII) is collected. By using OSDCloud you consent to this collection
@@ -25,6 +32,12 @@ function Deploy-OSDCloud {
     .PARAMETER CLI
         Skips the graphical UX and runs the deployment workflow immediately in the
         current console session.
+
+    .PARAMETER Incognito
+        Forces the initialized OSDCoreLicense.IsRegistered state to false for
+        unlicensed testing, even when a registered license is present. Does not
+        modify the saved license or disable analytics. Applies to CLI and GUI
+        launches; the next launch without this switch reloads normal license state.
 
     .PARAMETER PostAction
         Specifies what to do after the workflow completes successfully. Restart and
@@ -42,6 +55,31 @@ function Deploy-OSDCloud {
     .PARAMETER DiskNumber
         Specifies the local disk number to use for deployment. The disk number must
         exist in the local disk inventory detected by OSDCloud.
+
+    .PARAMETER DiskLabelOS
+        NTFS volume label for the Windows partition. Defaults to 'OS'.
+        Must be nonblank, at most 32 characters, and contain no invalid label characters.
+        Customization requires registration; otherwise the default is used.
+
+    .PARAMETER DiskLabelRecovery
+        NTFS volume label for the recovery partition. Defaults to 'Recovery'.
+        Does not enable a recovery partition when recovery is skipped.
+        Customization requires registration; otherwise the default is used.
+
+    .PARAMETER DiskSizeSystem
+        System partition size in bytes, from 100MB through 3000MB. Defaults to 500MB.
+        Customization requires registration; otherwise the default is used.
+
+    .PARAMETER DiskSizeOS
+        Fixed Windows partition size in bytes, at least 32GB. When omitted, Windows
+        uses the remaining space after reserving recovery. When supplied, excess
+        space remains unallocated and recovery uses DiskSizeRecovery.
+        Customization requires registration; otherwise automatic sizing is used.
+
+    .PARAMETER DiskSizeRecovery
+        Recovery partition size in bytes, from 350MB through 80000MB. Defaults to
+        2000MB. Does not change the workflow's recovery skip/force rules.
+        Customization requires registration; otherwise the default is used.
 
     .PARAMETER KeyboardLayout
         Overrides the detected keyboard layout value used to infer OSLanguageCode
@@ -68,6 +106,12 @@ function Deploy-OSDCloud {
         Runs the default OSDCloud workflow immediately without the graphical UX.
 
     .EXAMPLE
+        Deploy-OSDCloud -CLI -Incognito
+
+        Runs the default workflow with IsRegistered forced to false, exercising
+        unregistered behavior without changing the saved license.
+
+    .EXAMPLE
         Deploy-OSDCloud -CLI -PostAction Restart
 
         Runs the default workflow and restarts WinPE 10 seconds after it completes.
@@ -91,6 +135,14 @@ function Deploy-OSDCloud {
         Deploy-OSDCloud -CLI -DiskNumber 1
 
         Runs the default OSDCloud workflow immediately and deploys to local disk 1.
+
+    .EXAMPLE
+        Deploy-OSDCloud -CLI -DiskLabelOS 'Windows' -DiskLabelRecovery 'WinRE' -DiskSizeSystem 1GB -DiskSizeOS 100GB -DiskSizeRecovery 2GB
+
+        On registered devices, customizes the partition labels and sizes, leaving
+        excess space unallocated. Unregistered devices warn and use defaults.
+        Size expressions use PowerShell binary units. The same parameters work
+        without -CLI; no new graphical controls are added.
 
     .EXAMPLE
         Deploy-OSDCloud -WorkflowName 'latest' -SkipWorkflowVerification
@@ -120,6 +172,10 @@ function Deploy-OSDCloud {
         [System.Management.Automation.SwitchParameter]
         $CLI,
 
+        [Parameter(Mandatory = $false, HelpMessage = 'Forces unregistered license state for testing.')]
+        [System.Management.Automation.SwitchParameter]
+        $Incognito,
+
         [Parameter(Mandatory = $false, HelpMessage = 'Action to take after the workflow completes successfully.')]
         [ValidateSet('Restart', 'Shutdown', 'Quit', 'Exit')]
         [System.String]
@@ -128,6 +184,28 @@ function Deploy-OSDCloud {
         [Parameter(Mandatory = $false, HelpMessage = 'Optional local disk number to use as the deployment target.')]
         [System.UInt32]
         $DiskNumber,
+
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
+        [System.String]
+        $DiskLabelOS = 'OS',
+
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
+        [System.String]
+        $DiskLabelRecovery = 'Recovery',
+
+        [ValidateRange(100MB, 3000MB)]
+        [System.UInt64]
+        $DiskSizeSystem = 500MB,
+
+        [ValidateRange(32GB, [System.UInt64]::MaxValue)]
+        [System.UInt64]
+        $DiskSizeOS,
+
+        [ValidateRange(350MB, 80000MB)]
+        [System.UInt64]
+        $DiskSizeRecovery = 2000MB,
 
         [Parameter(Mandatory = $false)]
         [System.Management.Automation.SwitchParameter]
@@ -204,6 +282,7 @@ function Deploy-OSDCloud {
     }
 
     end {
+        $Error.Clear()
         #=================================================
         $ModuleVersion = $($MyInvocation.MyCommand.Module.Version)
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($MyInvocation.MyCommand.ModuleName) Module: $ModuleVersion"
@@ -252,7 +331,15 @@ function Deploy-OSDCloud {
         #=================================================
         # Initialize OSD
         Initialize-OSDCoreLicense
+        if ($Incognito.IsPresent) {
+            $global:OSDCoreLicense.IsRegistered = $false
+            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [INFO] Incognito: IsRegistered is forced to false for unlicensed testing."
+        }
         Initialize-OSDCoreDevice
+        # Device initialization can refresh license state when license details are missing.
+        if ($Incognito.IsPresent) {
+            $global:OSDCoreLicense.IsRegistered = $false
+        }
         #=================================================
         # OSDCoreDevice Manufacturer, Model, Product overrides
         if ($OSDManufacturer -and -not [string]::IsNullOrWhiteSpace($OSDManufacturer)) {

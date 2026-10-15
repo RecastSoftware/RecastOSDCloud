@@ -148,11 +148,16 @@ function New-OSDCloudPartitionWindows {
     .PARAMETER SizeRecovery
     Recovery partition size when the recovery partition is created.
 
+    .PARAMETER SizeWindows
+    Optional fixed Windows partition size in bytes, at least 32GB. Extra space
+    remains unallocated; recovery uses SizeRecovery rather than all remaining space.
+    When omitted, preserves automatic Windows sizing.
+
     .PARAMETER NoRecoveryPartition
     Skips creation of the recovery partition.
 
     .EXAMPLE
-    New-OSDPartitionWindows -DiskNumber 0 -PartitionStyle GPT
+    New-OSDCloudPartitionWindows -DiskNumber 0 -PartitionStyle GPT
     Creates Windows and recovery partitions on disk 0.
 
     .LINK
@@ -174,12 +179,16 @@ function New-OSDCloudPartitionWindows {
         #Default = Recovery
         #Aliases: LR, LabelR
         [Alias('LR','LabelR')]
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
         [string]$LabelRecovery = 'Recovery',
 
         #Volume label for the Windows partition
         #Default = Windows
         #Aliases: LW, LabelW
         [Alias('LW','LabelW')]
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
         [string]$LabelWindows = 'Windows',
 
         [Alias('PS')]
@@ -194,6 +203,9 @@ function New-OSDCloudPartitionWindows {
         [ValidateRange(350MB,80000MB)]
         [uint64]$SizeRecovery = 2000MB,
 
+        [ValidateRange(32GB, [System.UInt64]::MaxValue)]
+        [uint64]$SizeWindows,
+
         #Skips creation of the recovery partition
         [Alias('SkipRecovery','SkipRecoveryPartition')]
         [System.Management.Automation.SwitchParameter]$NoRecoveryPartition
@@ -201,6 +213,8 @@ function New-OSDCloudPartitionWindows {
     #=================================================
     #	Get-OSDCloudDisk
     #=================================================
+    $Error.Clear()
+    $fixedWindowsSize = $PSBoundParameters.ContainsKey('SizeWindows')
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Starting Windows partition workflow for disk $DiskNumber"
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Looking up disk metadata for disk $DiskNumber"
     $GetOSDDisk = Get-OSDCloudDisk -Number $DiskNumber
@@ -224,13 +238,20 @@ function New-OSDCloudPartitionWindows {
         }
     }
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] PartitionStyle is set to $PartitionStyle"
+    $reservedRecoverySize = if ($NoRecoveryPartition) { 0 } else { $SizeRecovery }
+    $requiredFreeSpace = if ($fixedWindowsSize) { [decimal]$SizeWindows + $reservedRecoverySize + 2MB } else { [decimal]$reservedRecoverySize + 1MB }
+    if ($requiredFreeSpace -gt $GetOSDDisk.LargestFreeExtent) {
+        throw "Disk $DiskNumber has insufficient free space for Windows and recovery. Required: $requiredFreeSpace bytes; available: $($GetOSDDisk.LargestFreeExtent) bytes."
+    }
+    $windowsSizeParameters = if ($fixedWindowsSize) { @{ Size = $SizeWindows } } else { @{ UseMaximumSize = $true } }
+    $recoverySizeParameters = if ($fixedWindowsSize) { @{ Size = $SizeRecovery } } else { @{ UseMaximumSize = $true } }
     #=================================================
     #	GPT WINDOWS
     #=================================================
     if ($PartitionStyle -eq 'GPT' -and $NoRecoveryPartition -eq $true) {
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT Windows partition without a recovery partition"
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT Windows Partition"
-        $PartitionWindows = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -GptType '{ebd0a0a2-b9e5-4433-87c0-68b6b72699c7}' -DriveLetter C
+        $PartitionWindows = New-Partition -DiskNumber $DiskNumber @windowsSizeParameters -GptType '{ebd0a0a2-b9e5-4433-87c0-68b6b72699c7}' -DriveLetter C
 
         #$null = Format-Volume -Partition $PartitionWindows -NewFileSystemLabel "$LabelWindows" -FileSystem NTFS -Force -Confirm:$false
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Formatting the GPT Windows partition as NTFS with label $LabelWindows"
@@ -255,7 +276,9 @@ exit
     if ($PartitionStyle -eq 'GPT' -and $NoRecoveryPartition -eq $false) {
 
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Calculating Windows partition size from the remaining free space"
-        $SizeWindows = $($GetOSDDisk.LargestFreeExtent) - $SizeRecovery
+        if (-not $fixedWindowsSize) {
+            $SizeWindows = $($GetOSDDisk.LargestFreeExtent) - $SizeRecovery
+        }
         $SizeWindowsGB = [math]::Round($SizeWindows / 1GB,1)
 
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT Windows partition with a recovery partition reserved"
@@ -276,7 +299,7 @@ exit
 
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT recovery partition"
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating GPT Recovery Partition"
-        $PartitionRecovery = New-Partition -DiskNumber $DiskNumber -GptType '{de94bba4-06d1-4d40-a16a-bfd50179d6ac}' -UseMaximumSize
+        $PartitionRecovery = New-Partition -DiskNumber $DiskNumber -GptType '{de94bba4-06d1-4d40-a16a-bfd50179d6ac}' @recoverySizeParameters
 
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Formatting the GPT recovery partition as NTFS with label $LabelRecovery"
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Format-Volume FileSystem NTFS NewFileSystemLabel $LabelRecovery"
@@ -306,7 +329,7 @@ exit
     if ($PartitionStyle -eq 'MBR' -and $NoRecoveryPartition -eq $true) {
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating MBR Windows partition without a recovery partition"
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating MBR Windows Partition"
-        $PartitionWindows = New-Partition -DiskNumber $DiskNumber -UseMaximumSize -MbrType IFS -DriveLetter C
+        $PartitionWindows = New-Partition -DiskNumber $DiskNumber @windowsSizeParameters -MbrType IFS -DriveLetter C
 
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Formatting the MBR Windows partition as NTFS with label $LabelWindows"
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Format-Volume -DriveLetter C -FileSystem NTFS -NewFileSystemLabel $LabelWindows"
@@ -328,7 +351,9 @@ exit
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Reading disk geometry before creating the MBR Windows partition"
         $OSDDisk = Get-Disk -Number $DiskNumber
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Calculating Windows partition size from the remaining free space"
-        $SizeWindows = $($OSDDisk.LargestFreeExtent) - $SizeRecovery
+        if (-not $fixedWindowsSize) {
+            $SizeWindows = $($OSDDisk.LargestFreeExtent) - $SizeRecovery
+        }
         $SizeWindowsGB = [math]::Round($SizeWindows / 1GB,1)
 
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating MBR Windows partition with a recovery partition reserved"
@@ -350,7 +375,7 @@ exit
 
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating MBR recovery partition"
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] New-Partition -DiskNumber $DiskNumber -UseMaximumSize"
-        $PartitionRecovery = New-Partition -DiskNumber $DiskNumber -UseMaximumSize
+        $PartitionRecovery = New-Partition -DiskNumber $DiskNumber @recoverySizeParameters
 
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Formatting the MBR recovery partition as NTFS with label $LabelRecovery"
         Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Format-Volume -FileSystem NTFS -NewFileSystemLabel $LabelRecovery"
@@ -374,195 +399,6 @@ exit
 "@ | diskpart.exe
     }
 }
-function Clear-DeviceLocalDisk {
-    [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
-    param (
-        [Parameter(ValueFromPipeline = $true)]
-        [Object]$Input,
-
-        [Alias('Disk','Number')]
-        [uint32]$DiskNumber,
-
-        [Alias('I')]
-        [System.Management.Automation.SwitchParameter]$Initialize,
-
-        [Alias('PS')]
-        [ValidateSet('GPT','MBR')]
-        [string]$PartitionStyle,
-
-        [Parameter(ValueFromPipelineByPropertyName = $true)]
-        [Alias('F')]
-        [System.Management.Automation.SwitchParameter]$Force,
-
-        [System.Management.Automation.SwitchParameter]$NoResults,
-
-        [Alias('W','Warn','Warning')]
-        [System.Management.Automation.SwitchParameter]$ShowWarning
-    )
-    #=================================================
-    #	PSBoundParameters
-    #=================================================
-    $IsConfirmPresent   = $PSBoundParameters.ContainsKey('Confirm')
-    $IsForcePresent     = $PSBoundParameters.ContainsKey('Force')
-    $IsVerbosePresent   = $PSBoundParameters.ContainsKey('Verbose')
-    #=================================================
-    #	Enable Verbose if Force parameter is not $true
-    #=================================================
-    if ($IsForcePresent -eq $false) {
-        $VerbosePreference = 'Continue'
-    }
-    #=================================================
-    #	Get-Disk
-    #=================================================
-    if ($Input) {
-        $GetDisk = $Input
-    } else {
-        $GetDisk = Get-DeviceLocalDisk | Where-Object {$_.IsBoot -eq $false} | Sort-Object Number
-    }
-    #=================================================
-    #	Get DiskNumber
-    #=================================================
-    if ($PSBoundParameters.ContainsKey('DiskNumber')) {
-        $GetDisk = $GetDisk | Where-Object {$_.DiskNumber -eq $DiskNumber}
-    }
-    #=================================================
-    #	-PartitionStyle
-    #=================================================
-    if (-NOT ($PSBoundParameters.ContainsKey('PartitionStyle'))) {
-        if ($global:OSDCoreDevice.IsUEFI -eq $true) {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] IsUEFI = $true"
-            $PartitionStyle = 'GPT'
-        } else {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] IsUEFI = $false"
-            $PartitionStyle = 'MBR'
-        }
-    }
-    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] PartitionStyle = $PartitionStyle"
-    #=================================================
-    #	Get-Help
-    #=================================================
-    if ($IsForcePresent -eq $false) {
-        Get-Help $($MyInvocation.MyCommand.Name)
-    }
-    #=================================================
-    #	Display Disk Information
-    #=================================================
-    $GetDisk | Select-Object -Property DiskNumber, BusType,`
-    @{Name='SizeGB';Expression={[int]($_.Size / 1000000000)}},`
-    FriendlyName,Model, PartitionStyle,`
-    @{Name='Partitions';Expression={$_.NumberOfPartitions}} | `
-    Format-Table | Out-Host
-
-    if ($IsForcePresent -eq $false) {
-        Break
-    }
-    #=================================================
-    #	Display Warning
-    #=================================================
-    if ($PSBoundParameters.ContainsKey('ShowWarning')) {
-        Write-Warning "All data on the cleared Disk will be cleared and all data will be lost"
-        pause
-    }
-    #=================================================
-    #	Clear-Disk
-    #=================================================
-    $ClearDisk = @()
-    foreach ($Item in $GetDisk) {
-        if ($PSCmdlet.ShouldProcess(
-            "Disk $($Item.Number) $($Item.BusType) $([int]($Item.Size / 1000000000))GB $($Item.FriendlyName) [$($Item.PartitionStyle) $($Item.NumberOfPartitions) Partitions]",
-            "Clear-Disk"
-        ))
-        {
-            Write-Warning "Cleaning Disk $($Item.Number) $($Item.BusType) $([int]($Item.Size / 1000000000))GB $($Item.FriendlyName) [$($Item.PartitionStyle) $($Item.NumberOfPartitions) Partitions]"
-            Invoke-DiskpartClean -DiskNumber $Item.Number
-
-            if ($Initialize -eq $true) {
-                Write-Warning "Initializing $PartitionStyle Disk $($Item.Number) $($Item.BusType) $([int]($Item.Size / 1000000000))GB $($Item.FriendlyName)"
-                $Item | Initialize-Disk -PartitionStyle $PartitionStyle
-            }
-
-            $ClearDisk += Get-OSDCloudDisk -Number $Item.Number
-        }
-    }
-    #=================================================
-    #	Return
-    #=================================================
-    if ($PSBoundParameters.ContainsKey('NoResults')) {
-        #Don't return results
-    }
-    else {
-        $ClearDisk | Select-Object -Property DiskNumber, BusType,`
-        @{Name='SizeGB';Expression={[int]($_.Size / 1000000000)}},`
-        FriendlyName, Model, PartitionStyle,`
-        @{Name='Partitions';Expression={$_.NumberOfPartitions}} | `
-        Format-Table | Out-Host
-    }
-    #=================================================
-}
-function Get-DeviceDataDisk {
-    [CmdletBinding()]
-    param ()
-    #=================================================
-    #   Get-Partition Information
-    #=================================================
-    $GetPartition = Get-Partition | `
-    Where-Object {$_.DriveLetter -gt 0} | `
-    Where-Object {$_.IsOffline -eq $false} | `
-    Where-Object {$_.IsReadOnly -ne $true} | `
-    Where-Object {$_.Size -gt 10000000000} | `
-    Sort-Object -Property DriveLetter | `
-    Select-Object -Property DriveLetter, DiskNumber
-    #=================================================
-    #   Get-Volume Information
-    #=================================================
-    $GetVolume = $(Get-Volume | `
-    Sort-Object -Property DriveLetter | `
-    Select-Object -Property DriveLetter,FileSystem,OperationalStatus,DriveType,FileSystemLabel,Size,SizeRemaining)
-    #=================================================
-    #   Create Object
-    #=================================================
-    $LocalResults = foreach ($Item in $GetPartition) {
-        $GetVolumeProperties = $GetVolume | Where-Object {$_.DriveLetter -eq $Item.DriveLetter}
-        $ObjectProperties = @{
-
-            DiskNumber          = $Item.DiskNumber
-            DriveLetter         = $GetVolumeProperties.DriveLetter
-            FileSystem          = $GetVolumeProperties.FileSystem
-            OperationalStatus   = $GetVolumeProperties.OperationalStatus
-            DriveType           = $GetVolumeProperties.DriveType
-            FileSystemLabel     = $GetVolumeProperties.FileSystemLabel
-            Size                = $GetVolumeProperties.Size
-            SizeRemaining       = $GetVolumeProperties.SizeRemaining
-
-        }
-        New-Object -TypeName PSObject -Property $ObjectProperties
-    }
-    #=================================================
-    #   Get-DriveInfo
-    #=================================================
-    $GetNetworkDrives = [System.IO.DriveInfo]::getdrives() | Where-Object {$_.DriveType -eq 'Network'} | Where-Object {$_.DriveFormat -eq 'NTFS'}
-    $NetworkResults = foreach ($Item in $GetNetworkDrives) {
-        $ObjectProperties = @{
-            DiskNumber          = 99
-            DriveLetter         = ($Item.Name).substring(0,1)
-            FileSystem          = 'NTFS'
-            OperationalStatus   = $Item.IsReady
-            DriveType           = 'Network'
-            FileSystemLabel     = $Item.VolumeLabel
-            Size                = $Item.TotalSize
-            SizeRemaining       = $Item.TotalFreeSpace
-
-        }
-        New-Object -TypeName PSObject -Property $ObjectProperties
-    }
-    #=================================================
-    #   Return Results
-    #=================================================
-    $LocalResults = $LocalResults | Sort-Object -Property DriveLetter
-    $LocalResults = $LocalResults | Where-Object {$_.FileSystem -eq 'NTFS'}
-    [array]$Results = [array]$LocalResults + [array]$NetworkResults
-    Return [array]$Results
-}
 function Get-DeviceLocalDisk {
     [CmdletBinding()]
     param ()
@@ -574,25 +410,6 @@ function Get-DeviceLocalDisk {
     #	Return
     #=================================================
     Return $GetDisk
-    #=================================================
-}
-function Get-DeviceLocalDiskPartition {
-    [CmdletBinding()]
-    param ()
-
-    #=================================================
-    #	Return
-    #=================================================
-    Return (Get-OSDCloudPartition | Where-Object {$_.IsUSB -eq $false})
-    #=================================================
-}
-function Get-DeviceLocalDiskVolume {
-    [CmdletBinding()]
-    param ()
-    #=================================================
-    #	Return
-    #=================================================
-    Return (Get-OSDCloudVolume | Where-Object {$_.IsUSB -eq $false})
     #=================================================
 }
 function Get-OSDCloudDisk {
@@ -671,36 +488,6 @@ function Get-OSDCloudDisk {
     Return $GetDisk
     #=================================================
 }
-function Get-OSDCloudPartition {
-    [CmdletBinding()]
-    param ()
-    #=================================================
-    #	PSBoundParameters
-    #=================================================
-    $IsConfirmPresent   = $PSBoundParameters.ContainsKey('Confirm')
-    $IsForcePresent     = $PSBoundParameters.ContainsKey('Force')
-    $IsVerbosePresent   = $PSBoundParameters.ContainsKey('Verbose')
-    #=================================================
-    #	Get Variables
-    #=================================================
-    $GetDisk = Get-OSDCloudDisk -BusType USB
-    $GetPartition = Get-Partition | Sort-Object DiskNumber, PartitionNumber
-    #=================================================
-    #	Add Property IsUSB
-    #=================================================
-    foreach ($Partition in $GetPartition) {
-        if ($Partition.DiskNumber -in $($GetDisk).DiskNumber) {
-            $Partition | Add-Member -NotePropertyName 'IsUSB' -NotePropertyValue $true -Force
-        } else {
-            $Partition | Add-Member -NotePropertyName 'IsUSB' -NotePropertyValue $false -Force
-        }
-    }
-    #=================================================
-    #	Return
-    #=================================================
-    Return $GetPartition
-    #=================================================
-}
 function Get-OSDCloudVolume {
     [CmdletBinding()]
     param ()
@@ -713,13 +500,18 @@ function Get-OSDCloudVolume {
     #=================================================
     #	Get Variables
     #=================================================
-    $GetPartition = Get-DeviceUSBPartition
+    $usbDisks = @(Get-Disk | Where-Object {$_.BusType -eq 'USB'})
+    $usbPartitions = @(
+        foreach ($usbDisk in $usbDisks) {
+            Get-Partition -DiskNumber $usbDisk.Number
+        }
+    )
     $GetVolume = Get-Volume | Sort-Object DriveLetter
     #=================================================
     #	Add Property IsUSB
     #=================================================
     foreach ($Volume in $GetVolume) {
-        if ($Volume.Path -in $($GetPartition).AccessPaths) {
+        if ($Volume.Path -in $usbPartitions.AccessPaths) {
             $Volume | Add-Member -NotePropertyName 'IsUSB' -NotePropertyValue $true -Force
         } else {
             $Volume | Add-Member -NotePropertyName 'IsUSB' -NotePropertyValue $false -Force
@@ -735,29 +527,6 @@ function Get-OSDCloudVolume {
                         IsUSB, DriveType, OperationalStatus, HealthStatus
     #=================================================
 }
-function Get-DeviceUSBDisk {
-    [CmdletBinding()]
-    param ()
-    #=================================================
-    #	Get-OSDCloudDisk
-    #=================================================
-    $GetDisk = Get-OSDCloudDisk -BusType USB
-    #=================================================
-    #	Return
-    #=================================================
-    Return $GetDisk
-    #=================================================
-}
-function Get-DeviceUSBPartition {
-    [CmdletBinding()]
-    param ()
-
-    #=================================================
-    #	Return
-    #=================================================
-    Return (Get-OSDCloudPartition | Where-Object {$_.IsUSB -eq $true})
-    #=================================================
-}
 function Get-DeviceUSBVolume {
     [CmdletBinding()]
     param ()
@@ -766,64 +535,6 @@ function Get-DeviceUSBVolume {
     #=================================================
     Return (Get-OSDCloudVolume | Where-Object {$_.IsUSB -eq $true})
     #=================================================
-}
-function Invoke-SelectDeviceDataDisk {
-    [CmdletBinding()]
-    param (
-        [int]$NotDiskNumber,
-        [System.Management.Automation.SwitchParameter]$Skip,
-        [System.Management.Automation.SwitchParameter]$SelectOne
-    )
-    #=================================================
-    #	Get USB Disk and add the MinimumSizeGB filter
-    #=================================================
-    $Results = Get-DeviceDataDisk | Sort-Object -Property DriveLetter
-    #=================================================
-    #	Filter NotDiskNumber
-    #=================================================
-    if ($PSBoundParameters.ContainsKey('NotDiskNumber')) {
-        $Results = $Results | Where-Object {$_.DiskNumber -ne $NotDiskNumber}
-    }
-    #=================================================
-    #	Process Results
-    #=================================================
-    if ($Results) {
-        #=================================================
-        #	There was only 1 Item, then we will select it automatically
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('SelectOne')) {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Automatically select "
-            if (($Results | Measure-Object).Count -eq 1) {
-                $SelectedItem = $Results
-                Return $SelectedItem
-            }
-        }
-        #=================================================
-        #	Table of Items
-        #=================================================
-        $Results | Select-Object -Property DriveLetter, FileSystemLabel,`
-        @{Name='FreeGB';Expression={[int]($_.SizeRemaining / 1000000000)}},`
-        @{Name='TotalGB';Expression={[int]($_.Size / 1000000000)}},`
-        FileSystem, DriveType, DiskNumber | Format-Table | Out-Host
-        #=================================================
-        #	Select an Item
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('Skip')) {
-            do {$Selection = Read-Host -Prompt "Select a Disk to save the FFU on by DriveLetter, or press S to SKIP"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DriveLetter) -or ($Selection -eq 'S'))
-
-            if ($Selection -eq 'S') {Return $false}
-        }
-        else {
-            do {$Selection = Read-Host -Prompt "Select a Disk to save the FFU on by DriveLetter"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DriveLetter))
-        }
-        #=================================================
-        #	Return Selection
-        #=================================================
-        Return ($Results | Where-Object {$_.DriveLetter -eq $Selection})
-        #=================================================
-    }
 }
 function Invoke-SelectDeviceLocalDisk {
     [CmdletBinding()]
@@ -883,337 +594,6 @@ function Invoke-SelectDeviceLocalDisk {
         #=================================================
     }
 }
-function Invoke-SelectDeviceLocalVolume {
-    [CmdletBinding()]
-    param (
-        [Parameter(ValueFromPipeline = $true)]
-        [Object]$Input,
-        [int]$MinimumSizeGB = 1,
-
-        [ValidateSet('FAT32','NTFS')]
-        [string]$FileSystem,
-
-        [System.Management.Automation.SwitchParameter]$Skip,
-        [System.Management.Automation.SwitchParameter]$SelectOne
-    )
-    #=================================================
-    #	Get-Volume
-    #=================================================
-    if ($Input) {
-        $Results = $Input
-    } else {
-        $Results = Get-DeviceLocalDiskVolume | Sort-Object -Property DriveLetter | `
-        Where-Object {$_.SizeGB -gt $MinimumSizeGB}
-    }
-    #=================================================
-    #	Filter the File System
-    #=================================================
-    if ($PSBoundParameters.ContainsKey('FileSystem')) {
-        $Results = $Results | Where-Object {$_.FileSystem -eq $FileSystem}
-    }
-    #=================================================
-    #	Process Results
-    #=================================================
-    if ($Results) {
-        #=================================================
-        #	There was only 1 Item, then we will select it automatically
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('SelectOne')) {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Automatically select "
-            if (($Results | Measure-Object).Count -eq 1) {
-                $SelectedItem = $Results
-                Return $SelectedItem
-            }
-        }
-        #=================================================
-        #	Table of Items
-        #=================================================
-        $Results | Select-Object -Property DriveLetter, FileSystemLabel,`
-        SizeGB, SizeRemainingGB, SizeRemainingMB, DriveType | `
-        Format-Table | Out-Host
-        #=================================================
-        #	Select an Item
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('Skip')) {
-            do {$Selection = Read-Host -Prompt "Select a Fixed Volume by DriveLetter, or press S to SKIP"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DriveLetter) -or ($Selection -eq 'S'))
-
-            if ($Selection -eq 'S') {Return $false}
-        }
-        else {
-            do {$Selection = Read-Host -Prompt "Select a Fixed Volume by DriveLetter"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DriveLetter))
-        }
-        #=================================================
-        #	Return Selection
-        #=================================================
-        Return ($Results | Where-Object {$_.DriveLetter -eq $Selection})
-        #=================================================
-    }
-}
-function Invoke-SelectOSDCloudDisk {
-    [CmdletBinding()]
-    param (
-        [Parameter(ValueFromPipeline = $true)]
-        [Object]$Input,
-        [System.Management.Automation.SwitchParameter]$Skip,
-        [System.Management.Automation.SwitchParameter]$SelectOne
-    )
-    #=================================================
-    #	Get-Disk
-    #=================================================
-    if ($Input) {
-        $Results = $Input
-    } else {
-        $Results = Get-DeviceLocalDisk
-    }
-    #=================================================
-    #	Process Results
-    #=================================================
-    if ($Results) {
-        #=================================================
-        #	There was only 1 Item, then we will select it automatically
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('SelectOne')) {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Automatically select "
-            if (($GetDisk | Measure-Object).Count -eq 1) {
-                $SelectedItem = $GetDisk
-                Return $SelectedItem
-            }
-        }
-        #=================================================
-        #	Table of Items
-        #=================================================
-        $GetDisk | Select-Object -Property DiskNumber, BusType, MediaType,`
-        @{Name='SizeGB';Expression={[int]($_.Size / 1000000000)}},`
-        FriendlyName,Model, PartitionStyle,`
-        @{Name='Partitions';Expression={$_.NumberOfPartitions}} | `
-        Format-Table | Out-Host
-        #=================================================
-        #	Select an Item
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('Skip')) {
-            do {$Selection = Read-Host -Prompt "Select a Disk by DiskNumber, or press S to SKIP"}
-            until (($Selection -ge 0) -and ($Selection -in $GetDisk.DiskNumber) -or ($Selection -eq 'S'))
-
-            if ($Selection -eq 'S') {Return $false}
-        }
-        else {
-            do {$Selection = Read-Host -Prompt "Select a Disk by DiskNumber"}
-            until (($Selection -ge 0) -and ($Selection -in $GetDisk.DiskNumber))
-        }
-        #=================================================
-        #	Return Selection
-        #=================================================
-        Return ($GetDisk | Where-Object {$_.DiskNumber -eq $Selection})
-        #=================================================
-    }
-}
-function Invoke-SelectOSDCloudVolume {
-    [CmdletBinding()]
-    param (
-        [Parameter(ValueFromPipeline = $true)]
-        [Object]$Input,
-        [int]$MinimumSizeGB = 1,
-
-        [ValidateSet('FAT32','NTFS')]
-        [string]$FileSystem,
-
-        [System.Management.Automation.SwitchParameter]$Skip,
-        [System.Management.Automation.SwitchParameter]$SelectOne
-    )
-    #=================================================
-    #	Get-Volume
-    #=================================================
-    if ($Input) {
-        $Results = $Input
-    } else {
-        $Results = Get-OSDCloudVolume | Sort-Object -Property DriveLetter | `
-        Where-Object {$_.SizeGB -gt $MinimumSizeGB}
-    }
-    #=================================================
-    #	Filter the File System
-    #=================================================
-    if ($PSBoundParameters.ContainsKey('FileSystem')) {
-        $Results = $Results | Where-Object {$_.FileSystem -eq $FileSystem}
-    }
-    #=================================================
-    #	Process Results
-    #=================================================
-    if ($Results) {
-        #=================================================
-        #	There was only 1 Item, then we will select it automatically
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('SelectOne')) {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Automatically select "
-            if (($Results | Measure-Object).Count -eq 1) {
-                $SelectedItem = $Results
-                Return $SelectedItem
-            }
-        }
-        #=================================================
-        #	Table of Items
-        #=================================================
-        $Results | Select-Object -Property DriveLetter, FileSystemLabel,`
-        SizeGB, SizeRemainingGB, SizeRemainingMB, `
-        IsUSB, DriveType | `
-        Format-Table | Out-Host
-        #=================================================
-        #	Select an Item
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('Skip')) {
-            do {$Selection = Read-Host -Prompt "Select a Volume by DriveLetter, or press S to SKIP"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DriveLetter) -or ($Selection -eq 'S'))
-
-            if ($Selection -eq 'S') {Return $false}
-        }
-        else {
-            do {$Selection = Read-Host -Prompt "Select a Volume by DriveLetter"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DriveLetter))
-        }
-        #=================================================
-        #	Return Selection
-        #=================================================
-        Return ($Results | Where-Object {$_.DriveLetter -eq $Selection})
-        #=================================================
-    }
-}
-function Invoke-SelectDeviceUSBDisk {
-    [CmdletBinding()]
-    param (
-        [Parameter(ValueFromPipeline = $true)]
-        [Object]$Input,
-
-        [Alias('Min','MinGB','MinSize')]
-        [int]$MinimumSizeGB = 8,
-
-        [Alias('Max','MaxGB','MaxSize')]
-        [int]$MaximumSizeGB = 1800,
-
-        [System.Management.Automation.SwitchParameter]$Skip,
-        [System.Management.Automation.SwitchParameter]$SelectOne
-    )
-    #=================================================
-    #	Get-Disk
-    #=================================================
-    if ($Input) {
-        $Results = $Input
-    } else {
-        $Results = Get-DeviceUSBDisk | Where-Object {($_.Size -gt ($MinimumSizeGB * 1GB)) -and ($_.Size -lt ($MaximumSizeGB * 1GB))}
-    }
-    #=================================================
-    #	Process Results
-    #=================================================
-    if ($Results) {
-        #=================================================
-        #	There was only 1 Item, then we will select it automatically
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('SelectOne')) {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Automatically select "
-            if (($Results | Measure-Object).Count -eq 1) {
-                $SelectedItem = $Results
-                Return $SelectedItem
-            }
-        }
-        #=================================================
-        #	Table of Items
-        #=================================================
-        $Results | Select-Object -Property DiskNumber, BusType, MediaType,`
-        @{Name='SizeGB';Expression={[int]($_.Size / 1000000000)}},`
-        FriendlyName,Model, PartitionStyle,`
-        @{Name='Partitions';Expression={$_.NumberOfPartitions}} | `
-        Format-Table | Out-Host
-        #=================================================
-        #	Select an Item
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('Skip')) {
-            do {$Selection = Read-Host -Prompt "Select a USB Disk by DiskNumber, or press S to SKIP"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DiskNumber) -or ($Selection -eq 'S'))
-
-            if ($Selection -eq 'S') {Return $false}
-        }
-        else {
-            do {$Selection = Read-Host -Prompt "Select a USB Disk by DiskNumber"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DiskNumber))
-        }
-        #=================================================
-        #	Return Selection
-        #=================================================
-        Return ($Results | Where-Object {$_.DiskNumber -eq $Selection})
-        #=================================================
-    }
-}
-function Invoke-SelectDeviceUSBVolume {
-    [CmdletBinding()]
-    param (
-        [Parameter(ValueFromPipeline = $true)]
-        [Object]$Input,
-        [int]$MinimumSizeGB = 1,
-
-        [ValidateSet('FAT32','NTFS')]
-        [string]$FileSystem,
-
-        [System.Management.Automation.SwitchParameter]
-        $Skip,
-
-        [System.Management.Automation.SwitchParameter]
-        $SelectOne
-    )
-    #=================================================
-    #	Get-Volume
-    #=================================================
-    if ($Input) {
-        $Results = $Input
-    } else {
-        $Results = Get-DeviceUSBVolume | Sort-Object -Property DriveLetter | `
-        Where-Object {$_.SizeGB -gt $MinimumSizeGB}
-    }
-    #=================================================
-    #	Filter the File System
-    #=================================================
-    if ($PSBoundParameters.ContainsKey('FileSystem')) {
-        $Results = $Results | Where-Object {$_.FileSystem -eq $FileSystem}
-    }
-    #=================================================
-    #	Process Results
-    #=================================================
-    if ($Results) {
-        #=================================================
-        #	There was only 1 Item, then we will select it automatically
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('SelectOne')) {
-            Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Automatically select "
-            if (($Results | Measure-Object).Count -eq 1) {
-                $SelectedItem = $Results
-                Return $SelectedItem
-            }
-        }
-        #=================================================
-        #	Table of Items
-        #=================================================
-        $Results | Select-Object -Property DriveLetter, FileSystemLabel,`
-        SizeGB, SizeRemainingGB, SizeRemainingMB, DriveType | `
-        Format-Table | Out-Host
-        #=================================================
-        #	Select an Item
-        #=================================================
-        if ($PSBoundParameters.ContainsKey('Skip')) {
-            do {$Selection = Read-Host -Prompt "Select a USB Volume by DriveLetter, or press S to SKIP"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DriveLetter) -or ($Selection -eq 'S'))
-
-            if ($Selection -eq 'S') {Return $false}
-        }
-        else {
-            do {$Selection = Read-Host -Prompt "Select a USB Volume by DriveLetter"}
-            until (($Selection -ge 0) -and ($Selection -in $Results.DriveLetter))
-        }
-        #=================================================
-        #	Return Selection
-        #=================================================
-        Return ($Results | Where-Object {$_.DriveLetter -eq $Selection})
-        #=================================================
-    }
-}
 function New-OSDCloudDisk {
     <#
     .SYNOPSIS
@@ -1267,15 +647,20 @@ function New-OSDCloudDisk {
     Range = 350MB - 80000MB (80GB)
     Alias = SR, Recovery
 
+    .PARAMETER SizeWindows
+    Optional fixed Windows partition size in bytes, at least 32GB. When supplied,
+    recovery uses SizeRecovery and extra space remains unallocated. When omitted,
+    Windows uses the remaining space after reserving recovery.
+
     .PARAMETER SizeSystemGpt
     System Partition size for UEFI GPT based Computers
-    Default = 260MB
+    Default = 500MB
     Range = 100MB - 3000MB (3GB)
     Alias = SSG, Efi, SystemG
 
     .PARAMETER SizeSystemMbr
     System Partition size for BIOS MBR based Computers
-    Default = 260MB
+    Default = 500MB
     Range = 100MB - 3000MB (3GB)
     Alias = SSM, Mbr, SystemM
 
@@ -1322,12 +707,19 @@ function New-OSDCloudDisk {
         [uint64]$SizeMSR = 16MB,
 
         [Alias('LW','LabelW')]
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
         [string]$LabelWindows = 'OS',
+
+        [ValidateRange(32GB, [System.UInt64]::MaxValue)]
+        [uint64]$SizeWindows,
 
         [Alias('SkipRecovery','SkipRecoveryPartition')]
         [System.Management.Automation.SwitchParameter]$NoRecoveryPartition,
 
         [Alias('LR','LabelR')]
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
         [string]$LabelRecovery = 'Recovery',
 
         [Alias('SR','Recovery')]
@@ -1341,6 +733,7 @@ function New-OSDCloudDisk {
     #=================================================
     #	PSBoundParameters
     #=================================================
+    $Error.Clear()
     $IsConfirmPresent   = $PSBoundParameters.ContainsKey('Confirm')
     $IsForcePresent     = $PSBoundParameters.ContainsKey('Force')
     $IsVerbosePresent   = $PSBoundParameters.ContainsKey('Verbose')
@@ -1429,6 +822,20 @@ function New-OSDCloudDisk {
         Write-Warning "Something went wrong"
         Break
     }
+    $layoutParameters = @{
+        PartitionStyle = $PartitionStyle
+        LabelWindows = $LabelWindows
+        LabelRecovery = $LabelRecovery
+        SizeSystemGpt = $SizeSystemGpt
+        SizeSystemMbr = $SizeSystemMbr
+        SizeMSR = $SizeMSR
+        SizeRecovery = $SizeRecovery
+        NoRecoveryPartition = $NoRecoveryPartition
+    }
+    if ($PSBoundParameters.ContainsKey('SizeWindows')) {
+        $layoutParameters.SizeWindows = $SizeWindows
+    }
+    Test-OSDCloudDiskLayout -DiskSize $OSDisk.Size @layoutParameters
     #=================================================
     #   Create OSDisk
     #=================================================
@@ -1511,6 +918,9 @@ function New-OSDCloudDisk {
         PartitionStyle          = $PartitionStyle
         SizeRecovery            = $SizeRecovery
         NoRecoveryPartition     = $NoRecoveryPartition
+    }
+    if ($PSBoundParameters.ContainsKey('SizeWindows')) {
+        $WindowsPartition.SizeWindows = $SizeWindows
     }
     New-OSDCloudPartitionWindows @WindowsPartition
     #=================================================

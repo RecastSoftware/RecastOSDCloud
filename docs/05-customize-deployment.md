@@ -62,6 +62,57 @@ Restrict `values` to one entry to force a choice without showing alternatives.
 
 ARM64 has fewer editions (no N or Education variants) — see [guide 7](07-arm64-devices.md).
 
+## Customize disk labels and partition sizes
+
+Pass disk overrides to `Deploy-OSDCloud` for either CLI or GUI launches:
+
+These five customization parameters require registration:
+`Initialize-OSDCoreLicense` must report `IsRegistered = true`. Otherwise, any
+explicitly supplied customization produces one warning and deployment uses
+the defaults below (including automatic OS sizing). No customization means no
+registration warning. `DiskNumber` remains available without registration.
+
+To exercise unregistered behavior on a registered device, use
+`Deploy-OSDCloud -CLI -Incognito` (or omit `-CLI` for the GUI). This forces
+`IsRegistered = false` for testing without modifying the saved license.
+Registration-only features use their unregistered behavior; disk overrides
+warn and fall back to defaults. It does not disable analytics. The next launch
+without `-Incognito` reloads normal registration.
+
+```powershell
+Deploy-OSDCloud -CLI -DiskNumber 0 -DiskLabelOS 'Windows' -DiskLabelRecovery 'WinRE' `
+    -DiskSizeSystem 1GB -DiskSizeOS 100GB -DiskSizeRecovery 2GB
+```
+
+| Parameter | Default | Accepted values |
+|---|---|---|
+| `DiskLabelOS` | `OS` | Nonblank label, up to 32 characters |
+| `DiskLabelRecovery` | `Recovery` | Nonblank label, up to 32 characters |
+| `DiskSizeSystem` | `500MB` | `100MB` through `3000MB` |
+| `DiskSizeOS` | Automatic | At least `32GB` when supplied |
+| `DiskSizeRecovery` | `2000MB` | `350MB` through `80000MB` |
+
+Sizes are bytes; use PowerShell expressions such as `500MB` or `100GB`.
+Plain numbers are not interpreted as megabytes. Labels cannot contain control
+characters or `\ / : * ? " < > | + , ; = [ ]`.
+
+Omitting `DiskSizeOS` keeps the existing automatic layout: Windows uses the
+remaining space after reserving recovery. Supplying it creates a fixed-size
+Windows partition, gives recovery its requested size, and leaves extra space
+unallocated. The GPT layout, 16MB MSR, drive letters, and recovery attributes
+are unchanged.
+
+Recovery labels/sizes do not enable recovery. VM detection and workflow skip
+disable recovery unless force is set. Invalid values and layouts that cannot
+fit the target disk are rejected before disk clearing, including an allowance
+for partition alignment and disk metadata.
+Malformed or out-of-range input still fails parameter binding when unregistered.
+Valid unregistered customization requests are ignored before capacity checks;
+the default layout is checked instead.
+
+These overrides remain effective when launched without `-CLI`. No new GUI
+controls or persisted profile settings are included.
+
 ## Skip or enable individual steps
 
 Each step entry in `workflow/<workflow>/tasks/osdcloud.json` has a `skip`

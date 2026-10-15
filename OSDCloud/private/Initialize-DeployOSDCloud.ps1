@@ -12,6 +12,28 @@ function Initialize-DeployOSDCloud {
         [System.UInt32]
         $DiskNumber,
 
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
+        [System.String]
+        $DiskLabelOS = 'OS',
+
+        [ValidateLength(1, 32)]
+        [ValidatePattern('^(?!\s*$)[^\x00-\x1f\\/:*?"<>|+,;=\[\]]+$')]
+        [System.String]
+        $DiskLabelRecovery = 'Recovery',
+
+        [ValidateRange(100MB, 3000MB)]
+        [System.UInt64]
+        $DiskSizeSystem = 500MB,
+
+        [ValidateRange(32GB, [System.UInt64]::MaxValue)]
+        [System.UInt64]
+        $DiskSizeOS,
+
+        [ValidateRange(350MB, 80000MB)]
+        [System.UInt64]
+        $DiskSizeRecovery = 2000MB,
+
         [Parameter(Mandatory = $false)]
         [System.Collections.IDictionary]
         $EnvParameters,
@@ -72,7 +94,26 @@ function Initialize-DeployOSDCloud {
         [System.String]
         $OSLanguageCode
     )
+    $Error.Clear()
     $ErrorActionPreference = 'Stop'
+    if ($null -eq $global:OSDCoreLicense) {
+        Initialize-OSDCoreLicense
+    }
+    $requestedDiskSizeOS = if ($PSBoundParameters.ContainsKey('DiskSizeOS')) { $DiskSizeOS } else { $null }
+    if ($global:OSDCoreLicense.IsRegistered -ne $true) {
+        $diskCustomizationParameters = @(
+            'DiskLabelOS', 'DiskLabelRecovery', 'DiskSizeSystem', 'DiskSizeOS', 'DiskSizeRecovery'
+        )
+        $requestedDiskCustomization = @($diskCustomizationParameters | Where-Object { $PSBoundParameters.ContainsKey($_) })
+        if ($requestedDiskCustomization.Count -gt 0) {
+            Write-Warning "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Disk customization requires OSDCloud registration (IsRegistered = true). Ignoring $($requestedDiskCustomization -join ', ') and using default partition labels and sizes."
+        }
+        $DiskLabelOS = 'OS'
+        $DiskLabelRecovery = 'Recovery'
+        $DiskSizeSystem = 500MB
+        $DiskSizeRecovery = 2000MB
+        $requestedDiskSizeOS = $null
+    }
     #=================================================
     # Get module details
     # $ModuleVersion = $($MyInvocation.MyCommand.Module.Version)
@@ -145,6 +186,11 @@ function Initialize-DeployOSDCloud {
         #CoreOperatingSystems       = $global:OSDCoreOperatingSystems
         DeploymentDisk             = $null
         DeploymentDiskNumber       = $null
+        DiskLabelOS                = $DiskLabelOS
+        DiskLabelRecovery          = $DiskLabelRecovery
+        DiskSizeSystem             = $DiskSizeSystem
+        DiskSizeOS                 = $requestedDiskSizeOS
+        DiskSizeRecovery           = $DiskSizeRecovery
         DriverPackName             = $null
         DriverPackCacheObject      = $null
         DriverPackCloudObject      = $null
@@ -293,6 +339,9 @@ function Initialize-DeployOSDCloud {
     }
     $global:OSDCloudDeploy.DeploymentDisk = $tempDeploymentDisk
     $global:OSDCloudDeploy.DeploymentDiskNumber = [System.UInt32]$tempDeploymentDiskNumber
+    $diskParameters = Get-OSDCloudDiskParameters -Settings $global:OSDCloudDeploy -RecoveryPartitionSkip $true
+    # Recovery policy is resolved at workflow start; validate the required OS/system space now.
+    Test-OSDCloudDiskLayout -DiskSize $tempDeploymentDisk.Size @diskParameters
     #endregion
     #=================================================
     #region DriverPacks

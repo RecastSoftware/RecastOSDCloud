@@ -1,0 +1,144 @@
+BeforeAll {
+    $moduleRoot = Join-Path $PSScriptRoot '..\..'
+    $testModule = New-Module -Name DiskParameterDeploymentTests -ArgumentList $moduleRoot -ScriptBlock {
+        param ($ModuleRoot)
+        . "$ModuleRoot\public\WinOS\Deploy-OSDCloud.ps1"
+        . "$ModuleRoot\private\Initialize-DeployOSDCloud.ps1"
+        function Get-OSDCloudWorkflowRuntimeParameter {
+            [CmdletBinding()]
+            param ($ModuleBase, $WorkflowName, $ProcessorArchitecture)
+            return [System.Management.Automation.RuntimeDefinedParameterDictionary]::new()
+        }
+        function Initialize-OSDCoreLicense { [CmdletBinding()] param () }
+        function Initialize-OSDCoreDevice { [CmdletBinding()] param () }
+        function Invoke-OSDCloudWorkflowTask { [CmdletBinding()] param () }
+        function Invoke-OSDCloudWorkflowUI { [CmdletBinding()] param ($WorkflowName) }
+    }
+    Import-Module $testModule
+    $originalDevice = $global:OSDCoreDevice
+    $originalDeploy = $global:OSDCloudDeploy
+    $originalLicense = $global:OSDCoreLicense
+}
+
+AfterAll {
+    Remove-Module DiskParameterDeploymentTests
+    $global:OSDCoreDevice = $originalDevice
+    $global:OSDCloudDeploy = $originalDeploy
+    $global:OSDCoreLicense = $originalLicense
+}
+
+Describe 'Deploy-OSDCloud disk parameters' {
+    BeforeEach {
+        $global:OSDCoreDevice = [pscustomobject]@{
+            OSDManufacturer = 'HP'; OSDModel = 'Test'; OSDProduct = 'Test'
+            ProcessorArchitecture = 'amd64'; KeyboardLayout = $null
+        }
+        $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = $true }
+        $global:OSDCloudDeploy = [pscustomobject]@{ TimeStart = $null }
+        Mock Initialize-OSDCoreLicense {} -ModuleName DiskParameterDeploymentTests
+        Mock Initialize-OSDCoreDevice {} -ModuleName DiskParameterDeploymentTests
+        Mock Initialize-DeployOSDCloud {} -ModuleName DiskParameterDeploymentTests
+        Mock Invoke-OSDCloudWorkflowTask {} -ModuleName DiskParameterDeploymentTests
+        Mock Invoke-OSDCloudWorkflowUI {} -ModuleName DiskParameterDeploymentTests
+        Mock Export-Clixml {} -ModuleName DiskParameterDeploymentTests
+        Mock Out-File {} -ModuleName DiskParameterDeploymentTests
+        Mock Test-Path { $true } -ModuleName DiskParameterDeploymentTests
+        Mock Remove-Item {} -ModuleName DiskParameterDeploymentTests
+        Mock Write-Host {} -ModuleName DiskParameterDeploymentTests
+        Mock Out-Host {} -ModuleName DiskParameterDeploymentTests
+    }
+
+    It 'forwards all explicit disk parameters for CLI and GUI launches: CLI=<CLI>' -TestCases @(
+        @{ CLI = $true }
+        @{ CLI = $false }
+    ) {
+        param ($CLI)
+        Deploy-OSDCloud -CLI:$CLI -DiskNumber 0 -DiskLabelOS Windows -DiskLabelRecovery WinRE `
+            -DiskSizeSystem 1GB -DiskSizeOS 32GB -DiskSizeRecovery 3GB
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter {
+            $DiskNumber -eq 0 -and $DiskLabelOS -eq 'Windows' -and $DiskLabelRecovery -eq 'WinRE' -and
+            $DiskSizeSystem -eq 1GB -and $DiskSizeOS -eq 32GB -and $DiskSizeRecovery -eq 3GB
+        }
+    }
+
+    It 'does not bind omitted disk parameters in the initializer' {
+        Deploy-OSDCloud -CLI
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter {
+            -not $PesterBoundParameters.ContainsKey('DiskSizeOS') -and
+            -not $PesterBoundParameters.ContainsKey('DiskLabelOS') -and
+            -not $PesterBoundParameters.ContainsKey('DiskSizeSystem') -and
+            -not $PesterBoundParameters.ContainsKey('DiskSizeRecovery')
+        }
+    }
+
+    It 'forces unregistered state before device and deployment initialization: CLI=<CLI>' -TestCases @(
+        @{ CLI = $true }
+        @{ CLI = $false }
+    ) {
+        param ($CLI)
+        $savedLicense = [pscustomobject]@{ Email = 'test@example.invalid'; LicenseGuid = 'test-license' }
+        Mock Initialize-OSDCoreLicense {
+            $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = $true; License = $savedLicense }
+        } -ModuleName DiskParameterDeploymentTests
+        Mock Initialize-OSDCoreDevice {
+            $global:OSDCoreLicense.IsRegistered | Should -BeFalse
+            $global:OSDCoreLicense.IsRegistered = $true
+        } -ModuleName DiskParameterDeploymentTests
+        Mock Initialize-DeployOSDCloud {
+            $global:OSDCoreLicense.IsRegistered | Should -BeFalse
+        } -ModuleName DiskParameterDeploymentTests
+        Deploy-OSDCloud -CLI:$CLI -Incognito
+        $global:OSDCoreLicense.IsRegistered | Should -BeFalse
+        $global:OSDCoreLicense.License | Should -Be $savedLicense
+        Should -Invoke Initialize-OSDCoreLicense -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
+    }
+
+    It 'reloads normal registration on the next launch without Incognito' {
+        Mock Initialize-OSDCoreLicense {
+            $global:OSDCoreLicense = [pscustomobject]@{ IsRegistered = $true }
+        } -ModuleName DiskParameterDeploymentTests
+        Deploy-OSDCloud -CLI -Incognito
+        $global:OSDCoreLicense.IsRegistered | Should -BeFalse
+        Deploy-OSDCloud -CLI
+        $global:OSDCoreLicense.IsRegistered | Should -BeTrue
+        Should -Invoke Initialize-OSDCoreLicense -ModuleName DiskParameterDeploymentTests -Times 2 -Exactly
+    }
+
+    It 'does not override normal registration when Incognito is explicitly false' {
+        Deploy-OSDCloud -CLI -Incognito:$false
+        $global:OSDCoreLicense.IsRegistered | Should -BeTrue
+    }
+
+    It 'skips registered keyboard language conversion in Incognito mode' {
+        $global:OSDCoreDevice.KeyboardLayout = '00000409'
+        Deploy-OSDCloud -CLI -Incognito
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $OSLanguageCode -eq 'en-US' }
+    }
+
+    It 'documents every new parameter in the bundled external help' {
+        [xml]$helpXml = Get-Content -LiteralPath "$moduleRoot\en-US\OSDCloud-help.xml" -Raw
+        $namespaces = [System.Xml.XmlNamespaceManager]::new($helpXml.NameTable)
+        $namespaces.AddNamespace('command', 'http://schemas.microsoft.com/maml/dev/command/2004/10')
+        $namespaces.AddNamespace('maml', 'http://schemas.microsoft.com/maml/2004/10')
+        $deployHelp = $helpXml.SelectSingleNode("//command:command[command:details/command:name='Deploy-OSDCloud']", $namespaces)
+        foreach ($name in 'Incognito', 'DiskLabelOS', 'DiskLabelRecovery', 'DiskSizeSystem', 'DiskSizeOS', 'DiskSizeRecovery') {
+            $deployHelp.SelectNodes("command:parameters/command:parameter[maml:name='$name']", $namespaces).Count | Should -Be 1
+            $deployHelp.SelectNodes("command:syntax/command:syntaxItem/command:parameter[maml:name='$name']", $namespaces).Count | Should -Be 1
+        }
+    }
+
+    It 'rejects invalid public input before initialization: <Name>' -TestCases @(
+        @{ Name = 'DiskLabelOS'; Value = ' ' }
+        @{ Name = 'DiskLabelRecovery'; Value = "bad`nlabel" }
+        @{ Name = 'DiskSizeSystem'; Value = 99MB }
+        @{ Name = 'DiskSizeOS'; Value = 0 }
+        @{ Name = 'DiskSizeOS'; Value = 32GB - 1 }
+        @{ Name = 'DiskSizeRecovery'; Value = 349MB }
+    ) {
+        param ($Name, $Value)
+        $parameters = @{ $Name = $Value }
+        { Deploy-OSDCloud -CLI @parameters } | Should -Throw
+        Should -Invoke Initialize-DeployOSDCloud -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+    }
+}
