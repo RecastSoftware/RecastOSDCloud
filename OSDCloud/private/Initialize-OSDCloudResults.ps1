@@ -43,6 +43,8 @@ function Initialize-OSDCloudResults {
         totalSizeDownloadMB   = $null
         totalSizeCacheMB      = $null
         totalSizeCopyMB       = $null
+        ContentInternet       = $null
+        ContentLocal          = $null
         timeCloud             = $null
         timeDownload          = $null
         timeCache             = $null

@@ -100,7 +100,15 @@ Describe 'Deploy-OSDCloud disk parameters' {
         Deploy-OSDCloud -CLI:$CLI
         Should -Invoke Send-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
         Should -Invoke Out-Host -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter {
-            $InputObject.DeploymentId -eq $global:OSDCloudResults.DeploymentId -and $InputObject.IsComplete -and @($InputObject.PSObject.Properties.Name | Where-Object { $_ -match '^(step|rate|time)' }).Count -eq 0
+            $expectedProperties = @(
+                'DeploymentId', 'ModuleVersion', 'WorkflowName', 'WorkflowTaskName',
+                'LaunchMethod', 'DeploymentPhase', 'OSDManufacturer', 'OSDModel',
+                'OSDProduct', 'IsComplete', 'Status', 'StartTimeUtc', 'EndTimeUtc',
+                'totalDuration', 'ContentSource', 'ContentInternet', 'ContentLocal'
+            )
+            $InputObject.DeploymentId -eq $global:OSDCloudResults.DeploymentId -and
+            $InputObject.IsComplete -and
+            (@($InputObject.PSObject.Properties.Name) -join ',') -ceq ($expectedProperties -join ',')
         }
         Should -Invoke Export-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { -not $IncludeTarget }
         Should -Invoke Export-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $IncludeTarget }

@@ -30,7 +30,7 @@ function Send-OSDCloudResults {
             'totalDuration', 'totalDurationRAW',
             'timeDownload', 'timeCache', 'timeCopy', 'timeExpand', 'timeOther', 'timeCloud',
             'totalSizeDownloadMB', 'totalSizeCopyMB', 'totalSizeCacheMB', 'totalSizeMB', 'totalMBps',
-            'ContentSource',
+            'ContentSource', 'ContentInternet', 'ContentLocal',
             'sizeOS',
             'sizeDriverPack',
             'stepClearDisk',

@@ -177,10 +177,24 @@ function Deploy-OSDCloud {
         rates are null. timeDownload, timeCache, timeCopy, and timeExpand combine
         matching OS and driver-pack steps. timeCloud combines download and cache
         time, while timeOther is totalDurationRAW minus every step* value.
-        totalSizeMB combines sizeOS and sizeDriverPack. totalMBps divides totalSizeMB
+        ContentInternet is totalSizeCacheMB plus totalSizeDownloadMB. ContentLocal
+        counts only copied/reused content not downloaded during this deployment,
+        excluding downloads to USB cache and direct downloads even if later copied.
+        It sums eligible original bytes before rounding once. Both are whole MB
+        and remain null until content is acquired.
+        totalSizeMB is sizeOS plus sizeDriverPack, counting each acquired content
+        item once using its rounded MB size, not summing transfer traffic. OS size
+        is the acquired image file size, not the expanded Windows footprint.
+        Content downloaded and then copied contributes to ContentInternet, not
+        ContentLocal, and only once to totalSizeMB. totalMBps divides totalSizeMB
         by totalDuration and is null when totalDuration is unavailable or zero.
         OSFileName and DriverPackFileName identify the selected content files.
-        The final console summary excludes step*, rate*, and time* fields.
+        For ModelDrivers, DriverPackFileName is null and sizeDriverPack measures
+        all files in the local staging folder after copying from USB cache.
+        The final console summary shows deployment identity, module/workflow/launch
+        metadata, device manufacturer/model/product, completion status, UTC start/end
+        times, totalDuration, ContentSource, ContentInternet, and ContentLocal in that
+        order. Saved results and analytics retain the full reporting properties.
         Network is Wired or Wireless, or null if unavailable or ambiguous.
         ContentSource is Cloud for newly downloaded content (including USB downloads),
         Cache for pre-existing content, or Mixed for both OS/driver origins. It uses
@@ -554,7 +568,25 @@ function Deploy-OSDCloud {
         }
 
         if ($workflowCompleted) {
-            $global:OSDCloudResults | Select-Object -Property * -ExcludeProperty 'step*', 'rate*', 'time*' | Format-List -Property * | Out-Host
+            $global:OSDCloudResults | Select-Object -Property @(
+                'DeploymentId'
+                'Status'
+                'IsComplete'
+                'StartTimeUtc'
+                'EndTimeUtc'
+                'totalDuration'
+                'ContentSource'
+                'ContentInternet'
+                'ContentLocal'
+                'ModuleVersion'
+                'WorkflowName'
+                'WorkflowTaskName'
+                'LaunchMethod'
+                'DeploymentPhase'
+                'OSDManufacturer'
+                'OSDModel'
+                'OSDProduct'
+            ) | Format-List -Property * | Out-Host
 
             if ($PostAction -eq 'Restart' -or $PostAction -eq 'Shutdown') {
                 if ($env:SystemDrive -ne 'X:') {

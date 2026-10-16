@@ -34,6 +34,7 @@ additional event uses a reduced summary:
 - Hashed-device analytics distinct ID (or a random fallback GUID)
 - Lifecycle status, completion flag, UTC start/end timestamps, and numeric workflow duration in seconds
 - Actual acquired OS and driver-pack sizes (`sizeOS`, `sizeDriverPack`) in whole MB, their combined size (`totalSizeMB`), and overall throughput (`totalMBps`) calculated from combined size and deployment duration. Separate local downloads (`totalSizeDownloadMB`), USB-cache downloads (`totalSizeCacheMB`), and copied/reused content (`totalSizeCopyMB`) are also included. USB-cache downloads are excluded from the local-download total; subsequent local copies contribute to the copy total. Each transfer total rounds combined original bytes once.
+- `ContentInternet` is `totalSizeCacheMB + totalSizeDownloadMB`. `ContentLocal` counts only copied/reused content already available locally, excluding content downloaded during this deployment (to USB cache or directly) even if subsequently copied. Eligible original bytes are summed before rounding once to whole MB (1 MB = 1,048,576 bytes); this avoids subtracting independently rounded totals or downloads that were never copied. Both properties remain null until content is acquired. `totalSizeMB = sizeOS + sizeDriverPack` sums the individually rounded acquired content sizes once, not transfer traffic or the expanded Windows footprint. Content downloaded and subsequently copied contributes to internet content, not local content, and only once to `totalSizeMB`.
 - OS and driver-pack local download, USB-cache download (`stepOSCache`, `stepDriverPackCache`), copy, and expansion timing, with matching rates in whole MB/s calculated from reported sizes and seconds; unavailable rates are null.
 - Network connection category (`Wired` or `Wireless`), or null when unavailable or ambiguous. No adapter names, gateway addresses, or Wi-Fi network names are included in results analytics.
 - Combined OS/driver-pack origin (`ContentSource`): `Cloud` for new downloads (including USB-cache downloads), `Cache` for pre-existing content, or `Mixed` for both origins. Only obtained content contributes; unknown origin or no obtained content produces null.
@@ -41,7 +42,7 @@ additional event uses a reduced summary:
 - Aggregate whole-second download, USB-cache download, copy, and expansion durations; combined cloud time (download plus USB-cache download); and remaining workflow time after subtracting all reported step durations
 - Module version, workflow/task name, CLI or GUI launch method, and WinPE or Windows deployment environment
 - Manufacturer, model, product, processor architecture, and physical memory capacity
-- Selected OS name, version, build, build version, edition, activation channel, language, and file name; selected driver pack name and file name
+- Selected OS name, version, build, build version, edition, activation channel, language, and file name; selected driver pack name and file name. ModelDrivers is pre-existing cached folder content, so its driver pack file name is null and its size is the total file size in the local staging folder after copying.
 
 The completion flag means workflow execution reached the pre-PostAction boundary,
 not that every step succeeded. Duration excludes initialization, GUI selection,

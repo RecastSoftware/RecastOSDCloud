@@ -165,11 +165,25 @@ Describe 'OS and driver pack acquisition measurements' {
         Mock Test-Path { $false }
         Mock Get-ChildItem {
             [pscustomobject]@{ FullName = 'F:\ModelDrivers\driver.inf'; Length = 1.25MB }
-            [pscustomobject]@{ FullName = 'F:\ModelDrivers\driver.sys'; Length = 2.5MB }
+            [pscustomobject]@{ FullName = 'F:\ModelDrivers\driver.sys'; Length = 7MB }
+        }
+        Mock Get-ChildItem {
+            [pscustomobject]@{ FullName = 'C:\Windows\Temp\osdcloud-driverpack-expand\nested\driver.inf'; Length = 0.5MB }
+            [pscustomobject]@{ FullName = 'C:\Windows\Temp\osdcloud-driverpack-expand\nested\driver.sys'; Length = 2MB }
+            [pscustomobject]@{ FullName = 'C:\Windows\Temp\osdcloud-driverpack-expand\hidden.dat'; Length = 1.25MB }
+        } -ParameterFilter {
+            $LiteralPath -eq 'C:\Windows\Temp\osdcloud-driverpack-expand' -and $Recurse -and $File -and $Force
         }
         step-Save-WindowsDriver-DriverPack
         $global:OSDCloudWorkflowInvoke.ModelDriversStaged | Should -BeTrue
         $global:OSDCloudWorkflowInvoke.DriverPackAcquisition.Bytes | Should -Be 3.75MB
+        $global:OSDCloudWorkflowInvoke.DriverPackAcquisition.Copied | Should -BeTrue
+        $global:OSDCloudWorkflowInvoke.DriverPackAcquisition.Downloaded | Should -BeFalse
+        $global:OSDCloudWorkflowInvoke.DriverPackAcquisition.Cached | Should -BeFalse
+        Should -Invoke Get-ChildItem -Times 1 -Exactly -ParameterFilter {
+            $LiteralPath -eq 'C:\Windows\Temp\osdcloud-driverpack-expand' -and
+            $Recurse -and $File -and $Force -and $ErrorAction -eq 'Stop'
+        }
         Should -Invoke Invoke-RecastOSDDownloadFile -Times 0 -Exactly
     }
 
