@@ -39,10 +39,12 @@ function step-Save-WindowsDriver-DriverPack {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Staging drivers to:"
         Write-Host -ForegroundColor DarkGray "  $expandPath"
         New-Item -Path $expandPath -ItemType Directory -ErrorAction Stop | Out-Null
-        Get-ChildItem -LiteralPath $modelDriversPath -Force -ErrorAction Stop |
+        Invoke-OSDCloudTimedOperation -Name stepDriverPackCopy -Action {
+            Get-ChildItem -LiteralPath $modelDriversPath -Force -ErrorAction Stop |
             ForEach-Object {
                 Copy-Item -LiteralPath $_.FullName -Destination $expandPath -Recurse -Force -ErrorAction Stop
             }
+        }
         $InfCount = @(Get-ChildItem -LiteralPath $expandPath -Recurse -File -Filter '*.inf' -ErrorAction Stop).Count
         if ($InfCount -eq 0) {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [WARNING] No INF files were staged from ModelDrivers:"
@@ -52,6 +54,14 @@ function step-Save-WindowsDriver-DriverPack {
             return
         }
         $global:OSDCloudWorkflowInvoke.ModelDriversStaged = $true
+        try {
+            $stagedBytes = (Get-ChildItem -LiteralPath $expandPath -Recurse -File -Force -ErrorAction Stop |
+                Measure-Object -Property Length -Sum -ErrorAction Stop).Sum
+            Set-OSDCloudAcquisitionResult -Content DriverPack -Bytes $stagedBytes
+        }
+        catch {
+            Write-Warning "Could not measure staged ModelDrivers: $($_.Exception.Message)"
+        }
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] ModelDrivers staging complete. Found $InfCount INF file(s) in:"
         Write-Host -ForegroundColor DarkGray "  $expandPath"
         return
@@ -169,7 +179,9 @@ function step-Save-WindowsDriver-DriverPack {
         $CachedFile = $MatchingFiles | Select-Object -First 1
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Reusing the offline driver pack:"
         Write-Host -ForegroundColor DarkGray "  $($CachedFile.FullName)"
-        $null = Copy-Item -LiteralPath $CachedFile.FullName -Destination $DownloadPath -Force -ErrorAction Stop
+        $null = Invoke-OSDCloudTimedOperation -Name stepDriverPackCopy -Action {
+            Copy-Item -LiteralPath $CachedFile.FullName -Destination $DownloadPath -Force -ErrorAction Stop
+        }
         $FileInfo = Get-Item -LiteralPath (Join-Path $DownloadPath $CachedFile.Name) -ErrorAction Stop
     }
     #=================================================
@@ -203,14 +215,19 @@ function step-Save-WindowsDriver-DriverPack {
             }
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading DriverPack to USB cache."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Downloading or reusing the driver pack in the USB cache."
-            $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $USBDownloadPath -DestinationName $FileName -ErrorAction Stop
+            $SaveWebFile = Invoke-OSDCloudTimedOperation -Name stepDriverPackCache -CachedFilePath (Join-Path $USBDownloadPath $FileName) -Action {
+                Invoke-RecastOSDDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $USBDownloadPath -DestinationName $FileName -ErrorAction Stop
+            }
             if ($SaveWebFile) {
+                Set-OSDCloudAcquisitionResult -Content DriverPack -Bytes $SaveWebFile.Length
                 Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Copying cached DriverPack from $($SaveWebFile.FullName) to $DownloadPath."
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Copying cached driver pack from:"
                 Write-Host -ForegroundColor DarkGray "  $($SaveWebFile.FullName)"
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Copying to the local staging directory:"
                 Write-Host -ForegroundColor DarkGray "  $DownloadPath"
-                $null = Copy-Item -LiteralPath $SaveWebFile.FullName -Destination $DownloadPath -Force -ErrorAction Stop
+                $null = Invoke-OSDCloudTimedOperation -Name stepDriverPackCopy -Action {
+                    Copy-Item -LiteralPath $SaveWebFile.FullName -Destination $DownloadPath -Force -ErrorAction Stop
+                }
                 $FileInfo = Get-Item -LiteralPath (Join-Path $DownloadPath $SaveWebFile.Name) -ErrorAction Stop
             }
         }
@@ -223,7 +240,9 @@ function step-Save-WindowsDriver-DriverPack {
             $ProgressPhase = "Downloading driver pack to $DownloadPath"
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] USB cache did not provide a usable file. Downloading directly to:"
             Write-Host -ForegroundColor DarkGray "  $DownloadPath"
-            $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $DownloadPath -DestinationName $FileName -ErrorAction Stop
+            $SaveWebFile = Invoke-OSDCloudTimedOperation -Name stepDriverPackDownload -CachedFilePath (Join-Path $DownloadPath $FileName) -Action {
+                Invoke-RecastOSDDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $DownloadPath -DestinationName $FileName -ErrorAction Stop
+            }
             $FileInfo = $SaveWebFile
         }
     }
@@ -235,7 +254,9 @@ function step-Save-WindowsDriver-DriverPack {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Downloading driver pack directly to:"
         Write-Host -ForegroundColor DarkGray "  $DownloadPath"
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading DriverPack directly to $DownloadPath."
-        $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $DownloadPath -ErrorAction Stop
+        $SaveWebFile = Invoke-OSDCloudTimedOperation -Name stepDriverPackDownload -CachedFilePath (Join-Path $DownloadPath $FileName) -Action {
+            Invoke-RecastOSDDownloadFile -SourceUrl $DriverPackCloudObject.Url -DestinationDirectory $DownloadPath -ErrorAction Stop
+        }
         $FileInfo = $SaveWebFile
     }
     #=================================================
@@ -246,6 +267,7 @@ function step-Save-WindowsDriver-DriverPack {
         return
     }
     $OutFileObject = Get-Item -LiteralPath $FileInfo.FullName -ErrorAction Stop
+    Set-OSDCloudAcquisitionResult -Content DriverPack -Bytes $OutFileObject.Length
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloaded DriverPack file: $($OutFileObject.FullName); Extension: $($OutFileObject.Extension)"
     $ProgressPhase = 'Validating downloaded driver pack'
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Driver pack is ready ($($OutFileObject.Length) bytes; $($OutFileObject.Extension)):"
@@ -283,9 +305,12 @@ function step-Save-WindowsDriver-DriverPack {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Expanding CAB driver pack to:"
         Write-Host -ForegroundColor DarkGray "  $ExpandPath"
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Expanding CAB DriverPack: $DownloadedFile"
-        Expand -R "$DownloadedFile" -F:* "$ExpandPath" | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] CAB driver pack extraction failed with exit code $LASTEXITCODE."
+        $extractionExitCode = Invoke-OSDCloudTimedOperation -Name stepDriverPackExpand -Action {
+            Expand -R "$DownloadedFile" -F:* "$ExpandPath" | Out-Null
+            $LASTEXITCODE
+        }
+        if ($extractionExitCode -ne 0) {
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] CAB driver pack extraction failed with exit code $extractionExitCode."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Skipping this driver pack and continuing OSDCloud."
             & $removeExistingPath -Path $ExpandPath
             return
@@ -318,7 +343,9 @@ function step-Save-WindowsDriver-DriverPack {
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Expanding ZIP driver pack to:"
         Write-Host -ForegroundColor DarkGray "  $ExpandPath"
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Expanding ZIP DriverPack: $DownloadedFile"
-        Expand-Archive -Path $DownloadedFile -DestinationPath $ExpandPath -Force
+        Invoke-OSDCloudTimedOperation -Name stepDriverPackExpand -Action {
+            Expand-Archive -Path $DownloadedFile -DestinationPath $ExpandPath -Force
+        }
 
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] ZIP extraction finished. Applying drivers from:"
         Write-Host -ForegroundColor DarkGray "  $ExpandPath"
@@ -352,7 +379,9 @@ function step-Save-WindowsDriver-DriverPack {
         Write-Host -ForegroundColor DarkGray "  $ExpandPath"
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Expanding Dell DriverPack with Start-Process: $DownloadedFile"
         $null = New-Item -Path $ExpandPath -ItemType Directory -Force -ErrorAction Ignore | Out-Null
-        $ExpandProcess = Start-Process -FilePath $DownloadedFile -ArgumentList "/s /e=`"$ExpandPath`"" -Wait -PassThru
+        $ExpandProcess = Invoke-OSDCloudTimedOperation -Name stepDriverPackExpand -Action {
+            Start-Process -FilePath $DownloadedFile -ArgumentList "/s /e=`"$ExpandPath`"" -Wait -PassThru
+        }
         if ($ExpandProcess.ExitCode -ne 0) {
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] Dell driver pack extraction failed with exit code $($ExpandProcess.ExitCode)."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Skipping this driver pack and continuing OSDCloud."
@@ -394,9 +423,12 @@ function step-Save-WindowsDriver-DriverPack {
             Write-Host -ForegroundColor DarkGray "  $ExpandPath"
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Expanding HP DriverPack with 7za.exe: $DownloadedFile"
             # Start-Process -FilePath $DownloadedFile -ArgumentList "/s /e /f `"$ExpandPath`"" -Wait
-            & 7za x "$DownloadedFile" -o"C:\Windows\Temp\osdcloud-driverpack-expand"
-            if ($LASTEXITCODE -ne 0) {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] HP driver pack extraction failed with exit code $LASTEXITCODE."
+            $extractionExitCode = Invoke-OSDCloudTimedOperation -Name stepDriverPackExpand -Action {
+                & 7za x "$DownloadedFile" -o"C:\Windows\Temp\osdcloud-driverpack-expand" | Out-Host
+                $LASTEXITCODE
+            }
+            if ($extractionExitCode -ne 0) {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [ERROR] HP driver pack extraction failed with exit code $extractionExitCode."
                 Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Skipping this driver pack and continuing OSDCloud."
                 & $removeExistingPath -Path $ExpandPath
                 return

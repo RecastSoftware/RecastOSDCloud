@@ -46,6 +46,121 @@ By using OSDCloud you consent to this collection
 as described in the privacy policy:
 https://github.com/OSDeploy/OSDCloud/blob/main/PRIVACY.md
 
+## DEPLOYMENT RESULTS
+
+Every invocation creates a fresh `$global:OSDCloudResults` object. It contains a
+reduced summary, not a copy of the full device inventory or deployment settings.
+Read it after deployment, or import the saved snapshot:
+
+```powershell
+$global:OSDCloudResults
+$results = Import-Clixml -LiteralPath "$env:TEMP\OSDCloudResults.clixml"
+```
+
+| Properties | Meaning |
+| --- | --- |
+| `SchemaVersion`, `DeploymentId` | Schema version (initially 1) and a new GUID for this invocation |
+| `DistinctId` | Pseudonymous analytics identifier, using the existing hashed-device identity semantics; a random GUID is used when no device identity is available |
+| `Status`, `IsComplete` | Lifecycle state and whether workflow execution reached the pre-PostAction boundary |
+| `StartTimeUtc`, `EndTimeUtc`, `totalDurationRAW` | UTC workflow timestamps and elapsed time rounded to whole seconds |
+| `totalDuration` | `totalDurationRAW` minus `stepClearDisk`, treating an absent wait as zero and clamping the result at zero |
+| `sizeOS`, `sizeDriverPack` | Actual acquired content sizes in whole MB |
+| `totalSizeMB` | `sizeOS` plus `sizeDriverPack` in whole MB |
+| `totalMBps` | `totalSizeMB` divided by `totalDuration`, rounded to whole MB/s; null when duration is unavailable or zero |
+| `rateOSDownload`, `rateOSCache`, `rateOSCopy`, `rateOSExpand` | `sizeOS` divided by the matching `stepOS*` seconds, rounded to whole MB/s |
+| `rateDriverPackDownload`, `rateDriverPackCache`, `rateDriverPackCopy`, `rateDriverPackExpand` | `sizeDriverPack` divided by the matching `stepDriverPack*` seconds, rounded to whole MB/s |
+| `Network` | `Wired` or `Wireless` from connected default-gateway adapters; null if unavailable or ambiguous |
+| `ContentSource` | Combined OS/driver-pack origin: `Cloud` for newly downloaded content, `Cache` for pre-existing content, or `Mixed` when both origins were used |
+| `stepOSCopy`, `stepOSDownload` | Time spent reusing/copying cached OS content and downloading OS content, measured separately |
+| `stepDriverPackCopy`, `stepDriverPackDownload` | Time spent copying cached driver content and downloading driver content, measured separately |
+| `stepOSCache`, `stepDriverPackCache` | Time downloading new content to USB cache, excluded from the corresponding Download phase |
+| `stepOSExpand`, `stepDriverPackExpand` | Time spent applying the Windows image and extracting driver archives, excluding driver injection and setup script creation |
+| `stepClearDisk` | Time waiting for the disk-cleaning confirmation response, excluding disk discovery and disk cleaning |
+| `totalSizeDownloadMB` | Successfully downloaded OS and driver-pack bytes to local storage, excluding USB-cache downloads, rounded once to whole MB |
+| `totalSizeCacheMB` | Successfully downloaded OS and driver-pack bytes to USB cache, rounded once to whole MB |
+| `totalSizeCopyMB` | Successfully copied or reused cached OS and driver-pack bytes, rounded once to whole MB |
+| `ModuleVersion`, `WorkflowName`, `WorkflowTaskName`, `LaunchMethod`, `DeploymentPhase` | Module, selected workflow/task, CLI or GUI, and WinPE or Windows |
+| `OSDManufacturer`, `OSDModel`, `OSDProduct`, `ProcessorArchitecture`, `TotalPhysicalMemoryGB` | Reduced device summary |
+| `OSName`, `OSVersion`, `OSBuild`, `OSBuildVersion`, `OSEditionId`, `OSActivation`, `OSLanguageCode` | Selected target OS |
+| `DriverPackName` | Selected driver pack |
+
+`Status` is `NotStarted` during initialization/selection, `Running` during workflow
+execution, `Completed` when the workflow returns, `Failed` on a terminating error,
+or `Cancelled` when the operator dismisses the GUI without starting deployment.
+`IsComplete` starts as false and becomes true before PostAction handling. It does
+**not** prove that every deployment step succeeded: existing workflows can continue
+after warnings or nonterminating step errors.
+After completion, finalized `OSDCloudResults` properties except `step*` and `rate*`
+are displayed as a list in the console before any PostAction countdown or action,
+for both GUI and CLI. Exports and analytics retain those properties.
+
+A stopwatch measures workflow execution, including preflight and waits within the
+workflow. Initialization, GUI selection, results snapshot writes, terminal analytics,
+and the command's PostAction countdown/action are excluded. Timestamps in the initial
+running snapshot precede its write; final `StartTimeUtc` is refreshed at workflow
+invocation. Copy and download operations have separate timers; source checks, cache
+searches, hash verification, and driver injection are not included in those phases.
+The Cache and Copy timers are populated when a USB-cache download is followed by a local copy.
+If the download helper reuses an existing destination file, that operation counts
+as cache reuse under the copy timer rather than as a network download.
+Selected OS images reused directly from cache normally have zero rounded copy time.
+For cached ModelDrivers folders, driver size is the sum of staged file lengths and
+`stepDriverPackCopy` measures the copy. Driver expansion covers CAB, ZIP, Dell,
+and HP extraction during deployment. ModelDrivers requires no extraction; Lenovo
+and Surface installations deferred to SetupComplete are not timed as expansion.
+`stepClearDisk` wraps only the existing ShouldProcess confirmation (including a
+declined response). Force, Confirm:false, and WhatIf do not introduce a prompt.
+`totalDuration` subtracts the rounded confirmation wait from the rounded total.
+Sizes use PowerShell's `1MB` (1,048,576 bytes), based on actual files rather than
+catalog estimates. Values round to the nearest whole number, with halves rounded up.
+Rates use the reported whole-MB sizes and whole-second durations, rounded to whole
+MB/s with halves rounded up. A missing size or missing/zero duration produces null rather than division by zero.
+Expansion rates use source archive size, not expanded size. Network detection runs
+when results metadata is refreshed; it does not track connection changes per transfer.
+Download, Cache, and Copy totals each sum original bytes before rounding. Existing-file reuse counts
+only toward the copy total, not a new cache download. Content downloaded to USB and then copied locally counts
+toward Cache and Copy, not Download; each content item counts once per category. These are obtained
+content sizes, not wire-traffic measurements (retries and protocol overhead are excluded).
+Unexecuted phases remain null; attempted phases accumulate time even when an
+operation fails or a download falls back to another destination. Sizes remain null
+until content is obtained; totals include only successfully obtained content and
+remain null if neither component was obtained.
+Failed started runs retain elapsed time; unstarted/cancelled runs have null timing.
+
+`timeDownload`, `timeCache`, `timeCopy`, and `timeExpand` sum the matching
+whole-second OS and driver-pack `step*` values. `timeCloud` is the sum of
+`timeDownload` and `timeCache`. `timeOther` is `totalDurationRAW` minus all
+reported `step*` values and is never below zero. These aggregate `time*` fields
+remain in exported and analytics results but are omitted from the final console
+summary. `OSFileName` and `DriverPackFileName` identify the selected content files.
+
+`ContentSource` describes the origin of successfully obtained OS and driver-pack
+content, not its staging destination. A new download saved to USB and then copied
+locally is `Cloud`; only reuse of pre-existing content is `Cache`. One newly
+downloaded component and one pre-existing component produces `Mixed`. Skipped or
+unavailable components are ignored. The value is null if neither component was
+obtained or an obtained component has no known source. Classification uses transfer
+records rather than rounded sizes or durations.
+
+`OSDCloudResults.clixml` is overwritten in current `$env:TEMP` at workflow start and
+termination. At termination it is also written under the deployed Windows volume's
+`Windows\Temp`, resolved from the current workflow's image application root. This is
+normally `C:\Windows\Temp`, but another application root is respected. If no deployed
+Windows directory is available, a warning explains why that copy was skipped.
+Cancellation and initialization failure write only the current-TEMP snapshot.
+Export failures warn independently and do not block deployment or PostAction.
+
+Started deployments also send a reduced `OSDCloudResultsBeta` terminal event to PostHog,
+in addition to the unchanged detailed start event. Network failures warn and
+deployment continues. Raw device identifiers, license identifiers, paths, URLs, and
+exception messages are excluded from the new event. See [PRIVACY.md](../../PRIVACY.md).
+
+Results apply to `Deploy-OSDCloud` with or without `-CLI`, not the standalone
+`Deploy-OSDCloudCLI`/`Deploy-OSDCloudGUI` commands or direct workflow invocation.
+Abrupt power loss, forced host termination, or custom workflow steps that exit or
+restart before returning cannot guarantee a terminal snapshot/event; the saved
+snapshot may remain `Running`.
+
 ## EXAMPLES
 
 ### EXAMPLE 1

@@ -35,6 +35,10 @@ function Invoke-OSDCloudWorkflowTask {
         DiskSizeOS                 = $global:OSDCloudDeploy.DiskSizeOS
         DiskSizeRecovery           = $global:OSDCloudDeploy.DiskSizeRecovery
         FileInfoWindowsImage       = $null
+        OSAcquisition              = $null
+        DriverPackAcquisition      = $null
+        Durations                  = @{}
+        CompletedTransfers         = @{}
         DriverPackCacheObject      = $global:OSDCloudDeploy.DriverPackCacheObject
         DriverPackName             = $global:OSDCloudDeploy.DriverPackName
         DriverPackCloudObject      = $global:OSDCloudDeploy.DriverPackCloudObject

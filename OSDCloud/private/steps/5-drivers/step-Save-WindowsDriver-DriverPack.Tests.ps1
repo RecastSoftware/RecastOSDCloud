@@ -1,5 +1,7 @@
 BeforeAll {
     . "$PSScriptRoot\step-Save-WindowsDriver-DriverPack.ps1"
+    . "$PSScriptRoot\..\..\Invoke-OSDCloudTimedOperation.ps1"
+    . "$PSScriptRoot\..\..\Set-OSDCloudAcquisitionResult.ps1"
     . "$PSScriptRoot\step-Add-WindowsDriver-DriverPack.ps1"
     . "$PSScriptRoot\..\2-test\step-test-targetdriverpack.ps1"
     . "$PSScriptRoot\..\..\core-driverpack\Resolve-OSDCoreModelDriversPath.ps1"
@@ -25,10 +27,10 @@ Describe 'ModelDrivers shared workflow validation, staging, and injection' {
         Mock Test-Path { $false }
         Mock New-Item {}
         Mock Get-ChildItem {
-            [pscustomobject]@{ Name = 'nested'; FullName = "$sourcePath\nested" }
+            [pscustomobject]@{ Name = 'nested'; FullName = "$sourcePath\nested"; Length = 0L }
         }
         Mock Get-ChildItem {
-            [pscustomobject]@{ Name = 'driver.inf'; FullName = "$expandPath\nested\driver.inf" }
+            [pscustomobject]@{ Name = 'driver.inf'; FullName = "$expandPath\nested\driver.inf"; Length = 1024L }
         } -ParameterFilter { $LiteralPath -eq $expandPath -and $Filter -eq '*.inf' }
         Mock Copy-Item {}
         Mock Add-WindowsDriver {}
