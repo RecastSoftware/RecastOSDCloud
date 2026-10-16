@@ -150,7 +150,7 @@ Windows directory is available, a warning explains why that copy was skipped.
 Cancellation and initialization failure write only the current-TEMP snapshot.
 Export failures warn independently and do not block deployment or PostAction.
 
-Started deployments also send a reduced `OSDCloudResultsBeta` terminal event to PostHog,
+Started deployments also send a reduced `OSDCloudResults` terminal event to PostHog,
 in addition to the unchanged detailed start event. Network failures warn and
 deployment continues. Raw device identifiers, license identifiers, paths, URLs, and
 exception messages are excluded from the new event. See [PRIVACY.md](../../PRIVACY.md).

@@ -396,7 +396,7 @@ Describe 'Deployment results helpers' {
         Mock Invoke-RestMethod { $script:capturedBody = $Body }
         Send-OSDCloudResults
         $payload = $script:capturedBody | ConvertFrom-Json
-        $payload.event | Should -Be 'OSDCloudResultsBeta'
+        $payload.event | Should -Be 'OSDCloudResults'
         $payload.properties.IsComplete | Should -BeOfType ([bool])
         $payload.properties.totalDurationRAW | Should -Be 126
         $payload.properties.sizeOS | Should -Be 3

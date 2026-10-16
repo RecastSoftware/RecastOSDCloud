@@ -3,7 +3,7 @@ function Send-OSDCloudResults {
     .SYNOPSIS
         Sends reduced terminal deployment analytics.
     .DESCRIPTION
-        Sends an OSDCloudResultsBeta PostHog event with an explicit property allowlist
+        Sends an OSDCloudResults PostHog event with an explicit property allowlist
         and a two-second timeout. Failures warn without stopping deployment.
     .EXAMPLE
         Send-OSDCloudResults
