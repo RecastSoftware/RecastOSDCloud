@@ -58,6 +58,8 @@ Describe 'Deployment results helpers' {
         $global:OSDCloudResults.StartTimeUtc | Should -BeNullOrEmpty
         $global:OSDCloudResults.totalDurationRAW | Should -BeNullOrEmpty
         $global:OSDCloudResults.ContentSource | Should -BeNullOrEmpty
+        $global:OSDCloudResults.ContentInternet | Should -BeNullOrEmpty
+        $global:OSDCloudResults.ContentLocal | Should -BeNullOrEmpty
         $propertyNames = @($global:OSDCloudResults.PSObject.Properties.Name)
         foreach ($name in 'sizeOS', 'sizeDriverPack', 'totalDurationRAW', 'totalDuration',
             'timeDownload', 'timeCache', 'timeCopy', 'timeExpand', 'timeOther', 'timeCloud',
@@ -248,6 +250,46 @@ Describe 'Deployment results helpers' {
         $global:OSDCloudResults.ContentSource | Should -BeExactly $Expected
     }
 
+    It 'reports copied ModelDrivers without the retained OEM archive: OS=<OS>' -TestCases @(
+        @{ OS = 'Copy'; ExpectedSource = 'Cache' }
+        @{ OS = 'Download'; ExpectedSource = 'Mixed' }
+    ) {
+        param ($OS, $ExpectedSource)
+        $global:OSDCloudWorkflowInvoke.DriverPackName = 'ModelDrivers'
+        $global:OSDCloudWorkflowInvoke.DriverPackCloudObject = [pscustomobject]@{ FileName = 'sp160195.exe' }
+        $global:OSDCloudWorkflowInvoke.CompletedTransfers = @{ stepDriverPackCopy = $true }
+        $global:OSDCloudWorkflowInvoke.CompletedTransfers["stepOS${OS}"] = $true
+        Set-OSDCloudAcquisitionResult -Content OS -Bytes 5MB
+        Set-OSDCloudAcquisitionResult -Content DriverPack -Bytes 3.75MB
+        Update-OSDCloudResults
+        $global:OSDCloudResults.DriverPackName | Should -BeExactly 'ModelDrivers'
+        $global:OSDCloudResults.DriverPackFileName | Should -BeNullOrEmpty
+        $global:OSDCloudResults.ContentSource | Should -BeExactly $ExpectedSource
+        $global:OSDCloudResults.sizeDriverPack | Should -Be 4
+        Export-OSDCloudResults
+        $loaded = Import-Clixml -LiteralPath (Join-Path $env:TEMP 'OSDCloudResults.clixml')
+        $loaded.DriverPackFileName | Should -BeNullOrEmpty
+        $loaded.ContentSource | Should -BeExactly $ExpectedSource
+        $global:OSDCloudResults.StartTimeUtc = [datetime]::UtcNow
+        $global:OSDCloudResults.EndTimeUtc = [datetime]::UtcNow
+        $global:OSDCloudResults.Status = 'Completed'
+        Mock Invoke-RestMethod { $script:capturedBody = $Body }
+        Send-OSDCloudResults
+        $payload = $script:capturedBody | ConvertFrom-Json
+        $payload.properties.DriverPackFileName | Should -BeNullOrEmpty
+        $script:capturedBody | Should -Match '"DriverPackFileName":null'
+        $payload.properties.ContentSource | Should -BeExactly $ExpectedSource
+    }
+
+    It 'clears the OEM archive filename when ModelDrivers is selected before workflow execution' {
+        $global:OSDCloudDeploy.DriverPackName = 'ModelDrivers'
+        Update-OSDCloudResults
+        $global:OSDCloudResults.DriverPackFileName | Should -BeNullOrEmpty
+        $global:OSDCloudWorkflowInvoke.DriverPackName = 'Resolved pack'
+        Update-OSDCloudResults
+        $global:OSDCloudResults.DriverPackFileName | Should -BeExactly 'drivers.cab'
+    }
+
     It 'clears a previous classification when acquisition source is unknown' {
         $global:OSDCloudResults.ContentSource = 'Cloud'
         $global:OSDCloudWorkflowInvoke.CompletedTransfers = @{}
@@ -436,7 +478,7 @@ Describe 'Deployment results helpers' {
             'totalDuration', 'stepOSDownload', 'stepOSExpand', 'stepDriverPackDownload',
             'stepOSCache', 'stepDriverPackCache', 'rateOSCache', 'rateDriverPackCache', 'totalSizeCacheMB',
             'totalSizeMB', 'totalMBps',
-            'ContentSource',
+            'ContentSource', 'ContentInternet', 'ContentLocal',
             'rateOSDownload', 'rateOSCopy', 'rateOSExpand',
             'rateDriverPackDownload', 'rateDriverPackCopy', 'rateDriverPackExpand', 'Network',
             'stepDriverPackExpand', 'stepClearDisk', 'totalSizeCopyMB',
@@ -470,6 +512,74 @@ Describe 'Deployment results helpers' {
         Send-OSDCloudResults -WarningVariable warnings
         "$warnings" | Should -Match 'Only finalized'
         Should -Invoke Invoke-RestMethod -Times 0 -Exactly
+    }
+
+    It 'reports internet and local content in MB: <Mode>' -TestCases @(
+        @{ Mode = 'Direct'; OSOperation = 'Download'; DriverOperation = 'Download'; Internet = 3L; Local = 0L; Total = 2L }
+        @{ Mode = 'USB download and copy'; OSOperation = 'Cache'; DriverOperation = 'Copy'; Internet = 1L; Local = 1L; Total = 2L }
+        @{ Mode = 'Cache only'; OSOperation = 'Copy'; DriverOperation = 'Copy'; Internet = 0L; Local = 3L; Total = 2L }
+        @{ Mode = 'Both download destinations'; OSOperation = 'Cache'; DriverOperation = 'Download'; Internet = 2L; Local = 0L; Total = 2L }
+        @{ Mode = 'Empty content'; OSOperation = 'Copy'; DriverOperation = 'Copy'; Internet = 0L; Local = 0L; Total = 0L; Bytes = 0L }
+    ) {
+        param ($Mode, $OSOperation, $DriverOperation, $Internet, $Local, $Total, $Bytes = 1.49MB)
+        $global:OSDCloudWorkflowInvoke.CompletedTransfers = @{}
+        $global:OSDCloudWorkflowInvoke.CompletedTransfers["stepOS${OSOperation}"] = $true
+        if ($OSOperation -eq 'Cache') {
+            $global:OSDCloudWorkflowInvoke.CompletedTransfers.stepOSCopy = $true
+        }
+        $global:OSDCloudWorkflowInvoke.CompletedTransfers["stepDriverPack${DriverOperation}"] = $true
+        Set-OSDCloudAcquisitionResult -Content OS -Bytes $Bytes
+        Set-OSDCloudAcquisitionResult -Content DriverPack -Bytes $Bytes
+        Update-OSDCloudResults
+        Update-OSDCloudResults
+        $global:OSDCloudResults.ContentInternet | Should -Be $Internet
+        $global:OSDCloudResults.ContentInternet | Should -BeOfType ([long])
+        $global:OSDCloudResults.ContentLocal | Should -Be $Local
+        $global:OSDCloudResults.ContentLocal | Should -BeOfType ([long])
+        $global:OSDCloudResults.totalSizeMB | Should -Be $Total
+        Export-OSDCloudResults
+        $loaded = Import-Clixml -LiteralPath (Join-Path $env:TEMP 'OSDCloudResults.clixml')
+        $loaded.ContentInternet | Should -Be $Internet
+        $loaded.ContentLocal | Should -Be $Local
+        $global:OSDCloudResults.StartTimeUtc = [datetime]::UtcNow
+        $global:OSDCloudResults.EndTimeUtc = [datetime]::UtcNow
+        $global:OSDCloudResults.Status = 'Completed'
+        Mock Invoke-RestMethod { $script:capturedBody = $Body }
+        Send-OSDCloudResults
+        $payload = $script:capturedBody | ConvertFrom-Json
+        $payload.properties.ContentInternet | Should -Be $Internet
+        $payload.properties.ContentLocal | Should -Be $Local
+    }
+
+    It 'excludes internet content from local content regardless of copy completion: Copy=<Copy>' -TestCases @(
+        @{ Copy = $true }
+        @{ Copy = $false }
+    ) {
+        param ($Copy)
+        $global:OSDCloudWorkflowInvoke.CompletedTransfers = @{
+            stepOSCache = $true; stepOSCopy = $Copy
+            stepDriverPackDownload = $true; stepDriverPackCopy = $Copy
+        }
+        Set-OSDCloudAcquisitionResult -Content OS -Bytes 6MB
+        Set-OSDCloudAcquisitionResult -Content DriverPack -Bytes 3MB
+        Update-OSDCloudResults
+        $global:OSDCloudResults.ContentInternet | Should -Be 9
+        $global:OSDCloudResults.ContentLocal | Should -Be 0
+        $global:OSDCloudResults.totalSizeCopyMB | Should -Be (9 * [int]$Copy)
+        $global:OSDCloudResults.totalSizeMB | Should -Be 9
+    }
+
+    It 'reports only pre-existing USB content for the sample deployment sizes' {
+        $global:OSDCloudWorkflowInvoke.CompletedTransfers = @{
+            stepOSCache = $true; stepOSCopy = $true; stepDriverPackCopy = $true
+        }
+        Set-OSDCloudAcquisitionResult -Content OS -Bytes 6045MB
+        Set-OSDCloudAcquisitionResult -Content DriverPack -Bytes 2950MB
+        Update-OSDCloudResults
+        $global:OSDCloudResults.ContentInternet | Should -Be 6045
+        $global:OSDCloudResults.ContentLocal | Should -Be 2950
+        $global:OSDCloudResults.totalSizeCopyMB | Should -Be 8995
+        $global:OSDCloudResults.totalSizeMB | Should -Be 8995
     }
 
     It 'rounds combined original bytes, not the sum of rounded MB sizes' {

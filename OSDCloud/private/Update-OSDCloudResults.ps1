@@ -24,6 +24,7 @@ function Update-OSDCloudResults {
         $downloadBytes = 0L
         $copyBytes = 0L
         $cacheBytes = 0L
+        $localBytes = 0L
         $hasAcquisition = $false
         $hasCloudSource = $false
         $hasCacheSource = $false
@@ -40,6 +41,7 @@ function Update-OSDCloudResults {
                     $hasCloudSource = $true
                 }
                 elseif ($acquisition.Copied) {
+                    $localBytes += $acquisition.Bytes
                     $hasCacheSource = $true
                 }
                 else {
@@ -57,6 +59,9 @@ function Update-OSDCloudResults {
             $global:OSDCloudResults.totalSizeDownloadMB = [long][math]::Round($downloadBytes / 1MB, 0, [MidpointRounding]::AwayFromZero)
             $global:OSDCloudResults.totalSizeCopyMB = [long][math]::Round($copyBytes / 1MB, 0, [MidpointRounding]::AwayFromZero)
             $global:OSDCloudResults.totalSizeCacheMB = [long][math]::Round($cacheBytes / 1MB, 0, [MidpointRounding]::AwayFromZero)
+            $global:OSDCloudResults.ContentInternet = [long](
+                $global:OSDCloudResults.totalSizeCacheMB + $global:OSDCloudResults.totalSizeDownloadMB)
+            $global:OSDCloudResults.ContentLocal = [long][math]::Round($localBytes / 1MB, 0, [MidpointRounding]::AwayFromZero)
             $global:OSDCloudResults.totalSizeMB = [long](
                 [long]$global:OSDCloudResults.sizeOS + [long]$global:OSDCloudResults.sizeDriverPack)
         }
@@ -128,7 +133,12 @@ function Update-OSDCloudResults {
         if ($null -ne $workflow.DriverPackCloudObject) {
             $driverPack = $workflow.DriverPackCloudObject
         }
-        $global:OSDCloudResults.DriverPackFileName = $driverPack.FileName
+        $global:OSDCloudResults.DriverPackFileName = if ($global:OSDCloudResults.DriverPackName -eq 'ModelDrivers') {
+            $null
+        }
+        else {
+            $driverPack.FileName
+        }
 
         if ([string]::IsNullOrWhiteSpace($global:OSDCloudResults.DistinctId)) {
             $distinctId = [string]$global:OSDCoreDevice.EndpointSHA
