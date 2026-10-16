@@ -8,7 +8,7 @@
 | --- | --- |
 | **Author** | David Segura |
 | **Company** | Recast Software |
-| **Version** | 26.10.16.1 |
+| **Version** | 26.10.16.2 |
 | **PS Editions** | CompatiblePSEditions: Core, Desktop (manifest) |
 | **License** | See [LICENSE](LICENSE) |
 
@@ -27,6 +27,7 @@
 Release highlights from the last 30 days. See [CHANGELOG.md](CHANGELOG.md) for
 complete release notes and older history.
 
+- **26.10.16.2 — October 16:** Adds internet and local content totals to deployment results, summaries, exports, and analytics; corrects `ModelDrivers` filename reporting.
 - **26.10.16.1 — October 16:** Adds deployment result summaries and CLIXML snapshots, detailed OS/driver-pack timing and transfer metrics, and a reduced terminal analytics event.
 - **26.10.15.1 — October 15:** Refreshes the Windows 11 26H2 catalog, adds licensed automatic OS catalog refresh and USB publication, licensed WinpeStartup environment/registry/certificate imports, licensed disk layout customization, `-Incognito` license testing, and safer disk validation and partition handling.
 - **26.10.13.1 — October 13:** Adds `New-WinpeStartupProfile` to create named profiles in existing Boot-Assets folders and writable OSDCloud USB volumes, with bundled defaults and safe replacement options.

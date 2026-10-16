@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.10.16.2 - October 16, 2026
+
+### Added
+
+- Added `ContentInternet` and `ContentLocal` to deployment results, the completion summary, CLIXML exports, and analytics. Internet totals combine local and USB-cache download totals; local totals include only pre-existing content copied for deployment, rounded once from its original byte total. Both remain null until content is acquired.
+- Added focused tests for content-source totals and `ModelDrivers` result reporting.
+
+### Fixed
+
+- Corrected `ModelDrivers` result reporting to omit the retained OEM archive filename; its size reflects the staged local driver files.
+
+### Changed
+
+- Module version bumped from `26.10.16.1` to `26.10.16.2`.
+
 ## 26.10.16.1 - October 16, 2026
 
 ### Added
