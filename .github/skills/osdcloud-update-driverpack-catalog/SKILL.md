@@ -1,9 +1,9 @@
 ---
+name: osdcloud-update-driverpack-catalog
 description: "Step-by-step guide for updating OSDCloud driver pack catalogs: refresh Dell/HP/Lenovo XML snapshots, add or update Surface models in OSDCloud/core/driverpacks/surface.json, update OSDCloud/core/driverpacks/panasonic.json, or add ARM64 entries to OSDCloud/core/driverpacks/generic.json."
+disable-model-invocation: true
 argument-hint: "dell | hp | lenovo | microsoft | panasonic | generic | all"
-agent: "agent"
 ---
-
 Perform a driver pack catalog update for OSDCloud following the rules in [osdcloud-catalog-update.instructions.md](../instructions/osdcloud-catalog-update.instructions.md).
 
 ## Step 1 -- Determine scope

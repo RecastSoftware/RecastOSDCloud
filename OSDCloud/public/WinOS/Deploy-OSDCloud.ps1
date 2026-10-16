@@ -159,6 +159,32 @@ function Deploy-OSDCloud {
         This command writes deployment status to the host and starts workflow tasks.
         In GUI mode, workflow execution starts only after the operator clicks Start.
         Runtime parameters are provided by Get-OSDCloudWorkflowRuntimeParameter.
+        Creates global OSDCloudResults with reduced metadata, lifecycle status, and
+        whole-second workflow totalDurationRAW (excluding UI selection and PostAction).
+        stepOSCopy/Download/Expand and stepDriverPackCopy/Download/Expand
+        measure individual operations. stepClearDisk measures confirmation wait
+        only; totalDuration subtracts that wait from totalDurationRAW. sizeOS and
+        sizeDriverPack measure acquired content. totalSizeDownloadMB, totalSizeCacheMB,
+        and totalSizeCopyMB separately sum local downloads, USB-cache downloads, and
+        copied/reused original bytes before rounding (1MB = 1,048,576 bytes). IsComplete
+        marks workflow return, not proof that every step succeeded. Results are saved
+        as OSDCloudResults.clixml in current TEMP and, when available, the deployed
+        Windows Temp before PostAction. Started runs also send a terminal
+        OSDCloudResults analytics event; the existing start event is unchanged.
+        stepOSCache and stepDriverPackCache measure downloads to USB instead of
+        the Download phases. rateOSDownload/Cache/Copy/Expand and matching DriverPack
+        rates divide reported MB by step seconds, rounded to whole MB/s; unavailable
+        rates are null. timeDownload, timeCache, timeCopy, and timeExpand combine
+        matching OS and driver-pack steps. timeCloud combines download and cache
+        time, while timeOther is totalDurationRAW minus every step* value.
+        totalSizeMB combines sizeOS and sizeDriverPack. totalMBps divides totalSizeMB
+        by totalDuration and is null when totalDuration is unavailable or zero.
+        OSFileName and DriverPackFileName identify the selected content files.
+        The final console summary excludes step*, rate*, and time* fields.
+        Network is Wired or Wireless, or null if unavailable or ambiguous.
+        ContentSource is Cloud for newly downloaded content (including USB downloads),
+        Cache for pre-existing content, or Mixed for both OS/driver origins. It uses
+        only obtained content and is null when origin is unknown or no content exists.
 
     .LINK
         https://github.com/OSDeploy/OSDCloud/blob/main/PRIVACY.md
@@ -223,7 +249,7 @@ function Deploy-OSDCloud {
                     $profileRoot = Join-Path -Path $env:ProgramData -ChildPath 'OSDeployCore\OSDCloud\Profiles'
                     if (Test-Path -Path $profileRoot -PathType Container) {
                         $directoryNames = Get-ChildItem -Path $profileRoot -Directory -ErrorAction SilentlyContinue |
-                        Select-Object -ExpandProperty Name
+                            Select-Object -ExpandProperty Name
                         if ($directoryNames) {
                             $profileNames += $directoryNames
                         }
@@ -286,10 +312,17 @@ function Deploy-OSDCloud {
 
     end {
         $Error.Clear()
-        #=================================================
-        $ModuleVersion = $($MyInvocation.MyCommand.Module.Version)
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($MyInvocation.MyCommand.ModuleName) Module: $ModuleVersion"
-        <#
+        $launchMethod = if ($CLI.IsPresent) { 'CLI' } else { 'GUI' }
+        Initialize-OSDCloudResults -ModuleVersion ([string]$MyInvocation.MyCommand.Module.Version) `
+            -WorkflowName $WorkflowName -LaunchMethod $launchMethod
+        $resultsTimer = $null
+        $workflowCompleted = $false
+        $workflowStarted = $false
+        try {
+            #=================================================
+            $ModuleVersion = $($MyInvocation.MyCommand.Module.Version)
+            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] $($MyInvocation.MyCommand.ModuleName) Module: $ModuleVersion"
+            <#
         Write-Host -ForegroundColor DarkCyan 'OSDCloud collects analytic data during the deployment process to help improve the product and user experience.'
         Write-Host -ForegroundColor DarkCyan 'No personally identifiable information (PII) is collected, and all data is anonymized to protect user privacy.'
         Write-Host -ForegroundColor DarkCyan 'Collected data includes information about the deployment environment and system configuration.'
@@ -297,192 +330,232 @@ function Deploy-OSDCloud {
         Write-Host -ForegroundColor DarkGray 'https://github.com/OSDeploy/OSDCloud/blob/main/PRIVACY.md'
         Write-Host
         #>
-        #=================================================
-        # Workflow Verification and Warning
-        if ($WorkflowName -ne 'default' -and -not $SkipWorkflowVerification.IsPresent) {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow: $WorkflowName"
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] This version of OSDCloud is designed to run the default workflow."
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Using a custom workflow may result in unexpected behavior or errors."
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Please contact OSDCloud support to report issues with custom workflows and to seek assistance."
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Press any key to continue."
-            if ($Host -and $Host.UI -and $Host.UI.RawUI) {
-                $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+            #=================================================
+            # Workflow Verification and Warning
+            if ($WorkflowName -ne 'default' -and -not $SkipWorkflowVerification.IsPresent) {
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow: $WorkflowName"
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] This version of OSDCloud is designed to run the default workflow."
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Using a custom workflow may result in unexpected behavior or errors."
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Please contact OSDCloud support to report issues with custom workflows and to seek assistance."
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] Press any key to continue."
+                if ($Host -and $Host.UI -and $Host.UI.RawUI) {
+                    $null = $Host.UI.RawUI.ReadKey('NoEcho,IncludeKeyDown')
+                }
+                else {
+                    Write-Warning "Unable to read key input in this host. Continuing without key confirmation."
+                }
+            }
+            elseif ($WorkflowName -ne 'default' -and $SkipWorkflowVerification.IsPresent) {
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow: $WorkflowName"
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] SkipWorkflowVerification is set; continuing without verification prompt."
             }
             else {
-                Write-Warning "Unable to read key input in this host. Continuing without key confirmation."
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud Workflow: default"
             }
-        }
-        elseif ($WorkflowName -ne 'default' -and $SkipWorkflowVerification.IsPresent) {
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow: $WorkflowName"
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] SkipWorkflowVerification is set; continuing without verification prompt."
-        }
-        else {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud Workflow: default"
-        }
-        #=================================================
-        # Populate variables from environment and profile settings, and apply any parameter overrides.
-        $envParameters = @{}
-        if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction Ignore) {
-            $envParameters = ConvertTo-OSDCloudEnvParameter -BoundParameters $PSBoundParameters
-        }
-        #=================================================
-        # Set the osdcloud-logs Path
-        $LogsPath = "$env:TEMP\osdcloud-logs"
-        if (-not (Test-Path -Path $LogsPath)) {
-            New-Item -Path $LogsPath -ItemType Directory -Force | Out-Null
-        }
-        #=================================================
-        # Initialize OSD
-        Initialize-OSDCoreLicense
-        $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $Incognito.IsPresent -Force
-        if ($Incognito.IsPresent) {
-            $global:OSDCoreLicense.IsRegistered = $false
-            Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [INFO] Incognito: No Recast license is available and IsRegistered is forced to false for unlicensed testing."
-        }
-        Initialize-OSDCoreDevice
-        # Device initialization can refresh license state when license details are missing.
-        if ($Incognito.IsPresent) {
-            $global:OSDCoreLicense.IsRegistered = $false
-            $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $true -Force
-        }
-        #=================================================
-        # OSDCoreDevice Manufacturer, Model, Product overrides
-        if ($OSDManufacturer -and -not [string]::IsNullOrWhiteSpace($OSDManufacturer)) {
-            $global:OSDCoreDevice.OSDManufacturer = $OSDManufacturer
-        }
-        if ($OSDModel -and -not [string]::IsNullOrWhiteSpace($OSDModel)) {
-            $global:OSDCoreDevice.OSDModel = $OSDModel
-        }
-        if ($OSDProduct -and -not [string]::IsNullOrWhiteSpace($OSDProduct)) {
-            $global:OSDCoreDevice.OSDProduct = $OSDProduct
-        }
-        if ($ProcessorArchitecture -and -not [string]::IsNullOrWhiteSpace($ProcessorArchitecture)) {
-            $global:OSDCoreDevice.ProcessorArchitecture = $ProcessorArchitecture
-        }
-        #=================================================
-        # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
-        $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
-        if (Test-Path -LiteralPath $OSDCoreDeviceClixmlPath) {
-            Remove-Item -LiteralPath $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
-        }
-        $global:OSDCoreDevice | Export-Clixml -Path $OSDCoreDeviceClixmlPath -Force
+            #=================================================
+            # Populate variables from environment and profile settings, and apply any parameter overrides.
+            $envParameters = @{}
+            if (Get-Command -Name 'ConvertTo-OSDCloudEnvParameter' -ErrorAction Ignore) {
+                $envParameters = ConvertTo-OSDCloudEnvParameter -BoundParameters $PSBoundParameters
+            }
+            #=================================================
+            # Set the osdcloud-logs Path
+            $LogsPath = "$env:TEMP\osdcloud-logs"
+            if (-not (Test-Path -Path $LogsPath)) {
+                New-Item -Path $LogsPath -ItemType Directory -Force | Out-Null
+            }
+            #=================================================
+            # Initialize OSD
+            Initialize-OSDCoreLicense
+            $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $Incognito.IsPresent -Force
+            if ($Incognito.IsPresent) {
+                $global:OSDCoreLicense.IsRegistered = $false
+                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [INFO] Incognito: No Recast license is available and IsRegistered is forced to false for unlicensed testing."
+            }
+            Initialize-OSDCoreDevice
+            # Device initialization can refresh license state when license details are missing.
+            if ($Incognito.IsPresent) {
+                $global:OSDCoreLicense.IsRegistered = $false
+                $global:OSDCoreLicense | Add-Member -NotePropertyName IsIncognito -NotePropertyValue $true -Force
+            }
+            #=================================================
+            # OSDCoreDevice Manufacturer, Model, Product overrides
+            if ($OSDManufacturer -and -not [string]::IsNullOrWhiteSpace($OSDManufacturer)) {
+                $global:OSDCoreDevice.OSDManufacturer = $OSDManufacturer
+            }
+            if ($OSDModel -and -not [string]::IsNullOrWhiteSpace($OSDModel)) {
+                $global:OSDCoreDevice.OSDModel = $OSDModel
+            }
+            if ($OSDProduct -and -not [string]::IsNullOrWhiteSpace($OSDProduct)) {
+                $global:OSDCoreDevice.OSDProduct = $OSDProduct
+            }
+            if ($ProcessorArchitecture -and -not [string]::IsNullOrWhiteSpace($ProcessorArchitecture)) {
+                $global:OSDCoreDevice.ProcessorArchitecture = $ProcessorArchitecture
+            }
+            #=================================================
+            # Export OSDCoreDevice to XML and JSON for use in other scripts or workflows
+            $OSDCoreDeviceClixmlPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.xml'
+            if (Test-Path -LiteralPath $OSDCoreDeviceClixmlPath) {
+                Remove-Item -LiteralPath $OSDCoreDeviceClixmlPath -Force -ErrorAction SilentlyContinue
+            }
+            $global:OSDCoreDevice | Export-Clixml -Path $OSDCoreDeviceClixmlPath -Force
 
-        $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
-        if (Test-Path -LiteralPath $OSDCoreDeviceJsonPath) {
-            Remove-Item -LiteralPath $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
-        }
-        $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File $OSDCoreDeviceJsonPath -Force -Encoding utf8
-        #=================================================
-        # Automatically determine default OSLanguageCode from the detected keyboard layout if not explicitly provided.
-        $resolvedOSLanguageCode = if ($PSBoundParameters.ContainsKey('OSLanguageCode')) {
-            [System.String]$PSBoundParameters['OSLanguageCode']
-        }
-        else {
-            $null
-        }
-
-        if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
-            $canInferOSLanguage = Test-OSDCoreLicense
-            $languageKeyboardLayout = if ($PSBoundParameters.ContainsKey('KeyboardLayout')) { $KeyboardLayout } else { $global:OSDCoreDevice.KeyboardLayout }
-
-            if ($canInferOSLanguage -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
-                $resolvedOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $languageKeyboardLayout -FallbackLanguageCode 'en-US'
-                Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast: OSDCloud has set the OSLanguageCode to $resolvedOSLanguageCode based on the KeyboardLayout [$languageKeyboardLayout]."
+            $OSDCoreDeviceJsonPath = Join-Path -Path $LogsPath -ChildPath 'OSDCoreDevice.json'
+            if (Test-Path -LiteralPath $OSDCoreDeviceJsonPath) {
+                Remove-Item -LiteralPath $OSDCoreDeviceJsonPath -Force -ErrorAction SilentlyContinue
+            }
+            $global:OSDCoreDevice | ConvertTo-Json -Depth 10 | Out-File $OSDCoreDeviceJsonPath -Force -Encoding utf8
+            #=================================================
+            # Automatically determine default OSLanguageCode from the detected keyboard layout if not explicitly provided.
+            $resolvedOSLanguageCode = if ($PSBoundParameters.ContainsKey('OSLanguageCode')) {
+                [System.String]$PSBoundParameters['OSLanguageCode']
             }
             else {
-                $resolvedOSLanguageCode = 'en-US'
-                if (-not $canInferOSLanguage) {
-                    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping OSLanguageCode keyboard conversion because no valid Recast license is available."
+                $null
+            }
+
+            if (-not $PSBoundParameters.ContainsKey('OSLanguageCode')) {
+                $canInferOSLanguage = Test-OSDCoreLicense
+                $languageKeyboardLayout = if ($PSBoundParameters.ContainsKey('KeyboardLayout')) { $KeyboardLayout } else { $global:OSDCoreDevice.KeyboardLayout }
+
+                if ($canInferOSLanguage -and $languageKeyboardLayout -and -not [string]::IsNullOrWhiteSpace($languageKeyboardLayout)) {
+                    $resolvedOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $languageKeyboardLayout -FallbackLanguageCode 'en-US'
+                    Write-Host -ForegroundColor DarkGreen "[$(Get-Date -format s)] [INFO] Recast: OSDCloud has set the OSLanguageCode to $resolvedOSLanguageCode based on the KeyboardLayout [$languageKeyboardLayout]."
+                }
+                else {
+                    $resolvedOSLanguageCode = 'en-US'
+                    if (-not $canInferOSLanguage) {
+                        Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Skipping OSLanguageCode keyboard conversion because no valid Recast license is available."
+                    }
                 }
             }
-        }
-        #=================================================
-        # Start Initialization of OSDCloud Deployment
-        $initializeOSDCloudDeployParameters = @{
-            EnvParameters         = $envParameters
-            OSLanguageCode        = $resolvedOSLanguageCode
-            OSDManufacturer       = $global:OSDCoreDevice.OSDManufacturer
-            OSDModel              = $global:OSDCoreDevice.OSDModel
-            OSDProduct            = $global:OSDCoreDevice.OSDProduct
-            ProcessorArchitecture = $global:OSDCoreDevice.ProcessorArchitecture
-            ProfileName           = $ProfileName
-            WorkflowName          = $WorkflowName
-        }
-        $initializeOSDCloudDeployCommand = Get-Command -Name 'Initialize-DeployOSDCloud' -ErrorAction Ignore
-        if ($initializeOSDCloudDeployCommand) {
-            $excludedCommonParameterNames = @(
-                'Verbose',
-                'Debug',
-                'ErrorAction',
-                'WarningAction',
-                'InformationAction',
-                'ErrorVariable',
-                'WarningVariable',
-                'InformationVariable',
-                'OutVariable',
-                'OutBuffer',
-                'PipelineVariable',
-                'WhatIf',
-                'Confirm'
-            )
-
-            $initializeEligibleParameterNames = @(
-                $initializeOSDCloudDeployCommand.Parameters.Keys |
-                Where-Object {
-                    (-not $initializeOSDCloudDeployParameters.ContainsKey($_)) -and
-                    ($_ -notin $excludedCommonParameterNames)
-                }
-            )
-
-            foreach ($parameterName in $initializeEligibleParameterNames) {
-                if (-not $PSBoundParameters.ContainsKey($parameterName)) {
-                    continue
-                }
-                $parameterValue = $PSBoundParameters[$parameterName]
-                if ($null -eq $parameterValue) {
-                    continue
-                }
-                if ($parameterValue -is [System.String] -and [string]::IsNullOrWhiteSpace($parameterValue)) {
-                    continue
-                }
-
-                $initializeOSDCloudDeployParameters[$parameterName] = $parameterValue
+            #=================================================
+            # Start Initialization of OSDCloud Deployment
+            $initializeOSDCloudDeployParameters = @{
+                EnvParameters         = $envParameters
+                OSLanguageCode        = $resolvedOSLanguageCode
+                OSDManufacturer       = $global:OSDCoreDevice.OSDManufacturer
+                OSDModel              = $global:OSDCoreDevice.OSDModel
+                OSDProduct            = $global:OSDCoreDevice.OSDProduct
+                ProcessorArchitecture = $global:OSDCoreDevice.ProcessorArchitecture
+                ProfileName           = $ProfileName
+                WorkflowName          = $WorkflowName
             }
-        }
-        Initialize-DeployOSDCloud @initializeOSDCloudDeployParameters
-        #=================================================
-        # Start Deployment Workflow
-        $workflowCompleted = $false
-        if ($CLI.IsPresent) {
-            Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Invoke-OSDCloudWorkflowTask"
-            $global:OSDCloudDeploy.TimeStart = Get-Date
-            $global:OSDCloudDeploy | Out-Host
-            Invoke-OSDCloudWorkflowTask
-            $workflowCompleted = $true
-        }
-        else {
-            # Prevents the workflow from starting unless the Start button is clicked in the GUI
-            $global:OSDCloudDeploy.TimeStart = $null
+            $initializeOSDCloudDeployCommand = Get-Command -Name 'Initialize-DeployOSDCloud' -ErrorAction Ignore
+            if ($initializeOSDCloudDeployCommand) {
+                $excludedCommonParameterNames = @(
+                    'Verbose',
+                    'Debug',
+                    'ErrorAction',
+                    'WarningAction',
+                    'InformationAction',
+                    'ErrorVariable',
+                    'WarningVariable',
+                    'InformationVariable',
+                    'OutVariable',
+                    'OutBuffer',
+                    'PipelineVariable',
+                    'WhatIf',
+                    'Confirm'
+                )
 
-            Invoke-OSDCloudWorkflowUI -WorkflowName $WorkflowName
+                $initializeEligibleParameterNames = @(
+                    $initializeOSDCloudDeployCommand.Parameters.Keys |
+                        Where-Object {
+                            (-not $initializeOSDCloudDeployParameters.ContainsKey($_)) -and
+                            ($_ -notin $excludedCommonParameterNames)
+                        }
+                )
 
-            if ($null -ne $global:OSDCloudDeploy.TimeStart) {
-                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Invoke-OSDCloudWorkflowTask $WorkflowName"
-                # $global:OSDCloudDeploy | Out-Host
+                foreach ($parameterName in $initializeEligibleParameterNames) {
+                    if (-not $PSBoundParameters.ContainsKey($parameterName)) {
+                        continue
+                    }
+                    $parameterValue = $PSBoundParameters[$parameterName]
+                    if ($null -eq $parameterValue) {
+                        continue
+                    }
+                    if ($parameterValue -is [System.String] -and [string]::IsNullOrWhiteSpace($parameterValue)) {
+                        continue
+                    }
+
+                    $initializeOSDCloudDeployParameters[$parameterName] = $parameterValue
+                }
+            }
+            Initialize-DeployOSDCloud @initializeOSDCloudDeployParameters
+            #=================================================
+            # Start Deployment Workflow
+            if ($CLI.IsPresent) {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Invoke-OSDCloudWorkflowTask"
+                $global:OSDCloudDeploy.TimeStart = Get-Date
+                $global:OSDCloudDeploy | Out-Host
+            }
+            else {
+                # Prevents the workflow from starting unless the Start button is clicked in the GUI
+                $global:OSDCloudDeploy.TimeStart = $null
+
+                Invoke-OSDCloudWorkflowUI -WorkflowName $WorkflowName
+
+                if ($null -ne $global:OSDCloudDeploy.TimeStart) {
+                    Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Invoke-OSDCloudWorkflowTask $WorkflowName"
+                }
+                else {
+                    Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow '$WorkflowName' was not started."
+                    $global:OSDCloudResults.Status = 'Cancelled'
+                }
+            }
+
+            if ($CLI.IsPresent -or $null -ne $global:OSDCloudDeploy.TimeStart) {
+                # A failure before the workflow creates its snapshot must not reuse an old target.
+                $global:OSDCloudWorkflowInvoke = $null
+                Update-OSDCloudResults
+                $global:OSDCloudResults.Status = 'Running'
+                $global:OSDCloudResults.StartTimeUtc = [datetime]::UtcNow
+                Export-OSDCloudResults
+                $workflowStarted = $true
+                $global:OSDCloudResults.StartTimeUtc = [datetime]::UtcNow
+                $resultsTimer = [System.Diagnostics.Stopwatch]::StartNew()
                 try {
-                    Invoke-OSDCloudWorkflowTask
+                    try {
+                        Invoke-OSDCloudWorkflowTask
+                    }
+                    finally {
+                        $resultsTimer.Stop()
+                        $global:OSDCloudResults.EndTimeUtc = [datetime]::UtcNow
+                        $global:OSDCloudResults.totalDurationRAW = [long][math]::Round($resultsTimer.Elapsed.TotalSeconds, 0, [MidpointRounding]::AwayFromZero)
+                    }
                     $workflowCompleted = $true
                 }
                 catch {
+                    $global:OSDCloudResults.Status = 'Failed'
+                    if ($CLI.IsPresent) {
+                        throw
+                    }
                     Write-Warning "Failed to invoke OSDCloud Workflow '$WorkflowName': $_"
                 }
             }
-            else {
-                Write-Host -ForegroundColor DarkYellow "[$(Get-Date -format s)] [WARN] OSDCloud Workflow '$WorkflowName' was not started."
+        }
+        catch {
+            $global:OSDCloudResults.Status = 'Failed'
+            throw
+        }
+        finally {
+            if ($workflowCompleted) {
+                $global:OSDCloudResults.Status = 'Completed'
+                $global:OSDCloudResults.IsComplete = $true
+            }
+            if ($workflowStarted) {
+                Update-OSDCloudResults
+            }
+            Export-OSDCloudResults -IncludeTarget:$workflowStarted
+            if ($workflowStarted) {
+                Send-OSDCloudResults
             }
         }
 
         if ($workflowCompleted) {
+            $global:OSDCloudResults | Select-Object -Property * -ExcludeProperty 'step*', 'rate*', 'time*' | Format-List -Property * | Out-Host
+
             if ($PostAction -eq 'Restart' -or $PostAction -eq 'Shutdown') {
                 if ($env:SystemDrive -ne 'X:') {
                     Write-Warning "PostAction '$PostAction' is only available in WinPE. Skipping."

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 26.10.16.1 - October 16, 2026
+
+### Added
+
+- Added `$global:OSDCloudResults` for `Deploy-OSDCloud` GUI and `-CLI`, with lifecycle status, a reduced deployment summary, whole-second workflow duration, and CLIXML snapshots in the current TEMP and deployed Windows TEMP when available.
+- Added detailed OS and driver-pack acquisition reporting, including separate download, USB-cache, copy, and expansion timings; acquired sizes; transfer totals; whole-MB/s rates; network category; and `ContentSource`. The console summary omits phase and rate details while exports and analytics retain them.
+- Added a reduced `OSDCloudResults` event after started deployments, alongside the unchanged start event. The new event uses an explicit property allowlist and excludes raw device and license identifiers, local paths, URLs, and exception messages.
+- Added focused tests for results lifecycle and serialization, timing and acquisition accounting, deployment completion, and result-event behavior.
+
+### Fixed
+
+- Included a required registry command when applying Windows images.
+
+### Changed
+
+- Module version bumped from `26.10.15.1` to `26.10.16.1`.
+
 ## 26.10.15.1 - October 15, 2026
 
 ### Added

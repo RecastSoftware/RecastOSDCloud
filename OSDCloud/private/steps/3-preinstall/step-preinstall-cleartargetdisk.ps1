@@ -4,6 +4,7 @@ function step-preinstall-cleartargetdisk {
         [System.Nullable[System.Int32]]
         $DiskNumber = $global:OSDCloudWorkflowInvoke.DeploymentDiskNumber
     )
+    $Error.Clear()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
@@ -55,7 +56,11 @@ function step-preinstall-cleartargetdisk {
 
     foreach ($Disk in $TargetDisks) {
         $TargetDescription = "Disk $($Disk.Number) $($Disk.BusType) $([int]($Disk.Size / 1000000000))GB $($Disk.FriendlyName)"
-        if ($PSCmdlet.ShouldProcess($TargetDescription, 'Clean disk with DiskPart')) {
+        $deploymentCmdlet = $PSCmdlet
+        $clearConfirmed = Invoke-OSDCloudTimedOperation -Name stepClearDisk -Action {
+            $deploymentCmdlet.ShouldProcess($TargetDescription, 'Clean disk with DiskPart')
+        }
+        if ($clearConfirmed) {
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Cleaning Disk $($Disk.Number) with DiskPart."
             $DiskPartCommands = @(
                 "select disk $($Disk.Number)"

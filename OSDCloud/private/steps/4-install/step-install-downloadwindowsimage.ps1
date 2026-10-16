@@ -3,6 +3,7 @@ function step-install-downloadwindowsimage {
     param (
         $OperatingSystemCloudObject = $global:OSDCloudWorkflowInvoke.OperatingSystemCloudObject
     )
+    $Error.Clear()
     #=================================================
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
@@ -35,8 +36,11 @@ function step-install-downloadwindowsimage {
         $OperatingSystemCachePath = if ($global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject.FullName) { $global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject.FullName } else { [string]$global:OSDCloudWorkflowInvoke.OperatingSystemCacheObject }
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Testing selected OperatingSystem cache path: $OperatingSystemCachePath"
         if (Test-Path -LiteralPath $OperatingSystemCachePath) {
-            $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage = Get-Item -LiteralPath $OperatingSystemCachePath
+            $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage = Invoke-OSDCloudTimedOperation -Name stepOSCopy -Action {
+                Get-Item -LiteralPath $OperatingSystemCachePath
+            }
             $global:OSDCloudWorkflowInvoke.WindowsImagePath = $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage.FullName
+            Set-OSDCloudAcquisitionResult -Content OS -Bytes $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage.Length
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using cached Windows image: $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] WindowsImagePath:  $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
             return
@@ -85,8 +89,9 @@ function step-install-downloadwindowsimage {
         exit
     }
     if ($FileInfo) {
-        $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage = $FileInfo
+        $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage = Invoke-OSDCloudTimedOperation -Name stepOSCopy -Action { $FileInfo }
         $global:OSDCloudWorkflowInvoke.WindowsImagePath = $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage.FullName
+        Set-OSDCloudAcquisitionResult -Content OS -Bytes $FileInfo.Length
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Using offline Windows image: $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] WindowsImagePath:  $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
         return
@@ -122,12 +127,17 @@ function step-install-downloadwindowsimage {
             $null = New-Item -Path $USBDownloadPath -ItemType Directory -Force
         }
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading Windows image to USB cache."
-        $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
+        $SaveWebFile = Invoke-OSDCloudTimedOperation -Name stepOSCache -CachedFilePath (Join-Path $USBDownloadPath $FileName) -Action {
+            Invoke-RecastOSDDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory "$USBDownloadPath" -DestinationName $FileName
+        }
 
         if ($SaveWebFile) {
+            Set-OSDCloudAcquisitionResult -Content OS -Bytes $SaveWebFile.Length
             Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Copying cached Windows image from $($SaveWebFile.FullName) to $DownloadPath."
             Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Copy Offline OS to $DownloadPath"
-            $null = Copy-Item -Path $SaveWebFile.FullName -Destination $DownloadPath -Force
+            $null = Invoke-OSDCloudTimedOperation -Name stepOSCopy -Action {
+                Copy-Item -Path $SaveWebFile.FullName -Destination $DownloadPath -Force
+            }
             $FileInfo = Get-Item "$DownloadPath\$($SaveWebFile.Name)"
         }
     }
@@ -135,7 +145,9 @@ function step-install-downloadwindowsimage {
         # $SaveWebFile is a FileInfo Object, not a path
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] DownloadPath: $DownloadPath"
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloading Windows image directly to $DownloadPath."
-        $SaveWebFile = Invoke-RecastOSDDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory $DownloadPath -ErrorAction Stop
+        $SaveWebFile = Invoke-OSDCloudTimedOperation -Name stepOSDownload -CachedFilePath (Join-Path $DownloadPath $FileName) -Action {
+            Invoke-RecastOSDDownloadFile -SourceUrl $OperatingSystemFilePath -DestinationDirectory $DownloadPath -ErrorAction Stop
+        }
         $FileInfo = $SaveWebFile
     }
     #=================================================
@@ -150,6 +162,7 @@ function step-install-downloadwindowsimage {
     # Store this as a FileInfo Object
     $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage = $FileInfo
     $global:OSDCloudWorkflowInvoke.WindowsImagePath = $global:OSDCloudWorkflowInvoke.FileInfoWindowsImage.FullName
+    Set-OSDCloudAcquisitionResult -Content OS -Bytes $FileInfo.Length
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Downloaded Windows image path: $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] WindowsImagePath:  $($global:OSDCloudWorkflowInvoke.WindowsImagePath)"
     #=================================================

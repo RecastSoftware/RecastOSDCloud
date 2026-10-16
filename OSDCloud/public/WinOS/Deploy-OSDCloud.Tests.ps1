@@ -3,6 +3,10 @@ BeforeAll {
     $testModule = New-Module -Name DiskParameterDeploymentTests -ArgumentList $moduleRoot -ScriptBlock {
         param ($ModuleRoot)
         . "$ModuleRoot\public\WinOS\Deploy-OSDCloud.ps1"
+        . "$ModuleRoot\private\Initialize-OSDCloudResults.ps1"
+        . "$ModuleRoot\private\Update-OSDCloudResults.ps1"
+        . "$ModuleRoot\private\Export-OSDCloudResults.ps1"
+        . "$ModuleRoot\private\Send-OSDCloudResults.ps1"
         . "$ModuleRoot\private\Initialize-DeployOSDCloud.ps1"
         . "$ModuleRoot\private\Update-OSDCloudCoreCatalogOS.ps1"
         . "$ModuleRoot\private\core-license\Get-OSDCoreLicense.ps1"
@@ -26,6 +30,8 @@ BeforeAll {
     $originalDevice = $global:OSDCoreDevice
     $originalDeploy = $global:OSDCloudDeploy
     $originalLicense = $global:OSDCoreLicense
+    $originalResults = Get-Variable -Name OSDCloudResults -Scope Global -ErrorAction SilentlyContinue
+    $originalWorkflowInvoke = Get-Variable -Name OSDCloudWorkflowInvoke -Scope Global -ErrorAction SilentlyContinue
 }
 
 AfterAll {
@@ -33,10 +39,15 @@ AfterAll {
     $global:OSDCoreDevice = $originalDevice
     $global:OSDCloudDeploy = $originalDeploy
     $global:OSDCoreLicense = $originalLicense
+    if ($originalResults) { $global:OSDCloudResults = $originalResults.Value }
+    else { Remove-Variable -Name OSDCloudResults -Scope Global -ErrorAction SilentlyContinue }
+    if ($originalWorkflowInvoke) { $global:OSDCloudWorkflowInvoke = $originalWorkflowInvoke.Value }
+    else { Remove-Variable -Name OSDCloudWorkflowInvoke -Scope Global -ErrorAction SilentlyContinue }
 }
 
 Describe 'Deploy-OSDCloud disk parameters' {
     BeforeEach {
+        Mock Get-CimInstance { @() } -ModuleName DiskParameterDeploymentTests
         $global:OSDCoreDevice = [pscustomobject]@{
             OSDManufacturer = 'HP'; OSDModel = 'Test'; OSDProduct = 'Test'
             ProcessorArchitecture = 'amd64'; KeyboardLayout = $null
@@ -52,12 +63,135 @@ Describe 'Deploy-OSDCloud disk parameters' {
         Mock Initialize-DeployOSDCloud {} -ModuleName DiskParameterDeploymentTests
         Mock Invoke-OSDCloudWorkflowTask {} -ModuleName DiskParameterDeploymentTests
         Mock Invoke-OSDCloudWorkflowUI {} -ModuleName DiskParameterDeploymentTests
+        Mock Export-OSDCloudResults {} -ModuleName DiskParameterDeploymentTests
+        Mock Send-OSDCloudResults {} -ModuleName DiskParameterDeploymentTests
         Mock Export-Clixml {} -ModuleName DiskParameterDeploymentTests
         Mock Out-File {} -ModuleName DiskParameterDeploymentTests
         Mock Test-Path { $true } -ModuleName DiskParameterDeploymentTests
         Mock Remove-Item {} -ModuleName DiskParameterDeploymentTests
         Mock Write-Host {} -ModuleName DiskParameterDeploymentTests
         Mock Out-Host {} -ModuleName DiskParameterDeploymentTests
+        Mock Format-List { $InputObject } -ModuleName DiskParameterDeploymentTests
+    }
+
+    It 'records completed results for CLI=<CLI> before terminal reporting' -TestCases @(
+        @{ CLI = $true }
+        @{ CLI = $false }
+    ) {
+        param ($CLI)
+        Mock Invoke-OSDCloudWorkflowUI { $global:OSDCloudDeploy.TimeStart = Get-Date } -ModuleName DiskParameterDeploymentTests
+        Mock Invoke-OSDCloudWorkflowTask {
+            $global:OSDCloudResults.Status | Should -Be 'Running'
+            $global:OSDCloudResults.IsComplete | Should -BeFalse
+            $global:OSDCloudResults.StartTimeUtc.Kind | Should -Be 'Utc'
+            $global:OSDCloudResults.EndTimeUtc | Should -BeNullOrEmpty
+            $global:OSDCloudWorkflowInvoke | Should -BeNullOrEmpty
+            [System.Threading.Thread]::Sleep(30)
+        } -ModuleName DiskParameterDeploymentTests
+        Mock Send-OSDCloudResults {
+            $global:OSDCloudResults.Status | Should -Be 'Completed'
+            $global:OSDCloudResults.IsComplete | Should -BeTrue
+            $global:OSDCloudResults.totalDurationRAW | Should -BeOfType ([long])
+            $global:OSDCloudResults.totalDuration | Should -Be $global:OSDCloudResults.totalDurationRAW
+            $global:OSDCloudResults.totalDurationRAW | Should -BeGreaterOrEqual 0
+            $global:OSDCloudResults.EndTimeUtc.Kind | Should -Be 'Utc'
+        } -ModuleName DiskParameterDeploymentTests
+        $global:OSDCloudWorkflowInvoke = @{ ParamsExpandWindowsImage = @{ ApplyPath = 'Z:\stale' } }
+        Deploy-OSDCloud -CLI:$CLI
+        Should -Invoke Send-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
+        Should -Invoke Out-Host -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter {
+            $InputObject.DeploymentId -eq $global:OSDCloudResults.DeploymentId -and $InputObject.IsComplete -and @($InputObject.PSObject.Properties.Name | Where-Object { $_ -match '^(step|rate|time)' }).Count -eq 0
+        }
+        Should -Invoke Export-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { -not $IncludeTarget }
+        Should -Invoke Export-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $IncludeTarget }
+    }
+
+    It 'records GUI cancellation without timing, a target export, or terminal analytics' {
+        Deploy-OSDCloud
+        $global:OSDCloudResults.Status | Should -Be 'Cancelled'
+        Should -Invoke Format-List -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        $global:OSDCloudResults.IsComplete | Should -BeFalse
+        $global:OSDCloudResults.StartTimeUtc | Should -BeNullOrEmpty
+        $global:OSDCloudResults.EndTimeUtc | Should -BeNullOrEmpty
+        $global:OSDCloudResults.totalDurationRAW | Should -BeNullOrEmpty
+        $global:OSDCloudResults.totalDuration | Should -BeNullOrEmpty
+        Should -Invoke Invoke-OSDCloudWorkflowTask -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Send-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        Should -Invoke Export-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { -not $IncludeTarget }
+    }
+
+    It 'records terminating workflow failure and preserves CLI=<CLI> error behavior' -TestCases @(
+        @{ CLI = $true }
+        @{ CLI = $false }
+    ) {
+        param ($CLI)
+        Mock Invoke-OSDCloudWorkflowUI { $global:OSDCloudDeploy.TimeStart = Get-Date } -ModuleName DiskParameterDeploymentTests
+        Mock Invoke-OSDCloudWorkflowTask { throw 'Synthetic workflow failure' } -ModuleName DiskParameterDeploymentTests
+        if ($CLI) {
+            { Deploy-OSDCloud -CLI } | Should -Throw '*Synthetic workflow failure*'
+        }
+        else {
+            Deploy-OSDCloud -WarningVariable warnings
+            "$warnings" | Should -Match 'Synthetic workflow failure'
+        }
+        $global:OSDCloudResults.Status | Should -Be 'Failed'
+        $global:OSDCloudResults.IsComplete | Should -BeFalse
+        $global:OSDCloudResults.EndTimeUtc | Should -Not -BeNullOrEmpty
+        Should -Invoke Format-List -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+        $global:OSDCloudResults.totalDurationRAW | Should -BeOfType ([long])
+        Should -Invoke Send-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
+    }
+
+    It 'resets results and records initialization failure without timing or terminal analytics' {
+        Deploy-OSDCloud -CLI
+        $previousId = $global:OSDCloudResults.DeploymentId
+        Mock Initialize-DeployOSDCloud { throw 'Synthetic initialization failure' } -ModuleName DiskParameterDeploymentTests
+        { Deploy-OSDCloud -CLI } | Should -Throw '*Synthetic initialization failure*'
+        $global:OSDCloudResults.DeploymentId | Should -Not -Be $previousId
+        $global:OSDCloudResults.Status | Should -Be 'Failed'
+        $global:OSDCloudResults.IsComplete | Should -BeFalse
+        $global:OSDCloudResults.totalDurationRAW | Should -BeNullOrEmpty
+        Should -Invoke Send-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
+    }
+
+    It 'excludes initialization, UI selection, and results export time from the stopwatch' {
+        Mock Initialize-DeployOSDCloud { [System.Threading.Thread]::Sleep(300) } -ModuleName DiskParameterDeploymentTests
+        Mock Invoke-OSDCloudWorkflowUI {
+            [System.Threading.Thread]::Sleep(300)
+            $global:OSDCloudDeploy.TimeStart = Get-Date
+        } -ModuleName DiskParameterDeploymentTests
+        Mock Export-OSDCloudResults { [System.Threading.Thread]::Sleep(300) } -ModuleName DiskParameterDeploymentTests
+        Mock Invoke-OSDCloudWorkflowTask { [System.Threading.Thread]::Sleep(40) } -ModuleName DiskParameterDeploymentTests
+        Deploy-OSDCloud
+        $global:OSDCloudResults.totalDurationRAW | Should -BeOfType ([long])
+        $global:OSDCloudResults.totalDurationRAW | Should -Be 0
+    }
+
+    It 'finalizes and reports results before the PostAction <PostAction> countdown' -TestCases @(
+        @{ PostAction = 'Restart' }
+        @{ PostAction = 'Shutdown' }
+        @{ PostAction = 'Exit' }
+    ) {
+        param ($PostAction)
+        $originalSystemDrive = $env:SystemDrive
+        try {
+            $env:SystemDrive = 'X:'
+            Mock Start-Sleep {
+                $global:OSDCloudResults.IsComplete | Should -BeTrue
+                $global:OSDCloudResults.Status | Should -Be 'Completed'
+                $global:OSDCloudResults.totalDurationRAW | Should -BeOfType ([long])
+                Should -Invoke Send-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
+                Should -Invoke Out-Host -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter {
+                    $InputObject.DeploymentId -eq $global:OSDCloudResults.DeploymentId -and $InputObject.IsComplete -and @($InputObject.PSObject.Properties.Name | Where-Object { $_ -match '^(step|rate)' }).Count -eq 0
+                }
+                Should -Invoke Export-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { $IncludeTarget }
+                throw 'Stop before host exit or restart'
+            } -ModuleName DiskParameterDeploymentTests
+            { Deploy-OSDCloud -CLI -PostAction $PostAction } | Should -Throw '*Stop before host exit or restart*'
+        }
+        finally {
+            $env:SystemDrive = $originalSystemDrive
+        }
     }
 
     It 'forwards all explicit disk parameters for CLI and GUI launches: CLI=<CLI>' -TestCases @(
