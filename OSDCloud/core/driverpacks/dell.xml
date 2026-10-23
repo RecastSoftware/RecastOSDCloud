@@ -1,4 +1,4 @@
-<DriverPackManifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" baseLocation="downloads.dell.com" dateTime="2026-10-16T13:10:39" releaseID="6F5PY" version="2026.10.02" application="OnDemandCabBuilder" schemaVersion="2.3" xsi:noNamespaceSchemaLocation="https://downloads.dell.com/catalog/clientschema/4.0/DriverPackManifest.xsd" baseLocationAccessProtocols="HTTP FTP" deltaBase="http://en.community.dell.com" xmlns="openmanage/cm/dm">
+<DriverPackManifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" baseLocation="downloads.dell.com" dateTime="2026-10-22T14:24:04" releaseID="N06M2" version="2026.10.04" application="OnDemandCabBuilder" schemaVersion="2.3" xsi:noNamespaceSchemaLocation="https://downloads.dell.com/catalog/clientschema/4.0/DriverPackManifest.xsd" baseLocationAccessProtocols="HTTP FTP" deltaBase="http://en.community.dell.com" xmlns="openmanage/cm/dm">
   <DriverPackage format="cab" hashMD5="4B4B4330EBFF3E9F353D2C3D7B4450F6" size="72429980" dateTime="2014-07-11T00:00:00" vendorVersion="1.0" dellVersion="A01" path="FOLDER02291001M/1/160-vista-A01-JFH0G.CAB" releaseID="JFH0G" delta="/techcenter/enterprise-client/w/wiki/optiplex-160-vista-driver-cab" type="win">
     <Name>
       <Display lang="en"><![CDATA[160-vista-A01-JFH0G.CAB]]></Display>
@@ -57547,6 +57547,51 @@
         <Hash algorithm="MD5">78448380D005431899E8DE9303C4288C</Hash>
         <Hash algorithm="SHA1">C0F672780DC16253BA14343655556D621DC7EF5A</Hash>
         <Hash algorithm="SHA256">2E383DEAF5915FE57703D2BC6762DFEE1DDA64EA383665CDC455A03ECA231A1F</Hash>
+      </Cryptography>
+    </DriverPackMetadataInfo>
+  </DriverPackage>
+  <DriverPackage format="cab" hashMD5="2AB038C135BA77C297A2F645CF74010B" size="1410596530" dateTime="2026-10-14T02:18:04" vendorVersion="1.0" dellVersion="A01" path="FOLDER15155325M/1/DX16263-CY5J6_Win11_1.0_A01.cab" releaseID="CY5J6" delta="" type="win">
+    <Name>
+      <Display lang="en"><![CDATA[DX16263-CY5J6_Win11_1.0_A01.cab]]></Display>
+    </Name>
+    <Description>
+      <Display lang="en"><![CDATA[With the Dell Command Deploy Driver Packs, an I/T Administrator can perform the following tasks:
+1) Use Microsoft Windows OS-based PnP enumeration capabilities to install drivers for applicable devices
+2) Create a system-level optimized deployment sequence
+3) Setup an appropriate boot control sequence.
+4) Optimize the deployment of targeted system-specific driver packages.]]></Display>
+    </Description>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="Windows11" osVendor="Microsoft" osArch="ARM64" osType="client" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0">
+        <Display lang="en"><![CDATA[ Windows 11 ARM64 ]]></Display>
+        <SupportedLanguages>
+          <Language lang="en">English</Language>
+        </SupportedLanguages>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <SupportedSystems>
+      <Brand key="72" prefix="XPSNOTEBOOK">
+        <Display lang="en"><![CDATA[ XPS Notebook ]]></Display>
+        <Model systemID="0D8E" name="XPS 16 DX16263" rtsDate="2026-09-21T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ XPS 16 DX16263 ]]></Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/04/Drivers/DriversDetails?driverId=CY5J6">
+      <Display lang="en"><![CDATA[Please visit http://Dell.com/Command for additional help on using CABs for OS Deployment.]]></Display>
+    </ImportantInfo>
+    <Cryptography>
+      <Hash algorithm="MD5">2AB038C135BA77C297A2F645CF74010B</Hash>
+      <Hash algorithm="SHA1">6EAB204FE49256C3353385E23A9F281AA9C8479D</Hash>
+      <Hash algorithm="SHA256">AE2D0D63A2288C1800BE2B1E329F45C6311FE0CE167D61F9CFD6ABF27395BB0A</Hash>
+    </Cryptography>
+    <DriverPackMetadataInfo>
+      <Size>67924</Size>
+      <path>FOLDER15155309M/1/DX16263-CY5J6_Win11_1.0_A01.xml</path>
+      <Cryptography>
+        <Hash algorithm="MD5">118BD6C10336235B80017D12B252FC46</Hash>
+        <Hash algorithm="SHA1">E44C61293590A579D539994E066AFE27199FDA12</Hash>
+        <Hash algorithm="SHA256">997B6957C966648BF48A33C212E278A5307EFAA6A471DCFC24EAF52891F031DB</Hash>
       </Cryptography>
     </DriverPackMetadataInfo>
   </DriverPackage>
