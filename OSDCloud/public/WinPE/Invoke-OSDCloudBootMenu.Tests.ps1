@@ -24,7 +24,7 @@ AfterAll {
     $env:OSDCLOUDBOOT_AUTHOR = $script:originalAuthor
 }
 
-Describe 'OSDCloud Boot Menu schema conversion' {
+Describe 'OSDCloud BootMenu schema conversion' {
     It 'validates and renders the new schema without running commands' {
         $file = Join-Path $TestDrive 'conversion.json'
         @'
@@ -67,7 +67,7 @@ Describe 'OSDCloud Boot Menu schema conversion' {
     }
 }
 
-Describe 'OSDCloud Boot Menu runtime' {
+Describe 'OSDCloud BootMenu runtime' {
     BeforeEach {
         $env:SystemDrive = 'X:'
         $script:commands = [System.Collections.Generic.List[string]]::new()
@@ -170,7 +170,7 @@ Describe 'OSDCloud Boot Menu runtime' {
     }
 }
 
-Describe 'OSDCloud Boot Menu discovery' {
+Describe 'OSDCloud BootMenu discovery' {
     It 'searches only OSDCloud profile roots with X first followed by C through Z' {
         $script:searchedRoots = [System.Collections.Generic.List[string]]::new()
         Mock Test-Path {

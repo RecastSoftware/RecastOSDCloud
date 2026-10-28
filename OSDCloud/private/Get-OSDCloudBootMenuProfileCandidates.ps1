@@ -1,7 +1,7 @@
 function Get-OSDCloudBootMenuProfileCandidates {
     <#
     .SYNOPSIS
-        Finds OSDCloud Boot Menu profiles on attached drives.
+        Finds OSDCloud BootMenu profiles on attached drives.
     .DESCRIPTION
         Reads only OSDCloud\bootmenu-profiles\<name>\osdcloudbootmenu.json on drives C:
         through Z:. The RAM disk is searched first. Names and GUIDs come from
@@ -19,7 +19,7 @@ function Get-OSDCloudBootMenuProfileCandidates {
     param ()
 
     $Error.Clear()
-    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Discovering Boot Menu profiles"
+    Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Discovering BootMenu Profiles"
     $seen = [System.Collections.Generic.HashSet[guid]]::new()
     foreach ($driveLetter in @('X') + @([char[]](67..90) | Where-Object { $_ -ne 'X' })) {
         $root = '{0}:\OSDCloud\bootmenu-profiles' -f $driveLetter

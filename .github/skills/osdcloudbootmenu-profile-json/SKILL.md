@@ -1,9 +1,9 @@
 ---
 name: osdcloudbootmenu-profile-json
-description: "Create, edit, validate, or consume osdcloudbootmenu.json Boot Menu profiles. Use for Invoke-OSDCloudBootMenu, bootmenu-profiles, info GUID identity, osdcloudBoot build requirements and modules, osdcloudBootStartup phases, env, and deployOSDCloud settings. Keep Invoke-WinpeStartup and winpestartup.json legacy behavior separate."
+description: "Create, edit, validate, or consume osdcloudbootmenu.json BootMenu Profiles. Use for Invoke-OSDCloudBootMenu, bootmenu-profiles, info GUID identity, osdcloudBoot build requirements and modules, osdcloudBootStartup phases, env, and deployOSDCloud settings. Keep Invoke-WinpeStartup and winpestartup.json legacy behavior separate."
 ---
 
-# OSDCloud Boot Menu Profiles
+# OSDCloud BootMenu Profiles
 
 Read the existing JSON before editing. The bundled PowerShell and Recovery
 Environment profiles under `OSDCloudBoot\core\bootmenu-profiles` are the schema

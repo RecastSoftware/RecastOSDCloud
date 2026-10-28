@@ -3,10 +3,10 @@
 function Invoke-OSDCloudBootMenu {
     <#
     .SYNOPSIS
-        Selects and runs an OSDCloud Boot Menu profile.
+        Selects and runs an OSDCloud BootMenu profile.
 
     .DESCRIPTION
-        Executes the OSDCloud Boot Menu sequence from a single entry point.
+        Executes the OSDCloud BootMenu sequence from a single entry point.
         The function can optionally load defaults from module JSON, discover and
         apply a startup profile, and then run startup steps in order including
         environment setup, drivers, files, hardware checks, connectivity, module
@@ -566,7 +566,7 @@ function Invoke-OSDCloudBootMenu {
 
             if (-not $selectedProfile -and $useConsolePrompt) {
                 Write-Host ''
-                Write-Host -ForegroundColor Cyan 'OSDCloud Boot Menu Profiles:'
+                Write-Host -ForegroundColor Cyan 'OSDCloud BootMenu Profiles:'
                 $orderedProfiles |
                     Select-Object Index, Profile, Path |
                     Format-Table -AutoSize | Out-String | Write-Host

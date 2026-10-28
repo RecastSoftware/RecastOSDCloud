@@ -3,7 +3,7 @@
 function ConvertFrom-OSDCloudBootMenuProfile {
     <#
     .SYNOPSIS
-        Converts an OSDCloud Boot Menu profile to runtime settings
+        Converts an OSDCloud BootMenu profile to runtime settings
 
     .DESCRIPTION
         Reads an osdcloudbootmenu.json file and returns the flat settings consumed by

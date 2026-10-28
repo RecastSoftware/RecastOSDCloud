@@ -3,7 +3,7 @@
 function Assert-OSDCloudBootMenuProfile {
     <#
     .SYNOPSIS
-        Validates an OSDCloud Boot Menu profile JSON file
+        Validates an OSDCloud BootMenu profile JSON file
 
     .DESCRIPTION
         Parses one osdcloudbootmenu.json file and verifies that it uses only supported
@@ -46,7 +46,7 @@ function Assert-OSDCloudBootMenuProfile {
     }
 
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-        throw "OSDCloud Boot Menu profile was not found: $Path"
+        throw "OSDCloud BootMenu profile was not found: $Path"
     }
 
     try {
@@ -55,10 +55,10 @@ function Assert-OSDCloudBootMenuProfile {
         $Profile = ConvertFrom-Json -InputObject $Raw -ErrorAction Stop
     }
     catch {
-        throw "Invalid OSDCloud Boot Menu profile JSON '$Path': $($_.Exception.Message) Backslashes in JSON strings must be escaped as '\\'."
+        throw "Invalid OSDCloud BootMenu profile JSON '$Path': $($_.Exception.Message) Backslashes in JSON strings must be escaped as '\\'."
     }
 
-    $Fail = { param ($Message) throw "Invalid OSDCloud Boot Menu profile '$Path': $Message" }
+    $Fail = { param ($Message) throw "Invalid OSDCloud BootMenu profile '$Path': $Message" }
     $IsObject = { param ($Value) $Value -is [System.Management.Automation.PSCustomObject] }
     $AssertKeys = {
         param ($Object, $Name, $Allowed)

@@ -8,7 +8,7 @@ description: "Author and update legacy winpestartup.json files for Invoke-WinpeS
 Create profiles that configure `Invoke-WinpeStartup` without embedding workflow logic in the profile. Preserve the existing JSON style and make the smallest change that satisfies the request.
 
 This is the **legacy** format. For `Invoke-OSDCloudBootMenu` or
-`osdcloudbootmenu.json`, use [OSDCloud Boot Menu Profiles](../osdcloudbootmenu-profile-json/SKILL.md).
+`osdcloudbootmenu.json`, use [OSDCloud BootMenu Profiles](../osdcloudbootmenu-profile-json/SKILL.md).
 Do not convert or modify existing legacy profiles when authoring new Boot Menu content.
 
 ## Profile location and discovery
