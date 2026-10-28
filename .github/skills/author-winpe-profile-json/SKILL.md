@@ -1,11 +1,15 @@
 ---
 name: author-winpe-profile-json
-description: Author and update OSDCloud WinPE startup profile JSON files. Use this skill whenever the user asks to create, edit, validate, or add startup, main, shutdown, restart, module, Wi-Fi, IP configuration, device display, or PowerShell command settings in OSDCloud/core/OSDRepo/winpe-profiles/*.json, even if they only describe the desired WinPE behavior without naming the profile format.
+description: "Author and update legacy winpestartup.json files for Invoke-WinpeStartup. Use for explicitly legacy startup, main, shutdown, restart, module, Wi-Fi, IP configuration, device display, or PowerShell settings. For osdcloudbootmenu.json and Invoke-OSDCloudBootMenu use osdcloudbootmenu-profile-json instead."
 ---
 
 # Author WinPE Profile JSON
 
 Create profiles that configure `Invoke-WinpeStartup` without embedding workflow logic in the profile. Preserve the existing JSON style and make the smallest change that satisfies the request.
+
+This is the **legacy** format. For `Invoke-OSDCloudBootMenu` or
+`osdcloudbootmenu.json`, use [OSDCloud Boot Menu Profiles](../osdcloudbootmenu-profile-json/SKILL.md).
+Do not convert or modify existing legacy profiles when authoring new Boot Menu content.
 
 ## Profile location and discovery
 

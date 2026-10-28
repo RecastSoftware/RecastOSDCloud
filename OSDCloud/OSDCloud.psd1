@@ -35,6 +35,7 @@ Windows 11 26H2 GA Release
         'Show-OSDCloudDeviceInfo',
         'Start-OSDCloudExplorer',
         # WinPE
+        'Invoke-OSDCloudBootMenu',
         'Invoke-WinpeStartup',
         'Invoke-WinpeStartupManager',
         'Show-WinpeStartupDeviceErrors',

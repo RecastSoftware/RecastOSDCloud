@@ -1,0 +1,200 @@
+#Requires -Version 5.1
+
+function Assert-OSDCloudBootMenuProfile {
+    <#
+    .SYNOPSIS
+        Validates an OSDCloud Boot Menu profile JSON file
+
+    .DESCRIPTION
+        Parses one osdcloudbootmenu.json file and verifies that it uses only supported
+        sections, properties, and value types. Supported top-level sections are
+        schemaVersion (must be 1), info, env, osdcloudBoot, osdcloudBootStartup,
+        deployOSDCloud, and osdcloudBootMenu. Stored commands are not executed. Invalid content produces a
+        terminating error that identifies the file.
+
+    .PARAMETER Path
+        Specifies the osdcloudbootmenu.json file to validate.
+
+    .EXAMPLE
+        PS> Assert-OSDCloudBootMenuProfile -Path 'C:\ProgramData\OSDeployCore\boot-assets\bootmenu-profiles\Deploy\osdcloudbootmenu.json'
+
+        Validates the selected Boot Menu profile without executing its commands.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        None.
+
+    .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-10-28
+
+    .LINK
+        ConvertFrom-OSDCloudBootMenuProfile
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [System.String]
+        $Path
+    )
+    if ((Get-Variable -Name OSDTraceLogSession -Scope Script -ValueOnly -ErrorAction Ignore) -and (Get-Command -Name Write-OSDTraceLog -ErrorAction SilentlyContinue)) {
+        Write-OSDTraceLog -Component $script:OSDTraceLogSession.CommandName -Message 'Calling private function: Assert-OSDCloudBootMenuProfile' -Parameters $PSBoundParameters
+    }
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "OSDCloud Boot Menu profile was not found: $Path"
+    }
+
+    try {
+        $Raw = Get-Content -LiteralPath $Path -Raw -ErrorAction Stop
+        if (-not $Raw.TrimStart().StartsWith('{')) { throw 'Expected one JSON object.' }
+        $Profile = ConvertFrom-Json -InputObject $Raw -ErrorAction Stop
+    }
+    catch {
+        throw "Invalid OSDCloud Boot Menu profile JSON '$Path': $($_.Exception.Message) Backslashes in JSON strings must be escaped as '\\'."
+    }
+
+    $Fail = { param ($Message) throw "Invalid OSDCloud Boot Menu profile '$Path': $Message" }
+    $IsObject = { param ($Value) $Value -is [System.Management.Automation.PSCustomObject] }
+    $AssertKeys = {
+        param ($Object, $Name, $Allowed)
+        foreach ($Property in $Object.PSObject.Properties) {
+            if ($Property.Name -notin $Allowed) { & $Fail "Unsupported property '$Name$($Property.Name)'." }
+        }
+    }
+    $AssertBoolean = {
+        param ($Object, $Name, $Key)
+        $Property = $Object.PSObject.Properties[$Key]
+        if ($Property -and $Property.Value -isnot [System.Boolean]) { & $Fail "'$Name$Key' must be a JSON boolean." }
+    }
+    $AssertString = {
+        param ($Object, $Name, $Key)
+        $Property = $Object.PSObject.Properties[$Key]
+        if ($Property -and ($Property.Value -isnot [System.String] -or [System.String]::IsNullOrWhiteSpace($Property.Value))) {
+            & $Fail "'$Name$Key' must be a non-empty string."
+        }
+    }
+    $AssertStringArray = {
+        param ($Object, $Name, $Key)
+        $Property = $Object.PSObject.Properties[$Key]
+        if (-not $Property) { return }
+        if ($Property.Value -isnot [System.Array]) { & $Fail "'$Name$Key' must be a JSON array." }
+        foreach ($Item in $Property.Value) {
+            if ($Item -isnot [System.String] -or [System.String]::IsNullOrWhiteSpace($Item)) {
+                & $Fail "'$Name$Key' must contain only non-empty strings."
+            }
+        }
+    }
+    $AssertSection = {
+        param ($Root, $Key)
+        $Property = $Root.PSObject.Properties[$Key]
+        if (-not $Property) { return $null }
+        if (-not (& $IsObject $Property.Value)) { & $Fail "'$Key' must be a JSON object." }
+        return $Property.Value
+    }
+    $AssertCommandSection = {
+        param ($Section, $Key)
+        $Name = "osdcloudBootStartup.$Key."
+        $Command = & $AssertSection $Section $Key
+        if (-not $Command) { return }
+        & $AssertKeys $Command $Name @('enabled', 'commands', 'noExit', 'errorAction')
+        & $AssertBoolean $Command $Name 'enabled'
+        & $AssertBoolean $Command $Name 'noExit'
+        & $AssertStringArray $Command $Name 'commands'
+        $ErrorAction = $Command.PSObject.Properties['errorAction']
+        if ($ErrorAction -and $ErrorAction.Value -notin @('Continue', 'Stop')) {
+            & $Fail "'${Name}errorAction' must be 'Continue' or 'Stop'."
+        }
+    }
+    $AssertRunSection = {
+        param ($Root, $Key)
+        $Section = & $AssertSection $Root $Key
+        if (-not $Section) { return }
+        $Name = "$Key."
+        & $AssertKeys $Section $Name @('enabled', 'command', 'parameters')
+        & $AssertBoolean $Section $Name 'enabled'
+        & $AssertString $Section $Name 'command'
+        if ($Section.enabled -and -not $Section.command) { & $Fail "'${Name}command' is required when enabled." }
+        $Parameters = $Section.PSObject.Properties['parameters']
+        if ($Parameters) {
+            if (-not (& $IsObject $Parameters.Value)) { & $Fail "'${Name}parameters' must be a JSON object." }
+            foreach ($Parameter in $Parameters.Value.PSObject.Properties) {
+                if ($Parameter.Name -notmatch '^[A-Za-z][A-Za-z0-9]*$') {
+                    & $Fail "'${Name}parameters' contains an invalid parameter name '$($Parameter.Name)'."
+                }
+                if ($Parameter.Value -isnot [System.Boolean] -and $Parameter.Value -isnot [System.String] -and
+                    $Parameter.Value -isnot [System.ValueType]) {
+                    & $Fail "'${Name}parameters.$($Parameter.Name)' must be a string, number, or boolean."
+                }
+            }
+        }
+    }
+
+    if (-not (& $IsObject $Profile)) { & $Fail 'The profile must contain one JSON object.' }
+    & $AssertKeys $Profile '' @('schemaVersion', 'info', 'env', 'osdcloudBoot', 'osdcloudBootStartup', 'deployOSDCloud', 'osdcloudBootMenu')
+
+    $SchemaVersion = $Profile.PSObject.Properties['schemaVersion']
+    if (-not $SchemaVersion -or $SchemaVersion.Value -isnot [System.Int64] -and $SchemaVersion.Value -isnot [System.Int32] -or $SchemaVersion.Value -ne 1) {
+        & $Fail "'schemaVersion' is required and must be 1."
+    }
+
+    $Info = & $AssertSection $Profile 'info'
+    if ($Info) {
+        & $AssertKeys $Info 'info.' @('id', 'name', 'author', 'description')
+        $IdProperty = $Info.PSObject.Properties['id']
+        $ParsedId = [guid]::Empty
+        if ($IdProperty -and ($IdProperty.Value -isnot [System.String] -or -not [guid]::TryParse($IdProperty.Value, [ref]$ParsedId) -or $ParsedId -eq [guid]::Empty)) {
+            & $Fail "'info.id' must be a GUID string."
+        }
+        foreach ($Key in 'name', 'author', 'description') {
+            $Property = $Info.PSObject.Properties[$Key]
+            if ($Property -and $Property.Value -isnot [System.String]) { & $Fail "'info.$Key' must be a string." }
+        }
+    }
+
+    $Env = & $AssertSection $Profile 'env'
+    if ($Env) {
+        foreach ($Property in $Env.PSObject.Properties) {
+            if ($Property.Name -notmatch '^[A-Za-z_][A-Za-z0-9_]*$') { & $Fail "'env.$($Property.Name)' is not a valid environment variable name." }
+            if ($Property.Value -isnot [System.String]) { & $Fail "'env.$($Property.Name)' must be a string." }
+        }
+    }
+
+    $BootImage = & $AssertSection $Profile 'osdcloudBoot'
+    if ($BootImage) {
+        & $AssertKeys $BootImage 'osdcloudBoot.' @('requireWinPE', 'requireWinRE', 'installModule')
+        & $AssertBoolean $BootImage 'osdcloudBoot.' 'requireWinRE'
+        & $AssertBoolean $BootImage 'osdcloudBoot.' 'requireWinPE'
+        if ($BootImage.requireWinPE -and $BootImage.requireWinRE) { & $Fail 'A profile cannot require both WinPE and WinRE.' }
+        $PSModules = $BootImage.PSObject.Properties['installModule']
+        if ($PSModules) {
+            if ($PSModules.Value -isnot [System.Array]) { & $Fail "'osdcloudBoot.installModule' must be a JSON array." }
+            foreach ($Module in $PSModules.Value) {
+                if ($Module -is [string] -and -not [string]::IsNullOrWhiteSpace($Module)) { continue }
+                if (-not (& $IsObject $Module)) { & $Fail "'osdcloudBoot.installModule' must contain module names or JSON objects." }
+                & $AssertKeys $Module 'osdcloudBoot.installModule.' @('name', 'version', 'source', 'enabled')
+                if (-not $Module.PSObject.Properties['name']) { & $Fail "'osdcloudBoot.installModule' entries require 'name'." }
+                foreach ($Key in 'name', 'version', 'source') { & $AssertString $Module 'osdcloudBoot.installModule.' $Key }
+                & $AssertBoolean $Module 'osdcloudBoot.installModule.' 'enabled'
+            }
+        }
+    }
+
+    $WinpeStartup = & $AssertSection $Profile 'osdcloudBootStartup'
+    if ($WinpeStartup) {
+        $Name = 'osdcloudBootStartup.'
+        & $AssertKeys $WinpeStartup $Name @('enabled', 'onScreenKeyboard', 'showPnpDevices', 'showPnpErrors', 'wifi', 'ipConfig', 'updateOSDCloud', 'installModules', 'startup', 'main', 'shutdown')
+        foreach ($Key in 'enabled', 'onScreenKeyboard', 'showPnpDevices', 'showPnpErrors', 'wifi', 'ipConfig', 'updateOSDCloud') {
+            & $AssertBoolean $WinpeStartup $Name $Key
+        }
+        & $AssertStringArray $WinpeStartup $Name 'installModules'
+        foreach ($Key in 'startup', 'main', 'shutdown') { & $AssertCommandSection $WinpeStartup $Key }
+    }
+
+    & $AssertRunSection $Profile 'deployOSDCloud'
+    & $AssertRunSection $Profile 'osdcloudBootMenu'
+}
