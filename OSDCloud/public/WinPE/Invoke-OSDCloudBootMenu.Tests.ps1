@@ -9,7 +9,7 @@ BeforeAll {
     function Initialize-WinpeStartupMain { }
     function Import-WinpeStartupAssets { param ($Path, $SystemDrive) }
     function Invoke-WinpeStartupManager { param ($Step, $Value) }
-    function Show-WinpeStartupProfileWindow { param ($Profiles) }
+    function Show-OSDCloudBootMenuProfileWindow { param ($Profiles) }
     $script:originalDrive = $env:SystemDrive
     $script:originalSite = $env:BOOTMENU_TEST_SITE
     $script:originalProfile = $env:OSDCLOUDBOOTMENU_PROFILE
@@ -155,15 +155,15 @@ Describe 'OSDCloud Boot Menu runtime' {
             Set-Content -LiteralPath $script:otherCandidate.Path
         Mock Get-OSDCloudBootMenuProfileCandidates { $script:candidate; $script:otherCandidate }
         Mock Read-Host { '2' }
-        Mock Show-WinpeStartupProfileWindow { throw 'Must not open a window' }
+        Mock Show-OSDCloudBootMenuProfileWindow { throw 'Must not open a window' }
         Invoke-OSDCloudBootMenu -CLI
         $script:commands.ToArray() | Should -Be @('Other-Command')
-        Should -Invoke Show-WinpeStartupProfileWindow -Times 0 -Exactly
+        Should -Invoke Show-OSDCloudBootMenuProfileWindow -Times 0 -Exactly
     }
 
     It 'stops after cancelling the multiple-profile window' {
         Mock Get-OSDCloudBootMenuProfileCandidates { $script:candidate; $script:candidate.PSObject.Copy() }
-        Mock Show-WinpeStartupProfileWindow { $null }
+        Mock Show-OSDCloudBootMenuProfileWindow { $null }
         Invoke-OSDCloudBootMenu
         $script:commands.Count | Should -Be 0
         Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*selection cancelled*' }

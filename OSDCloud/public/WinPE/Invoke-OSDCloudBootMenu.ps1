@@ -550,7 +550,7 @@ function Invoke-OSDCloudBootMenu {
                 $useConsolePrompt = [bool]$CLI
                 if (-not $useConsolePrompt) {
                     try {
-                        $selectedProfile = Show-WinpeStartupProfileWindow -Profiles $orderedProfiles -ErrorAction Stop
+                        $selectedProfile = Show-OSDCloudBootMenuProfileWindow -Profiles $orderedProfiles -ErrorAction Stop
                         if (-not $selectedProfile) {
                             Write-Warning 'Invoke-OSDCloudBootMenu: Profile selection cancelled.'
                             $skipExecution = $true

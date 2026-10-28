@@ -1,10 +1,10 @@
-function Show-WinpeStartupProfileWindow {
+function Show-OSDCloudBootMenuProfileWindow {
     <#
     .SYNOPSIS
-        Shows a WPF window for selecting a WinpeStartup profile.
+        Shows a WPF window for selecting an OSDCloud Boot Menu profile.
 
     .DESCRIPTION
-        Displays the discovered WinpeStartup profiles in a small dark window
+        Displays the discovered OSDCloud Boot Menu profiles in a small dark window
         styled like OSDCloud Boot. Only profile names are listed; hovering over a
         profile shows its JSON path and asset folder. Start, Enter, or a
         double-click returns the selected profile. Cancel, Escape, or closing
@@ -14,11 +14,11 @@ function Show-WinpeStartupProfileWindow {
         caller can fall back to the console prompt.
 
     .PARAMETER Profiles
-        Profile candidate objects from Get-WinpeStartupProfileCandidates. Each
+        Profile candidate objects from Get-OSDCloudBootMenuProfileCandidates. Each
         object must have Profile and Path properties and may have AssetPath.
 
     .EXAMPLE
-        $selected = Show-WinpeStartupProfileWindow -Profiles @(Get-WinpeStartupProfileCandidates)
+        $selected = Show-OSDCloudBootMenuProfileWindow -Profiles @(Get-OSDCloudBootMenuProfileCandidates)
 
         Shows the profile selector and returns the selected candidate or $null.
 
@@ -26,7 +26,7 @@ function Show-WinpeStartupProfileWindow {
         System.Management.Automation.PSCustomObject
 
     .NOTES
-        Used by Invoke-WinpeStartup unless -CLI is specified.
+        Used by Invoke-OSDCloudBootMenu unless -CLI is specified.
     #>
     [CmdletBinding()]
     [OutputType([pscustomobject])]
@@ -44,7 +44,7 @@ function Show-WinpeStartupProfileWindow {
     [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Recast Software - OSDCloud WinpeStartup" Width="640" Height="480" MinWidth="480" MinHeight="360"
+        Title="Recast Software - OSDCloud Boot Menu" Width="640" Height="480" MinWidth="480" MinHeight="360"
         WindowStartupLocation="CenterScreen" Background="#161F5B" Topmost="True"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Foreground="#F5F5F5"
         UseLayoutRounding="True" SnapsToDevicePixels="True">
@@ -163,7 +163,7 @@ function Show-WinpeStartupProfileWindow {
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Margin="28,24,28,12">
             <TextBlock Text="OSDCloud" FontSize="24" FontWeight="SemiBold" Foreground="{StaticResource AccentBrush}"/>
-            <TextBlock Text="WinpeStartup" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,2,0,0"/>
+            <TextBlock Text="Boot Menu" Foreground="{StaticResource SecondaryTextBrush}" Margin="0,2,0,0"/>
         </StackPanel>
         <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="28,0,28,24">
             <Grid>
@@ -177,11 +177,11 @@ function Show-WinpeStartupProfileWindow {
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource IconStyle}" Text="&#xE77B;"
-                           AutomationProperties.Name="Startup profile"/>
+                           AutomationProperties.Name="Boot Menu profile"/>
                 <StackPanel Grid.Row="0" Grid.Column="1">
-                    <TextBlock Style="{StaticResource CardTitleStyle}" Text="Build: Startup Profile"/>
+                    <TextBlock Style="{StaticResource CardTitleStyle}" Text="Build: Boot Menu Profile"/>
                     <TextBlock Foreground="{StaticResource SecondaryTextBrush}" Margin="0,6,0,10"
-                               Text="Select the profile WinpeStartup applies before running startup steps. Hover over a profile for its location."/>
+                               Text="Select the profile OSDCloud Boot Menu applies before running startup steps. Hover over a profile for its location."/>
                 </StackPanel>
                 <ListBox x:Name="ProfileList" Grid.Row="1" Grid.Column="1"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -194,10 +194,10 @@ function Show-WinpeStartupProfileWindow {
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button x:Name="CancelButton" Content="Cancel" Width="112" IsCancel="True"
                         Background="{StaticResource ControlBrush}" BorderBrush="{StaticResource BorderBrush}" Foreground="#F5F5F5"
-                        AutomationProperties.Name="Cancel WinpeStartup"/>
+                        AutomationProperties.Name="Cancel Boot Menu profile selection"/>
                 <Button x:Name="StartButton" Content="Start" Width="112" IsDefault="True"
                         Background="{StaticResource AccentBrush}" BorderBrush="{StaticResource AccentBrush}" Foreground="#161F5B"
-                        AutomationProperties.Name="Start WinpeStartup with the selected profile"/>
+                        AutomationProperties.Name="Start OSDCloud Boot Menu with the selected profile"/>
             </StackPanel>
         </Border>
     </Grid>
