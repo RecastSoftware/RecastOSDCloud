@@ -1,0 +1,47 @@
+name: Update Operating System Catalog
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+concurrency:
+  group: update-operating-system-catalog
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Check and update operating system catalog
+        id: update
+        shell: pwsh
+        run: .\.github\scripts\Update-OperatingSystemCatalog.ps1
+
+      - name: Commit if changed
+        if: steps.update.outputs.changed == 'true'
+        env:
+          CATALOG_NAME: ${{ steps.update.outputs.catalog_name }}
+        shell: pwsh
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          git add -- "OSDCloud/core/operatingsystems/$env:CATALOG_NAME"
+
+          if (git diff --cached --quiet) {
+              Write-Host "No changes to commit."
+          } else {
+              $catalogName = $env:CATALOG_NAME
+              git commit -m "chore(catalog): add operating system catalog ($catalogName)"
+              git push
+          }

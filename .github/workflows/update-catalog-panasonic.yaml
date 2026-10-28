@@ -1,0 +1,74 @@
+name: Update Panasonic Driver Pack Catalog
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Download Panasonic driver pack catalog
+        shell: pwsh
+        run: |
+          $moduleConfig = Get-Content 'OSDCloud\core\module.json' -Raw | ConvertFrom-Json -ErrorAction Stop
+          $catalogUrl = $moduleConfig.panasonic.driverpackcatalogoem
+          if (-not $catalogUrl) {
+              throw 'Panasonic driver pack catalog URL was not found in OSDCloud\core\module.json.'
+          }
+
+          $temporaryPath = Join-Path $env:TEMP 'Panasonic.json'
+          $catalogPath = 'OSDCloud\core\driverpacks\panasonic.json'
+
+          Write-Host "Downloading Panasonic.json from $catalogUrl..."
+          Invoke-WebRequest -Uri $catalogUrl -OutFile $temporaryPath -UseBasicParsing -ErrorAction Stop
+          Write-Host "Downloaded: $((Get-Item $temporaryPath).Length) bytes"
+
+          $catalog = Get-Content -LiteralPath $temporaryPath -Raw | ConvertFrom-Json -ErrorAction Stop
+          if ($catalog.Manufacturer -ne 'Panasonic' -or -not $catalog.LastDateModified -or -not $catalog.Models) {
+              throw 'Downloaded Panasonic driver pack catalog is missing required catalog metadata.'
+          }
+
+          foreach ($model in $catalog.Models) {
+              if (-not $model.Alias -or -not $model.Product -or -not $model.DriverPacks) {
+                  throw 'Downloaded Panasonic driver pack catalog contains a model with missing required data.'
+              }
+
+              foreach ($driverPack in $model.DriverPacks) {
+                  if (-not $driverPack.OSVer -or -not $driverPack.OSRelease -or
+                      -not $driverPack.Version -or -not $driverPack.URL -or
+                      -not $driverPack.Hash -or -not $driverPack.ReleaseDate) {
+                      throw "Downloaded Panasonic driver pack catalog contains an incomplete entry for $($model.Alias)."
+                  }
+              }
+          }
+
+          Copy-Item -LiteralPath $temporaryPath -Destination $catalogPath -Force
+          Write-Host "Updated $catalogPath"
+
+      - name: Commit if changed
+        shell: pwsh
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+
+          git add OSDCloud/core/driverpacks/panasonic.json
+
+          if (git diff --cached --quiet) {
+              Write-Host "No changes to commit."
+          } else {
+              $catalog = Get-Content 'OSDCloud\core\driverpacks\panasonic.json' -Raw | ConvertFrom-Json
+              $date = ([datetime]$catalog.LastDateModified).ToString('yyyy-MM-dd')
+              git commit -m "chore(catalog): update Panasonic driver pack catalog ($date)"
+              git push
+          }
