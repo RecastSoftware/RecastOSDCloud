@@ -10,6 +10,8 @@ BeforeAll {
     function Import-WinpeStartupAssets { param ($Path, $SystemDrive) }
     function Invoke-WinpeStartupManager { param ($Step, $Value) }
     function Show-OSDCloudBootMenuProfileWindow { param ($Profiles) }
+    function Expand-WinpeStartupBootPack { param ($Path, $Destination, $Prefix, $SystemDrive) }
+    function Invoke-WinpeStartupBootPackScripts { param ($Path) }
     $script:originalDrive = $env:SystemDrive
     $script:originalSite = $env:BOOTMENU_TEST_SITE
     $script:originalProfile = $env:OSDCLOUDBOOTMENU_PROFILE
@@ -80,6 +82,8 @@ Describe 'OSDCloud BootMenu runtime' {
         Mock Initialize-WinpeStartupMain { }
         Mock Import-WinpeStartupAssets { }
         Mock Invoke-WinpeStartupManager { }
+        Mock Expand-WinpeStartupBootPack { }
+        Mock Invoke-WinpeStartupBootPackScripts { }
         Mock Start-Sleep { }
         Mock Start-Transcript { }
         Mock Stop-Transcript { }
@@ -104,6 +108,33 @@ Describe 'OSDCloud BootMenu runtime' {
         Should -Invoke Import-WinpeStartupAssets -Times 1 -Exactly
         Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { $ArgumentList -contains '-NoExit' }
         Should -Invoke Write-Warning -Times 0 -Exactly
+    }
+
+    It 'applies build Import Packs before startup and profile Import Packs after selection' {
+        $script:packOrder = [System.Collections.Generic.List[string]]::new()
+        Mock Expand-WinpeStartupBootPack {
+            $script:packOrder.Add("expand:$Path")
+            if ($Prefix -eq 'bootpack-') { 'X:\WinpeStartup\core\bootpack-build' } else { 'X:\OSDCloud\bootpack-expanded\profile' }
+        }
+        Mock Initialize-WinpeStartupEnvironment { $script:packOrder.Add('environment') }
+        Mock Import-WinpeStartupAssets { $script:packOrder.Add("import:$($Path -join ',')") }
+        Mock Invoke-WinpeStartupBootPackScripts { $script:packOrder.Add("scripts:$($Path -join ',')") }
+        Invoke-OSDCloudBootMenu
+        $buildIndex = $script:packOrder.IndexOf('expand:X:\OSDCloud\boot-packs')
+        $buildIndex | Should -BeGreaterOrEqual 0
+        $buildIndex | Should -BeLessThan $script:packOrder.IndexOf('environment')
+        $profileExpand = $script:packOrder.IndexOf("expand:$(Join-Path $TestDrive 'boot-packs')")
+        $profileExpand | Should -BeGreaterThan $script:packOrder.IndexOf('scripts:X:\WinpeStartup\core\bootpack-build')
+        $script:packOrder.IndexOf('import:X:\OSDCloud\bootpack-expanded\profile') | Should -BeGreaterThan $profileExpand
+        $script:packOrder.IndexOf('scripts:X:\OSDCloud\bootpack-expanded\profile') |
+            Should -BeGreaterThan $script:packOrder.IndexOf('import:X:\OSDCloud\bootpack-expanded\profile')
+        $script:commands.ToArray() | Should -Be @("Write-Output 'Menu'")
+    }
+
+    It 'does not import profile assets again when the profile has no Import Packs' {
+        Invoke-OSDCloudBootMenu
+        Should -Invoke Import-WinpeStartupAssets -Times 1 -Exactly
+        Should -Invoke Invoke-WinpeStartupBootPackScripts -Times 1 -Exactly
     }
 
     It 'allows explicit arguments to override JSON' {

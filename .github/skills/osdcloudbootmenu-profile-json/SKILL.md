@@ -31,7 +31,7 @@ examples. Do not execute stored commands during authoring or validation.
 |---|---|
 | `info` | `id` (GUID string), `name`, `author`, `description` |
 | `env` | Map of environment variable names to strings; no secrets |
-| `osdcloudBoot` | `requireWinPE`, `requireWinRE`, `installModule` |
+| `osdcloudBoot` | `requireWinPE`, `requireWinRE`, `installModule`, `buildPacks`, `importPacks` |
 | `osdcloudBootStartup` | `enabled`, `onScreenKeyboard`, `showPnpDevices`, `showPnpErrors`, `wifi`, `ipConfig`, `updateOSDCloud`, `installModules`, `startup`, `main`, `shutdown` |
 | `deployOSDCloud` | `enabled`, `command` (`Deploy-OSDCloud`), `parameters` object |
 | `osdcloudBootMenu` | `enabled`, `command` (`Invoke-OSDCloudBootMenu`), `parameters` object |
@@ -45,6 +45,15 @@ examples. Do not execute stored commands during authoring or validation.
 - `osdcloudBoot.installModule` adds modules at build time. Entries may be module
   name strings or `{ "name": "Module", "version": "1.2.3", "source": "PSGallery", "enabled": true }`.
   Version and source are optional; disabled entries are skipped.
+- `osdcloudBoot.buildPacks` and `osdcloudBoot.importPacks` are arrays of
+  `{ "id": "<Pack GUID>", "name": "<display name>" }` references to OSDCloud
+  BootPacks (licensed). `id` is required and matched to `bootpack.json` `info.id`
+  in the build profile's `boot-packs` folder, then `boot-assets\boot-packs`; `name`
+  is informational. Build Packs are applied to the image when the profile is built.
+  Import Packs are copied to `OSDCloud\bootmenu-profiles\<profile>\boot-packs\<id>`
+  and applied by `Invoke-OSDCloudBootMenu` only when that profile is selected:
+  `.env`, `.reg`, and `.cer` items are imported, then Execute scripts run. Use the
+  OSDCloudBoot Packs page (or `Set-OSDCloudBootMenuProfilePack`) to edit them.
 - `osdcloudBootStartup.installModules` is an array of names updated at runtime,
   not an image-injection list.
 - Each `startup`/`main`/`shutdown` object accepts `enabled`, `commands` (string

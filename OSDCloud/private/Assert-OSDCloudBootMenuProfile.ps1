@@ -9,7 +9,9 @@ function Assert-OSDCloudBootMenuProfile {
         Parses one osdcloudbootmenu.json file and verifies that it uses only supported
         sections, properties, and value types. Supported top-level sections are
         schemaVersion (must be 1), info, env, osdcloudBoot, osdcloudBootStartup,
-        deployOSDCloud, and osdcloudBootMenu. Stored commands are not executed. Invalid content produces a
+        deployOSDCloud, and osdcloudBootMenu. osdcloudBoot.buildPacks and
+        osdcloudBoot.importPacks contain objects with a GUID id and an optional name that
+        reference OSDCloud BootPacks. Stored commands are not executed. Invalid content produces a
         terminating error that identifies the file.
 
     .PARAMETER Path
@@ -166,7 +168,23 @@ function Assert-OSDCloudBootMenuProfile {
 
     $BootImage = & $AssertSection $Profile 'osdcloudBoot'
     if ($BootImage) {
-        & $AssertKeys $BootImage 'osdcloudBoot.' @('requireWinPE', 'requireWinRE', 'installModule')
+        & $AssertKeys $BootImage 'osdcloudBoot.' @('requireWinPE', 'requireWinRE', 'installModule', 'buildPacks', 'importPacks')
+        foreach ($PackKey in 'buildPacks', 'importPacks') {
+            $Packs = $BootImage.PSObject.Properties[$PackKey]
+            if (-not $Packs) { continue }
+            if ($Packs.Value -isnot [System.Array]) { & $Fail "'osdcloudBoot.$PackKey' must be a JSON array." }
+            $SeenPackIds = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+            foreach ($Pack in $Packs.Value) {
+                if (-not (& $IsObject $Pack)) { & $Fail "'osdcloudBoot.$PackKey' must contain JSON objects." }
+                & $AssertKeys $Pack "osdcloudBoot.$PackKey." @('id', 'name')
+                $PackId = [guid]::Empty
+                if ($Pack.id -isnot [System.String] -or -not [guid]::TryParse($Pack.id, [ref]$PackId) -or $PackId -eq [guid]::Empty) {
+                    & $Fail "'osdcloudBoot.$PackKey.id' must be a GUID string."
+                }
+                if (-not $SeenPackIds.Add($PackId.ToString())) { & $Fail "'osdcloudBoot.$PackKey' contains duplicate id '$($Pack.id)'." }
+                & $AssertString $Pack "osdcloudBoot.$PackKey." 'name'
+            }
+        }
         & $AssertBoolean $BootImage 'osdcloudBoot.' 'requireWinRE'
         & $AssertBoolean $BootImage 'osdcloudBoot.' 'requireWinPE'
         if ($BootImage.requireWinPE -and $BootImage.requireWinRE) { & $Fail 'A profile cannot require both WinPE and WinRE.' }

@@ -58,6 +58,18 @@ function Invoke-OSDCloudBootMenu {
         loading, its env section, and built-in shell setup are not
         license-gated.
 
+        OSDCloud Import Packs are also license-gated. Build-level Import Packs in
+        X:\OSDCloud\boot-packs\<id> are expanded to
+        X:\WinpeStartup\core\bootpack-<id> before Core assets are imported, so
+        their .env, winpe-reg, and winpe-root-cer files are applied with Core.
+        Their Execute scripts run after WinPE initialization and before
+        profiles are discovered. Import Packs attached to the selected profile
+        (<profile folder>\boot-packs\<id>) are expanded to
+        X:\OSDCloud\bootpack-expanded\<id> after the profile assets are
+        imported, then their assets are imported and Execute scripts run.
+        .cmd scripts run with cmd.exe and .ps1 scripts run with Windows
+        PowerShell. Invalid Packs and script failures warn and continue.
+
         This function only runs in WinPE where SystemDrive is X:. If it is called
         outside WinPE, it writes a warning and exits without running startup steps.
 
@@ -508,6 +520,10 @@ function Invoke-OSDCloudBootMenu {
             }
         }
 
+        # Expand build-level Import Packs into WinpeStartup Core asset folders before Core assets are imported
+        $buildImportPackPaths = @(Expand-WinpeStartupBootPack -Path "$startupSystemDrive\OSDCloud\boot-packs" `
+                -Destination "$startupSystemDrive\WinpeStartup\core" -Prefix 'bootpack-' -SystemDrive $startupSystemDrive)
+
         # Initialize WinPE environment (shell folders, env vars, registry)
         Initialize-WinpeStartupEnvironment
 
@@ -520,6 +536,9 @@ function Invoke-OSDCloudBootMenu {
         # Run wpeinit and wpeutil commands and wait for initialization to complete
         Initialize-WinpeStartupMain
         Start-Sleep -Seconds 3
+
+        # Run build-level Import Pack scripts before the BootMenu is shown
+        Invoke-WinpeStartupBootPackScripts -Path $buildImportPackPaths
 
         try {
             $candidateProfiles = @(Get-OSDCloudBootMenuProfileCandidates -ErrorAction Stop)
@@ -705,6 +724,14 @@ function Invoke-OSDCloudBootMenu {
 
         if ($selectedProfile -and $selectedProfile.AssetPath) {
             Import-WinpeStartupAssets -Path $selectedProfile.AssetPath -SystemDrive $startupSystemDrive
+
+            # Apply Import Packs attached to the selected BootMenu profile
+            $profileImportPackPaths = @(Expand-WinpeStartupBootPack -Path ([IO.Path]::Combine($selectedProfile.AssetPath, 'boot-packs')) `
+                    -Destination "$startupSystemDrive\OSDCloud\bootpack-expanded" -SystemDrive $startupSystemDrive)
+            if ($profileImportPackPaths.Count -gt 0) {
+                Import-WinpeStartupAssets -Path $profileImportPackPaths -SystemDrive $startupSystemDrive
+                Invoke-WinpeStartupBootPackScripts -Path $profileImportPackPaths
+            }
         }
 
         Write-Verbose 'Invoke-OSDCloudBootMenu: Starting full WinpeStartup sequence'
