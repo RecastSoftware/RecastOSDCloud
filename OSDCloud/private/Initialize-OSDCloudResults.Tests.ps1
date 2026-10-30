@@ -4,6 +4,7 @@ BeforeAll {
     . "$PSScriptRoot\Export-OSDCloudResults.ps1"
     . "$PSScriptRoot\Send-OSDCloudResults.ps1"
     . "$PSScriptRoot\Set-OSDCloudAcquisitionResult.ps1"
+    $moduleVersion = (Import-PowerShellDataFile -LiteralPath (Join-Path $PSScriptRoot '..\OSDCloud.psd1')).ModuleVersion
     $stateNames = @('OSDCloudResults', 'OSDCloudDeploy', 'OSDCoreDevice', 'OSDCloudWorkflowInvoke')
     $originalState = @{}
     foreach ($name in $stateNames) {
@@ -45,7 +46,7 @@ Describe 'Deployment results helpers' {
             stepOSDownload = $true
             stepDriverPackDownload = $true
         }
-        Initialize-OSDCloudResults -ModuleVersion '26.10.15.1' -WorkflowName default -LaunchMethod CLI
+        Initialize-OSDCloudResults -ModuleVersion $moduleVersion -WorkflowName default -LaunchMethod CLI
         Update-OSDCloudResults
         Mock Invoke-RestMethod {}
     }
@@ -53,6 +54,7 @@ Describe 'Deployment results helpers' {
     It 'creates a reduced fresh schema with nullable timing and no raw identifiers' {
         $id = $global:OSDCloudResults.DeploymentId
         $global:OSDCloudResults.SchemaVersion | Should -Be 1
+        $global:OSDCloudResults.ModuleVersion | Should -BeExactly $moduleVersion
         $global:OSDCloudResults.Status | Should -Be 'NotStarted'
         $global:OSDCloudResults.IsComplete | Should -BeFalse
         $global:OSDCloudResults.StartTimeUtc | Should -BeNullOrEmpty
@@ -64,6 +66,7 @@ Describe 'Deployment results helpers' {
         foreach ($name in 'sizeOS', 'sizeDriverPack', 'totalDurationRAW', 'totalDuration',
             'timeDownload', 'timeCache', 'timeCopy', 'timeExpand', 'timeOther', 'timeCloud',
             'totalSizeDownloadMB', 'totalSizeCopyMB', 'totalSizeMB', 'totalMBps',
+            'ContentInternet', 'ContentLocal',
             'OSFileName', 'DriverPackFileName') {
             $propertyNames -ccontains $name | Should -BeTrue
         }
@@ -81,9 +84,11 @@ Describe 'Deployment results helpers' {
         $global:OSDCloudResults.DriverPackFileName | Should -BeExactly 'drivers.cab'
         $json = $global:OSDCloudResults | ConvertTo-Json
         $json | Should -Not -Match 'raw-private-uuid|private-serial|private-license|private.invalid'
-        Initialize-OSDCloudResults -ModuleVersion '26.10.15.1' -WorkflowName default -LaunchMethod GUI
+        Initialize-OSDCloudResults -ModuleVersion $moduleVersion -WorkflowName default -LaunchMethod GUI
         $global:OSDCloudResults.DeploymentId | Should -Not -Be $id
         $global:OSDCloudResults.LaunchMethod | Should -Be 'GUI'
+        $global:OSDCloudResults.ContentInternet | Should -BeNullOrEmpty
+        $global:OSDCloudResults.ContentLocal | Should -BeNullOrEmpty
     }
 
     It 'hashes the UUID when needed and keeps the resolved identity for the run' {
@@ -251,14 +256,18 @@ Describe 'Deployment results helpers' {
     }
 
     It 'reports copied ModelDrivers without the retained OEM archive: OS=<OS>' -TestCases @(
-        @{ OS = 'Copy'; ExpectedSource = 'Cache' }
-        @{ OS = 'Download'; ExpectedSource = 'Mixed' }
+        @{ OS = 'Copy'; ExpectedSource = 'Cache'; Internet = 0L; Local = 9L }
+        @{ OS = 'Download'; ExpectedSource = 'Mixed'; Internet = 5L; Local = 4L }
+        @{ OS = 'Cache'; ExpectedSource = 'Mixed'; Internet = 5L; Local = 4L }
     ) {
-        param ($OS, $ExpectedSource)
+        param ($OS, $ExpectedSource, $Internet, $Local)
         $global:OSDCloudWorkflowInvoke.DriverPackName = 'ModelDrivers'
         $global:OSDCloudWorkflowInvoke.DriverPackCloudObject = [pscustomobject]@{ FileName = 'sp160195.exe' }
         $global:OSDCloudWorkflowInvoke.CompletedTransfers = @{ stepDriverPackCopy = $true }
         $global:OSDCloudWorkflowInvoke.CompletedTransfers["stepOS${OS}"] = $true
+        if ($OS -eq 'Cache') {
+            $global:OSDCloudWorkflowInvoke.CompletedTransfers.stepOSCopy = $true
+        }
         Set-OSDCloudAcquisitionResult -Content OS -Bytes 5MB
         Set-OSDCloudAcquisitionResult -Content DriverPack -Bytes 3.75MB
         Update-OSDCloudResults
@@ -266,10 +275,14 @@ Describe 'Deployment results helpers' {
         $global:OSDCloudResults.DriverPackFileName | Should -BeNullOrEmpty
         $global:OSDCloudResults.ContentSource | Should -BeExactly $ExpectedSource
         $global:OSDCloudResults.sizeDriverPack | Should -Be 4
+        $global:OSDCloudResults.ContentInternet | Should -Be $Internet
+        $global:OSDCloudResults.ContentLocal | Should -Be $Local
         Export-OSDCloudResults
         $loaded = Import-Clixml -LiteralPath (Join-Path $env:TEMP 'OSDCloudResults.clixml')
         $loaded.DriverPackFileName | Should -BeNullOrEmpty
         $loaded.ContentSource | Should -BeExactly $ExpectedSource
+        $loaded.ContentInternet | Should -Be $Internet
+        $loaded.ContentLocal | Should -Be $Local
         $global:OSDCloudResults.StartTimeUtc = [datetime]::UtcNow
         $global:OSDCloudResults.EndTimeUtc = [datetime]::UtcNow
         $global:OSDCloudResults.Status = 'Completed'
@@ -279,6 +292,8 @@ Describe 'Deployment results helpers' {
         $payload.properties.DriverPackFileName | Should -BeNullOrEmpty
         $script:capturedBody | Should -Match '"DriverPackFileName":null'
         $payload.properties.ContentSource | Should -BeExactly $ExpectedSource
+        $payload.properties.ContentInternet | Should -Be $Internet
+        $payload.properties.ContentLocal | Should -Be $Local
     }
 
     It 'clears the OEM archive filename when ModelDrivers is selected before workflow execution' {
@@ -340,6 +355,7 @@ Describe 'Deployment results helpers' {
         foreach ($directory in @($env:TEMP, (Join-Path $targetRoot 'Windows\Temp'))) {
             $loaded = Import-Clixml -LiteralPath (Join-Path $directory 'OSDCloudResults.clixml')
             $loaded.DeploymentId | Should -Be $global:OSDCloudResults.DeploymentId
+            $loaded.ModuleVersion | Should -BeExactly $moduleVersion
             $loaded.IsComplete | Should -BeOfType ([bool])
             $loaded.StartTimeUtc | Should -BeOfType ([datetime])
             $loaded.totalDurationRAW | Should -BeOfType ([long])
@@ -348,6 +364,10 @@ Describe 'Deployment results helpers' {
             $loaded.sizeOS | Should -Be 6
             $loaded.totalSizeCopyMB | Should -Be 6
             $loaded.totalSizeDownloadMB | Should -Be 6
+            $loaded.ContentInternet | Should -Be 6
+            $loaded.ContentInternet | Should -BeOfType ([long])
+            $loaded.ContentLocal | Should -Be 0
+            $loaded.ContentLocal | Should -BeOfType ([long])
             foreach ($name in 'sizeOS', 'sizeDriverPack', 'totalDurationRAW', 'totalDuration',
                 'totalSizeDownloadMB', 'totalSizeCopyMB', 'totalSizeMB', 'totalMBps') {
                 $loaded.PSObject.Properties.Name -ccontains $name | Should -BeTrue
@@ -440,6 +460,7 @@ Describe 'Deployment results helpers' {
         $payload = $script:capturedBody | ConvertFrom-Json
         $payload.event | Should -Be 'OSDCloudResults'
         $payload.properties.IsComplete | Should -BeOfType ([bool])
+        $payload.properties.ModuleVersion | Should -BeExactly $moduleVersion
         $payload.properties.totalDurationRAW | Should -Be 126
         $payload.properties.sizeOS | Should -Be 3
         $payload.properties.stepOSCopy | Should -Be 5
@@ -461,6 +482,8 @@ Describe 'Deployment results helpers' {
         $payload.properties.DriverPackFileName | Should -BeExactly 'drivers.cab'
         $payload.properties.totalSizeDownloadMB | Should -Be 4
         $payload.properties.totalSizeCopyMB | Should -Be 3
+        $payload.properties.ContentInternet | Should -Be 4
+        $payload.properties.ContentLocal | Should -Be 0
         $payload.properties.totalSizeMB | Should -Be 4
         $payload.properties.totalMBps | Should -Be 0
         $payload.properties.ContentSource | Should -BeExactly 'Cloud'
@@ -534,13 +557,17 @@ Describe 'Deployment results helpers' {
         Update-OSDCloudResults
         $global:OSDCloudResults.ContentInternet | Should -Be $Internet
         $global:OSDCloudResults.ContentInternet | Should -BeOfType ([long])
+        $global:OSDCloudResults.ContentInternet | Should -Be (
+            $global:OSDCloudResults.totalSizeCacheMB + $global:OSDCloudResults.totalSizeDownloadMB)
         $global:OSDCloudResults.ContentLocal | Should -Be $Local
         $global:OSDCloudResults.ContentLocal | Should -BeOfType ([long])
         $global:OSDCloudResults.totalSizeMB | Should -Be $Total
         Export-OSDCloudResults
         $loaded = Import-Clixml -LiteralPath (Join-Path $env:TEMP 'OSDCloudResults.clixml')
         $loaded.ContentInternet | Should -Be $Internet
+        $loaded.ContentInternet | Should -BeOfType ([long])
         $loaded.ContentLocal | Should -Be $Local
+        $loaded.ContentLocal | Should -BeOfType ([long])
         $global:OSDCloudResults.StartTimeUtc = [datetime]::UtcNow
         $global:OSDCloudResults.EndTimeUtc = [datetime]::UtcNow
         $global:OSDCloudResults.Status = 'Completed'
