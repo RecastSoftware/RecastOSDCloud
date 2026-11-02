@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Added
+
+- Added the `recast` workflow (`Deploy-OSDCloud -WorkflowName recast`). It keeps the `refreshalt` tasks, OS settings, single-page layout, and deployment behavior, restyled in the light Recast Portal look with Material Design 3 controls: an OSDCloud by Recast title bar, a navy announcement banner, white cards, outlined dropdowns with floating labels, and a blue Start button. The UI uses MaterialDesignInXamlToolkit 5.4.0 (MIT), bundled in `OSDCloud\types\materialdesign` for Windows PowerShell and PowerShell 7. If those assemblies cannot be loaded, the default workflow UI is shown instead.
+
 ### Changed
 
 - The `refreshalt` deployment UI combines Device and Identity into a single collapsible bar, initially collapsed to leave more room for deployment settings.
