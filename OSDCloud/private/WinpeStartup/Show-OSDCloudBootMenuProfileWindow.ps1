@@ -6,7 +6,7 @@ function Show-OSDCloudBootMenuProfileWindow {
     .DESCRIPTION
         Displays the discovered OSDCloud BootMenu profiles in a small dark window
         styled like OSDCloud Boot, with a custom title bar showing
-        "OSDCloud BootMenu" and the OSDCloud module version, and the Recast logo
+        "Recast Software - OSDCloud BootMenu" and the OSDCloud module version, and the Recast logo
         in the footer. Only profile names are listed; hovering over a
         profile shows its JSON path and asset folder. Start, Enter, or a
         double-click returns the selected profile. Cancel, Escape, or closing
@@ -452,9 +452,9 @@ function Show-OSDCloudBootMenuProfileWindow {
             </Button>
             <Grid Grid.Column="1" Margin="16,0,24,0" VerticalAlignment="Center">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                <TextBlock x:Name="WindowHeading" Text="OSDCloud BootMenu" FontSize="16" FontWeight="SemiBold"
+                <TextBlock x:Name="WindowHeading" Text="Recast Software - OSDCloud BootMenu" FontSize="16" FontWeight="SemiBold"
                            TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
-                           AutomationProperties.Name="OSDCloud BootMenu"/>
+                           AutomationProperties.Name="Recast Software - OSDCloud BootMenu"/>
                 <TextBlock x:Name="WindowSubtitle" Grid.Column="1" Margin="12,0,0,0"
                            Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="NoWrap"
                            TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>

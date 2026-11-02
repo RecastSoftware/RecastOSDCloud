@@ -12,7 +12,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- The BootMenu profile window uses the OSDCloud Boot style: a custom title bar reading `OSDCloud BootMenu <version>`, the Recast logo at the bottom left, and a collapsed left menu with Keyboard Layout and OSDCloud Explorer shortcuts. Selecting a keyboard layout applies it immediately.
+- The BootMenu profile window uses the OSDCloud Boot style: a custom title bar reading `Recast Software - OSDCloud BootMenu <version>`, the Recast logo at the bottom left, and a collapsed left menu with Keyboard Layout and OSDCloud Explorer shortcuts. Selecting a keyboard layout applies it immediately.
 - Module version bumped from `26.10.16.2` to `26.11.1`.
 
 ## 26.10.16.2 - October 16, 2026
