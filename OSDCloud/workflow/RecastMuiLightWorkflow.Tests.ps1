@@ -1,6 +1,6 @@
 BeforeAll {
     $workflowRoot = $PSScriptRoot
-    $path = Join-Path $workflowRoot 'recast'
+    $path = Join-Path $workflowRoot 'recast-mui-light'
     $materialFramework = if ($PSVersionTable.PSEdition -eq 'Core') { 'net8.0-windows' } else { 'net462' }
     $materialPath = Join-Path $workflowRoot "..\types\materialdesign\$materialFramework"
     $materialAssemblies = 'Microsoft.Xaml.Behaviors.dll', 'MaterialDesignColors.dll', 'MaterialDesignThemes.Wpf.dll'
@@ -21,7 +21,7 @@ BeforeAll {
     }
 }
 
-Describe 'Recast workflow' {
+Describe 'recast-mui-light workflow' {
     It 'bundles Material Design assemblies for Windows PowerShell and PowerShell 7' {
         foreach ($framework in 'net462', 'net8.0-windows') {
             foreach ($assemblyName in $materialAssemblies) {
@@ -111,7 +111,7 @@ Describe 'Recast workflow' {
     It 'has task ids that are unique across all workflows' {
         $tasks = Get-ChildItem $workflowRoot -Recurse -Filter *.json | Where-Object { $_.Directory.Name -eq 'tasks' } |
             ForEach-Object { [pscustomobject]@{ Workflow = $_.Directory.Parent.Name; Id = (Get-Content -Raw $_.FullName | ConvertFrom-Json).id } }
-        $recastIds = $tasks | Where-Object Workflow -EQ 'recast' | ForEach-Object Id
+        $recastIds = $tasks | Where-Object Workflow -EQ 'recast-mui-light' | ForEach-Object Id
         $recastIds | Should -Not -BeNullOrEmpty
         $tasks | Where-Object Id -In $recastIds | Group-Object Id | Where-Object Count -GT 1 | Should -BeNullOrEmpty
     }
@@ -128,9 +128,9 @@ Describe 'Recast workflow' {
     }
 }
 
-Describe 'Recast workflow fallback' {
+Describe 'recast-mui-light workflow fallback' {
     It 'uses the default workflow UI when Material Design assemblies are unavailable' {
-        $isolatedUi = Join-Path $TestDrive 'workflow\recast\ui'
+        $isolatedUi = Join-Path $TestDrive 'workflow\recast-mui-light\ui'
         $defaultUi = Join-Path $TestDrive 'workflow\default\ux'
         New-Item -ItemType Directory -Path $isolatedUi, $defaultUi -Force | Out-Null
         Copy-Item (Join-Path $path 'ui\*') $isolatedUi
@@ -145,7 +145,7 @@ Describe 'Recast workflow fallback' {
     }
 }
 
-Describe 'Recast device and identity bar' {
+Describe 'recast-mui-light device and identity bar' {
     BeforeEach {
         $window = Get-RecastWindow
         $expander = $window.FindName('DeviceIdentityExpander')
