@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Recast Software - OSDCloud" Width="1000" Height="760" MinWidth="760" MinHeight="560"
+        WindowStartupLocation="CenterScreen" Background="#F4F6FB" BorderBrush="#D5DCEB" BorderThickness="1"
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Foreground="#161F5B"
+        TextElement.FontFamily="Segoe UI Variable Text, Segoe UI" TextElement.Foreground="#161F5B"
+        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        AutomationProperties.Name="Recast Software - OSDCloud">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="48" GlassFrameThickness="0,0,0,1"
+                            ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}"
+                            UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:CustomColorTheme BaseTheme="Light" PrimaryColor="#0372FF" SecondaryColor="#161F5B"/>
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Recast Portal palette -->
+            <FontFamily x:Key="MaterialDesignFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+            <SolidColorBrush x:Key="RecastNavyBrush" Color="#161F5B"/>
+            <SolidColorBrush x:Key="RecastBlueBrush" Color="#0372FF"/>
+            <SolidColorBrush x:Key="RecastBlueTintBrush" Color="#E8F1FF"/>
+            <SolidColorBrush x:Key="CanvasBrush" Color="#F4F6FB"/>
+            <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="BorderBrush" Color="#E1E6F0"/>
+            <SolidColorBrush x:Key="HoverBrush" Color="#EEF2FA"/>
+            <SolidColorBrush x:Key="PressedBrush" Color="#E1E8F6"/>
+            <SolidColorBrush x:Key="SecondaryTextBrush" Color="#5B6788"/>
+            <Style x:Key="CardStyle" TargetType="materialDesign:Card">
+                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="UniformCornerRadius" Value="10"/>
+                <Setter Property="Padding" Value="24,20"/>
+                <Setter Property="materialDesign:ElevationAssist.Elevation" Value="Dp1"/>
+            </Style>
+            <Style x:Key="IconTileStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource RecastBlueTintBrush}"/>
+                <Setter Property="CornerRadius" Value="8"/>
+                <Setter Property="Width" Value="36"/>
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <Style x:Key="IconTileIconStyle" TargetType="materialDesign:PackIcon">
+                <Setter Property="Width" Value="20"/>
+                <Setter Property="Height" Value="20"/>
+                <Setter Property="Foreground" Value="{StaticResource RecastBlueBrush}"/>
+                <Setter Property="HorizontalAlignment" Value="Center"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <Style x:Key="PillBorderStyle" TargetType="Border">
+                <Setter Property="Background" Value="{StaticResource RecastBlueTintBrush}"/>
+                <Setter Property="CornerRadius" Value="4"/>
+                <Setter Property="Padding" Value="8,3"/>
+                <Setter Property="HorizontalAlignment" Value="Left"/>
+            </Style>
+            <Style x:Key="PillTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource RecastBlueBrush}"/>
+                <Setter Property="FontSize" Value="10"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+            </Style>
+            <Style x:Key="CardTitleStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="18"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Foreground" Value="{StaticResource RecastNavyBrush}"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+                <Setter Property="Foreground" Value="{StaticResource RecastNavyBrush}"/>
+                <Setter Property="Margin" Value="0,0,0,6"/>
+            </Style>
+            <Style x:Key="DescriptionTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+            </Style>
+            <Style x:Key="HelperTextStyle" TargetType="TextBlock" BasedOn="{StaticResource DescriptionTextStyle}">
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="Margin" Value="14,2,0,10"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                <Setter Property="TextWrapping" Value="NoWrap"/>
+            </Style>
+            <Style x:Key="LabelTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="Margin" Value="0,4,12,4"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <Style x:Key="ValueTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource RecastNavyBrush}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="TextWrapping" Value="Wrap"/>
+                <Setter Property="Margin" Value="0,4,16,4"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <Style x:Key="CopyValueTextStyle" TargetType="TextBlock" BasedOn="{StaticResource ValueTextStyle}">
+                <Setter Property="Foreground" Value="{StaticResource RecastBlueBrush}"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="Margin" Value="0,4,8,4"/>
+            </Style>
+            <Style x:Key="StatusTextStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="TextWrapping" Value="NoWrap"/>
+                <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+                <Style.Triggers>
+                    <Trigger Property="Text" Value="">
+                        <Setter Property="ToolTip" Value="{x:Null}"/>
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style x:Key="SettingComboStyle" TargetType="ComboBox" BasedOn="{StaticResource MaterialDesignOutlinedComboBox}">
+                <Setter Property="Margin" Value="0,6,0,0"/>
+                <Setter Property="FontSize" Value="13"/>
+                <Setter Property="MaxDropDownHeight" Value="360"/>
+                <Setter Property="materialDesign:TextFieldAssist.TextFieldCornerRadius" Value="6"/>
+                <Setter Property="materialDesign:HintAssist.IsFloating" Value="True"/>
+            </Style>
+            <Style x:Key="CopyButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignIconButton}">
+                <Setter Property="Width" Value="28"/>
+                <Setter Property="Height" Value="28"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Margin" Value="0,2"/>
+                <Setter Property="Foreground" Value="{StaticResource RecastBlueBrush}"/>
+            </Style>
+            <Style x:Key="TitleBarFocusVisualStyle">
+                <Setter Property="Control.Template">
+                    <Setter.Value>
+                        <ControlTemplate>
+                            <Rectangle Margin="2" Stroke="{StaticResource RecastBlueBrush}" StrokeThickness="2" RadiusX="4" RadiusY="4"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="TitleBarButtonStyle" TargetType="Button">
+                <Setter Property="Width" Value="46"/>
+                <Setter Property="Height" Value="48"/>
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{StaticResource RecastNavyBrush}"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Cursor" Value="Hand"/>
+                <Setter Property="FocusVisualStyle" Value="{StaticResource TitleBarFocusVisualStyle}"/>
+                <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="CaptionBorder" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource HoverBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource PressedBrush}"/>
+                                </Trigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="Tag" Value="Close"/>
+                                        <Condition Property="IsMouseOver" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="CaptionBorder" Property="Background" Value="#C42B1C"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </MultiTrigger>
+                                <MultiTrigger>
+                                    <MultiTrigger.Conditions>
+                                        <Condition Property="Tag" Value="Close"/>
+                                        <Condition Property="IsPressed" Value="True"/>
+                                    </MultiTrigger.Conditions>
+                                    <Setter TargetName="CaptionBorder" Property="Background" Value="#A82418"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                </MultiTrigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.45"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
+                <Setter Property="Tag" Value="Close"/>
+            </Style>
+            <Style x:Key="TitleBarMenuButtonStyle" TargetType="Button" BasedOn="{StaticResource MaterialDesignFlatButton}">
+                <Setter Property="Height" Value="36"/>
+                <Setter Property="Padding" Value="12,0"/>
+                <Setter Property="Margin" Value="2,0"/>
+                <Setter Property="Foreground" Value="{StaticResource RecastNavyBrush}"/>
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="materialDesign:ButtonAssist.CornerRadius" Value="6"/>
+                <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            </Style>
+            <Style x:Key="TitleBarIconStyle" TargetType="materialDesign:PackIcon">
+                <Setter Property="Width" Value="16"/>
+                <Setter Property="Height" Value="16"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
+            </Style>
+            <!-- Dynamic menus are created in MainWindow.ps1 and need explicit styles. -->
+            <Style x:Key="ToolMenuStyle" TargetType="ContextMenu" BasedOn="{StaticResource {x:Type ContextMenu}}">
+                <Setter Property="MaxHeight" Value="420"/>
+            </Style>
+            <Style x:Key="ToolMenuItemStyle" TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                <Setter Property="Foreground" Value="{StaticResource RecastNavyBrush}"/>
+            </Style>
+            <Style x:Key="DeviceIdentityExpanderStyle" TargetType="Expander">
+                <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource RecastNavyBrush}"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Expander">
+                            <materialDesign:Card Background="{TemplateBinding Background}" UniformCornerRadius="10"
+                                                 materialDesign:ElevationAssist.Elevation="Dp1">
+                                <DockPanel>
+                                    <ToggleButton x:Name="HeaderToggle" DockPanel.Dock="Top" Style="{x:Null}"
+                                                  Background="Transparent" BorderBrush="Transparent" Padding="16,10"
+                                                  Foreground="{TemplateBinding Foreground}"
+                                                  FocusVisualStyle="{x:Null}" Cursor="Hand"
+                                                  Content="{TemplateBinding Header}"
+                                                  IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                                  AutomationProperties.Name="{Binding (AutomationProperties.Name), RelativeSource={RelativeSource TemplatedParent}}"
+                                                  AutomationProperties.HelpText="Expand or collapse device and identity details">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border x:Name="HeaderBorder" Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="2"
+                                                        CornerRadius="10" Padding="{TemplateBinding Padding}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <ContentPresenter VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                                                        <Path x:Name="HeaderChevron" Grid.Column="1" Data="M 0 0 L 5 5 L 10 0"
+                                                              Stroke="{StaticResource RecastBlueBrush}" StrokeThickness="1.6"
+                                                              VerticalAlignment="Center" Margin="12,0,4,0"/>
+                                                    </Grid>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="HeaderBorder" Property="Background" Value="{StaticResource HoverBrush}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsKeyboardFocused" Value="True">
+                                                        <Setter TargetName="HeaderBorder" Property="BorderBrush" Value="{StaticResource RecastBlueBrush}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsChecked" Value="True">
+                                                        <Setter TargetName="HeaderChevron" Property="Data" Value="M 0 5 L 5 0 L 10 5"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                    <ContentPresenter x:Name="DetailsPresenter" ContentSource="Content"
+                                                      Margin="24,4,24,20" Visibility="Collapsed"/>
+                                </DockPanel>
+                            </materialDesign:Card>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsExpanded" Value="True">
+                                    <Setter TargetName="DetailsPresenter" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <!-- Title bar -->
+        <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="16,0,0,0">
+                    <Image x:Name="LogoImage" Height="30" Stretch="Uniform" VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality" AutomationProperties.Name="OSDCloud by Recast"/>
+                    <TextBlock x:Name="VersionText" Margin="12,2,0,0" Foreground="{StaticResource SecondaryTextBrush}" FontSize="12" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,8,0">
+                    <Button x:Name="LogsMenuButton" Style="{StaticResource TitleBarMenuButtonStyle}" ToolTip="Open a deployment log" AutomationProperties.Name="Logs">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileDocumentOutline" Style="{StaticResource TitleBarIconStyle}" Margin="0,0,6,0"/>
+                            <TextBlock Text="Logs" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="WmiMenuButton" Style="{StaticResource TitleBarMenuButtonStyle}" ToolTip="Open a WMI inventory file" AutomationProperties.Name="WMI">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="DatabaseSearchOutline" Style="{StaticResource TitleBarIconStyle}" Margin="0,0,6,0"/>
+                            <TextBlock Text="WMI" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ShellMenuButton" Style="{StaticResource TitleBarMenuButtonStyle}" ToolTip="Open a command shell" AutomationProperties.Name="Shell">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Console" Style="{StaticResource TitleBarIconStyle}" Margin="0,0,6,0"/>
+                            <TextBlock Text="Shell" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="PrivacyButton" Style="{StaticResource TitleBarMenuButtonStyle}" ToolTip="OSDCloud privacy statement" AutomationProperties.Name="Privacy">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ShieldLockOutline" Style="{StaticResource TitleBarIconStyle}" Margin="0,0,6,0"/>
+                            <TextBlock Text="Privacy" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button x:Name="MinimizeButton" Style="{StaticResource TitleBarButtonStyle}" ToolTip="Minimize" AutomationProperties.Name="Minimize">
+                        <materialDesign:PackIcon Kind="WindowMinimize" Style="{StaticResource TitleBarIconStyle}"/>
+                    </Button>
+                    <Button x:Name="MaximizeButton" Style="{StaticResource TitleBarButtonStyle}" ToolTip="Maximize" AutomationProperties.Name="Maximize">
+                        <materialDesign:PackIcon x:Name="MaximizeIcon" Kind="WindowMaximize" Style="{StaticResource TitleBarIconStyle}"/>
+                    </Button>
+                    <Button x:Name="CloseButton" Style="{StaticResource TitleBarCloseButtonStyle}" ToolTip="Close" AutomationProperties.Name="Close">
+                        <materialDesign:PackIcon Kind="WindowClose" Style="{StaticResource TitleBarIconStyle}"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+        <!-- Portal-style announcement banner -->
+        <Border Grid.Row="1" Background="{StaticResource RecastNavyBrush}" Padding="20,9">
+            <DockPanel>
+                <materialDesign:PackIcon Kind="InformationOutline" Width="16" Height="16" Foreground="White" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <TextBlock x:Name="BannerText" Foreground="White" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center">
+                    <Run Text="Ready to deploy?" FontWeight="Bold"/>
+                    <Run Text="Review the device and deployment settings, then select Start to install Windows from the cloud."/>
+                </TextBlock>
+            </DockPanel>
+        </Border>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+            <StackPanel Margin="24,20,24,20">
+                <Expander x:Name="DeviceIdentityExpander" Style="{StaticResource DeviceIdentityExpanderStyle}"
+                          IsExpanded="False" Margin="0,0,0,16" AutomationProperties.Name="Device and Identity">
+                    <Expander.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Style="{StaticResource IconTileStyle}" Margin="0,0,12,0">
+                                <materialDesign:PackIcon Kind="Laptop" Style="{StaticResource IconTileIconStyle}"/>
+                            </Border>
+                            <TextBlock Text="Device and Identity" Style="{StaticResource CardTitleStyle}" FontSize="15" Foreground="#161F5B"/>
+                        </StackPanel>
+                    </Expander.Header>
+                    <Grid x:Name="DeviceIdentityDetails">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="24"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" Background="{StaticResource CanvasBrush}" CornerRadius="8" Padding="16,12">
+                            <StackPanel>
+                                <TextBlock Text="Device" Style="{StaticResource SectionTitleStyle}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" MinWidth="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Manufacturer" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="deviceOSDManufacturerText" Text="-" Style="{StaticResource ValueTextStyle}"/>
+                                    <TextBlock Grid.Row="1" Text="Model" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="deviceOSDModelText" Text="-" Style="{StaticResource ValueTextStyle}"/>
+                                    <TextBlock Grid.Row="2" Text="Product" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="deviceOSDProductText" Text="-" Style="{StaticResource ValueTextStyle}"/>
+                                    <TextBlock Grid.Row="3" Text="System SKU" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" x:Name="deviceComputerSystemSKUText" Text="-" Style="{StaticResource ValueTextStyle}"/>
+                                    <TextBlock Grid.Row="4" Text="BIOS Version" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" x:Name="deviceBiosVersionText" Text="-" Style="{StaticResource ValueTextStyle}"/>
+                                    <TextBlock Grid.Row="5" Text="BIOS Date" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="1" x:Name="deviceBiosReleaseDateText" Text="-" Style="{StaticResource ValueTextStyle}"/>
+                                    <TextBlock Grid.Row="6" Text="TPM 2.0" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="6" Grid.Column="1" x:Name="deviceIsTpmSpecText" Text="-" Style="{StaticResource ValueTextStyle}"/>
+                                    <TextBlock Grid.Row="7" Text="Autopilot" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="7" Grid.Column="1" x:Name="deviceIsAutopilotSpecText" Text="-" Style="{StaticResource ValueTextStyle}"/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Background="{StaticResource CanvasBrush}" CornerRadius="8" Padding="16,12" VerticalAlignment="Top">
+                            <StackPanel>
+                                <TextBlock Text="Identity" Style="{StaticResource SectionTitleStyle}"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" MinWidth="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Text="Serial Number" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" x:Name="deviceSerialNumberText" Text="-" Style="{StaticResource CopyValueTextStyle}" ToolTip="Click to copy Serial Number"/>
+                                    <Button Grid.Row="0" Grid.Column="2" x:Name="CopySerialNumberButton" Style="{StaticResource CopyButtonStyle}" ToolTip="Copy Serial Number" AutomationProperties.Name="Copy Serial Number">
+                                        <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
+                                    </Button>
+                                    <TextBlock Grid.Row="1" Text="UUID" Style="{StaticResource LabelTextStyle}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" x:Name="deviceUUIDText" Text="-" Style="{StaticResource CopyValueTextStyle}" ToolTip="Click to copy UUID"/>
+                                    <Button Grid.Row="1" Grid.Column="2" x:Name="CopyUUIDButton" Style="{StaticResource CopyButtonStyle}" ToolTip="Copy UUID" AutomationProperties.Name="Copy UUID">
+                                        <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
+                                    </Button>
+                                    <TextBlock Grid.Row="2" x:Name="deviceHardwareHashLabelText" Text="Hardware Hash" Style="{StaticResource LabelTextStyle}" Visibility="Collapsed"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" x:Name="deviceHardwareHashText" Text="Copy to Clipboard" Style="{StaticResource CopyValueTextStyle}" ToolTip="Click to copy Hardware Hash" Visibility="Collapsed"/>
+                                    <Button Grid.Row="2" Grid.Column="2" x:Name="CopyHardwareHashButton" Style="{StaticResource CopyButtonStyle}" ToolTip="Copy Hardware Hash" AutomationProperties.Name="Copy Hardware Hash" Visibility="Collapsed">
+                                        <materialDesign:PackIcon Kind="ContentCopy" Width="16" Height="16"/>
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Expander>
+                <materialDesign:Card x:Name="DeploymentSettingsCard" Style="{StaticResource CardStyle}">
+                    <StackPanel>
+                        <Border Style="{StaticResource PillBorderStyle}" Margin="0,0,0,10">
+                            <TextBlock Text="OSDCLOUD DEPLOYMENT" Style="{StaticResource PillTextStyle}"/>
+                        </Border>
+                        <DockPanel Margin="0,0,0,4">
+                            <Border Style="{StaticResource IconTileStyle}" Margin="0,0,12,0">
+                                <materialDesign:PackIcon Kind="MicrosoftWindows" Style="{StaticResource IconTileIconStyle}"/>
+                            </Border>
+                            <TextBlock Text="Deployment Settings" Style="{StaticResource CardTitleStyle}" FontSize="22"/>
+                        </DockPanel>
+                        <TextBlock Text="Choose the task sequence, operating system, and driver pack for this device." Style="{StaticResource DescriptionTextStyle}" FontSize="13" Margin="0,4,0,16"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
+                                <ComboBox x:Name="TaskSequenceCombo" Style="{StaticResource SettingComboStyle}"
+                                          materialDesign:HintAssist.Hint="Task Sequence" AutomationProperties.Name="Task Sequence"/>
+                                <TextBlock Text="Workflow task that runs after you select Start" Style="{StaticResource HelperTextStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0">
+                                <ComboBox x:Name="OperatingSystemCombo" Style="{StaticResource SettingComboStyle}"
+                                          materialDesign:HintAssist.Hint="Operating System" AutomationProperties.Name="Operating System"/>
+                                <TextBlock Text="Windows release from the OSDCloud catalog" Style="{StaticResource HelperTextStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="2">
+                                <ComboBox x:Name="OSEditionCombo" Style="{StaticResource SettingComboStyle}"
+                                          materialDesign:HintAssist.Hint="Edition" AutomationProperties.Name="Edition"/>
+                                <TextBlock Text="Windows edition to install" Style="{StaticResource HelperTextStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="0">
+                                <ComboBox x:Name="OSLanguageCodeCombo" Style="{StaticResource SettingComboStyle}"
+                                          materialDesign:HintAssist.Hint="Language" AutomationProperties.Name="Language"/>
+                                <TextBlock x:Name="SelectedOSLanguageText" Text="-" Style="{StaticResource HelperTextStyle}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="2" Grid.Column="2">
+                                <ComboBox x:Name="OSActivationCombo" Style="{StaticResource SettingComboStyle}"
+                                          materialDesign:HintAssist.Hint="Activation" AutomationProperties.Name="Activation"/>
+                                <TextBlock x:Name="OSActivationHintText" Text="Retail or Volume license channel" Style="{StaticResource HelperTextStyle}"/>
+                            </StackPanel>
+                            <Border Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Background="{StaticResource CanvasBrush}" CornerRadius="8" Padding="14,10" Margin="0,4,0,10">
+                                <DockPanel>
+                                    <materialDesign:PackIcon Kind="LayersOutline" Width="20" Height="20" Foreground="{StaticResource RecastBlueBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                    <StackPanel>
+                                        <TextBlock Text="Windows Image" Style="{StaticResource DescriptionTextStyle}" FontSize="11"/>
+                                        <TextBlock x:Name="SelectedFileNameText" Text="-" Style="{StaticResource ValueTextStyle}" Margin="0,1,0,0"/>
+                                        <TextBlock x:Name="SelectedIdText" Text="-" Style="{StaticResource StatusTextStyle}" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                            <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+                                <ComboBox x:Name="DriverPackCombo" Style="{StaticResource SettingComboStyle}"
+                                          materialDesign:HintAssist.Hint="Driver Pack" AutomationProperties.Name="Driver Pack"/>
+                                <TextBlock x:Name="DriverPackUrlText" Text="-" Style="{StaticResource HelperTextStyle}" Margin="14,2,0,0"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </materialDesign:Card>
+            </StackPanel>
+        </ScrollViewer>
+        <!-- Action bar -->
+        <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="24,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,16,0">
+                    <TextBlock x:Name="SummaryText" Style="{StaticResource StatusTextStyle}" FontSize="12" FontWeight="SemiBold" Foreground="#161F5B"/>
+                    <TextBlock x:Name="StatusText" Style="{StaticResource StatusTextStyle}" Margin="0,2,0,0"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="CancelButton" Content="Cancel" IsCancel="True" MinWidth="104" Height="40" Margin="0,0,12,0"
+                            Style="{StaticResource MaterialDesignOutlinedButton}" materialDesign:ButtonAssist.CornerRadius="6"
+                            AutomationProperties.Name="Cancel"/>
+                    <Button x:Name="StartButton" IsEnabled="False" MinWidth="128" Height="40"
+                            Style="{StaticResource MaterialDesignRaisedButton}" materialDesign:ButtonAssist.CornerRadius="6"
+                            AutomationProperties.Name="Start deployment" ToolTip="Start the OSDCloud deployment with the selected settings">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Start" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <materialDesign:PackIcon Kind="ArrowRight" Width="18" Height="18" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
