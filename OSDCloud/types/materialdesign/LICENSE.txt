@@ -1,4 +1,4 @@
-Third-party components used by the OSDCloud recast workflow UI (OSDCloud\workflow\recast\ui).
+Third-party components used by the OSDCloud recast-mui-light workflow UI (OSDCloud\workflow\recast-mui-light\ui).
 Assemblies are unmodified copies from nuget.org.
 
 MaterialDesignThemes.Wpf.dll  MaterialDesignThemes 5.4.0   https://github.com/MaterialDesignInXAML/MaterialDesignInXamlToolkit

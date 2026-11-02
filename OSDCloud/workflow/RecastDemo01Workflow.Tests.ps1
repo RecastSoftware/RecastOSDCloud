@@ -1,6 +1,6 @@
 BeforeAll {
     $workflowRoot = $PSScriptRoot
-    $workflowName = 'uidemo-01'
+    $workflowName = 'recast-demo-01'
     $path = Join-Path $workflowRoot $workflowName
     Add-Type -AssemblyName PresentationFramework
     function Get-WorkflowWindow {
@@ -9,7 +9,7 @@ BeforeAll {
     }
 }
 
-Describe 'uidemo-01 workflow' {
+Describe 'recast-demo-01 workflow' {
     It 'loads MainWindow.xaml with the required controls' {
         $window = Get-WorkflowWindow
         $controls = @(

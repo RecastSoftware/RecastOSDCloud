@@ -6,11 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Added the `recast` workflow (`Deploy-OSDCloud -WorkflowName recast`). It keeps the `refreshalt` tasks, OS settings, single-page layout, and deployment behavior, restyled in the light Recast Portal look with Material Design 3 controls: an OSDCloud by Recast title bar, a navy announcement banner, white cards, outlined dropdowns with floating labels, and a blue Start button. The UI uses MaterialDesignInXamlToolkit 5.4.0 (MIT), bundled in `OSDCloud\types\materialdesign` for Windows PowerShell and PowerShell 7. If those assemblies cannot be loaded, the default workflow UI is shown instead.
+- Added the `recast-mui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-mui-light`). It keeps the `recast-winui-dark` tasks, OS settings, single-page layout, and deployment behavior, restyled in the light Recast Portal look with Material Design 3 controls: an OSDCloud by Recast title bar, a navy announcement banner, white cards, outlined dropdowns with floating labels, and a blue Start button. The UI uses MaterialDesignInXamlToolkit 5.4.0 (MIT), bundled in `OSDCloud\types\materialdesign` for Windows PowerShell and PowerShell 7. If those assemblies cannot be loaded, the default workflow UI is shown instead.
+- Added the `recast-winui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-winui-light`). It is the `recast-winui-dark` single-page layout in a light theme: a white title bar and cards on a light gray background, navy text, Recast blue accents, and the OSDCloud by Recast logo.
 
 ### Changed
 
-- The `refreshalt` deployment UI combines Device and Identity into a single collapsible bar, initially collapsed to leave more room for deployment settings.
+- Renamed workflows: `refreshalt` is now `recast-winui-dark`, `recast` is now `recast-mui-light`, and `refresh` is now `recast-demo-01`. Use the new names with `Deploy-OSDCloud -WorkflowName`.
+- The `recast-winui-dark` deployment UI combines Device and Identity into a single collapsible bar, initially collapsed to leave more room for deployment settings.
 
 ## 26.11.1 - November 1, 2026
 
