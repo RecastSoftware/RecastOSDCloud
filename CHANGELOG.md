@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 
 - `Invoke-OSDCloudBootMenu` applies licensed OSDCloud Import Packs. Packs in `X:\OSDCloud\boot-packs` are expanded into WinpeStartup Core assets before the environment is initialized, and their Execute scripts run before the BootMenu is shown. Packs in the selected profile's `boot-packs` folder are expanded, imported, and run after that profile's assets are imported.
 - `osdcloudbootmenu.json` accepts `osdcloudBoot.buildPacks` and `osdcloudBoot.importPacks` Pack references (`id`, optional `name`).
+- Added `refresh` and `refreshalt` workflows (`Deploy-OSDCloud -WorkflowName refresh` or `refreshalt`). Both keep the default workflow's tasks, OS settings, and deployment settings behavior and use the dark OSDCloud Boot and BootMenu style with a custom title bar and the Recast logo. `refresh` uses a collapsible sidebar with Deploy, Device, Identity, Logs, WMI, and Tools pages. `refreshalt` shows Device, Identity, and Deployment Settings cards on one page with Logs, WMI, Shell, and Privacy menus in the title bar. In both, pressing Enter does not start a deployment, and Cancel closes the window without deploying.
 - `Test-OSDCloudBootMenu` opens the BootMenu window in full Windows for testing. It shows discovered profiles (or sample profiles when none are found), returns the selected profile without running it, and only reports the keyboard layout command it would run.
 
 ### Changed
