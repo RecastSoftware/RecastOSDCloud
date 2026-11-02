@@ -2,12 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## Unreleased
+## 26.11.1 - November 1, 2026
 
 ### Added
 
 - `Invoke-OSDCloudBootMenu` applies licensed OSDCloud Import Packs. Packs in `X:\OSDCloud\boot-packs` are expanded into WinpeStartup Core assets before the environment is initialized, and their Execute scripts run before the BootMenu is shown. Packs in the selected profile's `boot-packs` folder are expanded, imported, and run after that profile's assets are imported.
 - `osdcloudbootmenu.json` accepts `osdcloudBoot.buildPacks` and `osdcloudBoot.importPacks` Pack references (`id`, optional `name`).
+- `Test-OSDCloudBootMenu` opens the BootMenu window in full Windows for testing. It shows discovered profiles (or sample profiles when none are found), returns the selected profile without running it, and only reports the keyboard layout command it would run.
+
+### Changed
+
+- The BootMenu profile window uses the OSDCloud Boot style: a custom title bar reading `OSDCloud BootMenu <version>`, the Recast logo at the bottom left, and a collapsed left menu with Keyboard Layout and OSDCloud Explorer shortcuts. Selecting a keyboard layout applies it immediately.
+- Module version bumped from `26.10.16.2` to `26.11.1`.
 
 ## 26.10.16.2 - October 16, 2026
 
