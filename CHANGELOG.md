@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Changed
+
+- The `refreshalt` deployment UI combines Device and Identity into a single collapsible bar, initially collapsed to leave more room for deployment settings.
+
 ## 26.11.1 - November 1, 2026
 
 ### Added
