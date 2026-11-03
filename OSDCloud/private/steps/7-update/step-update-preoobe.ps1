@@ -9,7 +9,7 @@ function step-update-preoobe {
         return
     }
     try {
-        $source = Join-Path $PSScriptRoot '..\..\..\core\oobe\OSDCloudPreOOBE.ps1'
+        $source = Join-Path $PSScriptRoot '..\..\..\core\preoobe\OSDCloudPreOOBE.ps1'
         $scriptsPath = 'C:\Windows\Setup\Scripts'
         if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
             throw "OOBE menu source is missing: $source"

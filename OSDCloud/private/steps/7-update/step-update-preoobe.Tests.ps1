@@ -23,7 +23,7 @@ Describe 'step-update-preoobe' {
         step-update-preoobe
         Should -Invoke Save-OSDCloudPreOOBERuntime -Times 1 -Exactly -ParameterFilter {
             $DestinationPath -eq 'C:\Windows\Setup\Scripts\OSDCloudPreOOBE.ps1' -and
-            $SourcePath -like '*\core\oobe\OSDCloudPreOOBE.ps1'
+            $SourcePath -like '*\core\preoobe\OSDCloudPreOOBE.ps1'
         }
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 1 -Exactly -ParameterFilter {
             $Path -eq 'C:\Windows\Setup\Scripts\OOBE.cmd' -and $Phase -eq 'OOBE'
@@ -42,7 +42,7 @@ Describe 'step-update-preoobe' {
     }
 
     It 'reports missing assets without writing to the Windows image' {
-        Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\core\oobe\*' }
+        Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\core\preoobe\*' }
         Mock Write-Warning {}
         step-update-preoobe
         Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*source is missing*' }
@@ -69,7 +69,7 @@ Describe 'step-update-preoobe' {
 
 Describe 'Setup menu batch invocation' {
     It 'bundles all components into one parseable standalone script' {
-        $source = Join-Path $PSScriptRoot '..\..\..\core\oobe\OSDCloudPreOOBE.ps1'
+        $source = Join-Path $PSScriptRoot '..\..\..\core\preoobe\OSDCloudPreOOBE.ps1'
         $destination = Join-Path $TestDrive 'OSDCloudPreOOBE.ps1'
         Save-OSDCloudPreOOBERuntime -SourcePath $source -DestinationPath $destination
         $text = [IO.File]::ReadAllText($destination)

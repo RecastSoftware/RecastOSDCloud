@@ -103,7 +103,7 @@ account. No additional configuration is needed.
 ## OSDCloudPreOOBE automated tasks (recast-winui-dark)
 
 Only the two `recast-winui-dark` tasks enable `step-update-preoobe`. During WinPE
-deployment it bundles [OSDCloudPreOOBE.ps1](../OSDCloud/core/oobe/OSDCloudPreOOBE.ps1)
+deployment it bundles [OSDCloudPreOOBE.ps1](../OSDCloud/core/preoobe/OSDCloudPreOOBE.ps1)
 and its source components into a single standalone script in
 `C:\Windows\Setup\Scripts` and **appends** a synchronous invocation as the last
 block in `OOBE.cmd`, after the original commands.
@@ -281,7 +281,7 @@ if Windows subsequently changes desktops. The menu does not force a desktop swit
 For an inert **local console** preview, use:
 
 ```powershell
-powershell.exe -NoLogo -NoProfile -STA -File .\OSDCloud\core\oobe\OSDCloudPreOOBE.ps1 -Preview
+powershell.exe -NoLogo -NoProfile -STA -File .\OSDCloud\core\preoobe\OSDCloudPreOOBE.ps1 -Preview
 ```
 
 Preview simulates the sequence (including Start, step checkboxes and Continue to OOBE)
