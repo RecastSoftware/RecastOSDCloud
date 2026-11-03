@@ -6,11 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Synchronize internet time as the first PreOOBE task before HTTPS probes and updates, so an incorrect clock does not block certificate validation. Log clock corrections and time-source failures without changing the time zone or bypassing TLS validation.
+- Fix PreOOBE internet time sync and the Date, Time & TimeZone dialog setting the clock to the UTC value as local time. Windows PowerShell `Set-Date` ignores `DateTimeKind`, so both now apply local time in the running OS time zone.
+- PreOOBE logs the running OS date, time and time zone at start, shows them in the status bar using the OS locale, waits with a `Starting in 10 seconds` countdown before each task, and pauses after an Updating Windows 11 failure so the clock can be corrected before Retry or Continue.
+- PreOOBE task output shows short error messages; full exceptions and stack traces are written only to the log. The title reads `Recast Software - OSDCloud PreOOBE <version>`, the running account moves to a title-bar person icon tooltip, the status bar shows only the clock, and **Cancel step** is renamed **Skip Step**.
+- Fix the PreOOBE connectivity probe failing with "The remote certificate is invalid". `https://www.msftconnecttest.com` serves a mismatched Akamai certificate; the probe now checks NCSI over HTTP and validates HTTPS against `https://sls.update.microsoft.com/`. Certificate failures log TLS, certificate chain, proxy, DNS and time-service diagnostics and run a ±1 hour clock shift test that always restores the clock.
 - Keep OOBE and SetupComplete menus topmost after rendering so ordinary Windows Setup windows cannot cover them. Log activation, topmost state and window bounds instead of claiming rendering proves visibility.
 
 ### Added
 
-- Added OSDCloudPreOOBE automated OEM driver installation, Updating Windows 11 and Updating Drivers in the two existing dark task sequences, with per-update Skip/Cancel, connectivity-based offline skips, detailed task/installer diagnostics and a 15-second automatic completion countdown. Scripts and calendar tools move to the title bar. Wireless recovery is design-only for a future iteration.
+- Added OSDCloudPreOOBE automated OEM driver installation, Updating Windows 11 and Updating Drivers in the two existing dark task sequences, with update cancellation, connectivity-based offline skips, detailed task/installer diagnostics and a 15-second automatic completion countdown. Scripts and calendar tools move to the title bar. Wireless recovery is design-only for a future iteration.
 - OOBE's standalone menu now offers Windows 11 software and driver updates through inbox Windows Update Agent, with responsive progress, per-update failure/HRESULT reporting, safe cooperative cancellation and reboot-required reporting without automatic reboot.
 - Added a self-contained Windows PowerShell 5.1 technician menu at the end of `OOBE.cmd` in both `recast-winui-dark` tasks. It opens at the top-left with BootMenu-style caption controls and a title-bar Shell menu for CMD Prompt/Windows PowerShell, opens setup scripts in Notepad, and returns 0 when closed. It also provides Date, Time and TimeZone settings. Includes an embedded console-session launcher, explicit failure logging, and an inert preview. Actual first-boot behavior on AMD64 and ARM64 still requires deployment validation.
 - Added the `recast-mui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-mui-light`). It keeps the `recast-winui-dark` tasks, OS settings, single-page layout, and deployment behavior, restyled in the light Recast Portal look with Material Design 3 controls: an OSDCloud by Recast title bar, a navy announcement banner, white cards, outlined dropdowns with floating labels, and a blue Start button. The UI uses MaterialDesignInXamlToolkit 5.4.0 (MIT), bundled in `OSDCloud\types\materialdesign` for Windows PowerShell and PowerShell 7. If those assemblies cannot be loaded, the default workflow UI is shown instead.
@@ -18,6 +23,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Remove PreOOBE's per-update Skip buttons; retain safe active-update cancellation and automatic offline skips.
 - Renamed the standalone OOBEMenu runtime and staging step to OSDCloudPreOOBE and step-update-preoobe; legacy managed batch invocations are migrated. The runtime no longer accepts the menu's Phase parameter.
 - Stage the interactive menu only as the final OOBE.cmd block, removing legacy managed SetupComplete invocations. OOBE now offers clock and both update actions; update output fills the available height when resized.
 - Moved OOBE and SetupComplete shell shortcuts into a dark title-bar Shell dropdown matching the deployment GUI.

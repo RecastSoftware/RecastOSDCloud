@@ -74,6 +74,9 @@ Describe 'Setup menu batch invocation' {
         Save-OSDCloudPreOOBERuntime -SourcePath $source -DestinationPath $destination
         $text = [IO.File]::ReadAllText($destination)
         $text | Should -Not -Match '#region PreOOBE components'
+        $version = (Import-PowerShellDataFile (Join-Path $PSScriptRoot '..\..\..\OSDCloud.psd1')).ModuleVersion
+        $text | Should -Match ([regex]::Escape("`$OSDCloudPreOOBEVersion = '$version'"))
+        $text | Should -Not -Match 'OSDCloud\.psd1'
         $text | Should -Match 'function Invoke-OSDCloudPreOOBEDriverPack'
         $text | Should -Match 'function Show-OOBEMenuWindow'
         $tokens = $null; $errors = $null

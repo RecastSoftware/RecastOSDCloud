@@ -103,7 +103,8 @@ function Invoke-OSDCloudPreOOBEDriverPack {
     }
     catch {
         $State.Outcome = 'Failed'
-        Write-OOBEMenuUpdateStatus -State $State -Message "Driver unpack/install failed: $($_.Exception.ToString()). Staged artifacts retained."
+        Write-OOBEMenuLog -Message "Driver unpack/install failed: $($_.Exception.ToString())"
+        Write-OOBEMenuUpdateStatus -State $State -Message "Driver unpack/install failed: $(Get-OSDCloudPreOOBEErrorMessage -Exception $_.Exception) Staged artifacts retained."
     }
     finally { $State.InstallationActive = $false }
 }

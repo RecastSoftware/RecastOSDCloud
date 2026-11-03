@@ -127,9 +127,24 @@ needed) and runs the equivalent of:
 
 ### Automatic sequence
 
-The title is **OSDCloudPreOOBE**. It starts these tasks automatically:
+The title is **Recast Software - OSDCloud PreOOBE** followed by the OSDCloud module
+version (stamped into the staged script). On start it logs the running OS date, time and
+time zone. Each task shows a **Starting in 10 seconds** countdown before it runs,
+giving clock changes time to apply and the technician time to review or correct the
+clock. It starts these tasks automatically:
 
-1. **Driver unpack / install**: the opted-in driver-download step stages
+1. **Synchronizing internet time**: retrieve Google's HTTP `Date` header and set
+   the system clock before any HTTPS connectivity checks or Windows Update work.
+   This follows the existing OSDCloud time-source convention using HTTP to avoid
+   the incorrect-clock/certificate bootstrap problem. Two attempts have five-second
+   request budgets. Redirects, missing dates and stale cached responses are rejected.
+   The internet UTC time is converted to the running OS time zone before it is applied
+   (Windows PowerShell `Set-Date` sets local time and ignores `DateTimeKind`).
+   The UTC correction, applied local time and verified resulting clock are logged; the
+   time zone is unchanged. Failure is reported explicitly and independent tasks continue.
+   HTTP time is unauthenticated: use a trusted deployment network. This does not
+   disable certificate validation for connectivity probes or Windows Update.
+2. **Driver unpack / install**: the opted-in driver-download step stages
    `OSDCloudPreOOBE.DriverPack.json` beside the runtime instead of appending Lenovo
    or Surface installation commands to SetupComplete. The engine validates the local
    package path, manufacturer, extension, size and SHA-256 before execution.
@@ -140,19 +155,23 @@ The title is **OSDCloudPreOOBE**. It starts these tasks automatically:
    Surface MSI uses `/qn /norestart` with verbose MSI logging. Exit 3010 records
    a reboot requirement but does not reboot. Artifacts are retained for diagnostics.
    No staged manifest means **NotApplicable**.
-2. **Updating Windows 11**: check connectivity, then scan/download/install applicable
-   software updates (including Windows servicing and .NET).
-3. **Updating Drivers**: check connectivity again, then scan/download/install
+3. **Updating Windows 11**: check connectivity, then scan/download/install applicable
+   software updates (including Windows servicing and .NET). If this task **fails**,
+   the sequence pauses: use the title-bar calendar to verify Date, Time and TimeZone,
+   then select **Retry** (runs it again after the 15-second countdown) or **Continue**.
+   The pause has no timeout; closing the window skips the remaining tasks.
+4. **Updating Drivers**: check connectivity again, then scan/download/install
    applicable driver updates.
 
 The update actions honor configured Windows Update/WSUS policies, exclude hidden/
 Preview updates and updates requiring interactive input, and accept EULAs.
 No third-party module is imported and update-service settings are not changed.
-Each pending update can be **Skipped**; **Cancel step** cooperatively cancels the
+There are no per-update Skip buttons. **Skip Step** cooperatively cancels the
 active update after its current WUA operation. The next independent task still runs.
 OEM installation cannot be force-cancelled. There is no forced installation timeout.
 
-Failures are logged and shown explicitly; the engine continues independent tasks.
+Failures are logged and shown explicitly as a short message; full exception details and
+stack traces are written only to `OSDCloudPreOOBE.log`. The engine continues independent tasks.
 After all tasks reach terminal states, a **15-second countdown** closes the window
 with **exit 0**, allowing Windows Setup to continue. No task automatically reboots.
 Close/Escape/Alt+F4 requests safe completion of the active OEM operation or cancellation
@@ -161,10 +180,25 @@ Startup failure returns nonzero; the batch reports/logs it and continues.
 
 ### Connectivity and future wireless recovery
 
-Before each update, an HTTPS Microsoft connectivity probe must return the exact
-`Microsoft Connect Test` content. It does not follow redirects or accept portal pages.
-Two attempts have five-second request budgets and a 64-byte response limit.
-The probe uses the SYSTEM default proxy and never changes network policy.
+Before each update, the Windows NCSI probe `http://www.msftconnecttest.com/connecttest.txt`
+must return the exact `Microsoft Connect Test` content. It does not follow redirects
+or accept portal pages. HTTPS certificate validation is then checked against
+`https://sls.update.microsoft.com/` (any HTTP status means TLS succeeded).
+`https://www.msftconnecttest.com` is not used: it serves an Akamai certificate
+(`a248.e.akamai.net`), so it fails validation with a name mismatch even when the
+clock is correct. Two attempts have five-second request budgets and a 64-byte response
+limit. The probe uses the SYSTEM default proxy and never changes network policy.
+
+When the HTTPS check fails with a certificate error, troubleshooting is logged:
+
+- **TLS diagnostic**: the clock (local, UTC, time zone), W32Time and Hyper-V
+  time-sync service state, proxy, DNS, root store counts, and a handshake that records
+  the SSL policy errors, server certificate, chain elements and chain status.
+  The diagnostic never trusts an invalid certificate.
+- **Clock shift test** (SYSTEM only): the clock is set 1 hour forward and probed,
+  then 1 hour back and probed, and then restored (always, including on errors) and
+  probed again. Calendar Apply is blocked while the test runs. Results are
+  diagnostic only; if the restored probe connects, the update continues.
 Unavailable internet or a failed probe marks that update **Skipped**, with the reason
 logged. Local driver installation and the completion countdown still proceed.
 Cancellation is checked between attempts; an in-flight probe may take up to its timeout.
@@ -196,11 +230,15 @@ Windows Setup windows cannot cover it; minimize it when working in a launched sh
   parts of the current batch file; do not assume editing it changes the active run.
 - The title-bar calendar icon opens **Date, Time & TimeZone**. Select a local
   calendar date, enter 24-hour `HH:mm:ss`, select a Windows time zone, then **Apply**.
-  The selected zone is applied first and the chosen local time is converted to the
-  correct UTC instant for that zone. Input is validated before changes; daylight-saving
+  The selected zone is applied first, then the chosen local time is applied as local
+  time in that zone. Input is validated before changes; daylight-saving
   gaps/repeated hours are rejected. Errors remain visible. If setting the time
   fails after the time zone changed, inspect the clock/zone before retrying. Applying
-  clock changes is disabled during active installation and completion countdown.
+  clock changes is disabled during time synchronization, active installation and
+  completion countdown.
+- The status bar shows only the running OS date and time in the OS locale's full format
+  with the time zone name and UTC offset, refreshed every second.
+- The title-bar person icon shows the running account (**SYSTEM**) on hover.
 - Shell and Notepad windows remain open after the engine closes and are not waited on.
 - Tool errors remain visible and are logged without stopping task execution.
 

@@ -140,8 +140,9 @@ function Set-OOBEMenuClock {
     Set-TimeZone -Id $zone.Id -ErrorAction Stop
     [TimeZoneInfo]::ClearCachedData()
     Write-OOBEMenuLog -Message "Time zone set to $($zone.Id); applying local date/time $localDate."
-    # Set-Date converts DateTime to UTC before updating the system clock.
-    Set-Date -Date $utcDate -ErrorAction Stop | Out-Null
+    # Windows PowerShell Set-Date calls SetLocalTime with the DateTime fields and ignores Kind,
+    # so it must receive local time in the newly applied time zone, never UTC.
+    Set-Date -Date ([datetime]::SpecifyKind($localDate, [DateTimeKind]::Local)) -ErrorAction Stop | Out-Null
     Write-OOBEMenuLog -Message "Date, time, and time zone set to $description."
     return "Date, time, and time zone set to $description."
 }
@@ -168,6 +169,29 @@ function Write-OOBEMenuUpdateStatus {
     $State.Status = $Message
     $State.Messages.Enqueue($Message)
     Write-OOBEMenuLog -Message $Message
+}
+
+function Get-OSDCloudPreOOBEErrorMessage {
+    <#
+    .SYNOPSIS
+        Returns a short, user-facing error message.
+    .DESCRIPTION
+        Unwraps PowerShell method-invocation and aggregate wrappers and returns the innermost
+        exception message on one line. Log the full exception separately for diagnostics.
+    .PARAMETER Exception
+        Exception to summarize.
+    .EXAMPLE
+        Get-OSDCloudPreOOBEErrorMessage -Exception $_.Exception
+    .NOTES
+        Never returns stack traces.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][Exception]$Exception)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Summarize $($Exception.GetType().FullName)"
+    $inner = $Exception
+    while ($inner.InnerException) { $inner = $inner.InnerException }
+    return (($inner.Message -split '\r?\n')[0]).Trim()
 }
 
 function Invoke-OOBEMenuWindowsUpdate {
@@ -318,28 +342,145 @@ function Invoke-OOBEMenuWindowsUpdate {
     }
 }
 
+function Get-OSDCloudPreOOBEClock {
+    <#
+    .SYNOPSIS
+        Returns the running OS date, time and time zone.
+    .DESCRIPTION
+        Refreshes cached time zone data so changes made by the calendar tool or
+        internet time synchronization are reflected, and formats the full local
+        date and time using the running OS culture.
+    .EXAMPLE
+        (Get-OSDCloudPreOOBEClock).Text
+    .NOTES
+        Read-only; safe to call from the WPF dispatcher.
+    #>
+    [CmdletBinding()]
+    param ()
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Read clock"
+    [TimeZoneInfo]::ClearCachedData()
+    $zone = [TimeZoneInfo]::Local
+    $utcNow = [datetime]::UtcNow
+    $localNow = [datetime]::SpecifyKind([TimeZoneInfo]::ConvertTimeFromUtc($utcNow, $zone), [DateTimeKind]::Local)
+    $zoneName = if ($zone.IsDaylightSavingTime($localNow)) { $zone.DaylightName } else { $zone.StandardName }
+    $offset = $zone.GetUtcOffset($localNow)
+    $sign = if ($offset -lt [TimeSpan]::Zero) { '-' } else { '+' }
+    $text = '{0} {1} (UTC{2}{3})' -f $localNow.ToString('F', [Globalization.CultureInfo]::CurrentCulture), $zoneName, $sign, $offset.Duration().ToString('hh\:mm')
+    return [pscustomobject]@{ Local = $localNow; Utc = $utcNow; TimeZoneId = $zone.Id; TimeZoneName = $zoneName; Text = $text }
+}
+
+function Sync-OSDCloudPreOOBETime {
+    <#
+    .SYNOPSIS
+        Bootstraps the system clock from an internet HTTP Date header.
+    .DESCRIPTION
+        Uses the existing OSDCloud Google HTTP time-source convention without TLS,
+        so an incorrect local date cannot prevent time retrieval. Requests are
+        bounded and redirects or stale cached responses are rejected.
+    .PARAMETER State
+        Shared cancellation and diagnostic state.
+    .EXAMPLE
+        Sync-OSDCloudPreOOBETime -State $state
+    .NOTES
+        Requires SYSTEM. Does not change the time zone or disable TLS validation.
+        HTTP time is unauthenticated; use only on trusted deployment networks.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][hashtable]$State)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Synchronize clock"
+    if (-not (Get-OOBEMenuContext).IsSystem) { throw 'Internet time synchronization requires SYSTEM.' }
+    Add-Type -AssemblyName System.Net.Http -ErrorAction Stop
+    for ($attempt = 1; $attempt -le 2; $attempt++) {
+        if ($State.CancelRequested) { $State.Outcome = 'Cancelled'; return }
+        $handler = [Net.Http.HttpClientHandler]::new()
+        $handler.AllowAutoRedirect = $false
+        $handler.DefaultProxyCredentials = [Net.CredentialCache]::DefaultCredentials
+        $client = New-Object -TypeName System.Net.Http.HttpClient -ArgumentList $handler -ErrorAction Stop
+        $client.Timeout = [TimeSpan]::FromSeconds(5)
+        $request = [Net.Http.HttpRequestMessage]::new([Net.Http.HttpMethod]::Head, 'http://www.google.com')
+        [void]$request.Headers.TryAddWithoutValidation('Cache-Control', 'no-cache, no-store')
+        $response = $null
+        try {
+            Write-OOBEMenuUpdateStatus -State $State -Message "Retrieving internet time from http://www.google.com (attempt $attempt, five-second timeout)."
+            $pending = $client.SendAsync($request, [Net.Http.HttpCompletionOption]::ResponseHeadersRead)
+            if (-not $pending.Wait(5000)) {
+                $client.CancelPendingRequests()
+                throw 'Internet time request timed out after five seconds.'
+            }
+            $response = $pending.GetAwaiter().GetResult()
+            if ([int]$response.StatusCode -ne 200) { throw "Unexpected time-source status: $($response.StatusCode)." }
+            if ($null -eq $response.Headers.Date) { throw 'Time source returned no HTTP Date header.' }
+            if ($response.Headers.Age -and $response.Headers.Age.TotalSeconds -gt 60) { throw 'Time source returned a stale cached response.' }
+            $utcTime = $response.Headers.Date.UtcDateTime
+            if ($utcTime.Year -lt 2024) { throw "Time source returned an invalid Windows 11 deployment date: $utcTime." }
+            if ($State.CancelRequested) { $State.Outcome = 'Cancelled'; return }
+            [TimeZoneInfo]::ClearCachedData()
+            $zone = [TimeZoneInfo]::Local
+            $before = (Get-Date).ToUniversalTime()
+            # Windows PowerShell Set-Date calls SetLocalTime and ignores Kind; convert UTC to the running OS time zone.
+            $localTime = [datetime]::SpecifyKind([TimeZoneInfo]::ConvertTimeFromUtc($utcTime, $zone), [DateTimeKind]::Local)
+            Write-OOBEMenuUpdateStatus -State $State -Message "Clock before: $($before.ToString('o')); internet UTC: $($utcTime.ToString('o')); correction: $(($utcTime - $before).TotalSeconds) seconds."
+            Write-OOBEMenuUpdateStatus -State $State -Message "Setting local time $($localTime.ToString('F')) in time zone $($zone.Id) ($($zone.DisplayName))."
+            Set-Date -Date $localTime -ErrorAction Stop | Out-Null
+            $after = (Get-Date).ToUniversalTime()
+            if ([Math]::Abs(($after - $utcTime).TotalSeconds) -gt 10) { throw "Clock verification failed; UTC after setting: $($after.ToString('o'))." }
+            Write-OOBEMenuUpdateStatus -State $State -Message "Internet time synchronized; UTC now $($after.ToString('o')), local $($after.ToLocalTime().ToString('F')). Time zone $($zone.Id) unchanged."
+            $State.Succeeded = $true
+            $State.Outcome = 'Succeeded'
+            return
+        }
+        catch {
+            Write-OOBEMenuUpdateStatus -State $State -Message "Internet time attempt $attempt failed: $($_.Exception.GetBaseException().Message)"
+            if ($attempt -eq 2) { throw }
+        }
+        finally {
+            if ($response) { $response.Dispose() }
+            $request.Dispose()
+            $client.Dispose()
+            $handler.Dispose()
+        }
+    }
+}
+
 function Test-OSDCloudPreOOBEConnectivity {
     <#
     .SYNOPSIS
-        Verifies internet connectivity using a bounded Microsoft content probe.
+        Verifies internet connectivity and HTTPS certificate validation.
     .DESCRIPTION
-        Rejects redirects and unexpected content. Uses the SYSTEM default proxy.
-        Two attempts of at most five seconds each; no network changes are made.
+        First requests the Windows NCSI content over HTTP (as Windows does; this
+        endpoint does not serve a matching HTTPS certificate) and rejects redirects
+        and unexpected content. Then sends HEAD to the Windows Update service
+        locator over HTTPS; any HTTP status proves TLS and the clock are usable.
+        Uses the SYSTEM default proxy. Two attempts of at most five seconds per
+        request; no network changes are made. When HTTPS certificate validation
+        fails, logs TLS certificate-chain diagnostics and runs the ±1 hour clock
+        test before reporting failure.
     .PARAMETER State
         Shared cancellation and diagnostic state.
+    .PARAMETER Attempts
+        Number of probe attempts (1 or 2).
+    .PARAMETER NoDiagnostics
+        Skips certificate troubleshooting; used by the clock test itself.
     .EXAMPLE
         Test-OSDCloudPreOOBEConnectivity -State $state
     .NOTES
         Endpoint blocking can cause an offline skip even with reachable WSUS.
     #>
     [CmdletBinding()]
-    param ([Parameter(Mandatory)][hashtable]$State)
+    param (
+        [Parameter(Mandatory)][hashtable]$State,
+        [ValidateRange(1, 2)][int]$Attempts = 2,
+        [switch]$NoDiagnostics
+    )
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Check connectivity"
     $watch = [Diagnostics.Stopwatch]::StartNew()
     $reason = 'Cancelled'
+    $certificateError = $false
     Add-Type -AssemblyName System.Net.Http -ErrorAction Stop
-    for ($attempt = 1; $attempt -le 2 -and -not $State.CancelRequested; $attempt++) {
+    for ($attempt = 1; $attempt -le $Attempts -and -not $State.CancelRequested; $attempt++) {
         $handler = [Net.Http.HttpClientHandler]::new()
         $handler.AllowAutoRedirect = $false
         $handler.DefaultProxyCredentials = [Net.CredentialCache]::DefaultCredentials
@@ -347,9 +488,10 @@ function Test-OSDCloudPreOOBEConnectivity {
         $client.Timeout = [TimeSpan]::FromSeconds(5)
         $client.MaxResponseContentBufferSize = 64
         $response = $null
+        $tlsResponse = $null
         try {
             [void]$client.DefaultRequestHeaders.TryAddWithoutValidation('Cache-Control', 'no-cache')
-            $request = $client.GetAsync('https://www.msftconnecttest.com/connecttest.txt')
+            $request = $client.GetAsync('http://www.msftconnecttest.com/connecttest.txt')
             if (-not $request.Wait(5000)) {
                 $client.CancelPendingRequests()
                 throw 'Connectivity probe timed out after five seconds.'
@@ -357,22 +499,237 @@ function Test-OSDCloudPreOOBEConnectivity {
             $response = $request.GetAwaiter().GetResult()
             $content = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
             if ([int]$response.StatusCode -eq 200 -and $content.Trim() -eq 'Microsoft Connect Test') {
-                Write-OOBEMenuUpdateStatus -State $State -Message "Internet probe succeeded (attempt $attempt, $($watch.ElapsedMilliseconds) ms)."
-                return [pscustomobject]@{ Connected = $true; Reason = 'Expected Microsoft content received'; DurationMs = $watch.ElapsedMilliseconds }
+                Write-OOBEMenuUpdateStatus -State $State -Message "Internet probe succeeded (attempt $attempt, $($watch.ElapsedMilliseconds) ms); checking HTTPS certificate validation."
+                $tlsRequest = $client.GetAsync('https://sls.update.microsoft.com/', [Net.Http.HttpCompletionOption]::ResponseHeadersRead)
+                if (-not $tlsRequest.Wait(5000)) {
+                    $client.CancelPendingRequests()
+                    throw 'HTTPS probe timed out after five seconds.'
+                }
+                $tlsResponse = $tlsRequest.GetAwaiter().GetResult()
+                Write-OOBEMenuUpdateStatus -State $State -Message "HTTPS probe succeeded: https://sls.update.microsoft.com/ certificate valid (status $([int]$tlsResponse.StatusCode), $($watch.ElapsedMilliseconds) ms)."
+                return [pscustomobject]@{ Connected = $true; Reason = 'Expected Microsoft content received and HTTPS certificate valid'; DurationMs = $watch.ElapsedMilliseconds }
             }
             $reason = "Unexpected connectivity response (status $($response.StatusCode)); possible captive portal."
         }
         catch {
             $reason = "Connectivity probe failed: $($_.Exception.GetBaseException().Message)"
+            $inner = $_.Exception
+            while ($inner) {
+                if ($inner -is [Security.Authentication.AuthenticationException] -or $inner.Message -like '*certificate*') { $certificateError = $true }
+                $inner = $inner.InnerException
+            }
         }
         finally {
+            if ($tlsResponse) { $tlsResponse.Dispose() }
             if ($response) { $response.Dispose() }
             $client.Dispose()
             $handler.Dispose()
         }
-        Write-OOBEMenuUpdateStatus -State $State -Message "$reason Attempt $attempt, elapsed $($watch.ElapsedMilliseconds) ms."
+        Write-OOBEMenuUpdateStatus -State $State -Message "$reason Attempt $attempt, elapsed $($watch.ElapsedMilliseconds) ms; clock UTC $([datetime]::UtcNow.ToString('o'))."
     }
-    return [pscustomobject]@{ Connected = $false; Reason = $reason; DurationMs = $watch.ElapsedMilliseconds }
+    if ($certificateError -and -not $NoDiagnostics -and -not $State.CancelRequested) {
+        Write-OOBEMenuUpdateStatus -State $State -Message 'Certificate validation failed; starting TLS and clock troubleshooting.'
+        try { Write-OSDCloudPreOOBETlsDiagnostic -State $State }
+        catch { Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic failed: $($_.Exception.GetBaseException().Message)" }
+        try {
+            $retry = Test-OSDCloudPreOOBEClockShift -State $State
+            if ($retry -and $retry.Connected) {
+                return [pscustomobject]@{ Connected = $true; Reason = 'Connected after clock troubleshooting'; DurationMs = $watch.ElapsedMilliseconds }
+            }
+        }
+        catch { Write-OOBEMenuUpdateStatus -State $State -Message "Clock troubleshooting failed: $($_.Exception.GetBaseException().Message)" }
+    }
+    return [pscustomobject]@{ Connected = $false; Reason = $reason; DurationMs = $watch.ElapsedMilliseconds; CertificateError = $certificateError }
+}
+
+function Set-OSDCloudPreOOBEUtcClock {
+    <#
+    .SYNOPSIS
+        Sets the system clock to a UTC instant in the running OS time zone.
+    .DESCRIPTION
+        Windows PowerShell Set-Date calls SetLocalTime and ignores DateTimeKind,
+        so the UTC instant is converted to local time first. Verifies the result.
+    .PARAMETER UtcTime
+        Target UTC time.
+    .EXAMPLE
+        Set-OSDCloudPreOOBEUtcClock -UtcTime ([datetime]::UtcNow.AddHours(1))
+    .NOTES
+        Requires SYSTEM. Does not change the time zone.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][datetime]$UtcTime)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Set clock"
+    $UtcTime = [datetime]::SpecifyKind($UtcTime, [DateTimeKind]::Utc)
+    [TimeZoneInfo]::ClearCachedData()
+    $localTime = [datetime]::SpecifyKind([TimeZoneInfo]::ConvertTimeFromUtc($UtcTime, [TimeZoneInfo]::Local), [DateTimeKind]::Local)
+    Set-Date -Date $localTime -ErrorAction Stop | Out-Null
+    $after = (Get-Date).ToUniversalTime()
+    if ([Math]::Abs(($after - $UtcTime).TotalSeconds) -gt 10) { throw "Clock verification failed; requested UTC $($UtcTime.ToString('o')), actual $($after.ToString('o'))." }
+    return $after
+}
+
+function Test-OSDCloudPreOOBEClockShift {
+    <#
+    .SYNOPSIS
+        Tests connectivity with the clock 1 hour forward and 1 hour back.
+    .DESCRIPTION
+        Troubleshoots certificate validation failures caused by clock or time
+        zone offsets. Probes once at +1 hour and once at -1 hour, always restores
+        the original clock (adjusted for elapsed time), then probes once more.
+    .PARAMETER State
+        Shared cancellation and diagnostic state.
+    .EXAMPLE
+        Test-OSDCloudPreOOBEClockShift -State $state
+    .NOTES
+        Requires SYSTEM. Clock changes from the calendar are blocked meanwhile.
+        Returns the connectivity result after the clock is restored.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][hashtable]$State)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Clock shift test"
+    if (-not (Get-OOBEMenuContext).IsSystem) {
+        Write-OOBEMenuUpdateStatus -State $State -Message 'Clock shift test skipped: changing the clock requires SYSTEM.'
+        return
+    }
+    $baseUtc = [datetime]::UtcNow
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    $results = [Collections.Generic.List[string]]::new()
+    $State.ClockTestActive = $true
+    try {
+        foreach ($hours in 1, -1) {
+            if ($State.CancelRequested) { break }
+            $shifted = Set-OSDCloudPreOOBEUtcClock -UtcTime ($baseUtc.AddHours($hours) + $watch.Elapsed)
+            Write-OOBEMenuUpdateStatus -State $State -Message ("Clock test: shifted {0:+0;-0} hour; UTC now {1}, local {2}." -f $hours, $shifted.ToString('o'), $shifted.ToLocalTime().ToString('F'))
+            $result = Test-OSDCloudPreOOBEConnectivity -State $State -Attempts 1 -NoDiagnostics
+            $status = if ($result.Connected) { 'connected' } else { "failed: $($result.Reason)" }
+            $results.Add(("{0:+0;-0} hour {1}" -f $hours, $status))
+            Write-OOBEMenuUpdateStatus -State $State -Message ("Clock test {0:+0;-0} hour: {1}" -f $hours, $status)
+        }
+    }
+    finally {
+        try {
+            $restored = Set-OSDCloudPreOOBEUtcClock -UtcTime ($baseUtc + $watch.Elapsed)
+            Write-OOBEMenuUpdateStatus -State $State -Message "Clock test: restored UTC $($restored.ToString('o')), local $($restored.ToLocalTime().ToString('F'))."
+        }
+        catch { Write-OOBEMenuUpdateStatus -State $State -Message "Clock test: RESTORE FAILED, verify Date and Time manually: $($_.Exception.GetBaseException().Message)" }
+        finally { $State.ClockTestActive = $false }
+    }
+    if ($State.CancelRequested) { return }
+    $final = Test-OSDCloudPreOOBEConnectivity -State $State -Attempts 1 -NoDiagnostics
+    $status = if ($final.Connected) { 'connected' } else { "failed: $($final.Reason)" }
+    Write-OOBEMenuUpdateStatus -State $State -Message "Clock test summary: $($results -join '; '); restored clock $status."
+    if (-not $final.Connected -and ($results -like '*connected')) {
+        Write-OOBEMenuUpdateStatus -State $State -Message 'Clock test: connectivity works only with a shifted clock. Verify Date, Time and TimeZone with the calendar.'
+    }
+    elseif (-not $final.Connected) {
+        Write-OOBEMenuUpdateStatus -State $State -Message 'Clock test: certificate validation fails at every tested time, so the clock is unlikely to be the cause. Review the certificate chain status above (for example UntrustedRoot, PartialChain or a TLS-inspecting proxy).'
+    }
+    return $final
+}
+
+function Write-OSDCloudPreOOBETlsDiagnostic {
+    <#
+    .SYNOPSIS
+        Logs why the connectivity endpoint certificate fails validation.
+    .DESCRIPTION
+        Logs the clock, time services, proxy, DNS and a diagnostic-only TLS
+        handshake recording the server certificate, chain elements and chain
+        status. The certificate is never trusted and no data is sent.
+    .PARAMETER State
+        Shared diagnostic state.
+    .PARAMETER HostName
+        Endpoint host name.
+    .EXAMPLE
+        Write-OSDCloudPreOOBETlsDiagnostic -State $state
+    .NOTES
+        Direct TCP to port 443; a proxy may present a different certificate.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][hashtable]$State, [string]$HostName = 'sls.update.microsoft.com')
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] TLS diagnostic"
+    [TimeZoneInfo]::ClearCachedData()
+    $zone = [TimeZoneInfo]::Local
+    Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: clock UTC $([datetime]::UtcNow.ToString('o')), local $((Get-Date).ToString('F')), time zone $($zone.Id) ($($zone.BaseUtcOffset))."
+    foreach ($serviceName in 'W32Time', 'vmictimesync') {
+        $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+        $text = if ($service) { "$($service.Status), $($service.StartType)" } else { 'not installed' }
+        Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: service $serviceName $text."
+    }
+    try {
+        $uri = [Uri]"https://$HostName/"
+        $proxy = [Net.WebRequest]::GetSystemWebProxy().GetProxy($uri)
+        $proxyText = if ($proxy -eq $uri) { 'direct (no proxy)' } else { "$proxy (TLS inspection by a proxy can cause certificate failures)" }
+        Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: proxy for $uri is $proxyText."
+    }
+    catch { Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: proxy lookup failed: $($_.Exception.GetBaseException().Message)" }
+    try {
+        $addresses = [Net.Dns]::GetHostAddresses($HostName) | ForEach-Object { $_.IPAddressToString }
+        Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: $HostName resolves to $($addresses -join ', ')."
+    }
+    catch { Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: DNS lookup failed: $($_.Exception.GetBaseException().Message)" }
+    try {
+        $rootCount = @(Get-ChildItem -Path Cert:\LocalMachine\Root -ErrorAction Stop).Count
+        $authRootCount = @(Get-ChildItem -Path Cert:\LocalMachine\AuthRoot -ErrorAction SilentlyContinue).Count
+        Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: LocalMachine Root store $rootCount certificates, AuthRoot $authRootCount."
+    }
+    catch { Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: root store read failed: $($_.Exception.GetBaseException().Message)" }
+    if (-not ('Recast.OOBE.TlsProbe' -as [type])) {
+        Add-Type -ErrorAction Stop -TypeDefinition @'
+using System;
+using System.Collections.Generic;
+using System.Net.Security;
+using System.Net.Sockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
+namespace Recast.OOBE {
+    public static class TlsProbe {
+        public static string[] Inspect(string host, int port, int timeoutMs) {
+            List<string> lines = new List<string>();
+            using (TcpClient tcp = new TcpClient()) {
+                IAsyncResult connect = tcp.BeginConnect(host, port, null, null);
+                if (!connect.AsyncWaitHandle.WaitOne(timeoutMs)) { lines.Add("TCP connect to " + host + ":" + port + " timed out."); return lines.ToArray(); }
+                tcp.EndConnect(connect);
+                tcp.ReceiveTimeout = timeoutMs;
+                tcp.SendTimeout = timeoutMs;
+                lines.Add("TCP connected to " + tcp.Client.RemoteEndPoint + ".");
+                RemoteCertificateValidationCallback callback = delegate (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors) {
+                    lines.Add("SSL policy errors: " + errors + "; validated at UTC " + DateTime.UtcNow.ToString("o") + ".");
+                    if (certificate != null) {
+                        X509Certificate2 leaf = new X509Certificate2(certificate);
+                        lines.Add("Server certificate: " + leaf.Subject + "; issuer " + leaf.Issuer + "; valid " + leaf.NotBefore.ToUniversalTime().ToString("o") + " to " + leaf.NotAfter.ToUniversalTime().ToString("o") + "; thumbprint " + leaf.Thumbprint + ".");
+                    }
+                    if (chain != null) {
+                        foreach (X509ChainElement element in chain.ChainElements) {
+                            List<string> flags = new List<string>();
+                            foreach (X509ChainStatus status in element.ChainElementStatus) { flags.Add(status.Status + " (" + status.StatusInformation.Trim() + ")"); }
+                            lines.Add("Chain element: " + element.Certificate.Subject + "; valid to " + element.Certificate.NotAfter.ToUniversalTime().ToString("o") + "; thumbprint " + element.Certificate.Thumbprint + "; status " + (flags.Count == 0 ? "OK" : string.Join(", ", flags.ToArray())) + ".");
+                        }
+                        List<string> overall = new List<string>();
+                        foreach (X509ChainStatus status in chain.ChainStatus) { overall.Add(status.Status + " (" + status.StatusInformation.Trim() + ")"); }
+                        lines.Add("Chain status: " + (overall.Count == 0 ? "OK" : string.Join(", ", overall.ToArray())) + ".");
+                    }
+                    return errors == SslPolicyErrors.None;
+                };
+                using (SslStream ssl = new SslStream(tcp.GetStream(), false, callback)) {
+                    try {
+                        ssl.AuthenticateAsClient(host, null, SslProtocols.Tls12, false);
+                        lines.Add("TLS handshake succeeded: " + ssl.SslProtocol + ", " + ssl.CipherAlgorithm + ".");
+                    }
+                    catch (Exception ex) { lines.Add("TLS handshake failed: " + ex.GetBaseException().Message); }
+                }
+            }
+            return lines.ToArray();
+        }
+    }
+}
+'@
+    }
+    foreach ($line in [Recast.OOBE.TlsProbe]::Inspect($HostName, 443, 5000)) {
+        Write-OOBEMenuUpdateStatus -State $State -Message "TLS diagnostic: $line"
+    }
 }
 
 function Invoke-OSDCloudPreOOBETask {
@@ -380,10 +737,11 @@ function Invoke-OSDCloudPreOOBETask {
     .SYNOPSIS
         Executes one fixed PreOOBE task with an explicit terminal outcome.
     .DESCRIPTION
-        Driver work precedes updates. Connectivity failures skip updates, not drivers.
+        Internet time and driver work precede updates. Connectivity failures skip
+        updates, not drivers.
         Preview produces managed sample results without external calls.
     .PARAMETER Type
-        DriverPack, Software, or Driver.
+        Time, DriverPack, Software, or Driver.
     .PARAMETER State
         Shared task state.
     .PARAMETER PreviewOnly
@@ -395,7 +753,7 @@ function Invoke-OSDCloudPreOOBETask {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)][ValidateSet('DriverPack', 'Software', 'Driver')][string]$Type,
+        [Parameter(Mandatory)][ValidateSet('Time', 'DriverPack', 'Software', 'Driver')][string]$Type,
         [Parameter(Mandatory)][hashtable]$State,
         [switch]$PreviewOnly
     )
@@ -410,6 +768,9 @@ function Invoke-OSDCloudPreOOBETask {
             $State.Outcome = 'Succeeded'
         }
         elseif ($State.CancelRequested) { $State.Outcome = 'Cancelled' }
+        elseif ($Type -eq 'Time') {
+            Sync-OSDCloudPreOOBETime -State $State
+        }
         elseif ($Type -eq 'DriverPack') {
             Invoke-OSDCloudPreOOBEDriverPack -State $State
         }
@@ -429,7 +790,8 @@ function Invoke-OSDCloudPreOOBETask {
     catch {
         $State.Outcome = 'Failed'
         $State.Succeeded = $false
-        Write-OOBEMenuUpdateStatus -State $State -Message "$Type task failed: $($_.Exception.ToString())"
+        Write-OOBEMenuLog -Message "$Type task failed: $($_.Exception.ToString())"
+        Write-OOBEMenuUpdateStatus -State $State -Message "$Type task failed: $(Get-OSDCloudPreOOBEErrorMessage -Exception $_.Exception)"
     }
     finally {
         $State.DurationMs = $watch.ElapsedMilliseconds
@@ -445,7 +807,7 @@ function Start-OOBEMenuUpdateWorker {
         Shares only managed status data with WPF and creates all COM objects on
         the worker. The caller owns and disposes the returned pipeline/runspace.
     .PARAMETER Type
-        Software or Driver update action.
+        Time, DriverPack, Software, or Driver action.
     .PARAMETER State
         Synchronized progress and cooperative cancellation state.
     .EXAMPLE
@@ -455,15 +817,16 @@ function Start-OOBEMenuUpdateWorker {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)][ValidateSet('DriverPack', 'Software', 'Driver')][string]$Type,
+        [Parameter(Mandatory)][ValidateSet('Time', 'DriverPack', 'Software', 'Driver')][string]$Type,
         [Parameter(Mandatory)][hashtable]$State,
         [switch]$PreviewOnly
     )
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Start worker"
     $initialState = [Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
-    foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Invoke-OOBEMenuWindowsUpdate',
-        'Test-OSDCloudPreOOBEConnectivity', 'Invoke-OSDCloudPreOOBEDriverPack', 'Invoke-OSDCloudPreOOBETask') {
+    foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Get-OSDCloudPreOOBEErrorMessage', 'Invoke-OOBEMenuWindowsUpdate',
+        'Sync-OSDCloudPreOOBETime', 'Test-OSDCloudPreOOBEConnectivity', 'Set-OSDCloudPreOOBEUtcClock', 'Test-OSDCloudPreOOBEClockShift',
+        'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Invoke-OSDCloudPreOOBETask') {
         $definition = (Get-Command -Name $name -CommandType Function -ErrorAction Stop).Definition
         $initialState.Commands.Add([Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name, $definition))
     }
@@ -826,6 +1189,13 @@ function Invoke-OOBEMenuChild {
 
 
 
+#region PreOOBE version
+$OSDCloudPreOOBEVersion = try {
+    $manifestText = [IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\..\OSDCloud.psd1'))
+    [regex]::Match($manifestText, "(?m)^\s*ModuleVersion\s*=\s*'([^']+)'").Groups[1].Value
+} catch { '' }
+#endregion
+
 #region PreOOBE components
 . (Join-Path $PSScriptRoot 'Invoke-OSDCloudPreOOBEDriverPack.ps1')
 . (Join-Path $PSScriptRoot 'Show-OSDCloudPreOOBEWindow.ps1')
@@ -866,7 +1236,7 @@ function Invoke-OOBEMenu {
         if (-not $Preview -and -not $context.IsSystem) {
             throw 'The setup menu must run as SYSTEM. Use -Preview for an inert desktop test.'
         }
-        Write-OOBEMenuLog -Message "Start OSDCloudPreOOBE: identity $($context.Identity), session $($context.SessionId), station $($context.Station), desktop $($context.Desktop), console $($context.ConsoleSession), architecture $env:PROCESSOR_ARCHITECTURE."
+        Write-OOBEMenuLog -Message "Start OSDCloudPreOOBE $OSDCloudPreOOBEVersion`: identity $($context.Identity), session $($context.SessionId), station $($context.Station), desktop $($context.Desktop), console $($context.ConsoleSession), architecture $env:PROCESSOR_ARCHITECTURE."
         if ($InteractiveChild) {
             [Recast.OOBE.Native]::AttachInputDesktop()
         } elseif (-not $context.IsInputDesktop) {

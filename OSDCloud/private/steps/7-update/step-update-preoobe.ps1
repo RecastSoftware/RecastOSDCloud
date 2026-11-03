@@ -55,6 +55,12 @@ function Save-OSDCloudPreOOBERuntime {
         $loader = '(?ms)^#region PreOOBE components\r?\n.*?^#endregion'
         if ([regex]::Matches($content, $loader).Count -ne 1) { throw 'PreOOBE component loader was not found exactly once.' }
         $bundle = [regex]::Replace($content, $loader, [Text.RegularExpressions.MatchEvaluator]{ param($match) $components -join "`r`n" })
+        $versionRegion = '(?ms)^#region PreOOBE version\r?\n.*?^#endregion'
+        if ([regex]::Matches($bundle, $versionRegion).Count -ne 1) { throw 'PreOOBE version region was not found exactly once.' }
+        $manifest = Join-Path (Split-Path $SourcePath) '..\..\OSDCloud.psd1'
+        $version = [string](Import-PowerShellDataFile -LiteralPath $manifest -ErrorAction Stop).ModuleVersion
+        if ($version -notmatch '^\d+(\.\d+){1,3}$') { throw "Invalid OSDCloud module version: $version" }
+        $bundle = [regex]::Replace($bundle, $versionRegion, [Text.RegularExpressions.MatchEvaluator]{ param($match) "#region PreOOBE version`r`n`$OSDCloudPreOOBEVersion = '$version'`r`n#endregion" })
         $tokens = $null; $parseErrors = $null
         [void][Management.Automation.Language.Parser]::ParseInput($bundle, [ref]$tokens, [ref]$parseErrors)
         if ($parseErrors) { throw "PreOOBE bundle parsing failed: $($parseErrors.Message -join '; ')" }

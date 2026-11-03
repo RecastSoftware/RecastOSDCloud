@@ -113,13 +113,14 @@ Describe 'SetupComplete clock validation' {
         Should -Invoke Set-Date -Times 0 -Exactly
     }
 
-    It 'applies the chosen local time as the correct UTC instant after setting the selected time zone' {
+    It 'applies the chosen local time as local time after setting the selected time zone' {
         Set-OOBEMenuClock -Date ([datetime]'2030-06-15') -Time '14:30:00' -TimeZoneId 'Eastern Standard Time' |
             Should -BeLike 'Date, time, and time zone set to *'
         Should -Invoke Set-TimeZone -Times 1 -Exactly -ParameterFilter { $Id -eq 'Eastern Standard Time' -and $ErrorAction -eq 'Stop' }
+        # Windows PowerShell Set-Date calls SetLocalTime and ignores Kind, so it must receive local time.
         Should -Invoke Set-Date -Times 1 -Exactly -ParameterFilter {
-            $Date.ToString('yyyy-MM-dd HH:mm:ss') -eq '2030-06-15 18:30:00' -and
-            $Date.Kind -eq [DateTimeKind]::Utc -and $ErrorAction -eq 'Stop'
+            $Date.ToString('yyyy-MM-dd HH:mm:ss') -eq '2030-06-15 14:30:00' -and
+            $Date.Kind -eq [DateTimeKind]::Local -and $ErrorAction -eq 'Stop'
         }
     }
 
