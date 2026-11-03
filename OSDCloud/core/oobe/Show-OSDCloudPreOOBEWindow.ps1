@@ -4,6 +4,8 @@ function New-OSDCloudPreOOBEState {
         Creates the fixed ordered PreOOBE sequence.
     .DESCRIPTION
         Keeps UI-independent task results and worker ownership in one state object.
+        OEM drivers run first because they may be required for network connectivity.
+        Nothing runs until Start-OSDCloudPreOOBEState is called.
     .EXAMPLE
         New-OSDCloudPreOOBEState
     .NOTES
@@ -24,14 +26,14 @@ function New-OSDCloudPreOOBEState {
     Write-OOBEMenuLog -Message $message
     return @{
         Tasks = @(
-            [pscustomobject]@{ Type = 'Time'; Name = 'Synchronizing internet time'; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
-            [pscustomobject]@{ Type = 'DriverPack'; Name = 'Driver unpack / install'; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
-            [pscustomobject]@{ Type = 'Software'; Name = 'Updating Windows 11'; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
-            [pscustomobject]@{ Type = 'Driver'; Name = 'Updating Drivers'; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null }
+            [pscustomobject]@{ Type = 'DriverPack'; Name = 'Driver unpack / install'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
+            [pscustomobject]@{ Type = 'Time'; Name = 'Synchronizing internet time'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
+            [pscustomobject]@{ Type = 'Software'; Name = 'Updating Windows 11'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
+            [pscustomobject]@{ Type = 'Driver'; Name = 'Updating Drivers'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null }
         )
         Worker = $null; Active = $null; Shared = $null; CloseRequested = $false
-        RebootRequired = $false; Countdown = $null; Remaining = 15; Done = $false
-        StepDelaySeconds = 10; StepDelay = $null; StepTask = $null; StepRemaining = 10
+        RebootRequired = $false; Started = $false; Complete = $false; Done = $false
+        StepDelaySeconds = 10; StepDelay = $null; StepTask = $null; StepRemaining = 10; StartNow = $false
         Paused = $false; PausedTask = $null; StartClock = $startClock
         Output = $output; SummaryWritten = $false
     }
@@ -73,15 +75,49 @@ function Resume-OSDCloudPreOOBEState {
     Write-OOBEMenuLog -Message $message
 }
 
+function Start-OSDCloudPreOOBEState {
+    <#
+    .SYNOPSIS
+        Starts the PreOOBE sequence or the counting-down step immediately.
+    .DESCRIPTION
+        The first call starts the sequence. While a step is counting down, a later
+        call starts that step without waiting for the remaining seconds.
+    .PARAMETER State
+        Engine state from New-OSDCloudPreOOBEState.
+    .EXAMPLE
+        Start-OSDCloudPreOOBEState -State $state
+    .NOTES
+        Called by the Start button.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][hashtable]$State)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Start"
+    if ($State.Done -or $State.CloseRequested) { return }
+    if (-not $State.Started) {
+        $State.Started = $true
+        $message = 'OSDCloud PreOOBE started by technician.'
+    }
+    elseif ($State.StepDelay -and $State.StepTask) {
+        $State.StartNow = $true
+        $message = "Starting $($State.StepTask.Name) now by technician request."
+    }
+    else { return }
+    $State.Output.Add($message)
+    Write-OOBEMenuLog -Message $message
+}
+
 function Update-OSDCloudPreOOBEState {
     <#
     .SYNOPSIS
-        Advances task execution and completion countdown without blocking WPF.
+        Advances task execution without blocking WPF.
     .DESCRIPTION
-        Owns one worker at a time and waits StepDelaySeconds (10) before each task
-        starts. Failure never becomes success; an Updating Windows 11 failure
-        pauses until Retry or Continue. Close requests cancel updates safely,
-        finish active OEM operations, and skip pending work.
+        Waits for Start, then owns one worker at a time and waits StepDelaySeconds (10)
+        before each task starts. Unchecked (disabled) tasks are skipped when reached.
+        Failure never becomes success; an Updating Windows 11 failure pauses until
+        Retry or Continue. After all tasks finish the engine waits for Continue to OOBE
+        (a close request). Close requests cancel updates safely, finish active OEM
+        operations, and skip pending work.
     .PARAMETER State
         Engine state from New-OSDCloudPreOOBEState.
     .PARAMETER PreviewOnly
@@ -110,6 +146,7 @@ function Update-OSDCloudPreOOBEState {
         }
         if ($State.Worker -and $State.Active.Type -ne 'DriverPack') { $State.Shared.CancelRequested = $true }
     }
+    if (-not $State.Started -and -not $State.CloseRequested) { return }
     if ($State.Worker) {
         $message = $null
         while ($State.Shared.Messages.TryDequeue([ref]$message)) { $State.Output.Add($message) }
@@ -152,6 +189,15 @@ function Update-OSDCloudPreOOBEState {
     }
     if ($State.Paused) { return }
     $next = @($State.Tasks | Where-Object Outcome -eq 'Pending' | Select-Object -First 1)
+    while ($next.Count -and -not $next[0].Enabled) {
+        $next[0].Outcome = 'Skipped'
+        $next[0].Finished = (Get-Date).ToUniversalTime().ToString('o')
+        $message = "Skipped $($next[0].Name): unchecked by technician."
+        $State.Output.Add($message)
+        Write-OOBEMenuLog -Message $message
+        if ($State.StepTask -eq $next[0]) { $State.StepDelay = $null; $State.StepTask = $null; $State.StartNow = $false }
+        $next = @($State.Tasks | Where-Object Outcome -eq 'Pending' | Select-Object -First 1)
+    }
     if ($next.Count -and -not $State.CloseRequested) {
         if ($State.StepDelaySeconds -gt 0) {
             if (-not $State.StepDelay -or $State.StepTask -ne $next[0]) {
@@ -162,9 +208,10 @@ function Update-OSDCloudPreOOBEState {
                 Write-OOBEMenuLog -Message $message
             }
             $State.StepRemaining = [Math]::Max(0, $State.StepDelaySeconds - [int][Math]::Floor($State.StepDelay.Elapsed.TotalSeconds))
-            if ($State.StepRemaining -gt 0) { return }
+            if ($State.StepRemaining -gt 0 -and -not $State.StartNow) { return }
             $State.StepDelay = $null
             $State.StepTask = $null
+            $State.StartNow = $false
         }
         $State.Active = $next[0]
         $State.Active.Outcome = 'Running'
@@ -215,11 +262,10 @@ function Update-OSDCloudPreOOBEState {
             $State.Output.Add($message)
             Write-OOBEMenuLog -Message $message
         }
-        $State.Countdown = [Diagnostics.Stopwatch]::StartNew()
-        Write-OOBEMenuLog -Message 'Tasks complete. Continuing Windows Setup in 15 seconds.'
+        $State.Complete = $true
+        Write-OOBEMenuLog -Message 'Tasks complete. Waiting for Continue to OOBE.'
     }
-    $State.Remaining = [Math]::Max(0, 15 - [int][Math]::Floor($State.Countdown.Elapsed.TotalSeconds))
-    if ($State.CloseRequested -or $State.Remaining -eq 0) {
+    if ($State.CloseRequested) {
         $State.Done = $true
         Write-OOBEMenuLog -Message "PreOOBE finished; exit 0. Reboot required $($State.RebootRequired); no reboot initiated."
     }
@@ -230,8 +276,9 @@ function Show-OOBEMenuWindow {
     .SYNOPSIS
         Displays task progress and starts PreOOBE automation after rendering.
     .DESCRIPTION
-        Provides independent Shell/Scripts tools, calendar controls and safe per-step
-        cancellation. Output fills available height. Completion closes automatically.
+        Provides independent Shell/Scripts tools, calendar controls, a collapsible step
+        list with checkboxes, Start and Skip Step actions, and Continue to OOBE after
+        completion. Output fills available height.
     .PARAMETER ReadyEventName
         Optional session-bridge readiness signal.
     .EXAMPLE
@@ -248,13 +295,13 @@ function Show-OOBEMenuWindow {
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
- Title="OSDCloudPreOOBE" Width="760" Height="480" MinWidth="480" MinHeight="360"
+ Title="OSDCloudPreOOBE" Width="820" Height="480" MinWidth="520" MinHeight="360"
  WindowStartupLocation="Manual" Background="#161F5B" Foreground="#F5F5F5"
  FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Topmost="True"
  UseLayoutRounding="True" SnapsToDevicePixels="True" AutomationProperties.Name="OSDCloudPreOOBE task engine">
  <shell:WindowChrome.WindowChrome>
   <shell:WindowChrome CaptionHeight="48" GlassFrameThickness="0"
-   ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}" UseAeroCaptionButtons="False"/>
+   ResizeBorderThickness="8" UseAeroCaptionButtons="False"/>
  </shell:WindowChrome.WindowChrome>
  <Window.Resources>
   <SolidColorBrush x:Key="SurfaceBrush" Color="#1C2868"/>
@@ -300,6 +347,32 @@ function Show-OOBEMenuWindow {
   <Style x:Key="IconStyle" TargetType="TextBlock">
    <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
    <Setter Property="FontSize" Value="14"/><Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+  <Style x:Key="StepCheckBoxStyle" TargetType="CheckBox">
+   <Setter Property="Foreground" Value="#F5F5F5"/><Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Height" Value="40"/><Setter Property="Padding" Value="19,0,12,0"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="CheckBox">
+    <Border x:Name="StepBorder" Background="Transparent" Padding="{TemplateBinding Padding}">
+     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+      <Border x:Name="Box" Width="18" Height="18" CornerRadius="4" BorderThickness="1"
+       BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource ControlBrush}">
+       <TextBlock x:Name="Check" Text="&#xE73E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12"
+        Foreground="#111949" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
+      </Border>
+      <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center"/>
+     </StackPanel>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsChecked" Value="True">
+      <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+      <Setter TargetName="Box" Property="Background" Value="{StaticResource AccentBrush}"/>
+      <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+     </Trigger>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="StepBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Box" Property="BorderBrush" Value="#F5F5F5"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style TargetType="ContextMenu">
    <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/><Setter Property="Foreground" Value="#F5F5F5"/>
@@ -363,9 +436,12 @@ function Show-OOBEMenuWindow {
  <Grid>
   <Grid.RowDefinitions><RowDefinition Height="48"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <Grid Background="{StaticResource SidebarBrush}">
-   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <TextBlock x:Name="TitleText" Text="Recast Software - OSDCloud PreOOBE" FontWeight="SemiBold" Margin="16,0,4,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-   <StackPanel Grid.Column="1" Orientation="Horizontal">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="56"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <Button x:Name="PaneToggleButton" Width="56" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Expand steps" AutomationProperties.Name="Expand steps">
+    <TextBlock Text="&#xE700;" Style="{StaticResource IconStyle}"/>
+   </Button>
+   <TextBlock x:Name="TitleText" Grid.Column="1" Text="Recast Software - OSDCloud PreOOBE" FontWeight="SemiBold" Margin="4,0,4,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+   <StackPanel Grid.Column="2" Orientation="Horizontal">
     <Border x:Name="UserBadge" Width="40" Height="48" Background="Transparent" ToolTip="SYSTEM" AutomationProperties.Name="Running as SYSTEM" shell:WindowChrome.IsHitTestVisibleInChrome="True">
      <TextBlock Text="&#xE77B;" Style="{StaticResource IconStyle}" HorizontalAlignment="Center"/>
     </Border>
@@ -383,22 +459,29 @@ function Show-OOBEMenuWindow {
     <Button x:Name="CloseButton" Width="40" Padding="0" Tag="Close" Style="{StaticResource CaptionButtonStyle}" ToolTip="Finish active operation and continue setup" AutomationProperties.Name="Cancel remaining tasks and continue setup"><TextBlock Text="&#xE8BB;" Style="{StaticResource IconStyle}"/></Button>
    </StackPanel>
   </Grid>
-  <Grid Grid.Row="1" Margin="24,16">
+  <Grid Grid.Row="1">
+   <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="56"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Border Background="{StaticResource SidebarBrush}">
+    <StackPanel x:Name="StepPanel" Margin="0,8,0,0" AutomationProperties.Name="PreOOBE steps"/>
+   </Border>
+  <Grid Grid.Column="1" Margin="24,16">
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <StackPanel>
-     <TextBlock x:Name="TimeTaskText" Text="Synchronizing internet time - Pending" Margin="0,0,0,8"/>
-     <TextBlock x:Name="DriverTaskText" Text="Driver unpack / install - Pending" Margin="0,0,0,8"/>
-     <TextBlock x:Name="SoftwareTaskText" Text="Updating Windows 11 - Pending" Margin="0,0,0,8"/>
-     <TextBlock x:Name="UpdateDriverTaskText" Text="Updating Drivers - Pending" Margin="0,0,0,8"/>
+     <TextBlock x:Name="TaskText0" Margin="0,0,0,8"/>
+     <TextBlock x:Name="TaskText1" Margin="0,0,0,8"/>
+     <TextBlock x:Name="TaskText2" Margin="0,0,0,8"/>
+     <TextBlock x:Name="TaskText3" Margin="0,0,0,8"/>
     </StackPanel>
    <ProgressBar x:Name="ProgressBar" Grid.Row="1" Height="4" BorderThickness="0" Margin="0,8,0,12" Foreground="{StaticResource AccentBrush}" Background="{StaticResource ControlBrush}"/>
    <TextBox x:Name="OutputTextBox" Grid.Row="2" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="PreOOBE task output"/>
    <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="True">
-    <Button x:Name="CancelButton" DockPanel.Dock="Right" Content="Skip Step" IsEnabled="False" Margin="12,0,0,0" AutomationProperties.Name="Skip current update after its active operation"/>
+    <Button x:Name="StepButton" DockPanel.Dock="Right" Content="Start" Margin="12,0,0,0" AutomationProperties.Name="Start OSDCloud PreOOBE"/>
+    <Button x:Name="ContinueOobeButton" DockPanel.Dock="Right" Content="Continue to OOBE" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Continue to OOBE"/>
     <Button x:Name="ContinueButton" DockPanel.Dock="Right" Content="Continue" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Continue with the remaining tasks"/>
     <Button x:Name="RetryButton" DockPanel.Dock="Right" Content="Retry" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Retry Updating Windows 11"/>
     <TextBlock x:Name="StatusText" Text="Starting..." TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource SecondaryTextBrush}" AutomationProperties.LiveSetting="Polite"/>
    </DockPanel>
+  </Grid>
   </Grid>
   <Border Grid.Row="2" Background="{StaticResource SidebarBrush}" Padding="16,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
    <TextBlock x:Name="ContextText" Text="" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
@@ -422,7 +505,7 @@ function Show-OOBEMenuWindow {
     $window.FindName('UserBadge').ToolTip = $userName
     [Windows.Automation.AutomationProperties]::SetName($window.FindName('UserBadge'), "Running as $userName")
     $engine = New-OSDCloudPreOOBEState
-    $ui = @{ ExitCode = 0; Source = $null; OutputCount = 0; CountdownSecond = -1; ClockWindow = $null; ClockSecond = $null }
+    $ui = @{ ExitCode = 0; Source = $null; OutputCount = 0; ClockWindow = $null; ClockSecond = $null }
     $updateContext = {
         try { $text = (Get-OSDCloudPreOOBEClock).Text }
         catch { $text = "Clock unavailable: $($_.Exception.Message)" }
@@ -526,7 +609,7 @@ function Show-OOBEMenuWindow {
             $clock.FindName('ApplyClockButton').Add_Click({
                 try {
                     $dialog = $ui.ClockWindow
-                    if (-not $Preview -and ($engine.Shared.InstallationActive -or $engine.Shared.ClockTestActive -or $engine.Active.Type -eq 'Time' -or $engine.Countdown)) { throw 'Clock changes are disabled during synchronization, clock testing, installation or completion countdown.' }
+                    if (-not $Preview -and ($engine.Shared.InstallationActive -or $engine.Shared.ClockTestActive -or $engine.Active.Type -eq 'Time')) { throw 'Clock changes are disabled during synchronization, clock testing or installation.' }
                     $message = Set-OOBEMenuClock -Date $dialog.FindName('DatePicker').SelectedDate -Time $dialog.FindName('TimeTextBox').Text `
                         -TimeZoneId $dialog.FindName('TimeZoneComboBox').SelectedValue -PreviewOnly:$Preview
                     $dialog.FindName('ClockStatusText').Text = $message
@@ -542,12 +625,46 @@ function Show-OOBEMenuWindow {
             if ($ui.ClockWindow) { $ui.ClockWindow.Close(); $ui.ClockWindow = $null }
         }
     })
-    $window.FindName('CancelButton').Add_Click({
+    $window.FindName('StepButton').Add_Click({
+        if (-not $engine.Started -or $engine.StepDelay) { Start-OSDCloudPreOOBEState -State $engine; return }
         if ($engine.Worker -and $engine.Active.Type -in 'Software','Driver') {
             $engine.Shared.CancelRequested = $true
-            Write-OOBEMenuLog -Message "Cancellation requested for $($engine.Active.Name)."
+            Write-OOBEMenuLog -Message "Skip requested for $($engine.Active.Name)."
         }
     })
+    $window.FindName('ContinueOobeButton').Add_Click({
+        Write-OOBEMenuLog -Message 'Continue to OOBE selected.'
+        $window.Close()
+    })
+    $ui.PaneExpanded = $false
+    $ui.StepBoxes = [Collections.Generic.List[object]]::new()
+    $setPane = {
+        $window.FindName('SidebarColumn').Width = [Windows.GridLength]::new($(if ($ui.PaneExpanded) { 220 } else { 56 }))
+        $name = if ($ui.PaneExpanded) { 'Collapse steps' } else { 'Expand steps' }
+        $window.FindName('PaneToggleButton').ToolTip = $name
+        [Windows.Automation.AutomationProperties]::SetName($window.FindName('PaneToggleButton'), $name)
+        foreach ($box in $ui.StepBoxes) { $box.Content = if ($ui.PaneExpanded) { $box.Tag.Name } else { $null } }
+    }
+    foreach ($task in $engine.Tasks) {
+        $box = [Windows.Controls.CheckBox]::new()
+        $box.Style = $window.FindResource('StepCheckBoxStyle')
+        $box.IsChecked = $true
+        $box.Tag = $task
+        $box.ToolTip = "$($task.Name) - uncheck to skip"
+        [Windows.Automation.AutomationProperties]::SetName($box, $task.Name)
+        $toggleStep = {
+            $this.Tag.Enabled = [bool]$this.IsChecked
+            $state = if ($this.Tag.Enabled) { 'checked' } else { 'unchecked' }
+            Write-OOBEMenuLog -Message "$($this.Tag.Name) $state by technician."
+        }
+        $box.Add_Checked($toggleStep)
+        $box.Add_Unchecked($toggleStep)
+        [void]$window.FindName('StepPanel').Children.Add($box)
+        $ui.StepBoxes.Add($box)
+    }
+    $window.FindName('PaneToggleButton').Add_Click({ $ui.PaneExpanded = -not $ui.PaneExpanded; & $setPane })
+    & $setPane
+    for ($index = 0; $index -lt $engine.Tasks.Count; $index++) { $window.FindName("TaskText$index").Text = "$($engine.Tasks[$index].Name) - $($engine.Tasks[$index].Outcome)" }
     $window.FindName('RetryButton').Add_Click({ Resume-OSDCloudPreOOBEState -State $engine -Retry })
     $window.FindName('ContinueButton').Add_Click({ Resume-OSDCloudPreOOBEState -State $engine })
     $timer = [Windows.Threading.DispatcherTimer]::new()
@@ -560,29 +677,39 @@ function Show-OOBEMenuWindow {
                 $ui.OutputCount++
                 $window.FindName('OutputTextBox').ScrollToEnd()
             }
-            foreach ($pair in @(@('TimeTaskText',0),@('DriverTaskText',1),@('SoftwareTaskText',2),@('UpdateDriverTaskText',3))) {
-                $task = $engine.Tasks[$pair[1]]
+            for ($index = 0; $index -lt $engine.Tasks.Count; $index++) {
+                $task = $engine.Tasks[$index]
                 $outcome = if ($engine.StepDelay -and $engine.StepTask -eq $task -and $task.Outcome -eq 'Pending') { "Starting in $($engine.StepRemaining) seconds" }
                 elseif ($engine.Paused -and $engine.PausedTask -eq $task) { 'Failed - Paused' }
+                elseif ($task.Outcome -eq 'Pending' -and -not $task.Enabled) { 'Will be skipped' }
                 else { $task.Outcome }
-                $window.FindName($pair[0]).Text = "$($task.Name) - $outcome"
+                $window.FindName("TaskText$index").Text = "$($task.Name) - $outcome"
+                $ui.StepBoxes[$index].IsEnabled = $task.Outcome -eq 'Pending' -and -not $engine.CloseRequested
             }
-            $window.FindName('CancelButton').IsEnabled = $null -ne $engine.Worker -and $engine.Active.Type -in 'Software','Driver' -and -not $engine.Shared.CancelRequested
+            $stepButton = $window.FindName('StepButton')
+            if (-not $engine.Started -or $engine.StepDelay) {
+                $stepButton.Content = 'Start'
+                $stepButton.IsEnabled = -not $engine.CloseRequested
+                $label = if ($engine.Started) { "Start $($engine.StepTask.Name) now" } else { 'Start OSDCloud PreOOBE' }
+            }
+            else {
+                $stepButton.Content = 'Skip Step'
+                $stepButton.IsEnabled = $null -ne $engine.Worker -and $engine.Active.Type -in 'Software','Driver' -and -not $engine.Shared.CancelRequested
+                $label = 'Skip current update after its active operation'
+            }
+            [Windows.Automation.AutomationProperties]::SetName($stepButton, $label)
+            $stepButton.Visibility = if ($engine.Paused -or $engine.Complete) { 'Collapsed' } else { 'Visible' }
+            $window.FindName('ContinueOobeButton').Visibility = if ($engine.Complete) { 'Visible' } else { 'Collapsed' }
             $pausedVisibility = if ($engine.Paused) { 'Visible' } else { 'Collapsed' }
             $window.FindName('RetryButton').Visibility = $pausedVisibility
             $window.FindName('ContinueButton').Visibility = $pausedVisibility
             $window.FindName('ProgressBar').IsIndeterminate = $null -ne $engine.Worker
             if ($ui.ClockWindow) {
-                $ui.ClockWindow.FindName('ApplyClockButton').IsEnabled = $Preview -or (-not $engine.Shared.InstallationActive -and -not $engine.Shared.ClockTestActive -and $engine.Active.Type -ne 'Time' -and -not $engine.Countdown)
+                $ui.ClockWindow.FindName('ApplyClockButton').IsEnabled = $Preview -or (-not $engine.Shared.InstallationActive -and -not $engine.Shared.ClockTestActive -and $engine.Active.Type -ne 'Time')
             }
-            if ($engine.Countdown) {
-                $window.FindName('StatusText').Text = "Complete. Continuing Windows Setup in $($engine.Remaining) seconds."
-                if ($ui.CountdownSecond -ne $engine.Remaining) {
-                    $ui.CountdownSecond = $engine.Remaining
-                    Write-OOBEMenuLog -Message "Completion countdown: $($engine.Remaining) seconds."
-                }
-            }
+            if ($engine.Complete) { $window.FindName('StatusText').Text = 'OSDCloud PreOOBE complete. Select Continue to OOBE.' }
             elseif ($engine.CloseRequested) { $window.FindName('StatusText').Text = 'Closing after the active operation finishes safely.' }
+            elseif (-not $engine.Started) { $window.FindName('StatusText').Text = 'Ready. Select Start to begin OSDCloud PreOOBE.' }
             elseif ($engine.Paused) { $window.FindName('StatusText').Text = "$($engine.PausedTask.Name) failed. Select the calendar to verify Date, Time and TimeZone, then select Retry or Continue." }
             elseif ($engine.StepDelay) { $window.FindName('StatusText').Text = "$($engine.StepTask.Name) - Starting in $($engine.StepRemaining) seconds." }
             elseif ($engine.Shared) { $window.FindName('StatusText').Text = $engine.Shared.Status }

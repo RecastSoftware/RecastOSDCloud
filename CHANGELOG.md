@@ -6,10 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Synchronize internet time as the first PreOOBE task before HTTPS probes and updates, so an incorrect clock does not block certificate validation. Log clock corrections and time-source failures without changing the time zone or bypassing TLS validation.
+- Synchronize internet time before HTTPS probes and updates, so an incorrect clock does not block certificate validation. Log clock corrections and time-source failures without changing the time zone or bypassing TLS validation.
 - Fix PreOOBE internet time sync and the Date, Time & TimeZone dialog setting the clock to the UTC value as local time. Windows PowerShell `Set-Date` ignores `DateTimeKind`, so both now apply local time in the running OS time zone.
 - PreOOBE logs the running OS date, time and time zone at start, shows them in the status bar using the OS locale, waits with a `Starting in 10 seconds` countdown before each task, and pauses after an Updating Windows 11 failure so the clock can be corrected before Retry or Continue.
 - PreOOBE task output shows short error messages; full exceptions and stack traces are written only to the log. The title reads `Recast Software - OSDCloud PreOOBE <version>`, the running account moves to a title-bar person icon tooltip, the status bar shows only the clock, and **Cancel step** is renamed **Skip Step**.
+- PreOOBE runs Driver unpack / install first, since OEM drivers may be needed for connectivity and time sync. For demos, the window waits for **Start** before running tasks, the step button reads **Start** during each countdown to begin that step immediately, and a **Continue to OOBE** button replaces the 15-second automatic completion countdown. A collapsible left pane lists each step with a checkbox; unchecking a step before it starts skips it. The resize border is widened to 8 pixels without changing the visible border.
 - Fix the PreOOBE connectivity probe failing with "The remote certificate is invalid". `https://www.msftconnecttest.com` serves a mismatched Akamai certificate; the probe now checks NCSI over HTTP and validates HTTPS against `https://sls.update.microsoft.com/`. Certificate failures log TLS, certificate chain, proxy, DNS and time-service diagnostics and run a ±1 hour clock shift test that always restores the clock.
 - Keep OOBE and SetupComplete menus topmost after rendering so ordinary Windows Setup windows cannot cover them. Log activation, topmost state and window bounds instead of claiming rendering proves visibility.
 

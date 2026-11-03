@@ -129,22 +129,21 @@ needed) and runs the equivalent of:
 
 The title is **Recast Software - OSDCloud PreOOBE** followed by the OSDCloud module
 version (stamped into the staged script). On start it logs the running OS date, time and
-time zone. Each task shows a **Starting in 10 seconds** countdown before it runs,
-giving clock changes time to apply and the technician time to review or correct the
-clock. It starts these tasks automatically:
+time zone, then waits: nothing runs until the technician selects **Start**, so the
+sequence can be presented in demos. Each task then shows a **Starting in 10 seconds**
+countdown before it runs, giving clock changes time to apply and the technician time
+to review or correct the clock. During a countdown the button reads **Start** and
+starts that task immediately; while an update runs it reads **Skip Step**.
 
-1. **Synchronizing internet time**: retrieve Google's HTTP `Date` header and set
-   the system clock before any HTTPS connectivity checks or Windows Update work.
-   This follows the existing OSDCloud time-source convention using HTTP to avoid
-   the incorrect-clock/certificate bootstrap problem. Two attempts have five-second
-   request budgets. Redirects, missing dates and stale cached responses are rejected.
-   The internet UTC time is converted to the running OS time zone before it is applied
-   (Windows PowerShell `Set-Date` sets local time and ignores `DateTimeKind`).
-   The UTC correction, applied local time and verified resulting clock are logged; the
-   time zone is unchanged. Failure is reported explicitly and independent tasks continue.
-   HTTP time is unauthenticated: use a trusted deployment network. This does not
-   disable certificate validation for connectivity probes or Windows Update.
-2. **Driver unpack / install**: the opted-in driver-download step stages
+The collapsed left pane (select the hamburger to expand it) lists every task with a
+checkbox. Unchecking a task before it starts skips it (logged as unchecked by
+technician); checking it again before it is reached runs it. Checkboxes are disabled
+once a task has started or finished.
+
+Tasks run in this order:
+
+1. **Driver unpack / install**: runs first because the OEM drivers may be required
+   for network connectivity and time sync. The opted-in driver-download step stages
    `OSDCloudPreOOBE.DriverPack.json` beside the runtime instead of appending Lenovo
    or Surface installation commands to SetupComplete. The engine validates the local
    package path, manufacturer, extension, size and SHA-256 before execution.
@@ -155,10 +154,21 @@ clock. It starts these tasks automatically:
    Surface MSI uses `/qn /norestart` with verbose MSI logging. Exit 3010 records
    a reboot requirement but does not reboot. Artifacts are retained for diagnostics.
    No staged manifest means **NotApplicable**.
+2. **Synchronizing internet time**: retrieve Google's HTTP `Date` header and set
+   the system clock before any HTTPS connectivity checks or Windows Update work.
+   This follows the existing OSDCloud time-source convention using HTTP to avoid
+   the incorrect-clock/certificate bootstrap problem. Two attempts have five-second
+   request budgets. Redirects, missing dates and stale cached responses are rejected.
+   The internet UTC time is converted to the running OS time zone before it is applied
+   (Windows PowerShell `Set-Date` sets local time and ignores `DateTimeKind`).
+   The UTC correction, applied local time and verified resulting clock are logged; the
+   time zone is unchanged. Failure is reported explicitly and independent tasks continue.
+   HTTP time is unauthenticated: use a trusted deployment network. This does not
+   disable certificate validation for connectivity probes or Windows Update.
 3. **Updating Windows 11**: check connectivity, then scan/download/install applicable
    software updates (including Windows servicing and .NET). If this task **fails**,
    the sequence pauses: use the title-bar calendar to verify Date, Time and TimeZone,
-   then select **Retry** (runs it again after the 15-second countdown) or **Continue**.
+   then select **Retry** (runs it again after the 10-second countdown) or **Continue**.
    The pause has no timeout; closing the window skips the remaining tasks.
 4. **Updating Drivers**: check connectivity again, then scan/download/install
    applicable driver updates.
@@ -172,8 +182,9 @@ OEM installation cannot be force-cancelled. There is no forced installation time
 
 Failures are logged and shown explicitly as a short message; full exception details and
 stack traces are written only to `OSDCloudPreOOBE.log`. The engine continues independent tasks.
-After all tasks reach terminal states, a **15-second countdown** closes the window
-with **exit 0**, allowing Windows Setup to continue. No task automatically reboots.
+After all tasks reach terminal states, a **Continue to OOBE** button appears; selecting
+it closes the window with **exit 0**, allowing Windows Setup to continue. There is no
+automatic continuation, so PreOOBE requires a technician. No task automatically reboots.
 Close/Escape/Alt+F4 requests safe completion of the active OEM operation or cancellation
 of the active update, skips remaining tasks, and then continues setup.
 Startup failure returns nonzero; the batch reports/logs it and continues.
@@ -200,7 +211,7 @@ When the HTTPS check fails with a certificate error, troubleshooting is logged:
   probed again. Calendar Apply is blocked while the test runs. Results are
   diagnostic only; if the restored probe connects, the update continues.
 Unavailable internet or a failed probe marks that update **Skipped**, with the reason
-logged. Local driver installation and the completion countdown still proceed.
+logged. Local driver installation and the remaining tasks still proceed.
 Cancellation is checked between attempts; an in-flight probe may take up to its timeout.
 
 This probe does not guarantee WU/WSUS availability; service-specific failures are still
@@ -234,11 +245,12 @@ Windows Setup windows cannot cover it; minimize it when working in a launched sh
   time in that zone. Input is validated before changes; daylight-saving
   gaps/repeated hours are rejected. Errors remain visible. If setting the time
   fails after the time zone changed, inspect the clock/zone before retrying. Applying
-  clock changes is disabled during time synchronization, active installation and
-  completion countdown.
+  clock changes is disabled during time synchronization, clock testing and active
+  installation.
 - The status bar shows only the running OS date and time in the OS locale's full format
   with the time zone name and UTC offset, refreshed every second.
 - The title-bar person icon shows the running account (**SYSTEM**) on hover.
+- The window resizes from an 8-pixel border around its edges.
 - Shell and Notepad windows remain open after the engine closes and are not waited on.
 - Tool errors remain visible and are logged without stopping task execution.
 
@@ -253,7 +265,7 @@ and an enabled staging step; when disabled, original SetupComplete driver handli
 Diagnostics are in `%SystemRoot%\Temp\osdcloud-logs\OSDCloudPreOOBE.log`, including
 identity/session/desktop, package validation, task transitions/durations, connectivity
 failures, process IDs/exit codes, WUA identities/results/HRESULTs, cancellation,
-reboot requirements, countdown and final exit.
+reboot requirements, technician Start/skip selections and final exit.
 `OSDCloudPreOOBE-results.json` records terminal task outcomes; `PreOOBE-*.stdout.log`,
 `PreOOBE-*.stderr.log` and Surface MSI logs preserve installer diagnostics.
 Setup's own logs can be consulted to establish the actual hook/order.
@@ -272,7 +284,8 @@ For an inert **local console** preview, use:
 powershell.exe -NoLogo -NoProfile -STA -File .\OSDCloud\core\oobe\OSDCloudPreOOBE.ps1 -Preview
 ```
 
-Preview simulates the sequence and countdown without network, driver/update installations,
+Preview simulates the sequence (including Start, step checkboxes and Continue to OOBE)
+without network, driver/update installations,
 shell launches or clock writes. Logs and results go to `%TEMP%`. It does **not**
 verify first-boot behavior.
 

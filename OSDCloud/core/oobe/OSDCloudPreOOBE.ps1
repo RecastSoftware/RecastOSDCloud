@@ -5,7 +5,8 @@
     Self-contained inbox Windows PowerShell 5.1/WPF script for AMD64 and ARM64.
     Run synchronously at the end of OOBE.cmd as SYSTEM. If necessary, a copy of this script
     is launched as SYSTEM in the console session and attached to its input desktop.
-    Tasks finish with a 15-second countdown and return 0. Startup failures return 1.
+    The sequence waits for Start, and after the tasks finish it waits for Continue to OOBE,
+    then returns 0. Startup failures return 1.
     Shells are independent SYSTEM processes and remain open when the menu closes.
 .PARAMETER Preview
     Simulates tasks and tools without network or system changes.

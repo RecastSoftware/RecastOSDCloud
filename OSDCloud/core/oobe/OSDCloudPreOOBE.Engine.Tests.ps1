@@ -9,6 +9,7 @@ Describe 'PreOOBE ordered scheduler' {
         Mock Set-Content {}
         $engine = New-OSDCloudPreOOBEState
         $engine.StepDelaySeconds = 0
+        $engine.Started = $true
         $script:types = [Collections.Generic.List[string]]::new()
         Mock Start-OOBEMenuUpdateWorker {
             $script:types.Add($Type)
@@ -23,29 +24,81 @@ Describe 'PreOOBE ordered scheduler' {
         }
     }
 
-    It 'synchronizes time before drivers and updates and waits the full 15-second countdown' {
+    It 'installs OEM drivers before time sync and updates, then waits for Continue to OOBE' {
         1..5 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
-        ($script:types -join ',') | Should -Be 'Time,DriverPack,Software,Driver'
+        ($script:types -join ',') | Should -Be 'DriverPack,Time,Software,Driver'
         @($engine.Tasks | Where-Object Outcome -ne Succeeded).Count | Should -Be 0
-        $engine.Remaining | Should -Be 15
+        $engine.Complete | Should -BeTrue
+        1..3 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
         $engine.Done | Should -BeFalse
-        $engine.Countdown = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(14.99) }
-        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
-        $engine.Remaining | Should -Be 1
-        $engine.Done | Should -BeFalse
-        $engine.Countdown = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(15) }
+        $engine.CloseRequested = $true
         Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
         $engine.Done | Should -BeTrue
-        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
         Should -Invoke Set-Content -Times 1 -Exactly
+    }
+
+    It 'waits for Start before running any task' {
+        $engine.Started = $false
+        1..3 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
+        $script:types.Count | Should -Be 0
+        @($engine.Tasks | Where-Object Outcome -eq Pending).Count | Should -Be 4
+        Start-OSDCloudPreOOBEState -State $engine
+        $engine.Started | Should -BeTrue
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        ($script:types -join ',') | Should -Be 'DriverPack'
+        ($engine.Output -join "`n") | Should -BeLike '*OSDCloud PreOOBE started by technician.*'
+    }
+
+    It 'closing before Start skips every task and finishes' {
+        $engine.Started = $false
+        $engine.CloseRequested = $true
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $script:types.Count | Should -Be 0
+        @($engine.Tasks | Where-Object Outcome -eq Skipped).Count | Should -Be 4
+        $engine.Done | Should -BeTrue
+    }
+
+    It 'skips unchecked steps when reached and still runs re-checked steps' {
+        $engine.Tasks[1].Enabled = $false
+        $engine.Tasks[3].Enabled = $false
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $engine.Tasks[3].Outcome | Should -Be 'Pending'
+        $engine.Tasks[3].Enabled = $true
+        1..4 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
+        ($script:types -join ',') | Should -Be 'DriverPack,Software,Driver'
+        $engine.Tasks[1].Outcome | Should -Be 'Skipped'
+        ($engine.Output -join "`n") | Should -BeLike '*Skipped Synchronizing internet time: unchecked by technician.*'
+        $engine.Complete | Should -BeTrue
+    }
+
+    It 'skips a step unchecked during its countdown' {
+        $engine.StepDelaySeconds = 10
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $engine.StepTask | Should -Be $engine.Tasks[0]
+        $engine.Tasks[0].Enabled = $false
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $engine.Tasks[0].Outcome | Should -Be 'Skipped'
+        $engine.StepTask | Should -Be $engine.Tasks[1]
+        $script:types.Count | Should -Be 0
+    }
+
+    It 'Start begins the counting-down step immediately' {
+        $engine.StepDelaySeconds = 10
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $script:types.Count | Should -Be 0
+        Start-OSDCloudPreOOBEState -State $engine
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        ($script:types -join ',') | Should -Be 'DriverPack'
+        $engine.StartNow | Should -BeFalse
+        ($engine.Output -join "`n") | Should -BeLike '*Starting Driver unpack / install now by technician request.*'
     }
 
     It 'never starts a skipped pending update and still completes' {
         $engine.Tasks[2].Outcome = 'Skipped'
         1..4 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
-        ($script:types -join ',') | Should -Be 'Time,DriverPack,Driver'
+        ($script:types -join ',') | Should -Be 'DriverPack,Time,Driver'
         $engine.Tasks[2].Outcome | Should -Be 'Skipped'
-        $engine.Countdown | Should -Not -BeNullOrEmpty
+        $engine.Complete | Should -BeTrue
     }
 
     It 'pauses after a Windows Update startup failure and continues independent tasks on Continue' {
@@ -78,13 +131,13 @@ Describe 'PreOOBE ordered scheduler' {
         $engine.Paused | Should -BeTrue
         $engine.PausedTask | Should -Be $engine.Tasks[2]
         $engine.Tasks[3].Outcome | Should -Be 'Pending'
-        $engine.Countdown | Should -BeNullOrEmpty
+        $engine.Complete | Should -BeFalse
         Resume-OSDCloudPreOOBEState -State $engine -Retry
         $engine.Paused | Should -BeFalse
         1..3 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
-        ($script:types -join ',') | Should -Be 'Time,DriverPack,Software,Software,Driver'
+        ($script:types -join ',') | Should -Be 'DriverPack,Time,Software,Software,Driver'
         $engine.Tasks[2].Outcome | Should -Be 'Succeeded'
-        $engine.Countdown | Should -Not -BeNullOrEmpty
+        $engine.Complete | Should -BeTrue
     }
 
     It 'skips remaining tasks when the window closes while paused' {
@@ -105,14 +158,14 @@ Describe 'PreOOBE ordered scheduler' {
         $script:types.Count | Should -Be 0
         $engine.StepTask | Should -Be $engine.Tasks[0]
         $engine.StepRemaining | Should -Be 10
-        ($engine.Output -join "`n") | Should -BeLike '*Synchronizing internet time starting in 10 seconds.*'
+        ($engine.Output -join "`n") | Should -BeLike '*Driver unpack / install starting in 10 seconds.*'
         $engine.StepDelay = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(9.99) }
         Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
         $engine.StepRemaining | Should -Be 1
         $script:types.Count | Should -Be 0
         $engine.StepDelay = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(10) }
         Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
-        ($script:types -join ',') | Should -Be 'Time'
+        ($script:types -join ',') | Should -Be 'DriverPack'
         Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
         $engine.Tasks[0].Outcome | Should -Be 'Succeeded'
         $engine.StepTask | Should -Be $engine.Tasks[1]
@@ -125,8 +178,8 @@ Describe 'PreOOBE ordered scheduler' {
     }
 
     It 'does not force cancel OEM installation when closing and skips remaining tasks' {
-        $engine.Tasks[0].Outcome = 'Succeeded'
         Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $engine.Active.Type | Should -Be 'DriverPack'
         $engine.Worker.Handle.IsCompleted = $false
         $engine.CloseRequested = $true
         Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
@@ -140,8 +193,8 @@ Describe 'PreOOBE ordered scheduler' {
     }
 
     It 'cancels an active update cooperatively on close and waits for its completion' {
-        $engine.Tasks[0].Outcome = 'Succeeded'
-        $engine.Tasks[1].Outcome = 'NotApplicable'
+        $engine.Tasks[0].Outcome = 'NotApplicable'
+        $engine.Tasks[1].Outcome = 'Succeeded'
         Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
         $engine.Worker.Handle.IsCompleted = $false
         $engine.CloseRequested = $true
@@ -165,12 +218,12 @@ Describe 'PreOOBE ordered scheduler' {
         $engine.Output | Should -Contain 'Final worker message'
     }
 
-    It 'continues local drivers and update checks when internet time fails' {
+    It 'continues updates when internet time fails' {
         Mock Start-OOBEMenuUpdateWorker { throw 'Time source unreachable' } -ParameterFilter { $Type -eq 'Time' }
         1..5 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
-        $engine.Tasks[0].Outcome | Should -Be Failed
+        $engine.Tasks[1].Outcome | Should -Be Failed
         ($script:types -join ',') | Should -Be 'DriverPack,Software,Driver'
-        $engine.Countdown | Should -Not -BeNullOrEmpty
+        $engine.Complete | Should -BeTrue
     }
 }
 
@@ -315,12 +368,19 @@ Describe 'PreOOBE rendered automation' -Tag Interactive {
                 $result.Topmost = $testWindow.Topmost
                 $result.TitleText = $testWindow.FindName('TitleText').Text
                 $result.User = $testWindow.FindName('UserBadge').ToolTip
-                $result.SkipStep = $testWindow.FindName('CancelButton').Content
+                $result.StepButton = $testWindow.FindName('StepButton').Content
+                $result.ContinueOobe = $testWindow.FindName('ContinueOobeButton').Visibility
+                $result.Steps = @($testWindow.FindName('StepPanel').Children).Count
+                $result.Collapsed = $testWindow.FindName('SidebarColumn').Width.Value
+                $testWindow.FindName('PaneToggleButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                $result.Expanded = $testWindow.FindName('SidebarColumn').Width.Value
+                $result.StepName = $testWindow.FindName('StepPanel').Children[0].Content
+                $result.Resize = [Windows.Shell.WindowChrome]::GetWindowChrome($testWindow).ResizeBorderThickness.Right
                 $result.Context = $testWindow.FindName('ContextText').Text
                 $result.Scripts = @($testWindow.FindName('ScriptsMenuButton').ContextMenu.Items | ForEach-Object Header)
                 $result.Shells = @($testWindow.FindName('ShellMenuButton').ContextMenu.Items | ForEach-Object Header)
                 $result.Calendar = [Windows.Automation.AutomationProperties]::GetName($testWindow.FindName('CalendarButton'))
-                $result.Time = $testWindow.FindName('TimeTaskText').Text
+                $result.Time = $testWindow.FindName('TaskText1').Text
                 $result.SkipSoftware = $testWindow.FindName('SkipSoftwareButton')
                 $result.SkipDrivers = $testWindow.FindName('SkipDriversButton')
                 $testWindow.FindName('ScriptsMenuButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
@@ -350,7 +410,13 @@ Describe 'PreOOBE rendered automation' -Tag Interactive {
         $result.Title | Should -Be "Recast Software - OSDCloud PreOOBE $version (Preview)"
         $result.TitleText | Should -Be "Recast Software - OSDCloud PreOOBE $version"
         $result.User | Should -Not -BeNullOrEmpty
-        $result.SkipStep | Should -Be 'Skip Step'
+        $result.StepButton | Should -Be 'Start'
+        $result.ContinueOobe | Should -Be ([Windows.Visibility]::Collapsed)
+        $result.Steps | Should -Be 4
+        $result.Collapsed | Should -Be 56
+        $result.Expanded | Should -Be 220
+        $result.StepName | Should -Be 'Driver unpack / install'
+        $result.Resize | Should -Be 8
         $result.Context | Should -Not -BeLike '*OSDCloud by Recast*'
         $result.Topmost | Should -BeTrue
         ($result.Scripts -join ',') | Should -Be 'OOBE.cmd,SetupComplete.cmd'
