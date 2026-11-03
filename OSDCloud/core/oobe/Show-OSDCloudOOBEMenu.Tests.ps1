@@ -217,21 +217,31 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
                     $uiState.Width = $testWindow.ActualWidth
                     $uiState.Height = $testWindow.ActualHeight
                     $uiState.Title = $testWindow.Title
+                    $uiState.Topmost = $testWindow.Topmost
                     $uiState.PageTitleVisibility = $testWindow.FindName('PageTitleText').Visibility
                     $uiState.UpdateVisibility = $testWindow.FindName('WindowsUpdateButton').Visibility
                     $uiState.Left = $testWindow.Left
                     $uiState.Top = $testWindow.Top
                     $uiState.MinimizeStyle = $testWindow.FindName('MinimizeButton').Style
                     $uiState.ClockVisibility = $testWindow.FindName('ClockButton').Visibility
-                    $button = $testWindow.FindName('CommandButton')
+                    $uiState.OldCommand = $testWindow.FindName('CommandButton')
+                    $uiState.OldPowerShell = $testWindow.FindName('PowerShellButton')
+                    $button = $testWindow.FindName('ShellMenuButton')
                     [void]$button.Focus()
                     $uiState.Focused = $button.IsKeyboardFocused
                     $button.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent))
+                    $menu = $button.ContextMenu
+                    $uiState.MenuOpen = $menu.IsOpen
+                    $uiState.MenuPlacement = $menu.Placement
+                    $uiState.MenuTarget = $menu.PlacementTarget.Name
+                    $uiState.MenuHeaders = @($menu.Items | ForEach-Object { $_.Header })
+                    $menu.Items[0].RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.MenuItem]::ClickEvent))
                     $uiState.Status = $testWindow.FindName('StatusText').Text
-                    $testWindow.FindName('PowerShellButton').RaiseEvent(
-                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    $menu.Items[1].RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.MenuItem]::ClickEvent)
                     )
                     $uiState.PowerShellStatus = $testWindow.FindName('StatusText').Text
+                    $menu.IsOpen = $false
                     $testWindow.FindName('ContinueButton').RaiseEvent(
                         [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
                     )
@@ -244,14 +254,23 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
         $uiState.Width | Should -Be 480
         $uiState.Height | Should -Be 360
         $uiState.Title | Should -Be 'OSDCloud - OOBE.cmd (Preview)'
+        $uiState.Topmost | Should -BeTrue
         $uiState.PageTitleVisibility | Should -Be ([System.Windows.Visibility]::Collapsed)
-        $uiState.UpdateVisibility | Should -Be ([System.Windows.Visibility]::Collapsed)
+        $uiState.UpdateVisibility | Should -Be ([System.Windows.Visibility]::Visible)
         $workArea = [System.Windows.SystemParameters]::WorkArea
         $uiState.Left | Should -Be ($workArea.Left + [Math]::Min(20, [Math]::Max(0, $workArea.Width - [Math]::Min(640, $workArea.Width))))
         $uiState.Top | Should -Be ($workArea.Top + [Math]::Min(20, [Math]::Max(0, $workArea.Height - [Math]::Min(480, $workArea.Height))))
         $uiState.MinimizeStyle | Should -BeOfType ([System.Windows.Style])
-        $uiState.ClockVisibility | Should -Be ([System.Windows.Visibility]::Collapsed)
+        $uiState.ClockVisibility | Should -Be ([System.Windows.Visibility]::Visible)
         $uiState.Focused | Should -BeTrue
+        $uiState.OldCommand | Should -BeNullOrEmpty
+        $uiState.OldPowerShell | Should -BeNullOrEmpty
+        $uiState.MenuOpen | Should -BeTrue
+        $uiState.MenuPlacement | Should -Be ([System.Windows.Controls.Primitives.PlacementMode]::Bottom)
+        $uiState.MenuTarget | Should -Be 'ShellMenuButton'
+        $uiState.MenuHeaders.Count | Should -Be 2
+        $uiState.MenuHeaders[0] | Should -Be 'CMD Prompt'
+        $uiState.MenuHeaders[1] | Should -Be 'Windows PowerShell'
         $uiState.Status | Should -BeLike 'Preview: would open *cmd.exe /d /k'
         $uiState.PowerShellStatus | Should -BeLike 'Preview: would open *powershell.exe -NoLogo -NoProfile -NoExit -STA'
     }
@@ -270,7 +289,12 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
                         [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
                     )
                     $uiState.SidebarWidth = $testWindow.FindName('SidebarColumn').Width.Value
-                    $uiState.LabelVisibility = $testWindow.FindName('CommandLabel').Visibility
+                    $uiState.LabelVisibility = $testWindow.FindName('ToolsLabel').Visibility
+                    $testWindow.FindName('ShellMenuButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.CompactShellOpen = $testWindow.FindName('ShellMenuButton').ContextMenu.IsOpen
+                    $testWindow.FindName('ShellMenuButton').ContextMenu.IsOpen = $false
                     $testWindow.FindName('OpenOOBEButton').RaiseEvent(
                         [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
                     )
@@ -299,14 +323,15 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
         $uiState.CaptionBorder | Should -Be 0
         $uiState.SidebarWidth | Should -Be 56
         $uiState.LabelVisibility | Should -Be ([System.Windows.Visibility]::Collapsed)
+        $uiState.CompactShellOpen | Should -BeTrue
         $uiState.OOBEStatus | Should -BeLike 'Preview: would open *notepad.exe "*\Setup\Scripts\oobe.cmd"'
         $uiState.SetupStatus | Should -BeLike 'Preview: would open *notepad.exe "*\Setup\Scripts\setupcomplete.cmd"'
         $uiState.Maximized | Should -Be ([System.Windows.WindowState]::Maximized)
         $uiState.Restored | Should -Be ([System.Windows.WindowState]::Normal)
     }
 
-    It 'renders SetupComplete with clock controls and previews Apply without changing the host' {
-        $Phase = 'SetupComplete'
+    It 'renders OOBE with clock controls and previews Apply without changing the host' {
+        $Phase = 'OOBE'
         Mock Set-TimeZone {}
         Mock Set-Date {}
         $uiTimer.Add_Tick({
@@ -316,6 +341,7 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
                         Select-Object -ExpandProperty RootVisual)[0]
                 try {
                     $uiState.Title = $testWindow.Title
+                    $uiState.SetupTopmost = $testWindow.Topmost
                     $testWindow.FindName('ClockButton').RaiseEvent(
                         [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
                     )
@@ -349,7 +375,8 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
         $uiTimer.Start()
         Show-OOBEMenuWindow | Should -Be 0
         $uiState.Error | Should -BeNullOrEmpty
-        $uiState.Title | Should -Be 'OSDCloud - SetupComplete.cmd (Preview)'
+        $uiState.Title | Should -Be 'OSDCloud - OOBE.cmd (Preview)'
+        $uiState.SetupTopmost | Should -BeTrue
         $uiState.ClockVisible | Should -Be ([System.Windows.Visibility]::Visible)
         $uiState.DropDownOpen | Should -BeTrue
         $uiState.Status | Should -Be 'Preview: would set 2030-06-15 14:30:00 (UTC).'
@@ -368,8 +395,8 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
                         Where-Object { $_.RootVisual -is [System.Windows.Window] } |
                         Select-Object -ExpandProperty RootVisual)[0]
                 try {
-                    $testWindow.FindName('CommandButton').RaiseEvent(
-                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    $testWindow.FindName('ShellMenuButton').ContextMenu.Items[0].RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.MenuItem]::ClickEvent)
                     )
                     $uiState.Status = $testWindow.FindName('StatusText').Text
                     $uiState.Visible = $testWindow.IsVisible
@@ -384,8 +411,8 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
         $uiState.Visible | Should -BeTrue
     }
 
-    It 'offers both SetupComplete update actions while preview never starts an update worker' {
-        $Phase = 'SetupComplete'
+    It 'offers both OOBE update actions and fills resized output while preview never starts an update worker' {
+        $Phase = 'OOBE'
         Mock Start-OOBEMenuUpdateWorker { throw 'Preview must not start WUA' }
         $uiTimer.Add_Tick({
                 $uiTimer.Stop()
@@ -405,6 +432,20 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
                     )
                     $uiState.DriverStatus = $testWindow.FindName('StatusText').Text
                     $uiState.UpdateTitle = $testWindow.FindName('PageTitleText').Text
+                    $testWindow.Width = 640
+                    $testWindow.Height = 480
+                    $testWindow.UpdateLayout()
+                    $uiState.InitialOutputHeight = $testWindow.FindName('UpdateOutputTextBox').ActualHeight
+                    $testWindow.Height = 800
+                    $testWindow.UpdateLayout()
+                    $uiState.TallOutputHeight = $testWindow.FindName('UpdateOutputTextBox').ActualHeight
+                    $uiState.PageHeight = $testWindow.FindName('UpdatePage').ActualHeight
+                    $uiState.CancelHeight = $testWindow.FindName('CancelUpdateButton').ActualHeight
+                    $uiState.CancelMargin = $testWindow.FindName('CancelUpdateButton').Margin.Top
+                    $testWindow.Width = 480
+                    $testWindow.Height = 360
+                    $testWindow.UpdateLayout()
+                    $uiState.MinimumOutputHeight = $testWindow.FindName('UpdateOutputTextBox').ActualHeight
                     $testWindow.FindName('PaneToggleButton').RaiseEvent(
                         [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
                     )
@@ -416,7 +457,11 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
         $uiTimer.Start()
         Show-OOBEMenuWindow | Should -Be 0
         $uiState.Error | Should -BeNullOrEmpty
-        $uiState.Title | Should -Be 'OSDCloud - SetupComplete.cmd (Preview)'
+        $uiState.Title | Should -Be 'OSDCloud - OOBE.cmd (Preview)'
+        $uiState.TallOutputHeight | Should -BeGreaterThan 180
+        ($uiState.TallOutputHeight - $uiState.InitialOutputHeight) | Should -Be 320
+        $uiState.TallOutputHeight | Should -Be ($uiState.PageHeight - 32 - 16 - $uiState.CancelHeight - $uiState.CancelMargin)
+        $uiState.MinimumOutputHeight | Should -BeGreaterThan 0
         $uiState.SoftwareVisibility | Should -Be ([System.Windows.Visibility]::Visible)
         $uiState.DriverVisibility | Should -Be ([System.Windows.Visibility]::Visible)
         $uiState.UpdateLabelVisibility | Should -Be ([System.Windows.Visibility]::Collapsed)
@@ -427,7 +472,7 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
     }
 
     It 'surfaces worker startup failure without blocking menu closure' {
-        $Phase = 'SetupComplete'
+        $Phase = 'OOBE'
         $Preview = $false
         Mock Start-OOBEMenuUpdateWorker { throw 'Worker unavailable' }
         $uiTimer.Add_Tick({

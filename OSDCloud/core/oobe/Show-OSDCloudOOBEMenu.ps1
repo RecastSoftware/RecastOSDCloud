@@ -3,7 +3,7 @@
     Displays an interactive technician menu before Windows Setup continues.
 .DESCRIPTION
     Self-contained inbox Windows PowerShell 5.1/WPF script for AMD64 and ARM64.
-    Run synchronously from OOBE.cmd or SetupComplete.cmd as SYSTEM. If necessary, a copy of this script
+    Run synchronously at the end of OOBE.cmd as SYSTEM. If necessary, a copy of this script
     is launched as SYSTEM in the console session and attached to its input desktop.
     Closing the menu returns 0. Startup failures are logged and return 1.
     Shells are independent SYSTEM processes and remain open when the menu closes.
@@ -11,7 +11,7 @@
     Displays the menu as the current user without crossing sessions. Shell buttons
     only report their intended actions. Does not prove first-boot interactivity.
 .PARAMETER Phase
-    Selects OOBE or SetupComplete. SetupComplete provides clock and update actions.
+    Selects the caller title. SetupComplete is retained for legacy manual use only.
 .PARAMETER InteractiveChild
     Internal session-launch flag. Not needed in OOBE.cmd.
 .PARAMETER ReadyEvent
@@ -116,7 +116,7 @@ function Set-OOBEMenuClock {
     .EXAMPLE
         Set-OOBEMenuClock -Date (Get-Date) -Time '14:30:00' -TimeZoneId 'UTC' -PreviewOnly
     .NOTES
-        Called only by the SetupComplete page; applying changes requires SYSTEM.
+        Called by the clock page; applying changes requires SYSTEM.
     #>
     [CmdletBinding()]
     param (
@@ -220,7 +220,7 @@ function Invoke-OOBEMenuWindowsUpdate {
         }
         $session = New-Object -ComObject Microsoft.Update.Session -ErrorAction Stop
         $owned.Add($session)
-        $session.ClientApplicationID = 'Recast OSDCloud SetupComplete'
+        $session.ClientApplicationID = 'Recast OSDCloud OOBE'
         $searcher = $session.CreateUpdateSearcher()
         $owned.Add($searcher)
         Write-OOBEMenuUpdateStatus -State $State -Message "Searching for $Type updates."
@@ -850,7 +850,7 @@ function Show-OOBEMenuWindow {
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="CaptionBorder" Background="{TemplateBinding Background}">
+                        <Border x:Name="CaptionBorder" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -879,6 +879,54 @@ function Show-OOBEMenuWindow {
         </Style>
         <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
             <Setter Property="Tag" Value="Close"/>
+        </Style>
+        <Style x:Key="TitleBarMenuButtonStyle" TargetType="Button" BasedOn="{StaticResource TitleBarButtonStyle}">
+            <Setter Property="Width" Value="Auto"/>
+            <Setter Property="Padding" Value="12,0"/>
+        </Style>
+        <Style x:Key="ToolMenuStyle" TargetType="ContextMenu">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="#F5F5F5"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1" CornerRadius="8" Padding="4">
+                            <ScrollViewer MaxHeight="480" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                            </ScrollViewer>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ToolMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Foreground" Value="#F5F5F5"/>
+            <Setter Property="Padding" Value="12,7"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="MenuItemBorder" Background="Transparent" CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="MenuItemBorder" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="MenuItemBorder" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="TitleBarIconStyle" TargetType="TextBlock" BasedOn="{StaticResource IconStyle}">
             <Setter Property="FontSize" Value="12"/>
@@ -1005,7 +1053,7 @@ function Show-OOBEMenuWindow {
         </Grid.RowDefinitions>
         <Grid Grid.ColumnSpan="2" Background="{StaticResource SidebarBrush}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="56"/><ColumnDefinition Width="*"/><ColumnDefinition Width="46"/>
+                <ColumnDefinition Width="56"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="46"/>
                 <ColumnDefinition Width="46"/><ColumnDefinition Width="46"/>
             </Grid.ColumnDefinitions>
             <Button x:Name="PaneToggleButton" Style="{StaticResource TitleBarButtonStyle}"
@@ -1014,15 +1062,22 @@ function Show-OOBEMenuWindow {
             </Button>
             <TextBlock x:Name="TitleText" Grid.Column="1" Text="OSDCloud OOBE Menu" Margin="8,0"
                        VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-            <Button x:Name="MinimizeButton" Grid.Column="2" Style="{StaticResource TitleBarButtonStyle}"
+            <Button x:Name="ShellMenuButton" Grid.Column="2" Style="{StaticResource TitleBarMenuButtonStyle}"
+                    ToolTip="Open a command shell" AutomationProperties.Name="Shell">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE756;" Style="{StaticResource TitleBarIconStyle}" FontSize="14" Margin="0,0,8,0"/>
+                    <TextBlock Text="Shell" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="MinimizeButton" Grid.Column="3" Style="{StaticResource TitleBarButtonStyle}"
                     ToolTip="Minimize" AutomationProperties.Name="Minimize">
                 <TextBlock Text="&#xE921;" Style="{StaticResource TitleBarIconStyle}"/>
             </Button>
-            <Button x:Name="MaximizeButton" Grid.Column="3" Style="{StaticResource TitleBarButtonStyle}"
+            <Button x:Name="MaximizeButton" Grid.Column="4" Style="{StaticResource TitleBarButtonStyle}"
                     ToolTip="Maximize" AutomationProperties.Name="Maximize">
                 <TextBlock x:Name="MaximizeGlyph" Text="&#xE922;" Style="{StaticResource TitleBarIconStyle}"/>
             </Button>
-            <Button x:Name="CloseButton" Grid.Column="4" Style="{StaticResource TitleBarCloseButtonStyle}"
+            <Button x:Name="CloseButton" Grid.Column="5" Style="{StaticResource TitleBarCloseButtonStyle}"
                     ToolTip="Continue Windows Setup" AutomationProperties.Name="Close menu and continue Windows Setup">
                 <TextBlock Text="&#xE8BB;" Style="{StaticResource TitleBarIconStyle}"/>
             </Button>
@@ -1030,20 +1085,6 @@ function Show-OOBEMenuWindow {
         <Border Grid.Row="1" Background="{StaticResource SidebarBrush}">
             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Margin="0,8">
-                    <Button x:Name="CommandButton" Style="{StaticResource SidebarButtonStyle}"
-                            AutomationProperties.Name="Cmd Prompt" ToolTip="Cmd Prompt">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="CommandIcon" Text="&#xE756;" Style="{StaticResource IconStyle}" FontSize="18" Width="20"/>
-                            <TextBlock x:Name="CommandLabel" Text="Cmd Prompt" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="PowerShellButton" Style="{StaticResource SidebarButtonStyle}"
-                            AutomationProperties.Name="Windows PowerShell" ToolTip="Windows PowerShell">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock x:Name="PowerShellIcon" Text="&#xE756;" Style="{StaticResource IconStyle}" FontSize="18" Width="20"/>
-                            <TextBlock x:Name="PowerShellLabel" Text="Windows PowerShell" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
                     <Button x:Name="ToolsButton" Style="{StaticResource SidebarButtonStyle}"
                             AutomationProperties.Name="Setup scripts" ToolTip="Setup scripts">
                         <StackPanel Orientation="Horizontal">
@@ -1093,15 +1134,6 @@ function Show-OOBEMenuWindow {
                                 <TextBlock Text="Open setupcomplete.cmd" TextWrapping="Wrap"/>
                             </Button>
                         </StackPanel>
-                        <StackPanel x:Name="UpdatePage" Visibility="Collapsed">
-                            <ProgressBar x:Name="UpdateProgressBar" Height="4" BorderThickness="0" Foreground="{StaticResource AccentBrush}"
-                                         Background="{StaticResource ControlBrush}" IsIndeterminate="False" Margin="0,0,0,12"/>
-                            <TextBox x:Name="UpdateOutputTextBox" IsReadOnly="True" TextWrapping="Wrap"
-                                     VerticalScrollBarVisibility="Auto" Height="120"
-                                     AutomationProperties.Name="Windows Update results"/>
-                            <Button x:Name="CancelUpdateButton" Content="Cancel updates" IsEnabled="False" Margin="0,12,0,0"
-                                    AutomationProperties.Name="Cancel after current update operation"/>
-                        </StackPanel>
                         <StackPanel x:Name="ClockPage" Visibility="Collapsed">
                             <UniformGrid x:Name="ClockDateTimeGrid" Columns="2">
                                 <StackPanel Margin="0,0,8,8">
@@ -1126,6 +1158,20 @@ function Show-OOBEMenuWindow {
                     </Grid>
                 </Border>
             </ScrollViewer>
+            <Border x:Name="UpdatePage" Grid.Row="1" Visibility="Collapsed"
+                    Background="{StaticResource SurfaceBrush}" CornerRadius="4" Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <ProgressBar x:Name="UpdateProgressBar" Height="4" BorderThickness="0" Foreground="{StaticResource AccentBrush}"
+                                 Background="{StaticResource ControlBrush}" IsIndeterminate="False" Margin="0,0,0,12"/>
+                    <TextBox x:Name="UpdateOutputTextBox" Grid.Row="1" IsReadOnly="True" TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Windows Update results"/>
+                    <Button x:Name="CancelUpdateButton" Grid.Row="2" Content="Cancel updates" IsEnabled="False" Margin="0,12,0,0"
+                            AutomationProperties.Name="Cancel after current update operation"/>
+                </Grid>
+            </Border>
             <TextBlock x:Name="StatusText" Grid.Row="2" Margin="0,12,0,0" TextWrapping="Wrap"
                        Foreground="{StaticResource SecondaryTextBrush}" Text=""
                        AutomationProperties.LiveSetting="Polite"/>
@@ -1149,8 +1195,20 @@ function Show-OOBEMenuWindow {
     $state = @{ ExitCode = 0; Source = $null; PaneExpanded = $true; ClockLoaded = $false
         Worker = $null; UpdateState = $null; CloseRequested = $false; RebootRequired = $false }
     $status = $window.FindName('StatusText')
-    $commandButton = $window.FindName('CommandButton')
-    $powerShellButton = $window.FindName('PowerShellButton')
+    $shellMenuButton = $window.FindName('ShellMenuButton')
+    $shellMenu = [System.Windows.Controls.ContextMenu]::new()
+    $shellMenu.Style = $window.FindResource('ToolMenuStyle')
+    $shellMenu.PlacementTarget = $shellMenuButton
+    $shellMenu.Placement = [System.Windows.Controls.Primitives.PlacementMode]::Bottom
+    $shellMenuButton.ContextMenu = $shellMenu
+    foreach ($header in 'CMD Prompt', 'Windows PowerShell') {
+        $item = [System.Windows.Controls.MenuItem]::new()
+        $item.Header = $header
+        $item.Style = $window.FindResource('ToolMenuItemStyle')
+        [System.Windows.Automation.AutomationProperties]::SetName($item, $header)
+        [void]$shellMenu.Items.Add($item)
+    }
+    $shellMenuButton.Add_Click({ $shellMenu.IsOpen = $true })
     $continueButton = $window.FindName('ContinueButton')
     $title = "OSDCloud - $Phase.cmd"
     $window.Title = $title
@@ -1159,7 +1217,7 @@ function Show-OOBEMenuWindow {
     $clockButton = $window.FindName('ClockButton')
     $windowsUpdateButton = $window.FindName('WindowsUpdateButton')
     $driverUpdateButton = $window.FindName('DriverUpdateButton')
-    $clockButton.Visibility = if ($Phase -eq 'SetupComplete') { 'Visible' } else { 'Collapsed' }
+    $clockButton.Visibility = 'Visible'
     $windowsUpdateButton.Visibility = $clockButton.Visibility
     $driverUpdateButton.Visibility = $clockButton.Visibility
     $window.FindName('DatePicker').Add_DateValidationError({
@@ -1221,8 +1279,8 @@ function Show-OOBEMenuWindow {
             Write-OOBEMenuLog -Message $message
         }
     }
-    $commandButton.Add_Click({ & $launchShell $false })
-    $powerShellButton.Add_Click({ & $launchShell $true })
+    $shellMenu.Items[0].Add_Click({ & $launchShell $false })
+    $shellMenu.Items[1].Add_Click({ & $launchShell $true })
     $openScript = {
         param ([string]$FileName)
         try {
@@ -1250,6 +1308,7 @@ function Show-OOBEMenuWindow {
     $toolsButton = $window.FindName('ToolsButton')
     $toolsButton.Background = $window.Resources['ControlBrush']
     $toolsButton.Add_Click({
+        $window.FindName('PageScrollViewer').Visibility = 'Visible'
         $window.FindName('ToolsPage').Visibility = 'Visible'
         $window.FindName('ClockPage').Visibility = 'Collapsed'
         $window.FindName('UpdatePage').Visibility = 'Collapsed'
@@ -1260,7 +1319,6 @@ function Show-OOBEMenuWindow {
         $driverUpdateButton.Background = [System.Windows.Media.Brushes]::Transparent
     })
     $clockButton.Add_Click({
-        if ($Phase -ne 'SetupComplete') { return }
         try {
             if (-not $state.ClockLoaded) {
                 $now = Get-Date
@@ -1272,6 +1330,7 @@ function Show-OOBEMenuWindow {
                 $state.ClockLoaded = $true
             }
             $window.FindName('ToolsPage').Visibility = 'Collapsed'
+            $window.FindName('PageScrollViewer').Visibility = 'Visible'
             $window.FindName('ClockPage').Visibility = 'Visible'
             $window.FindName('UpdatePage').Visibility = 'Collapsed'
             $window.FindName('PageTitleText').Visibility = 'Visible'
@@ -1290,7 +1349,6 @@ function Show-OOBEMenuWindow {
         }
     })
     $window.FindName('ApplyClockButton').Add_Click({
-        if ($Phase -ne 'SetupComplete') { return }
         try {
             $selectedDate = $window.FindName('DatePicker').SelectedDate
             $selectedZone = $window.FindName('TimeZoneComboBox').SelectedValue
@@ -1306,9 +1364,6 @@ function Show-OOBEMenuWindow {
         }
     })
     $updateOutput = $window.FindName('UpdateOutputTextBox')
-    $window.FindName('PageScrollViewer').Add_SizeChanged({
-        $updateOutput.Height = [Math]::Max(60, [Math]::Min(180, $window.FindName('PageScrollViewer').ActualHeight - 110))
-    })
     $cancelUpdateButton = $window.FindName('CancelUpdateButton')
     $updateProgress = $window.FindName('UpdateProgressBar')
     $updateTimer = [System.Windows.Threading.DispatcherTimer]::new()
@@ -1358,7 +1413,8 @@ function Show-OOBEMenuWindow {
     })
     $startUpdates = {
         param ([string]$Type)
-        if ($Phase -ne 'SetupComplete' -or $state.Worker) { return }
+        if ($state.Worker) { return }
+        $window.FindName('PageScrollViewer').Visibility = 'Collapsed'
         $window.FindName('ToolsPage').Visibility = 'Collapsed'
         $window.FindName('ClockPage').Visibility = 'Collapsed'
         $window.FindName('UpdatePage').Visibility = 'Visible'
@@ -1423,10 +1479,10 @@ function Show-OOBEMenuWindow {
     $paneToggle.Add_Click({
         $state.PaneExpanded = -not $state.PaneExpanded
         $window.FindName('SidebarColumn').Width = if ($state.PaneExpanded) { 200 } else { 56 }
-        foreach ($labelName in 'CommandLabel', 'PowerShellLabel', 'ToolsLabel', 'ClockLabel', 'WindowsUpdateLabel', 'DriverUpdateLabel') {
+        foreach ($labelName in 'ToolsLabel', 'ClockLabel', 'WindowsUpdateLabel', 'DriverUpdateLabel') {
             $window.FindName($labelName).Visibility = if ($state.PaneExpanded) { 'Visible' } else { 'Collapsed' }
         }
-        foreach ($button in $commandButton, $powerShellButton, $toolsButton, $clockButton, $windowsUpdateButton, $driverUpdateButton) {
+        foreach ($button in $toolsButton, $clockButton, $windowsUpdateButton, $driverUpdateButton) {
             $button.HorizontalContentAlignment = if ($state.PaneExpanded) { 'Stretch' } else { 'Center' }
         }
         $name = if ($state.PaneExpanded) { 'Collapse navigation' } else { 'Expand navigation' }
@@ -1453,14 +1509,13 @@ function Show-OOBEMenuWindow {
             if (-not [Recast.OOBE.Native]::IsInputDesktop()) {
                 throw 'The rendered menu is not on the console input desktop.'
             }
-            Write-OOBEMenuLog -Message "Menu visible: session $([System.Diagnostics.Process]::GetCurrentProcess().SessionId), station $([Recast.OOBE.Native]::Station), desktop $([Recast.OOBE.Native]::Desktop)."
+            [void]$shellMenuButton.Focus()
+            $activated = $window.Activate()
+            Write-OOBEMenuLog -Message "Menu rendered on console input desktop: session $([System.Diagnostics.Process]::GetCurrentProcess().SessionId), station $([Recast.OOBE.Native]::Station), desktop $([Recast.OOBE.Native]::Desktop), activated $activated, topmost $($window.Topmost), position $($window.Left),$($window.Top), size $($window.ActualWidth)x$($window.ActualHeight)."
             if ($ReadyEventName) {
                 $signal = [System.Threading.EventWaitHandle]::OpenExisting($ReadyEventName)
                 try { [void]$signal.Set() } finally { $signal.Dispose() }
             }
-            [void]$commandButton.Focus()
-            [void]$window.Activate()
-            $window.Topmost = $false
         }
         catch {
             $state.ExitCode = 1

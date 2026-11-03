@@ -21,7 +21,7 @@ function step-update-oobemenu {
         Copy-Item -LiteralPath $source -Destination (Join-Path $scriptsPath 'Show-OSDCloudOOBEMenu.ps1') -Force -ErrorAction Stop
         Write-OSDCloudSetupMenuScript -Path (Join-Path $scriptsPath 'OOBE.cmd') -Phase OOBE
         Write-OSDCloudSetupMenuScript -Path (Join-Path $scriptsPath 'SetupComplete.cmd') -Phase SetupComplete
-        Write-Host -ForegroundColor DarkGray '[INFO] Staged interactive SYSTEM menus at the beginning of OOBE.cmd and SetupComplete.cmd.'
+        Write-Host -ForegroundColor DarkGray '[INFO] Staged the interactive SYSTEM menu at the end of OOBE.cmd; removed any legacy SetupComplete menu invocation.'
     }
     catch {
         Write-Warning "[$(Get-Date -Format s)] OOBE/SetupComplete menu staging failed: $($_.Exception.Message)"
@@ -32,15 +32,14 @@ function step-update-oobemenu {
 function Write-OSDCloudSetupMenuScript {
     <#
     .SYNOPSIS
-        Prepends the menu invocation to a Windows setup batch script.
+        Appends the OOBE menu or removes a legacy SetupComplete invocation.
     .DESCRIPTION
-        Removes previously managed menu blocks, including the old appended OOBE
-        block, then prepends exactly one synchronous invocation. Other bytes remain
-        unchanged so OEM commands and script encoding are not rewritten.
+        Removes previously managed menu blocks, then appends exactly one OOBE
+        invocation. SetupComplete is cleanup-only. Other bytes remain unchanged.
     .PARAMETER Path
         Destination OOBE.cmd or SetupComplete.cmd.
     .PARAMETER Phase
-        Menu phase to launch.
+        OOBE appends the menu; SetupComplete removes only a previously managed block.
     .EXAMPLE
         Write-OSDCloudSetupMenuScript -Path 'C:\Windows\Setup\Scripts\OOBE.cmd' -Phase OOBE
     .NOTES
@@ -52,7 +51,7 @@ function Write-OSDCloudSetupMenuScript {
         [Parameter(Mandatory)][ValidateSet('OOBE', 'SetupComplete')][string]$Phase
     )
     $Error.Clear()
-    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Prepend $Phase menu to $Path"
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Update $Phase menu block in $Path"
     # Latin-1 maps bytes one-to-one, preserving the original body during block removal.
     $byteEncoding = [Text.Encoding]::GetEncoding(28591)
     $existing = if (Test-Path -LiteralPath $Path -PathType Leaf) {
@@ -64,6 +63,18 @@ function Write-OSDCloudSetupMenuScript {
     $existing = [regex]::Replace($existing, $pattern, '')
     if ($existing -match ('(?m)^' + [regex]::Escape($marker) + '\r?$')) {
         throw "Incomplete managed menu block in $Path. Repair its end marker before staging."
+    }
+    if ($Phase -eq 'SetupComplete') {
+        if (Test-Path -LiteralPath $Path -PathType Leaf) {
+            $original = [IO.File]::ReadAllBytes($Path)
+            if ($existing -ne $byteEncoding.GetString($original)) {
+                [IO.File]::WriteAllBytes($Path, $byteEncoding.GetBytes($existing))
+            }
+        }
+        return
+    }
+    if ($existing -match '(?im)^\s*@?(?:exit(?:\s|$)|goto\s+:?eof(?:\s|$))') {
+        Write-Warning "OOBE.cmd contains an early exit. The appended menu runs only if the original commands reach the end: $Path"
     }
     $block = @'
 :: RecastOSDCloud {0} Menu
@@ -78,13 +89,14 @@ set "OSDCloudOOBEPowerShell="
 set "OSDCloudOOBEExitCode="
 :: End RecastOSDCloud {0} Menu
 '@
-    $prefix = (($block -f $Phase) -replace '\r?\n', "`r`n") + "`r`n"
+    $suffix = (($block -f $Phase) -replace '\r?\n', "`r`n") + "`r`n"
+    if ($existing -and -not $existing.EndsWith("`n")) { $existing += "`r`n" }
     $output = [IO.MemoryStream]::new()
     try {
-        $prefixBytes = [Text.Encoding]::ASCII.GetBytes($prefix)
+        $suffixBytes = [Text.Encoding]::ASCII.GetBytes($suffix)
         $bodyBytes = $byteEncoding.GetBytes($existing)
-        $output.Write($prefixBytes, 0, $prefixBytes.Length)
         $output.Write($bodyBytes, 0, $bodyBytes.Length)
+        $output.Write($suffixBytes, 0, $suffixBytes.Length)
         [IO.File]::WriteAllBytes($Path, $output.ToArray())
     }
     finally { $output.Dispose() }

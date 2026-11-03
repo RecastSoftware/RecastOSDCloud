@@ -1,5 +1,5 @@
 BeforeAll {
-    . "$PSScriptRoot\Show-OSDCloudOOBEMenu.ps1" -Preview -Phase SetupComplete
+    . "$PSScriptRoot\Show-OSDCloudOOBEMenu.ps1" -Preview -Phase OOBE
     Initialize-OOBEMenuNative
     $originalDrive = $env:SystemDrive
 }
