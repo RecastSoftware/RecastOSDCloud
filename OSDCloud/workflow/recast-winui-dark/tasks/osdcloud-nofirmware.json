@@ -198,6 +198,11 @@
             "skip": true
         },
         {
+            "name": "Stage Interactive OOBE and SetupComplete Menus",
+            "command": "step-update-oobemenu",
+            "skip": false
+        },
+        {
             "name": "Export OS Information to Logs",
             "command": "step-finalize-exportofflineosinfo"
         },

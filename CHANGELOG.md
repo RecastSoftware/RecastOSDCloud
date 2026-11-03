@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added self-contained Windows PowerShell 5.1 technician menus at the beginning of `OOBE.cmd` and `SetupComplete.cmd` in both `recast-winui-dark` tasks. They open at the top-left with BootMenu-style caption controls and left-side Cmd Prompt/Windows PowerShell shortcuts, open setup scripts in Notepad, and return 0 when closed. SetupComplete also provides Date, Time and TimeZone settings. Includes an embedded console-session launcher, explicit failure logging, and an inert preview. Actual first-boot behavior on AMD64 and ARM64 still requires deployment validation.
 - Added the `recast-mui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-mui-light`). It keeps the `recast-winui-dark` tasks, OS settings, single-page layout, and deployment behavior, restyled in the light Recast Portal look with Material Design 3 controls: an OSDCloud by Recast title bar, a navy announcement banner, white cards, outlined dropdowns with floating labels, and a blue Start button. The UI uses MaterialDesignInXamlToolkit 5.4.0 (MIT), bundled in `OSDCloud\types\materialdesign` for Windows PowerShell and PowerShell 7. If those assemblies cannot be loaded, the default workflow UI is shown instead.
 - Added the `recast-winui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-winui-light`). It is the `recast-winui-dark` single-page layout in a light theme: a white title bar and cards on a light gray background, navy text, Recast blue accents, and the OSDCloud by Recast logo.
 

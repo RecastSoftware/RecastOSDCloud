@@ -1,0 +1,91 @@
+function step-update-oobemenu {
+    [CmdletBinding()]
+    param ()
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Start"
+    $Step = $global:OSDCloudCurrentStep
+    if ($env:SystemDrive -ne 'X:' -or -not $global:OSDCoreDevice.IsWinPE) {
+        Write-Warning 'OOBE menu staging is only supported in WinPE; no files were changed.'
+        return
+    }
+    try {
+        $source = Join-Path $PSScriptRoot '..\..\..\core\oobe\Show-OSDCloudOOBEMenu.ps1'
+        $scriptsPath = 'C:\Windows\Setup\Scripts'
+        if (-not (Test-Path -LiteralPath $source -PathType Leaf)) {
+            throw "OOBE menu source is missing: $source"
+        }
+        if (-not (Test-Path -LiteralPath 'C:\Windows\System32\Config\SYSTEM' -PathType Leaf)) {
+            throw 'The applied Windows image is missing; cannot stage the OOBE menu.'
+        }
+        New-Item -Path $scriptsPath -ItemType Directory -Force -ErrorAction Stop | Out-Null
+        Copy-Item -LiteralPath $source -Destination (Join-Path $scriptsPath 'Show-OSDCloudOOBEMenu.ps1') -Force -ErrorAction Stop
+        Write-OSDCloudSetupMenuScript -Path (Join-Path $scriptsPath 'OOBE.cmd') -Phase OOBE
+        Write-OSDCloudSetupMenuScript -Path (Join-Path $scriptsPath 'SetupComplete.cmd') -Phase SetupComplete
+        Write-Host -ForegroundColor DarkGray '[INFO] Staged interactive SYSTEM menus at the beginning of OOBE.cmd and SetupComplete.cmd.'
+    }
+    catch {
+        Write-Warning "[$(Get-Date -Format s)] OOBE/SetupComplete menu staging failed: $($_.Exception.Message)"
+    }
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] End"
+}
+
+function Write-OSDCloudSetupMenuScript {
+    <#
+    .SYNOPSIS
+        Prepends the menu invocation to a Windows setup batch script.
+    .DESCRIPTION
+        Removes previously managed menu blocks, including the old appended OOBE
+        block, then prepends exactly one synchronous invocation. Other bytes remain
+        unchanged so OEM commands and script encoding are not rewritten.
+    .PARAMETER Path
+        Destination OOBE.cmd or SetupComplete.cmd.
+    .PARAMETER Phase
+        Menu phase to launch.
+    .EXAMPLE
+        Write-OSDCloudSetupMenuScript -Path 'C:\Windows\Setup\Scripts\OOBE.cmd' -Phase OOBE
+    .NOTES
+        Used by the WinPE staging step; never runs the destination script.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][ValidateSet('OOBE', 'SetupComplete')][string]$Phase
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Prepend $Phase menu to $Path"
+    # Latin-1 maps bytes one-to-one, preserving the original body during block removal.
+    $byteEncoding = [Text.Encoding]::GetEncoding(28591)
+    $existing = if (Test-Path -LiteralPath $Path -PathType Leaf) {
+        $byteEncoding.GetString([IO.File]::ReadAllBytes($Path))
+    } else { '' }
+    $marker = ":: RecastOSDCloud $Phase Menu"
+    $endMarker = ":: End RecastOSDCloud $Phase Menu"
+    $pattern = '(?ms)^' + [regex]::Escape($marker) + '\r?\n.*?^' + [regex]::Escape($endMarker) + '(?:\r?\n|$)'
+    $existing = [regex]::Replace($existing, $pattern, '')
+    if ($existing -match ('(?m)^' + [regex]::Escape($marker) + '\r?$')) {
+        throw "Incomplete managed menu block in $Path. Repair its end marker before staging."
+    }
+    $block = @'
+:: RecastOSDCloud {0} Menu
+set "OSDCloudOOBEPowerShell=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+if exist "%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe" set "OSDCloudOOBEPowerShell=%SystemRoot%\Sysnative\WindowsPowerShell\v1.0\powershell.exe"
+"%OSDCloudOOBEPowerShell%" -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File "%SystemRoot%\Setup\Scripts\Show-OSDCloudOOBEMenu.ps1" -Phase {0}
+set "OSDCloudOOBEExitCode=%ERRORLEVEL%"
+if not "%OSDCloudOOBEExitCode%"=="0" echo OSDCloud {0} menu failed with exit code %OSDCloudOOBEExitCode%. Continuing Windows Setup.
+if not "%OSDCloudOOBEExitCode%"=="0" if not exist "%SystemRoot%\Temp\osdcloud-logs" mkdir "%SystemRoot%\Temp\osdcloud-logs"
+if not "%OSDCloudOOBEExitCode%"=="0" echo [%DATE% %TIME%] {0} menu invocation failed with exit code %OSDCloudOOBEExitCode%.>>"%SystemRoot%\Temp\osdcloud-logs\OOBEMenu.log"
+set "OSDCloudOOBEPowerShell="
+set "OSDCloudOOBEExitCode="
+:: End RecastOSDCloud {0} Menu
+'@
+    $prefix = (($block -f $Phase) -replace '\r?\n', "`r`n") + "`r`n"
+    $output = [IO.MemoryStream]::new()
+    try {
+        $prefixBytes = [Text.Encoding]::ASCII.GetBytes($prefix)
+        $bodyBytes = $byteEncoding.GetBytes($existing)
+        $output.Write($prefixBytes, 0, $prefixBytes.Length)
+        $output.Write($bodyBytes, 0, $bodyBytes.Length)
+        [IO.File]::WriteAllBytes($Path, $output.ToArray())
+    }
+    finally { $output.Dispose() }
+}
