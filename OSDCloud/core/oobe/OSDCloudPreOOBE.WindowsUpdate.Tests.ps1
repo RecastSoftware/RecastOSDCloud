@@ -1,5 +1,5 @@
 BeforeAll {
-    . "$PSScriptRoot\Show-OSDCloudOOBEMenu.ps1" -Preview -Phase OOBE
+    . "$PSScriptRoot\OSDCloudPreOOBE.ps1" -Preview
     Initialize-OOBEMenuNative
     $originalDrive = $env:SystemDrive
 }
@@ -226,7 +226,7 @@ Describe 'Windows Update worker lifecycle' {
     It 'runs asynchronously on an STA thread with managed shared state and no real update calls' {
         Mock Get-Command {
             [pscustomobject]@{ Definition = 'param($Type, $State) $State.Status = "$Type/$([Threading.Thread]::CurrentThread.ApartmentState)"; $State.Succeeded = $true' }
-        } -ParameterFilter { $Name -eq 'Invoke-OOBEMenuWindowsUpdate' }
+        } -ParameterFilter { $Name -eq 'Invoke-OSDCloudPreOOBETask' }
         $state = [hashtable]::Synchronized(@{ Status = ''; Succeeded = $false })
         $worker = Start-OOBEMenuUpdateWorker -Type Driver -State $state
         try {

@@ -1,5 +1,5 @@
 BeforeAll {
-    . "$PSScriptRoot\step-update-oobemenu.ps1"
+    . "$PSScriptRoot\step-update-preoobe.ps1"
     $originalDevice = $global:OSDCoreDevice
     $originalDrive = $env:SystemDrive
 }
@@ -8,22 +8,22 @@ AfterAll {
     $env:SystemDrive = $originalDrive
 }
 
-Describe 'step-update-oobemenu' {
+Describe 'step-update-preoobe' {
     BeforeEach {
         $env:SystemDrive = 'X:'
         $global:OSDCoreDevice = [pscustomobject]@{ IsWinPE = $true }
         Mock Test-Path { $true }
         Mock New-Item {}
-        Mock Copy-Item {}
+        Mock Save-OSDCloudPreOOBERuntime {}
         Mock Write-Host {}
         Mock Write-OSDCloudSetupMenuScript {}
     }
 
     It 'stages one runtime script, appends OOBE and cleans up legacy SetupComplete' {
-        step-update-oobemenu
-        Should -Invoke Copy-Item -Times 1 -Exactly -ParameterFilter {
-            $Destination -eq 'C:\Windows\Setup\Scripts\Show-OSDCloudOOBEMenu.ps1' -and
-            $LiteralPath -like '*\core\oobe\Show-OSDCloudOOBEMenu.ps1' -and $ErrorAction -eq 'Stop'
+        step-update-preoobe
+        Should -Invoke Save-OSDCloudPreOOBERuntime -Times 1 -Exactly -ParameterFilter {
+            $DestinationPath -eq 'C:\Windows\Setup\Scripts\OSDCloudPreOOBE.ps1' -and
+            $SourcePath -like '*\core\oobe\OSDCloudPreOOBE.ps1'
         }
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 1 -Exactly -ParameterFilter {
             $Path -eq 'C:\Windows\Setup\Scripts\OOBE.cmd' -and $Phase -eq 'OOBE'
@@ -35,8 +35,8 @@ Describe 'step-update-oobemenu' {
 
     It 'does not stage files outside WinPE even if device metadata is stale' {
         $env:SystemDrive = 'C:'
-        step-update-oobemenu -WarningAction SilentlyContinue
-        Should -Invoke Copy-Item -Times 0 -Exactly
+        step-update-preoobe -WarningAction SilentlyContinue
+        Should -Invoke Save-OSDCloudPreOOBERuntime -Times 0 -Exactly
         Should -Invoke New-Item -Times 0 -Exactly
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 0 -Exactly
     }
@@ -44,30 +44,43 @@ Describe 'step-update-oobemenu' {
     It 'reports missing assets without writing to the Windows image' {
         Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\core\oobe\*' }
         Mock Write-Warning {}
-        step-update-oobemenu
+        step-update-preoobe
         Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*source is missing*' }
-        Should -Invoke Copy-Item -Times 0 -Exactly
+        Should -Invoke Save-OSDCloudPreOOBERuntime -Times 0 -Exactly
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 0 -Exactly
     }
 
     It 'reports a missing applied Windows image before writing' {
         Mock Test-Path { $false } -ParameterFilter { $LiteralPath -eq 'C:\Windows\System32\Config\SYSTEM' }
         Mock Write-Warning {}
-        step-update-oobemenu
+        step-update-preoobe
         Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*applied Windows image is missing*' }
-        Should -Invoke Copy-Item -Times 0 -Exactly
+        Should -Invoke Save-OSDCloudPreOOBERuntime -Times 0 -Exactly
     }
 
     It 'reports copy errors without writing a success-shaped invocation' {
-        Mock Copy-Item { throw 'Disk write failed' }
+        Mock Save-OSDCloudPreOOBERuntime { throw 'Disk write failed' }
         Mock Write-Warning {}
-        step-update-oobemenu
+        step-update-preoobe
         Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*Disk write failed*' }
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 0 -Exactly
     }
 }
 
 Describe 'Setup menu batch invocation' {
+    It 'bundles all components into one parseable standalone script' {
+        $source = Join-Path $PSScriptRoot '..\..\..\core\oobe\OSDCloudPreOOBE.ps1'
+        $destination = Join-Path $TestDrive 'OSDCloudPreOOBE.ps1'
+        Save-OSDCloudPreOOBERuntime -SourcePath $source -DestinationPath $destination
+        $text = [IO.File]::ReadAllText($destination)
+        $text | Should -Not -Match '#region PreOOBE components'
+        $text | Should -Match 'function Invoke-OSDCloudPreOOBEDriverPack'
+        $text | Should -Match 'function Show-OOBEMenuWindow'
+        $tokens = $null; $errors = $null
+        [void][Management.Automation.Language.Parser]::ParseFile($destination,[ref]$tokens,[ref]$errors)
+        $errors | Should -BeNullOrEmpty
+    }
+
     It 'appends OOBE after all original commands preserving body bytes' {
         foreach ($phase in 'OOBE') {
             $path = Join-Path $TestDrive "$phase.cmd"
@@ -77,15 +90,16 @@ Describe 'Setup menu batch invocation' {
             Write-OSDCloudSetupMenuScript -Path $path -Phase $phase
             $result = [IO.File]::ReadAllBytes($path)
             $text = [Text.Encoding]::GetEncoding(28591).GetString($result)
-            $text | Should -Match ":: End RecastOSDCloud $phase Menu`r`n$"
-            $text | Should -Match "-Phase $phase"
+            $text | Should -Match ":: End RecastOSDCloud PreOOBE`r`n$"
+            $text | Should -Match 'OSDCloudPreOOBE.ps1'
+            $text | Should -Not -Match '-Phase'
             $text | Should -Match 'Sysnative\\WindowsPowerShell'
             $text | Should -Match '-NoLogo -NoProfile -STA -ExecutionPolicy Bypass'
             $text | Should -Match 'OSDCloudOOBEExitCode=%ERRORLEVEL%'
             $original = [byte[]]($body + $tail)
             [Convert]::ToBase64String($result[0..($original.Length - 1)]) |
                 Should -Be ([Convert]::ToBase64String($original))
-            $text.IndexOf('-Phase') | Should -BeGreaterThan $text.IndexOf('echo existing')
+            $text.IndexOf('-File') | Should -BeGreaterThan $text.IndexOf('echo existing')
         }
     }
 
@@ -96,7 +110,7 @@ Describe 'Setup menu batch invocation' {
             $first = [Convert]::ToBase64String([IO.File]::ReadAllBytes($path))
             Write-OSDCloudSetupMenuScript -Path $path -Phase $phase
             [Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) | Should -Be $first
-            ([IO.File]::ReadAllText($path) -split ":: RecastOSDCloud $phase Menu").Count | Should -Be 2
+            ([IO.File]::ReadAllText($path) -split ":: RecastOSDCloud PreOOBE").Count | Should -Be 2
         }
     }
 
@@ -105,9 +119,9 @@ Describe 'Setup menu batch invocation' {
         [IO.File]::WriteAllText($path, "echo original`r`n:: RecastOSDCloud OOBE Menu`r`necho legacy`r`n:: End RecastOSDCloud OOBE Menu`r`necho tail")
         Write-OSDCloudSetupMenuScript -Path $path -Phase OOBE
         $text = [IO.File]::ReadAllText($path)
-        $text | Should -Match ":: End RecastOSDCloud OOBE Menu`r`n$"
+        $text | Should -Match ":: End RecastOSDCloud PreOOBE`r`n$"
         $text | Should -Not -Match 'echo legacy'
-        $text | Should -Match "^echo original`r`necho tail`r`n:: RecastOSDCloud OOBE Menu"
+        $text | Should -Match "^echo original`r`necho tail`r`n:: RecastOSDCloud PreOOBE"
     }
 
     It 'rejects an incomplete managed block instead of duplicating or discarding user commands' {
@@ -123,7 +137,7 @@ Describe 'Setup menu batch invocation' {
         [IO.File]::WriteAllText($path, ":: RecastOSDCloud OOBE Menu`r`necho legacy`r`n:: End RecastOSDCloud OOBE Menu`r`necho original")
         Write-OSDCloudSetupMenuScript -Path $path -Phase OOBE
         $first = [Convert]::ToBase64String([IO.File]::ReadAllBytes($path))
-        [IO.File]::ReadAllText($path) | Should -Match "^echo original`r`n:: RecastOSDCloud OOBE Menu"
+        [IO.File]::ReadAllText($path) | Should -Match "^echo original`r`n:: RecastOSDCloud PreOOBE"
         Write-OSDCloudSetupMenuScript -Path $path -Phase OOBE
         [Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) | Should -Be $first
     }
@@ -176,10 +190,10 @@ Describe 'Setup menu batch invocation' {
             [IO.File]::WriteAllText($wrapper, "@echo off`r`nset `"SystemRoot=$fakeWindows`"`r`ncall `"$path`"`r`n")
             $output = (& $env:ComSpec /d /c "`"$wrapper`"" 2>&1 | Out-String)
             $output | Should -Match "AFTER_$phase"
-            $output | Should -Match "$phase menu failed with exit code [1-9][0-9]*\. Continuing Windows Setup"
-            $output.IndexOf("AFTER_$phase") | Should -BeLessThan $output.IndexOf("OSDCloud $phase menu failed")
-            $log = [IO.File]::ReadAllText((Join-Path $fakeWindows 'Temp\osdcloud-logs\OOBEMenu.log'))
-            $log | Should -Match "$phase menu invocation failed with exit code [1-9][0-9]*"
+            $output | Should -Match "OSDCloudPreOOBE failed with exit code [1-9][0-9]*\. Continuing Windows Setup"
+            $output.IndexOf("AFTER_$phase") | Should -BeLessThan $output.IndexOf("OSDCloudPreOOBE failed")
+            $log = [IO.File]::ReadAllText((Join-Path $fakeWindows 'Temp\osdcloud-logs\OSDCloudPreOOBE.log'))
+            $log | Should -Match "PreOOBE invocation failed with exit code [1-9][0-9]*"
         }
     }
 }
@@ -192,14 +206,23 @@ Describe 'Dark workflow setup menu integration' {
             $task.amd64 | Should -BeTrue
             $task.arm64 | Should -BeTrue
             $steps = @($task.steps)
-            $menu = @($steps | Where-Object command -eq 'step-update-oobemenu')
+            $menu = @($steps | Where-Object command -eq 'step-update-preoobe')
             $menu.Count | Should -Be 1
             $menu[0].skip | Should -BeFalse
+            ($steps | Where-Object command -eq 'step-Save-WindowsDriver-DriverPack').parameters.PreOOBE | Should -BeTrue
             $steps.IndexOf($menu[0]) | Should -BeLessThan $steps.IndexOf(
                 ($steps | Where-Object command -eq 'step-finalize-exportofflineosinfo')
             )
             $steps[0].command | Should -Be 'step-initialize-osdcloudworkflowtask'
             $steps[-1].command | Should -Be 'step-finalize-stoposdcloudworkflow'
         }
+    }
+
+    It 'does not enable PreOOBE in any other workflow' {
+            $root = Join-Path $PSScriptRoot '..\..\..\workflow'
+            $references = @(Get-ChildItem -LiteralPath $root -Filter '*.json' -Recurse -File |
+                Where-Object { (Get-Content -LiteralPath $_.FullName -Raw) -match '"command"\s*:\s*"step-update-preoobe"' })
+            $references.Count | Should -Be 2
+            foreach ($file in $references) { $file.FullName | Should -Match '\\recast-winui-dark\\tasks\\' }
     }
 }

@@ -4,13 +4,24 @@ function step-Save-WindowsDriver-DriverPack {
         [System.String]
         $DriverPackName = $global:OSDCloudWorkflowInvoke.DriverPackName,
 
-        $DriverPackCloudObject = $global:OSDCloudWorkflowInvoke.DriverPackCloudObject
+        $DriverPackCloudObject = $global:OSDCloudWorkflowInvoke.DriverPackCloudObject,
+
+        [switch]$PreOOBE
     )
     #=================================================
     $Error.Clear()
     $ProgressPhase = 'Starting driver pack staging'
 
     try {
+    $deferToPreOOBE = $PreOOBE -and @($global:OSDCloudDeploy.WorkflowTaskObject.steps | Where-Object {
+        $_.command -eq 'step-update-preoobe' -and $_.skip -ne $true -and $_.disable -ne $true
+    }).Count -eq 1
+    if ($deferToPreOOBE) {
+        $manifestPath = 'C:\Windows\Setup\Scripts\OSDCloudPreOOBE.DriverPack.json'
+        if (Test-Path -LiteralPath $manifestPath -PathType Leaf) {
+            Remove-Item -LiteralPath $manifestPath -Force -ErrorAction Stop
+        }
+    }
     Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Start"
     #=================================================
     $Step = $global:OSDCloudCurrentStep
@@ -280,6 +291,14 @@ function step-Save-WindowsDriver-DriverPack {
     #=================================================
     # Expand the DriverPack
     $DownloadedFile = $OutFileObject.FullName
+    if ($deferToPreOOBE -and (
+        ($OutFileObject.Extension -eq '.exe' -and $DriverPackCloudObject.Manufacturer -match 'Lenovo') -or
+        ($OutFileObject.Extension -eq '.msi' -and $OutFileObject.Name -match 'surface')
+    )) {
+        Save-OSDCloudPreOOBEDriverManifest -Package $OutFileObject -Manufacturer $DriverPackCloudObject.Manufacturer
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Driver installation deferred to OSDCloudPreOOBE: $DownloadedFile. No SetupComplete driver commands added."
+        return
+    }
     $ExpandPath = 'C:\Windows\Temp\osdcloud-driverpack-expand'
     if (-not (Test-Path "$ExpandPath")) {
         Write-Verbose -Message "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Creating driver pack expand path: $ExpandPath"
@@ -579,4 +598,42 @@ rd /s /q C:\Windows\Temp\osdcloud-driverpack-download
         Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [PROGRESS] Driver pack step stopped during '$ProgressPhase'. See the warning above for details."
     }
     #=================================================
+}
+
+function Save-OSDCloudPreOOBEDriverManifest {
+    <#
+    .SYNOPSIS
+        Records a validated package handoff for the opted-in PreOOBE task.
+    .DESCRIPTION
+        Writes package identity, size and hash; no executable commands are stored.
+    .PARAMETER Package
+        Locally staged driver file.
+    .PARAMETER Manufacturer
+        Lenovo or Microsoft.
+    .EXAMPLE
+        Save-OSDCloudPreOOBEDriverManifest -Package $file -Manufacturer Lenovo
+    .NOTES
+        Used only by explicitly opted-in workflows.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][IO.FileInfo]$Package, [Parameter(Mandatory)][string]$Manufacturer)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Save handoff"
+    $root = 'C:\Windows\Temp\osdcloud-driverpack-download\'
+    if (-not $Package.FullName.StartsWith($root, [StringComparison]::OrdinalIgnoreCase)) {
+        throw "PreOOBE package is outside the staged download directory: $($Package.FullName)"
+    }
+    $manifest = [ordered]@{
+        Version = 1
+        Manufacturer = if ($Manufacturer -match 'Lenovo') { 'Lenovo' } else { 'Microsoft' }
+        PackagePath = $Package.FullName
+        FileName = $Package.Name
+        Size = $Package.Length
+        Sha256 = (Get-FileHash -LiteralPath $Package.FullName -Algorithm SHA256 -ErrorAction Stop).Hash
+    }
+    $scripts = 'C:\Windows\Setup\Scripts'
+    New-Item -Path $scripts -ItemType Directory -Force -ErrorAction Stop | Out-Null
+    $path = Join-Path $scripts 'OSDCloudPreOOBE.DriverPack.json'
+    $manifest | ConvertTo-Json | Set-Content -LiteralPath $path -Encoding UTF8 -ErrorAction Stop
+    Write-Host -ForegroundColor DarkGray "[$(Get-Date -Format s)] [PROGRESS] PreOOBE manifest saved: $path; package $($manifest.FileName); $($manifest.Size) bytes; SHA256 $($manifest.Sha256)."
 }

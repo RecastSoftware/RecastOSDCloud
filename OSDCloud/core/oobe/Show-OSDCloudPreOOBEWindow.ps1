@@ -1,0 +1,559 @@
+function New-OSDCloudPreOOBEState {
+    <#
+    .SYNOPSIS
+        Creates the fixed ordered PreOOBE sequence.
+    .DESCRIPTION
+        Keeps UI-independent task results and worker ownership in one state object.
+    .EXAMPLE
+        New-OSDCloudPreOOBEState
+    .NOTES
+        No external actions occur until the scheduler is ticked.
+    #>
+    [CmdletBinding()]
+    param ()
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Create sequence"
+    return @{
+        Tasks = @(
+            [pscustomobject]@{ Type = 'DriverPack'; Name = 'Driver unpack / install'; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
+            [pscustomobject]@{ Type = 'Software'; Name = 'Updating Windows 11'; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
+            [pscustomobject]@{ Type = 'Driver'; Name = 'Updating Drivers'; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null }
+        )
+        Worker = $null; Active = $null; Shared = $null; CloseRequested = $false
+        RebootRequired = $false; Countdown = $null; Remaining = 15; Done = $false
+        Output = [Collections.Generic.List[string]]::new(); SummaryWritten = $false
+    }
+}
+
+function Update-OSDCloudPreOOBEState {
+    <#
+    .SYNOPSIS
+        Advances task execution and completion countdown without blocking WPF.
+    .DESCRIPTION
+        Owns one worker at a time. Failure never becomes success. Close requests
+        cancel updates safely, finish active OEM operations, and skip pending work.
+    .PARAMETER State
+        Engine state from New-OSDCloudPreOOBEState.
+    .PARAMETER PreviewOnly
+        Simulates external operations.
+    .EXAMPLE
+        Update-OSDCloudPreOOBEState -State $state -PreviewOnly
+    .NOTES
+        The dispatcher calls this repeatedly; task installers run on the worker.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][hashtable]$State, [switch]$PreviewOnly)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Tick"
+    if ($State.Done) { return }
+    if ($State.CloseRequested) {
+        foreach ($task in $State.Tasks) {
+            if ($task.Outcome -eq 'Pending') {
+                $task.Outcome = 'Skipped'
+                $task.Finished = (Get-Date).ToUniversalTime().ToString('o')
+                Write-OOBEMenuLog -Message "Skipped $($task.Name): window closure requested."
+            }
+        }
+        if ($State.Worker -and $State.Active.Type -ne 'DriverPack') { $State.Shared.CancelRequested = $true }
+    }
+    if ($State.Worker) {
+        $message = $null
+        while ($State.Shared.Messages.TryDequeue([ref]$message)) { $State.Output.Add($message) }
+        if (-not $State.Worker.Handle.IsCompleted) { return }
+        try {
+            [void]$State.Worker.Pipeline.EndInvoke($State.Worker.Handle)
+            if ($State.Worker.Pipeline.Streams.Error.Count -gt 0) {
+                throw ($State.Worker.Pipeline.Streams.Error | Out-String)
+            }
+            if ($State.Shared.Outcome -notin 'Succeeded','Failed','Skipped','Cancelled','NotApplicable') {
+                throw "Worker ended without a terminal task outcome: $($State.Shared.Outcome)"
+            }
+            $State.Active.Outcome = $State.Shared.Outcome
+        }
+        catch {
+            $State.Active.Outcome = 'Failed'
+            $message = "$($State.Active.Name) worker failed: $($_.Exception.ToString())"
+            $State.Output.Add($message)
+            Write-OOBEMenuLog -Message $message
+        }
+        finally {
+            while ($State.Shared.Messages.TryDequeue([ref]$message)) { $State.Output.Add($message) }
+            $State.RebootRequired = $State.RebootRequired -or $State.Shared.RebootRequired
+            $State.Active.DurationMs = $State.Shared.DurationMs
+            $State.Active.Finished = (Get-Date).ToUniversalTime().ToString('o')
+            Write-OOBEMenuLog -Message "Task $($State.Active.Name) ended $($State.Active.Outcome), $($State.Active.DurationMs) ms."
+            $State.Worker.Pipeline.Dispose()
+            $State.Worker.Runspace.Dispose()
+            $State.Worker = $null
+            $State.Active = $null
+        }
+    }
+    $next = @($State.Tasks | Where-Object Outcome -eq 'Pending' | Select-Object -First 1)
+    if ($next.Count -and -not $State.CloseRequested) {
+        $State.Active = $next[0]
+        $State.Active.Outcome = 'Running'
+        $State.Active.Started = (Get-Date).ToUniversalTime().ToString('o')
+        $State.Shared = [hashtable]::Synchronized(@{
+            Messages = [Collections.Concurrent.ConcurrentQueue[string]]::new()
+            Status = $State.Active.Name; CancelRequested = $false; RebootRequired = $State.RebootRequired
+            Succeeded = $false; Outcome = 'Running'; DurationMs = 0L; InstallationActive = $false
+        })
+        Write-OOBEMenuLog -Message "Starting task $($State.Active.Name)."
+        try {
+            $State.Worker = Start-OOBEMenuUpdateWorker -Type $State.Active.Type -State $State.Shared -PreviewOnly:$PreviewOnly
+        }
+        catch {
+            $State.Active.Outcome = 'Failed'
+            $State.Active.Finished = (Get-Date).ToUniversalTime().ToString('o')
+            $message = "Could not start $($State.Active.Name): $($_.Exception.ToString())"
+            $State.Output.Add($message)
+            Write-OOBEMenuLog -Message $message
+            $State.Active = $null
+        }
+        return
+    }
+    if (-not $State.SummaryWritten) {
+        $State.SummaryWritten = $true
+        $summary = [ordered]@{ Completed = (Get-Date).ToUniversalTime().ToString('o'); RebootRequired = $State.RebootRequired; Tasks = $State.Tasks }
+        $root = if ($PreviewOnly) { $env:TEMP } else { Join-Path $env:WINDIR 'Temp\osdcloud-logs' }
+        try {
+            [void][IO.Directory]::CreateDirectory($root)
+            $summary | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $root 'OSDCloudPreOOBE-results.json') -Encoding UTF8 -ErrorAction Stop
+        }
+        catch {
+            $message = "Could not persist PreOOBE results: $($_.Exception.Message)"
+            $State.Output.Add($message)
+            Write-Error -Message $message -ErrorAction Continue
+            Write-OOBEMenuLog -Message $message
+        }
+        foreach ($task in $State.Tasks) {
+            $message = "$($task.Name): $($task.Outcome) ($($task.DurationMs) ms)."
+            $State.Output.Add($message)
+            Write-OOBEMenuLog -Message $message
+        }
+        $State.Countdown = [Diagnostics.Stopwatch]::StartNew()
+        Write-OOBEMenuLog -Message 'Tasks complete. Continuing Windows Setup in 15 seconds.'
+    }
+    $State.Remaining = [Math]::Max(0, 15 - [int][Math]::Floor($State.Countdown.Elapsed.TotalSeconds))
+    if ($State.CloseRequested -or $State.Remaining -eq 0) {
+        $State.Done = $true
+        Write-OOBEMenuLog -Message "PreOOBE finished; exit 0. Reboot required $($State.RebootRequired); no reboot initiated."
+    }
+}
+
+function Show-OOBEMenuWindow {
+    <#
+    .SYNOPSIS
+        Displays task progress and starts PreOOBE automation after rendering.
+    .DESCRIPTION
+        Provides independent Shell/Scripts tools, calendar controls and safe per-step
+        Skip/Cancel. Output fills available height. Completion closes automatically.
+    .PARAMETER ReadyEventName
+        Optional session-bridge readiness signal.
+    .EXAMPLE
+        Show-OOBEMenuWindow
+    .NOTES
+        Requires an STA console input desktop. Preview simulates tasks.
+    #>
+    [CmdletBinding()]
+    param ([string]$ReadyEventName)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Show progress"
+    Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase -ErrorAction Stop
+    [xml]$xaml = @'
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+ Title="OSDCloudPreOOBE" Width="640" Height="480" MinWidth="480" MinHeight="360"
+ WindowStartupLocation="Manual" Background="#161F5B" Foreground="#F5F5F5"
+ FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Topmost="True"
+ UseLayoutRounding="True" SnapsToDevicePixels="True" AutomationProperties.Name="OSDCloudPreOOBE task engine">
+ <shell:WindowChrome.WindowChrome>
+  <shell:WindowChrome CaptionHeight="48" GlassFrameThickness="0"
+   ResizeBorderThickness="{x:Static SystemParameters.WindowResizeBorderThickness}" UseAeroCaptionButtons="False"/>
+ </shell:WindowChrome.WindowChrome>
+ <Window.Resources>
+  <SolidColorBrush x:Key="SurfaceBrush" Color="#1C2868"/>
+  <SolidColorBrush x:Key="ControlBrush" Color="#243475"/>
+  <SolidColorBrush x:Key="BorderBrush" Color="#53639C"/>
+  <SolidColorBrush x:Key="HoverBrush" Color="#2D4088"/>
+  <SolidColorBrush x:Key="AccentBrush" Color="#31D1FF"/>
+  <SolidColorBrush x:Key="SidebarBrush" Color="#111949"/>
+  <SolidColorBrush x:Key="SecondaryTextBrush" Color="#CDD9F3"/>
+  <Style TargetType="Button">
+   <Setter Property="Foreground" Value="#F5F5F5"/><Setter Property="Background" Value="{StaticResource ControlBrush}"/>
+   <Setter Property="Padding" Value="12,7"/><Setter Property="Cursor" Value="Hand"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+    <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{StaticResource BorderBrush}"
+     BorderThickness="1" CornerRadius="4" Padding="{TemplateBinding Padding}">
+     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
+     <Trigger Property="IsPressed" Value="True"><Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource SurfaceBrush}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="CaptionButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+   <Setter Property="Background" Value="Transparent"/><Setter Property="Height" Value="48"/>
+   <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+    <Border x:Name="CaptionBorder" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+     <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
+     <Trigger Property="IsPressed" Value="True"><Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource ControlBrush}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
+     <MultiTrigger><MultiTrigger.Conditions><Condition Property="Tag" Value="Close"/><Condition Property="IsMouseOver" Value="True"/></MultiTrigger.Conditions>
+      <Setter TargetName="CaptionBorder" Property="Background" Value="#C42B1C"/>
+     </MultiTrigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="IconStyle" TargetType="TextBlock">
+   <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets"/>
+   <Setter Property="FontSize" Value="14"/><Setter Property="VerticalAlignment" Value="Center"/>
+  </Style>
+  <Style TargetType="ContextMenu">
+   <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/><Setter Property="Foreground" Value="#F5F5F5"/>
+   <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/><Setter Property="FontSize" Value="13"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ContextMenu">
+    <Border Background="{TemplateBinding Background}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4">
+     <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Cycle"/>
+    </Border>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="MenuItem">
+   <Setter Property="Foreground" Value="#F5F5F5"/><Setter Property="Padding" Value="12,7"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="MenuItem">
+    <Border x:Name="MenuBorder" Background="Transparent" CornerRadius="4" Padding="{TemplateBinding Padding}">
+     <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+    </Border>
+    <ControlTemplate.Triggers>
+     <Trigger Property="IsHighlighted" Value="True"><Setter TargetName="MenuBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="MenuBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="TextBox">
+   <Setter Property="Foreground" Value="#F5F5F5"/><Setter Property="Background" Value="{StaticResource ControlBrush}"/>
+   <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/><Setter Property="Padding" Value="8"/>
+  </Style>
+  <Style TargetType="ScrollBar">
+   <Setter Property="Width" Value="12"/>
+   <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar">
+    <Grid Background="{TemplateBinding Background}">
+     <Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="{TemplateBinding Orientation}"
+      Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}" ViewportSize="{TemplateBinding ViewportSize}"
+      Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+      <Track.DecreaseRepeatButton>
+       <RepeatButton Command="ScrollBar.PageUpCommand" Focusable="False">
+        <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template>
+       </RepeatButton>
+      </Track.DecreaseRepeatButton>
+      <Track.Thumb>
+       <Thumb>
+        <Thumb.Template><ControlTemplate TargetType="Thumb">
+         <Border x:Name="ThumbBorder" Background="{StaticResource BorderBrush}" CornerRadius="4" Margin="2"/>
+         <ControlTemplate.Triggers>
+          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ThumbBorder" Property="Background" Value="{StaticResource AccentBrush}"/></Trigger>
+          <Trigger Property="IsDragging" Value="True"><Setter TargetName="ThumbBorder" Property="Background" Value="{StaticResource AccentBrush}"/></Trigger>
+         </ControlTemplate.Triggers>
+        </ControlTemplate></Thumb.Template>
+       </Thumb>
+      </Track.Thumb>
+      <Track.IncreaseRepeatButton>
+       <RepeatButton Command="ScrollBar.PageDownCommand" Focusable="False">
+        <RepeatButton.Template><ControlTemplate TargetType="RepeatButton"><Border Background="Transparent"/></ControlTemplate></RepeatButton.Template>
+       </RepeatButton>
+      </Track.IncreaseRepeatButton>
+     </Track>
+    </Grid>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+ </Window.Resources>
+ <Grid>
+  <Grid.RowDefinitions><RowDefinition Height="48"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <Grid Background="{StaticResource SidebarBrush}">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <TextBlock Text="OSDCloudPreOOBE" FontWeight="SemiBold" Margin="16,0,4,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+   <StackPanel Grid.Column="1" Orientation="Horizontal">
+    <Button x:Name="ScriptsMenuButton" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open setup scripts" AutomationProperties.Name="Scripts">
+     <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Scripts" VerticalAlignment="Center"/></StackPanel>
+    </Button>
+    <Button x:Name="ShellMenuButton" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open a command shell" AutomationProperties.Name="Shell">
+     <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE756;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Shell" VerticalAlignment="Center"/></StackPanel>
+    </Button>
+    <Button x:Name="CalendarButton" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Date, Time and TimeZone" AutomationProperties.Name="Date, Time and TimeZone">
+     <TextBlock Text="&#xE787;" Style="{StaticResource IconStyle}"/>
+    </Button>
+    <Button x:Name="MinimizeButton" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" AutomationProperties.Name="Minimize"><TextBlock Text="&#xE921;" Style="{StaticResource IconStyle}"/></Button>
+    <Button x:Name="MaximizeButton" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Maximize" AutomationProperties.Name="Maximize"><TextBlock x:Name="MaximizeGlyph" Text="&#xE922;" Style="{StaticResource IconStyle}"/></Button>
+    <Button x:Name="CloseButton" Width="40" Padding="0" Tag="Close" Style="{StaticResource CaptionButtonStyle}" ToolTip="Finish active operation and continue setup" AutomationProperties.Name="Cancel remaining tasks and continue setup"><TextBlock Text="&#xE8BB;" Style="{StaticResource IconStyle}"/></Button>
+   </StackPanel>
+  </Grid>
+  <Grid Grid.Row="1" Margin="24,16">
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <StackPanel>
+     <TextBlock x:Name="DriverTaskText" Text="Driver unpack / install - Pending" Margin="0,0,0,8"/>
+     <TextBlock x:Name="SoftwareTaskText" Text="Updating Windows 11 - Pending" Margin="0,0,0,8"/>
+     <TextBlock x:Name="UpdateDriverTaskText" Text="Updating Drivers - Pending" Margin="0,0,0,8"/>
+    </StackPanel>
+    <StackPanel Grid.Column="1">
+     <Button x:Name="SkipSoftwareButton" Content="Skip" Margin="8,20,0,4" Padding="10,3" AutomationProperties.Name="Skip Updating Windows 11"/>
+     <Button x:Name="SkipDriversButton" Content="Skip" Padding="10,3" AutomationProperties.Name="Skip Updating Drivers"/>
+    </StackPanel>
+   </Grid>
+   <ProgressBar x:Name="ProgressBar" Grid.Row="1" Height="4" BorderThickness="0" Margin="0,8,0,12" Foreground="{StaticResource AccentBrush}" Background="{StaticResource ControlBrush}"/>
+   <TextBox x:Name="OutputTextBox" Grid.Row="2" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="PreOOBE task output"/>
+   <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="True">
+    <Button x:Name="CancelButton" DockPanel.Dock="Right" Content="Cancel step" IsEnabled="False" Margin="12,0,0,0" AutomationProperties.Name="Cancel current update after its active operation"/>
+    <TextBlock x:Name="StatusText" Text="Starting..." TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource SecondaryTextBrush}" AutomationProperties.LiveSetting="Polite"/>
+   </DockPanel>
+  </Grid>
+  <Border Grid.Row="2" Background="{StaticResource SidebarBrush}" Padding="16,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+   <TextBlock x:Name="ContextText" Text="OSDCloud by Recast | SYSTEM" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
+  </Border>
+ </Grid>
+</Window>
+'@
+    $reader = [Xml.XmlNodeReader]::new($xaml)
+    try { $window = [Windows.Markup.XamlReader]::Load($reader) }
+    finally { $reader.Close() }
+    if ($Preview) { $window.Title += ' (Preview)'; $window.FindName('ContextText').Text = 'Preview | No network or system changes' }
+    $engine = New-OSDCloudPreOOBEState
+    $ui = @{ ExitCode = 0; Source = $null; OutputCount = 0; CountdownSecond = -1; ClockWindow = $null }
+    $area = [Windows.SystemParameters]::WorkArea
+    $window.Width = [Math]::Min($window.Width, $area.Width)
+    $window.Height = [Math]::Min($window.Height, $area.Height)
+    $window.MinWidth = [Math]::Min($window.MinWidth, $area.Width)
+    $window.MinHeight = [Math]::Min($window.MinHeight, $area.Height)
+    $window.Left = $area.Left + [Math]::Min(20, [Math]::Max(0, $area.Width - $window.Width))
+    $window.Top = $area.Top + [Math]::Min(20, [Math]::Max(0, $area.Height - $window.Height))
+    $hook = [Windows.Interop.HwndSourceHook]{
+        param ([IntPtr]$Handle, [int]$Message, [IntPtr]$WParam, [IntPtr]$LParam, [ref]$Handled)
+        if ($Message -eq 0x24) { [Recast.OOBE.Native]::AdjustMaximize($Handle, $LParam); $Handled.Value = $true }
+        return [IntPtr]::Zero
+    }
+    $window.Add_SourceInitialized({
+        $ui.Source = [Windows.Interop.HwndSource]::FromHwnd([Windows.Interop.WindowInteropHelper]::new($window).Handle)
+        $ui.Source.AddHook($hook)
+    })
+    $launch = {
+        param ([string]$Action)
+        try {
+            if ($Action -in 'CMD Prompt','Windows PowerShell') {
+                $ps = $Action -eq 'Windows PowerShell'
+                $exe = Get-OOBEMenuNativePath -PowerShell:$ps
+                $arguments = if ($ps) { '-NoLogo -NoProfile -NoExit -STA' } else { '/d /k' }
+            }
+            else {
+                $exe = Get-OOBEMenuNativePath -Notepad
+                $path = Join-Path $env:WINDIR "Setup\Scripts\$Action"
+                if (-not $Preview -and -not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Script missing: $path" }
+                $arguments = "`"$path`""
+            }
+            if ($Preview) { $message = "Preview: would open $exe $arguments" }
+            else {
+                $child = [Recast.OOBE.Native]::Launch($exe, $arguments, $true, 0)
+                try { $message = "Opened $Action PID $($child.Id)." }
+                finally { $child.Dispose() }
+            }
+            $engine.Output.Add($message)
+            Write-OOBEMenuLog -Message $message
+        }
+        catch {
+            $message = "Unable to open $Action`: $($_.Exception.Message)"
+            $engine.Output.Add($message)
+            Write-Error -Message $message -ErrorAction Continue
+            Write-OOBEMenuLog -Message $message
+        }
+    }
+    foreach ($definition in @(
+        @{ Button = 'ShellMenuButton'; Items = @('CMD Prompt','Windows PowerShell') },
+        @{ Button = 'ScriptsMenuButton'; Items = @('OOBE.cmd','SetupComplete.cmd') }
+    )) {
+        $button = $window.FindName($definition.Button)
+        $menu = [Windows.Controls.ContextMenu]::new()
+        $menu.Style = $window.FindResource([Windows.Controls.ContextMenu])
+        $menu.PlacementTarget = $button
+        $menu.Placement = 'Bottom'
+        $button.ContextMenu = $menu
+        foreach ($header in $definition.Items) {
+            $item = [Windows.Controls.MenuItem]::new()
+            $item.Header = $header
+            $item.Style = $window.FindResource([Windows.Controls.MenuItem])
+            [Windows.Automation.AutomationProperties]::SetName($item, $header)
+            $item.Add_Click({ & $launch ([string]$this.Header) })
+            [void]$menu.Items.Add($item)
+        }
+        $button.Add_Click({ $this.ContextMenu.IsOpen = $true })
+    }
+    $window.FindName('CalendarButton').Add_Click({
+        try {
+            if ($ui.ClockWindow) { [void]$ui.ClockWindow.Activate(); return }
+            [xml]$clockXaml = @'
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="Date, Time and TimeZone" Width="420" SizeToContent="Height" ResizeMode="NoResize" Background="#161F5B" Foreground="#F5F5F5" WindowStartupLocation="CenterOwner">
+ <StackPanel Margin="20">
+  <TextBlock Text="Date"/><DatePicker x:Name="DatePicker" Margin="0,4,0,12"/>
+  <TextBlock Text="Time (HH:mm:ss)"/><TextBox x:Name="TimeTextBox" Margin="0,4,0,12"/>
+  <TextBlock Text="TimeZone"/><ComboBox x:Name="TimeZoneComboBox" DisplayMemberPath="DisplayName" SelectedValuePath="Id" Margin="0,4,0,12"/>
+  <Button x:Name="ApplyClockButton" Content="Apply Date, Time and TimeZone"/>
+  <TextBlock x:Name="ClockStatusText" TextWrapping="Wrap" Margin="0,12,0,0"/>
+ </StackPanel>
+</Window>
+'@
+            $clockReader = [Xml.XmlNodeReader]::new($clockXaml)
+            try { $clock = [Windows.Markup.XamlReader]::Load($clockReader) }
+            finally { $clockReader.Close() }
+            $ui.ClockWindow = $clock
+            $clock.Owner = $window
+            foreach ($controlName in 'DatePicker','TimeTextBox','TimeZoneComboBox','ApplyClockButton') {
+                [Windows.Automation.AutomationProperties]::SetName($clock.FindName($controlName), ($controlName -replace '([a-z])([A-Z])','$1 $2'))
+            }
+            $clock.FindName('DatePicker').SelectedDate = (Get-Date).Date
+            $clock.FindName('TimeTextBox').Text = (Get-Date).ToString('HH:mm:ss')
+            $clock.FindName('TimeZoneComboBox').ItemsSource = [TimeZoneInfo]::GetSystemTimeZones()
+            $clock.FindName('TimeZoneComboBox').SelectedValue = (Get-TimeZone -ErrorAction Stop).Id
+            $clock.FindName('ApplyClockButton').Add_Click({
+                try {
+                    $dialog = $ui.ClockWindow
+                    if (-not $Preview -and ($engine.Shared.InstallationActive -or $engine.Countdown)) { throw 'Clock changes are disabled during installation or completion countdown.' }
+                    $message = Set-OOBEMenuClock -Date $dialog.FindName('DatePicker').SelectedDate -Time $dialog.FindName('TimeTextBox').Text `
+                        -TimeZoneId $dialog.FindName('TimeZoneComboBox').SelectedValue -PreviewOnly:$Preview
+                    $dialog.FindName('ClockStatusText').Text = $message
+                }
+                catch { $ui.ClockWindow.FindName('ClockStatusText').Text = $_.Exception.Message; Write-OOBEMenuLog -Message $_.Exception.Message }
+            })
+            $clock.Add_Closed({ $ui.ClockWindow = $null })
+            $clock.Show()
+        }
+        catch {
+            $engine.Output.Add("Calendar tool failed: $($_.Exception.Message)")
+            Write-OOBEMenuLog -Message $_.Exception.Message
+            if ($ui.ClockWindow) { $ui.ClockWindow.Close(); $ui.ClockWindow = $null }
+        }
+    })
+    $window.FindName('SkipSoftwareButton').Add_Click({
+        if ($engine.Tasks[1].Outcome -eq 'Pending') {
+            $engine.Tasks[1].Outcome = 'Skipped'
+            $engine.Tasks[1].Finished = (Get-Date).ToUniversalTime().ToString('o')
+            $engine.Output.Add('Updating Windows 11 skipped by technician.')
+            Write-OOBEMenuLog -Message 'Updating Windows 11 skipped by technician.'
+        }
+    })
+    $window.FindName('SkipDriversButton').Add_Click({
+        if ($engine.Tasks[2].Outcome -eq 'Pending') {
+            $engine.Tasks[2].Outcome = 'Skipped'
+            $engine.Tasks[2].Finished = (Get-Date).ToUniversalTime().ToString('o')
+            $engine.Output.Add('Updating Drivers skipped by technician.')
+            Write-OOBEMenuLog -Message 'Updating Drivers skipped by technician.'
+        }
+    })
+    $window.FindName('CancelButton').Add_Click({
+        if ($engine.Worker -and $engine.Active.Type -ne 'DriverPack') {
+            $engine.Shared.CancelRequested = $true
+            Write-OOBEMenuLog -Message "Cancellation requested for $($engine.Active.Name)."
+        }
+    })
+    $timer = [Windows.Threading.DispatcherTimer]::new()
+    $timer.Interval = [TimeSpan]::FromMilliseconds(250)
+    $timer.Add_Tick({
+        try {
+            Update-OSDCloudPreOOBEState -State $engine -PreviewOnly:$Preview
+            while ($ui.OutputCount -lt $engine.Output.Count) {
+                $window.FindName('OutputTextBox').AppendText("$($engine.Output[$ui.OutputCount])`r`n")
+                $ui.OutputCount++
+                $window.FindName('OutputTextBox').ScrollToEnd()
+            }
+            foreach ($pair in @(@('DriverTaskText',0),@('SoftwareTaskText',1),@('UpdateDriverTaskText',2))) {
+                $task = $engine.Tasks[$pair[1]]
+                $window.FindName($pair[0]).Text = "$($task.Name) - $($task.Outcome)"
+            }
+            $window.FindName('SkipSoftwareButton').IsEnabled = $engine.Tasks[1].Outcome -eq 'Pending' -and -not $engine.CloseRequested
+            $window.FindName('SkipDriversButton').IsEnabled = $engine.Tasks[2].Outcome -eq 'Pending' -and -not $engine.CloseRequested
+            $window.FindName('CancelButton').IsEnabled = $null -ne $engine.Worker -and $engine.Active.Type -ne 'DriverPack' -and -not $engine.Shared.CancelRequested
+            $window.FindName('ProgressBar').IsIndeterminate = $null -ne $engine.Worker
+            if ($ui.ClockWindow) {
+                $ui.ClockWindow.FindName('ApplyClockButton').IsEnabled = $Preview -or (-not $engine.Shared.InstallationActive -and -not $engine.Countdown)
+            }
+            if ($engine.Countdown) {
+                $window.FindName('StatusText').Text = "Complete. Continuing Windows Setup in $($engine.Remaining) seconds."
+                if ($ui.CountdownSecond -ne $engine.Remaining) {
+                    $ui.CountdownSecond = $engine.Remaining
+                    Write-OOBEMenuLog -Message "Completion countdown: $($engine.Remaining) seconds."
+                }
+            }
+            elseif ($engine.CloseRequested) { $window.FindName('StatusText').Text = 'Closing after the active operation finishes safely.' }
+            elseif ($engine.Shared) { $window.FindName('StatusText').Text = $engine.Shared.Status }
+            if ($engine.RebootRequired) { $window.FindName('ContextText').Text = 'OSDCloud by Recast | SYSTEM | Reboot required; no automatic reboot' }
+            if ($engine.Done) { $timer.Stop(); $window.Close() }
+        }
+        catch {
+            $ui.ExitCode = 1
+            Write-OOBEMenuLog -Message "Scheduler failed: $($_.Exception.ToString())"
+            Write-Error -Message $_.Exception.Message -ErrorAction Continue
+            $engine.CloseRequested = $true
+            if (-not $engine.Worker) { $engine.Done = $true; $timer.Stop(); $window.Close() }
+        }
+    })
+    $window.FindName('MinimizeButton').Add_Click({ $window.WindowState = 'Minimized' })
+    $window.FindName('MaximizeButton').Add_Click({ $window.WindowState = if ($window.WindowState -eq 'Maximized') { 'Normal' } else { 'Maximized' } })
+    $window.Add_StateChanged({
+        $window.FindName('MaximizeGlyph').Text = if ($window.WindowState -eq 'Maximized') { [char]0xE923 } else { [char]0xE922 }
+        $name = if ($window.WindowState -eq 'Maximized') { 'Restore' } else { 'Maximize' }
+        $window.FindName('MaximizeButton').ToolTip = $name
+        [Windows.Automation.AutomationProperties]::SetName($window.FindName('MaximizeButton'),$name)
+    })
+    $window.FindName('CloseButton').Add_Click({ $window.Close() })
+    $window.Add_PreviewKeyDown({
+        if ($_.Key -eq [Windows.Input.Key]::Escape) { $_.Handled = $true; $window.Close() }
+    })
+    $window.Add_Closing({
+        if (-not $engine.Done) {
+            $_.Cancel = $true
+            $engine.CloseRequested = $true
+            Write-OOBEMenuLog -Message 'Window closure requested; active installer will not be terminated.'
+        }
+    })
+    $window.Add_Closed({
+        $timer.Stop()
+        if ($ui.ClockWindow) { $ui.ClockWindow.Close() }
+        if ($ui.Source) { $ui.Source.RemoveHook($hook) }
+    })
+    $window.Add_ContentRendered({
+        try {
+            if (-not [Recast.OOBE.Native]::IsInputDesktop()) { throw 'Not on the console input desktop.' }
+            $activated = $window.Activate()
+            Write-OOBEMenuLog -Message "PreOOBE rendered: session $([Diagnostics.Process]::GetCurrentProcess().SessionId), desktop $([Recast.OOBE.Native]::Desktop), activated $activated, topmost $($window.Topmost), bounds $($window.Left),$($window.Top) $($window.ActualWidth)x$($window.ActualHeight)."
+            if ($ReadyEventName) {
+                $signal = [Threading.EventWaitHandle]::OpenExisting($ReadyEventName)
+                try { [void]$signal.Set() } finally { $signal.Dispose() }
+            }
+            $timer.Start()
+        }
+        catch {
+            $ui.ExitCode = 1
+            $engine.Done = $true
+            Write-OOBEMenuLog -Message "PreOOBE visibility failed: $($_.Exception.ToString())"
+            $window.Close()
+        }
+    })
+    try { [void]$window.ShowDialog() }
+    finally {
+        $timer.Stop()
+        if ($engine.Worker) {
+            $engine.Shared.CancelRequested = $true
+            try { [void]$engine.Worker.Pipeline.EndInvoke($engine.Worker.Handle) }
+            finally { $engine.Worker.Pipeline.Dispose(); $engine.Worker.Runspace.Dispose(); $engine.Worker = $null }
+        }
+    }
+    return $ui.ExitCode
+}

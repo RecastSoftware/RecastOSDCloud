@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Added OSDCloudPreOOBE automated OEM driver installation, Updating Windows 11 and Updating Drivers in the two existing dark task sequences, with per-update Skip/Cancel, connectivity-based offline skips, detailed task/installer diagnostics and a 15-second automatic completion countdown. Scripts and calendar tools move to the title bar. Wireless recovery is design-only for a future iteration.
 - OOBE's standalone menu now offers Windows 11 software and driver updates through inbox Windows Update Agent, with responsive progress, per-update failure/HRESULT reporting, safe cooperative cancellation and reboot-required reporting without automatic reboot.
 - Added a self-contained Windows PowerShell 5.1 technician menu at the end of `OOBE.cmd` in both `recast-winui-dark` tasks. It opens at the top-left with BootMenu-style caption controls and a title-bar Shell menu for CMD Prompt/Windows PowerShell, opens setup scripts in Notepad, and returns 0 when closed. It also provides Date, Time and TimeZone settings. Includes an embedded console-session launcher, explicit failure logging, and an inert preview. Actual first-boot behavior on AMD64 and ARM64 still requires deployment validation.
 - Added the `recast-mui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-mui-light`). It keeps the `recast-winui-dark` tasks, OS settings, single-page layout, and deployment behavior, restyled in the light Recast Portal look with Material Design 3 controls: an OSDCloud by Recast title bar, a navy announcement banner, white cards, outlined dropdowns with floating labels, and a blue Start button. The UI uses MaterialDesignInXamlToolkit 5.4.0 (MIT), bundled in `OSDCloud\types\materialdesign` for Windows PowerShell and PowerShell 7. If those assemblies cannot be loaded, the default workflow UI is shown instead.
@@ -17,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Renamed the standalone OOBEMenu runtime and staging step to OSDCloudPreOOBE and step-update-preoobe; legacy managed batch invocations are migrated. The runtime no longer accepts the menu's Phase parameter.
 - Stage the interactive menu only as the final OOBE.cmd block, removing legacy managed SetupComplete invocations. OOBE now offers clock and both update actions; update output fills the available height when resized.
 - Moved OOBE and SetupComplete shell shortcuts into a dark title-bar Shell dropdown matching the deployment GUI.
 - Setup menu titles identify their callers as `OSDCloud - OOBE.cmd` and `OSDCloud - SetupComplete.cmd`. Removed introductory technician/setup text for a minimal interface.

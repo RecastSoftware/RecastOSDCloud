@@ -116,6 +116,7 @@
         {
             "name": "Download DriverPack from OEM",
             "command": "step-Save-WindowsDriver-DriverPack",
+            "parameters": { "PreOOBE": true },
             "testinfullos": true
         },
         {
@@ -198,8 +199,8 @@
             "skip": true
         },
         {
-            "name": "Stage Interactive OOBE and SetupComplete Menus",
-            "command": "step-update-oobemenu",
+            "name": "Stage OSDCloudPreOOBE",
+            "command": "step-update-preoobe",
             "skip": false
         },
         {
