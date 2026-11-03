@@ -122,7 +122,7 @@ needed) and runs the equivalent of:
 ```
 
 `SetupComplete.cmd` uses the same script with `-Phase SetupComplete`. Its title is
-**OSDCloud SetupComplete Menu**; the first menu is **OSDCloud OOBE Menu**.
+**OSDCloud - SetupComplete.cmd**; the first menu is **OSDCloud - OOBE.cmd**.
 Both open 20 device-independent pixels inward from the top-left of the primary
 work area (reduced when needed to keep the window on-screen), with BootMenu-style
 caption controls and a collapsible left sidebar.
@@ -137,15 +137,30 @@ caption controls and a collapsible left sidebar.
   correct UTC instant for that zone. Input is validated before changes; daylight-saving
   gaps/repeated hours are rejected. Errors remain visible. If setting the time
   fails after the time zone changed, inspect the clock/zone before retrying.
+- **Windows Update - Windows 11** and **Windows Update - Drivers** are available
+  only in SetupComplete. Clicking an action scans, downloads and installs applicable
+  updates using inbox Windows Update Agent. Windows 11 scans `Software` updates
+  (including servicing/.NET updates); Drivers scans `Driver` updates. Both honor
+  the device's configured update service/policies, exclude hidden/Preview updates
+  and updates requiring interactive input, and accept update EULAs for installation.
+  No third-party update module is imported and update-service settings are not changed.
+  The menu stays responsive, displays progress and individual results/HRESULTs, and
+  reports partial failures and reboot requirements. **Neither action reboots.**
+- Updates run one action at a time. **Cancel updates** stops further work after
+  the current Windows Update API operation completes. Closing the menu during
+  updates also requests cancellation, then waits for safe completion before closing
+  with exit 0. There is no forced timeout or process termination during installation;
+  a slow/stalled Windows Update API call can delay cancellation and setup continuation.
 - **Continue Windows Setup**, Escape, Alt+F4, or closing the window returns
   **exit code 0**. Remaining batch commands can then run and setup can continue.
 - Shell and Notepad windows remain open after menu closure and are not waited on.
 - A shell-launch error is displayed without closing the menu.
-- Startup failure returns nonzero and is logged; the appended batch block reports
+- Startup failure returns nonzero and is logged; the prepended batch block reports
   it and continues instead of deliberately stopping setup.
 
 **Security:** this is a technician feature that deliberately exposes SYSTEM
-shells, setup script editing, and clock changes. Disable both menus for unattended or end-user deployments by setting
+shells, setup script editing, clock changes, and update installation. Disable both
+menus for unattended or end-user deployments by setting
 `"skip": true` on `step-update-oobemenu` in the selected dark-workflow task
 **before deployment**. Editing the task afterward does not remove an already
 staged invocation.
@@ -167,7 +182,7 @@ powershell.exe -NoLogo -NoProfile -STA -File .\OSDCloud\core\oobe\Show-OSDCloudO
 powershell.exe -NoLogo -NoProfile -STA -File .\OSDCloud\core\oobe\Show-OSDCloudOOBEMenu.ps1 -Preview -Phase SetupComplete
 ```
 
-Preview runs as the current user, reports shell/Notepad launches and clock changes
+Preview runs as the current user, reports shell/Notepad launches, clock changes and update actions
 without executing them, and writes diagnostics
 to `%TEMP%\OOBEMenu.log`. It does **not** verify first-boot behavior.
 
@@ -180,6 +195,10 @@ it is open, both shells must work, and closing with shells still open must allow
 setup to proceed normally. Also test missing assets and unavailable desktops.
 Confirm the SetupComplete menu runs before its original commands, then verify
 date, time and time zone changes and normal continuation after its closure.
+Test both update actions on disposable Windows 11 devices with working network
+access, including no-updates results, failures, reboot-required results, cancellation
+and menu closure during an update. Local mocks/preview do not verify actual WUA
+installation during SYSTEM SetupComplete.
 Collect `OOBEMenu.log`, the staged `OOBE.cmd` and `SetupComplete.cmd`,
 `C:\Windows\Panther\setupact.log`, and
 `C:\Windows\Panther\UnattendGC\setupact.log` if a menu does not appear or setup

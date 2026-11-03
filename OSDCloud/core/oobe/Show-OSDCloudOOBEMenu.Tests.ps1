@@ -119,7 +119,7 @@ Describe 'SetupComplete clock validation' {
         Should -Invoke Set-TimeZone -Times 1 -Exactly -ParameterFilter { $Id -eq 'Eastern Standard Time' -and $ErrorAction -eq 'Stop' }
         Should -Invoke Set-Date -Times 1 -Exactly -ParameterFilter {
             $Date.ToString('yyyy-MM-dd HH:mm:ss') -eq '2030-06-15 18:30:00' -and
-                $Date.Kind -eq [DateTimeKind]::Utc -and $ErrorAction -eq 'Stop'
+            $Date.Kind -eq [DateTimeKind]::Utc -and $ErrorAction -eq 'Stop'
         }
     }
 
@@ -205,41 +205,47 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
 
     It 'renders at minimum size, keeps shell preview inert, and returns zero on Continue' {
         $uiTimer.Add_Tick({
-            $uiTimer.Stop()
-            $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
-                Where-Object { $_.RootVisual -is [System.Windows.Window] } |
-                Select-Object -ExpandProperty RootVisual)[0]
-            try {
-                if (-not $testWindow) { throw 'No rendered WPF menu window was found.' }
-                $testWindow.Width = 480
-                $testWindow.Height = 360
-                $testWindow.UpdateLayout()
-                $uiState.Width = $testWindow.ActualWidth
-                $uiState.Height = $testWindow.ActualHeight
-                $uiState.Left = $testWindow.Left
-                $uiState.Top = $testWindow.Top
-                $uiState.MinimizeStyle = $testWindow.FindName('MinimizeButton').Style
-                $uiState.ClockVisibility = $testWindow.FindName('ClockButton').Visibility
-                $button = $testWindow.FindName('CommandButton')
-                [void]$button.Focus()
-                $uiState.Focused = $button.IsKeyboardFocused
-                $button.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent))
-                $uiState.Status = $testWindow.FindName('StatusText').Text
-                $testWindow.FindName('PowerShellButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.PowerShellStatus = $testWindow.FindName('StatusText').Text
-                $testWindow.FindName('ContinueButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-            }
-            catch { $uiState.Error = $_; if ($testWindow) { $testWindow.Close() } }
-        })
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    if (-not $testWindow) { throw 'No rendered WPF menu window was found.' }
+                    $testWindow.Width = 480
+                    $testWindow.Height = 360
+                    $testWindow.UpdateLayout()
+                    $uiState.Width = $testWindow.ActualWidth
+                    $uiState.Height = $testWindow.ActualHeight
+                    $uiState.Title = $testWindow.Title
+                    $uiState.PageTitleVisibility = $testWindow.FindName('PageTitleText').Visibility
+                    $uiState.UpdateVisibility = $testWindow.FindName('WindowsUpdateButton').Visibility
+                    $uiState.Left = $testWindow.Left
+                    $uiState.Top = $testWindow.Top
+                    $uiState.MinimizeStyle = $testWindow.FindName('MinimizeButton').Style
+                    $uiState.ClockVisibility = $testWindow.FindName('ClockButton').Visibility
+                    $button = $testWindow.FindName('CommandButton')
+                    [void]$button.Focus()
+                    $uiState.Focused = $button.IsKeyboardFocused
+                    $button.RaiseEvent([System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent))
+                    $uiState.Status = $testWindow.FindName('StatusText').Text
+                    $testWindow.FindName('PowerShellButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.PowerShellStatus = $testWindow.FindName('StatusText').Text
+                    $testWindow.FindName('ContinueButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                }
+                catch { $uiState.Error = $_; if ($testWindow) { $testWindow.Close() } }
+            })
         $uiTimer.Start()
         Show-OOBEMenuWindow | Should -Be 0
         $uiState.Error | Should -BeNullOrEmpty
         $uiState.Width | Should -Be 480
         $uiState.Height | Should -Be 360
+        $uiState.Title | Should -Be 'OSDCloud - OOBE.cmd (Preview)'
+        $uiState.PageTitleVisibility | Should -Be ([System.Windows.Visibility]::Collapsed)
+        $uiState.UpdateVisibility | Should -Be ([System.Windows.Visibility]::Collapsed)
         $workArea = [System.Windows.SystemParameters]::WorkArea
         $uiState.Left | Should -Be ($workArea.Left + [Math]::Min(20, [Math]::Max(0, $workArea.Width - [Math]::Min(640, $workArea.Width))))
         $uiState.Top | Should -Be ($workArea.Top + [Math]::Min(20, [Math]::Max(0, $workArea.Height - [Math]::Min(480, $workArea.Height))))
@@ -252,39 +258,39 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
 
     It 'uses BootMenu caption buttons, collapsible left shortcuts, and inert Notepad actions' {
         $uiTimer.Add_Tick({
-            $uiTimer.Stop()
-            $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
-                Where-Object { $_.RootVisual -is [System.Windows.Window] } |
-                Select-Object -ExpandProperty RootVisual)[0]
-            try {
-                $uiState.CaptionBackground = $testWindow.FindName('MinimizeButton').Background.ToString()
-                $uiState.CaptionWidth = $testWindow.FindName('MinimizeButton').Width
-                $uiState.CaptionBorder = $testWindow.FindName('MinimizeButton').BorderThickness.Left
-                $testWindow.FindName('PaneToggleButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.SidebarWidth = $testWindow.FindName('SidebarColumn').Width.Value
-                $uiState.LabelVisibility = $testWindow.FindName('CommandLabel').Visibility
-                $testWindow.FindName('OpenOOBEButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.OOBEStatus = $testWindow.FindName('StatusText').Text
-                $testWindow.FindName('OpenSetupCompleteButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.SetupStatus = $testWindow.FindName('StatusText').Text
-                $testWindow.FindName('MaximizeButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.Maximized = $testWindow.WindowState
-                $testWindow.FindName('MaximizeButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.Restored = $testWindow.WindowState
-            }
-            catch { $uiState.Error = $_ }
-            finally { if ($testWindow) { $testWindow.Close() } }
-        })
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $uiState.CaptionBackground = $testWindow.FindName('MinimizeButton').Background.ToString()
+                    $uiState.CaptionWidth = $testWindow.FindName('MinimizeButton').Width
+                    $uiState.CaptionBorder = $testWindow.FindName('MinimizeButton').BorderThickness.Left
+                    $testWindow.FindName('PaneToggleButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.SidebarWidth = $testWindow.FindName('SidebarColumn').Width.Value
+                    $uiState.LabelVisibility = $testWindow.FindName('CommandLabel').Visibility
+                    $testWindow.FindName('OpenOOBEButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.OOBEStatus = $testWindow.FindName('StatusText').Text
+                    $testWindow.FindName('OpenSetupCompleteButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.SetupStatus = $testWindow.FindName('StatusText').Text
+                    $testWindow.FindName('MaximizeButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.Maximized = $testWindow.WindowState
+                    $testWindow.FindName('MaximizeButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.Restored = $testWindow.WindowState
+                }
+                catch { $uiState.Error = $_ }
+                finally { if ($testWindow) { $testWindow.Close() } }
+            })
         $uiTimer.Start()
         Show-OOBEMenuWindow | Should -Be 0
         $uiState.Error | Should -BeNullOrEmpty
@@ -304,46 +310,46 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
         Mock Set-TimeZone {}
         Mock Set-Date {}
         $uiTimer.Add_Tick({
-            $uiTimer.Stop()
-            $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
-                Where-Object { $_.RootVisual -is [System.Windows.Window] } |
-                Select-Object -ExpandProperty RootVisual)[0]
-            try {
-                $uiState.Title = $testWindow.Title
-                $testWindow.FindName('ClockButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.ClockVisible = $testWindow.FindName('ClockPage').Visibility
-                $zones = $testWindow.FindName('TimeZoneComboBox')
-                $zones.IsDropDownOpen = $true
-                $testWindow.UpdateLayout()
-                $uiState.DropDownOpen = $zones.IsDropDownOpen
-                $zones.IsDropDownOpen = $false
-                $testWindow.FindName('DatePicker').SelectedDate = [datetime]'2030-06-15'
-                $testWindow.FindName('TimeTextBox').Text = '14:30:00'
-                $testWindow.FindName('TimeZoneComboBox').SelectedValue = 'UTC'
-                $testWindow.FindName('ApplyClockButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.Status = $testWindow.FindName('StatusText').Text
-                $testWindow.FindName('TimeTextBox').Text = 'invalid'
-                $testWindow.FindName('ApplyClockButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.InvalidTimeStatus = $testWindow.FindName('StatusText').Text
-                $testWindow.Width = 480
-                $testWindow.Height = 360
-                $testWindow.UpdateLayout()
-                $uiState.ClockColumns = $testWindow.FindName('ClockDateTimeGrid').Columns
-                $uiState.StillVisible = $testWindow.IsVisible
-            }
-            catch { $uiState.Error = $_ }
-            finally { if ($testWindow) { $testWindow.Close() } }
-        })
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $uiState.Title = $testWindow.Title
+                    $testWindow.FindName('ClockButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.ClockVisible = $testWindow.FindName('ClockPage').Visibility
+                    $zones = $testWindow.FindName('TimeZoneComboBox')
+                    $zones.IsDropDownOpen = $true
+                    $testWindow.UpdateLayout()
+                    $uiState.DropDownOpen = $zones.IsDropDownOpen
+                    $zones.IsDropDownOpen = $false
+                    $testWindow.FindName('DatePicker').SelectedDate = [datetime]'2030-06-15'
+                    $testWindow.FindName('TimeTextBox').Text = '14:30:00'
+                    $testWindow.FindName('TimeZoneComboBox').SelectedValue = 'UTC'
+                    $testWindow.FindName('ApplyClockButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.Status = $testWindow.FindName('StatusText').Text
+                    $testWindow.FindName('TimeTextBox').Text = 'invalid'
+                    $testWindow.FindName('ApplyClockButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.InvalidTimeStatus = $testWindow.FindName('StatusText').Text
+                    $testWindow.Width = 480
+                    $testWindow.Height = 360
+                    $testWindow.UpdateLayout()
+                    $uiState.ClockColumns = $testWindow.FindName('ClockDateTimeGrid').Columns
+                    $uiState.StillVisible = $testWindow.IsVisible
+                }
+                catch { $uiState.Error = $_ }
+                finally { if ($testWindow) { $testWindow.Close() } }
+            })
         $uiTimer.Start()
         Show-OOBEMenuWindow | Should -Be 0
         $uiState.Error | Should -BeNullOrEmpty
-        $uiState.Title | Should -Be 'OSDCloud SetupComplete Menu (Preview)'
+        $uiState.Title | Should -Be 'OSDCloud - SetupComplete.cmd (Preview)'
         $uiState.ClockVisible | Should -Be ([System.Windows.Visibility]::Visible)
         $uiState.DropDownOpen | Should -BeTrue
         $uiState.Status | Should -Be 'Preview: would set 2030-06-15 14:30:00 (UTC).'
@@ -357,20 +363,20 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
     It 'keeps the menu open and displays a shell-launch failure' {
         Mock Get-OOBEMenuNativePath { throw 'Executable unavailable' }
         $uiTimer.Add_Tick({
-            $uiTimer.Stop()
-            $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
-                Where-Object { $_.RootVisual -is [System.Windows.Window] } |
-                Select-Object -ExpandProperty RootVisual)[0]
-            try {
-                $testWindow.FindName('CommandButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-                $uiState.Status = $testWindow.FindName('StatusText').Text
-                $uiState.Visible = $testWindow.IsVisible
-            }
-            catch { $uiState.Error = $_ }
-            finally { if ($testWindow) { $testWindow.Close() } }
-        })
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $testWindow.FindName('CommandButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.Status = $testWindow.FindName('StatusText').Text
+                    $uiState.Visible = $testWindow.IsVisible
+                }
+                catch { $uiState.Error = $_ }
+                finally { if ($testWindow) { $testWindow.Close() } }
+            })
         $uiTimer.Start()
         Show-OOBEMenuWindow -ErrorAction SilentlyContinue | Should -Be 0
         $uiState.Error | Should -BeNullOrEmpty
@@ -378,24 +384,183 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
         $uiState.Visible | Should -BeTrue
     }
 
-    It 'returns zero when Escape closes the menu' {
+    It 'offers both SetupComplete update actions while preview never starts an update worker' {
+        $Phase = 'SetupComplete'
+        Mock Start-OOBEMenuUpdateWorker { throw 'Preview must not start WUA' }
         $uiTimer.Add_Tick({
-            $uiTimer.Stop()
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $uiState.Title = $testWindow.Title
+                    $uiState.SoftwareVisibility = $testWindow.FindName('WindowsUpdateButton').Visibility
+                    $uiState.DriverVisibility = $testWindow.FindName('DriverUpdateButton').Visibility
+                    $testWindow.FindName('WindowsUpdateButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.SoftwareStatus = $testWindow.FindName('StatusText').Text
+                    $testWindow.FindName('DriverUpdateButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.DriverStatus = $testWindow.FindName('StatusText').Text
+                    $uiState.UpdateTitle = $testWindow.FindName('PageTitleText').Text
+                    $testWindow.FindName('PaneToggleButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.UpdateLabelVisibility = $testWindow.FindName('WindowsUpdateLabel').Visibility
+                }
+                catch { $uiState.Error = $_ }
+                finally { if ($testWindow) { $testWindow.Close() } }
+            })
+        $uiTimer.Start()
+        Show-OOBEMenuWindow | Should -Be 0
+        $uiState.Error | Should -BeNullOrEmpty
+        $uiState.Title | Should -Be 'OSDCloud - SetupComplete.cmd (Preview)'
+        $uiState.SoftwareVisibility | Should -Be ([System.Windows.Visibility]::Visible)
+        $uiState.DriverVisibility | Should -Be ([System.Windows.Visibility]::Visible)
+        $uiState.UpdateLabelVisibility | Should -Be ([System.Windows.Visibility]::Collapsed)
+        $uiState.SoftwareStatus | Should -BeLike 'Preview: would search, download and install Software updates*'
+        $uiState.DriverStatus | Should -BeLike 'Preview: would search, download and install Driver updates*'
+        $uiState.UpdateTitle | Should -Be 'Windows Update - Drivers'
+        Should -Invoke Start-OOBEMenuUpdateWorker -Times 0 -Exactly
+    }
+
+    It 'surfaces worker startup failure without blocking menu closure' {
+        $Phase = 'SetupComplete'
+        $Preview = $false
+        Mock Start-OOBEMenuUpdateWorker { throw 'Worker unavailable' }
+        $uiTimer.Add_Tick({
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $testWindow.FindName('WindowsUpdateButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.Status = $testWindow.FindName('StatusText').Text
+                    $uiState.Enabled = $testWindow.FindName('WindowsUpdateButton').IsEnabled
+                }
+                catch { $uiState.Error = $_ }
+                finally { if ($testWindow) { $testWindow.Close() } }
+            })
+        $uiTimer.Start()
+        Show-OOBEMenuWindow | Should -Be 0
+        $uiState.Error | Should -BeNullOrEmpty
+        $uiState.Status | Should -BeLike '*Unable to start Windows Update*Worker unavailable*'
+        $uiState.Enabled | Should -BeTrue
+    }
+
+    It 'requests cancellation on closure, waits safely for the worker, then exits zero' {
+        $Phase = 'SetupComplete'
+        $Preview = $false
+        Mock Start-OOBEMenuUpdateWorker {
+            param($Type, $State)
+            $uiState.WorkerState = $State
+            $runspace = [Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
+            $runspace.Open()
+            $pipeline = [PowerShell]::Create()
+            $pipeline.Runspace = $runspace
+            [void]$pipeline.AddScript(@'
+param($state)
+$deadline = [Diagnostics.Stopwatch]::StartNew()
+while (-not $state.CancelRequested -and $deadline.Elapsed.TotalSeconds -lt 5) {
+            Start-Sleep -Milliseconds 20
+}
+Start-Sleep -Milliseconds 100
+$state.Status = 'Cancelled safely.'
+$state.Messages.Enqueue($state.Status)
+'@).AddArgument($State)
+            return [pscustomobject]@{ Pipeline = $pipeline; Runspace = $runspace; Handle = $pipeline.BeginInvoke() }
+        }
+        $uiTimer.Add_Tick({
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $testWindow.FindName('WindowsUpdateButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    $uiState.UpdatesDisabled = -not $testWindow.FindName('DriverUpdateButton').IsEnabled
+                    $testWindow.Close()
+                    $uiState.DeferredClosure = $testWindow.IsVisible
+                    $uiState.CancelRequested = $uiState.WorkerState.CancelRequested
+                }
+                catch { $uiState.Error = $_; if ($testWindow) { $testWindow.Close() } }
+            })
+        $uiTimer.Start()
+        Show-OOBEMenuWindow | Should -Be 0
+        $uiState.Error | Should -BeNullOrEmpty
+        $uiState.UpdatesDisabled | Should -BeTrue
+        $uiState.DeferredClosure | Should -BeTrue
+        $uiState.CancelRequested | Should -BeTrue
+        $uiState.WorkerState.Status | Should -Be 'Cancelled safely.'
+        Should -Invoke Start-OOBEMenuUpdateWorker -Times 1 -Exactly
+    }
+
+    It 'reports asynchronous worker errors and restores controls without closing the menu' {
+        $Phase = 'SetupComplete'
+        $Preview = $false
+        $uiState.Started = $false
+        $uiState.Ticks = 0
+        Mock Start-OOBEMenuUpdateWorker {
+            $runspace = [Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
+            $runspace.Open()
+            $pipeline = [PowerShell]::Create()
+            $pipeline.Runspace = $runspace
+            [void]$pipeline.AddScript("throw 'Simulated worker failure'")
+            return [pscustomobject]@{ Pipeline = $pipeline; Runspace = $runspace; Handle = $pipeline.BeginInvoke() }
+        }
+        $uiTimer.Add_Tick({
             $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
                 Where-Object { $_.RootVisual -is [System.Windows.Window] } |
                 Select-Object -ExpandProperty RootVisual)[0]
             try {
-                $key = [System.Windows.Input.KeyEventArgs]::new(
-                    [System.Windows.Input.Keyboard]::PrimaryDevice,
-                    [System.Windows.PresentationSource]::FromVisual($testWindow), 0,
-                    [System.Windows.Input.Key]::Escape
-                )
-                $key.RoutedEvent = [System.Windows.UIElement]::PreviewKeyDownEvent
-                $testWindow.RaiseEvent($key)
-                $uiState.Handled = $key.Handled
+                $uiState.Ticks++
+                if (-not $uiState.Started) {
+                    $uiState.Started = $true
+                    $testWindow.FindName('WindowsUpdateButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                    return
+                }
+                if (-not $testWindow.FindName('WindowsUpdateButton').IsEnabled -and $uiState.Ticks -lt 50) { return }
+                $uiTimer.Stop()
+                $uiState.Status = $testWindow.FindName('StatusText').Text
+                $uiState.Enabled = $testWindow.FindName('WindowsUpdateButton').IsEnabled
+                $uiState.Visible = $testWindow.IsVisible
+                $testWindow.Close()
             }
-            catch { $uiState.Error = $_; if ($testWindow) { $testWindow.Close() } }
+            catch { $uiState.Error = $_; $uiTimer.Stop(); if ($testWindow) { $testWindow.Close() } }
         })
+        $uiTimer.Start()
+        Show-OOBEMenuWindow | Should -Be 0
+        $uiState.Error | Should -BeNullOrEmpty
+        $uiState.Status | Should -BeLike '*Windows Update worker failed*Simulated worker failure*'
+        $uiState.Enabled | Should -BeTrue
+        $uiState.Visible | Should -BeTrue
+    }
+
+    It 'returns zero when Escape closes the menu' {
+        $uiTimer.Add_Tick({
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $key = [System.Windows.Input.KeyEventArgs]::new(
+                        [System.Windows.Input.Keyboard]::PrimaryDevice,
+                        [System.Windows.PresentationSource]::FromVisual($testWindow), 0,
+                        [System.Windows.Input.Key]::Escape
+                    )
+                    $key.RoutedEvent = [System.Windows.UIElement]::PreviewKeyDownEvent
+                    $testWindow.RaiseEvent($key)
+                    $uiState.Handled = $key.Handled
+                }
+                catch { $uiState.Error = $_; if ($testWindow) { $testWindow.Close() } }
+            })
         $uiTimer.Start()
         Show-OOBEMenuWindow | Should -Be 0
         $uiState.Error | Should -BeNullOrEmpty
@@ -404,17 +569,17 @@ Describe 'OOBE menu local console rendering' -Tag 'Interactive' {
 
     It 'returns zero when the title-bar close button closes the menu' {
         $uiTimer.Add_Tick({
-            $uiTimer.Stop()
-            $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
-                Where-Object { $_.RootVisual -is [System.Windows.Window] } |
-                Select-Object -ExpandProperty RootVisual)[0]
-            try {
-                $testWindow.FindName('CloseButton').RaiseEvent(
-                    [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
-                )
-            }
-            catch { $uiState.Error = $_; if ($testWindow) { $testWindow.Close() } }
-        })
+                $uiTimer.Stop()
+                $testWindow = @([System.Windows.PresentationSource]::CurrentSources |
+                        Where-Object { $_.RootVisual -is [System.Windows.Window] } |
+                        Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $testWindow.FindName('CloseButton').RaiseEvent(
+                        [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+                    )
+                }
+                catch { $uiState.Error = $_; if ($testWindow) { $testWindow.Close() } }
+            })
         $uiTimer.Start()
         Show-OOBEMenuWindow | Should -Be 0
         $uiState.Error | Should -BeNullOrEmpty

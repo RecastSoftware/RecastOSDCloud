@@ -11,7 +11,7 @@
     Displays the menu as the current user without crossing sessions. Shell buttons
     only report their intended actions. Does not prove first-boot interactivity.
 .PARAMETER Phase
-    Selects OOBE or SetupComplete. SetupComplete also provides clock settings.
+    Selects OOBE or SetupComplete. SetupComplete provides clock and update actions.
 .PARAMETER InteractiveChild
     Internal session-launch flag. Not needed in OOBE.cmd.
 .PARAMETER ReadyEvent
@@ -21,7 +21,8 @@
 .EXAMPLE
     powershell.exe -NoLogo -NoProfile -STA -File .\Show-OSDCloudOOBEMenu.ps1 -Preview
 .NOTES
-    No OSDCloud module, external executable, network access, or user logon required.
+    No OSDCloud module, external executable, or user logon required.
+    Windows Update actions require network access to the configured update service.
     Dot-sourcing defines helpers only; it does not show UI or exit the caller.
 #>
 [CmdletBinding()]
@@ -148,6 +149,216 @@ function Set-OOBEMenuClock {
     Set-Date -Date $utcDate -ErrorAction Stop | Out-Null
     Write-OOBEMenuLog -Message "Date, time, and time zone set to $description."
     return "Date, time, and time zone set to $description."
+}
+
+function Write-OOBEMenuUpdateStatus {
+    <#
+    .SYNOPSIS
+        Publishes update progress without accessing WPF from the worker.
+    .DESCRIPTION
+        Queues a message, updates the current status, and writes diagnostics.
+    .PARAMETER State
+        Synchronized update state shared with the menu.
+    .PARAMETER Message
+        Progress or error text.
+    .EXAMPLE
+        Write-OOBEMenuUpdateStatus -State $state -Message 'Searching for updates.'
+    .NOTES
+        Called on the update worker thread.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][hashtable]$State, [Parameter(Mandatory)][string]$Message)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] $Message"
+    $State.Status = $Message
+    $State.Messages.Enqueue($Message)
+    Write-OOBEMenuLog -Message $Message
+}
+
+function Invoke-OOBEMenuWindowsUpdate {
+    <#
+    .SYNOPSIS
+        Downloads and installs applicable software or driver updates using inbox WUA.
+    .DESCRIPTION
+        Honors the configured update service. Excludes hidden and Preview updates
+        and updates requiring user input. Accepts update EULAs for the technician's
+        requested install. Checks search, download and individual installation
+        results, reports failures and reboot requirements, and never reboots.
+    .PARAMETER Type
+        Software for Windows 11 updates, or Driver for driver updates.
+    .PARAMETER State
+        Synchronized status, message queue, cancellation and reboot state.
+    .EXAMPLE
+        Invoke-OOBEMenuWindowsUpdate -Type Driver -State $state
+    .NOTES
+        Runs on a dedicated STA runspace as SYSTEM, not on the WPF dispatcher.
+        Cancellation is cooperative between WUA calls; never kills an installation.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][ValidateSet('Software', 'Driver')][string]$Type,
+        [Parameter(Mandatory)][hashtable]$State
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Start $Type updates"
+    $owned = [Collections.Generic.List[object]]::new()
+    $installed = 0
+    $failed = 0
+    $skipped = 0
+    $State.Succeeded = $false
+    try {
+        if ($env:SystemDrive -eq 'X:' -or -not (Get-OOBEMenuContext).IsSystem) {
+            throw 'Windows Update requires full Windows running as SYSTEM.'
+        }
+        $os = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion' -ErrorAction Stop
+        if ($os.InstallationType -ne 'Client' -or [int]$os.CurrentBuildNumber -lt 22000) {
+            throw 'These update actions require Windows 11.'
+        }
+        if ($State.CancelRequested) {
+            Write-OOBEMenuUpdateStatus -State $State -Message 'Updates cancelled before starting.'
+            return
+        }
+        $session = New-Object -ComObject Microsoft.Update.Session -ErrorAction Stop
+        $owned.Add($session)
+        $session.ClientApplicationID = 'Recast OSDCloud SetupComplete'
+        $searcher = $session.CreateUpdateSearcher()
+        $owned.Add($searcher)
+        Write-OOBEMenuUpdateStatus -State $State -Message "Searching for $Type updates."
+        $search = $searcher.Search("IsInstalled=0 and IsHidden=0 and Type='$Type'")
+        $owned.Add($search)
+        if ([int]$search.ResultCode -ne 2) {
+            throw "Update search did not succeed (result $($search.ResultCode)); no updates were installed."
+        }
+        $updates = $search.Updates
+        $owned.Add($updates)
+        $downloader = $session.CreateUpdateDownloader()
+        $owned.Add($downloader)
+        $installer = $session.CreateUpdateInstaller()
+        $owned.Add($installer)
+        $installer.ForceQuiet = $true
+        $installer.AllowSourcePrompts = $false
+        if ($installer.RebootRequiredBeforeInstallation) {
+            $State.RebootRequired = $true
+            throw 'Windows Update requires a reboot before installation. No reboot was initiated.'
+        }
+        for ($index = 0; $index -lt $updates.Count; $index++) {
+            if ($State.CancelRequested) { break }
+            $itemObjects = [Collections.Generic.List[object]]::new()
+            try {
+                $update = $updates.Item($index)
+                $itemObjects.Add($update)
+                $behavior = $update.InstallationBehavior
+                $itemObjects.Add($behavior)
+                if ($update.Title -match 'Preview' -or $behavior.CanRequestUserInput) {
+                    $skipped++
+                    Write-OOBEMenuUpdateStatus -State $State -Message "Skipped: $($update.Title)"
+                    continue
+                }
+                if (-not $update.EulaAccepted) { $update.AcceptEula() }
+                $selection = New-Object -ComObject Microsoft.Update.UpdateColl -ErrorAction Stop
+                $itemObjects.Add($selection)
+                [void]$selection.Add($update)
+                $downloader.Updates = $selection
+                Write-OOBEMenuUpdateStatus -State $State -Message "Downloading $($index + 1)/$($updates.Count): $($update.Title)"
+                $download = $downloader.Download()
+                $itemObjects.Add($download)
+                $downloadResult = $download.GetUpdateResult(0)
+                $itemObjects.Add($downloadResult)
+                if ([int]$download.ResultCode -ne 2 -or [int]$downloadResult.ResultCode -ne 2 -or -not $update.IsDownloaded) {
+                    $code = '0x{0:X8}' -f ([long]$downloadResult.HResult -band 0xFFFFFFFFL)
+                    throw "Download failed (result $($downloadResult.ResultCode), HRESULT $code)."
+                }
+                if ($State.CancelRequested) { break }
+                $installer.Updates = $selection
+                Write-OOBEMenuUpdateStatus -State $State -Message "Installing $($index + 1)/$($updates.Count): $($update.Title)"
+                $install = $installer.Install()
+                $itemObjects.Add($install)
+                $installResult = $install.GetUpdateResult(0)
+                $itemObjects.Add($installResult)
+                if ($install.RebootRequired -or $installResult.RebootRequired) { $State.RebootRequired = $true }
+                $code = '0x{0:X8}' -f ([long]$installResult.HResult -band 0xFFFFFFFFL)
+                if ([int]$install.ResultCode -ne 2 -or [int]$installResult.ResultCode -ne 2) {
+                    throw "Installation failed or partially succeeded (result $($installResult.ResultCode), HRESULT $code)."
+                }
+                $installed++
+                Write-OOBEMenuUpdateStatus -State $State -Message "Installed: $($update.Title) (HRESULT $code)."
+            }
+            catch {
+                $failed++
+                Write-OOBEMenuUpdateStatus -State $State -Message "Failed update $($index + 1) ($($update.Title)): $($_.Exception.Message)"
+            }
+            finally {
+                for ($item = $itemObjects.Count - 1; $item -ge 0; $item--) {
+                    if ([Runtime.InteropServices.Marshal]::IsComObject($itemObjects[$item])) {
+                        [void][Runtime.InteropServices.Marshal]::ReleaseComObject($itemObjects[$item])
+                    }
+                }
+            }
+        }
+        $State.Succeeded = -not $State.CancelRequested -and $failed -eq 0
+        $summary = if ($State.CancelRequested) { 'Cancelled.' } elseif ($updates.Count -eq 0) { 'No updates found.' } else { 'Finished.' }
+        $summary += " Installed: $installed. Failed: $failed. Skipped: $skipped."
+        if ($State.RebootRequired) { $summary += ' Reboot required; no reboot initiated.' }
+        Write-OOBEMenuUpdateStatus -State $State -Message $summary
+    }
+    catch {
+        $State.Succeeded = $false
+        Write-OOBEMenuUpdateStatus -State $State -Message "Windows Update failed: $($_.Exception.Message)"
+    }
+    finally {
+        for ($item = $owned.Count - 1; $item -ge 0; $item--) {
+            if ([Runtime.InteropServices.Marshal]::IsComObject($owned[$item])) {
+                [void][Runtime.InteropServices.Marshal]::ReleaseComObject($owned[$item])
+            }
+        }
+    }
+}
+
+function Start-OOBEMenuUpdateWorker {
+    <#
+    .SYNOPSIS
+        Starts the inbox update engine on an isolated STA runspace.
+    .DESCRIPTION
+        Shares only managed status data with WPF and creates all COM objects on
+        the worker. The caller owns and disposes the returned pipeline/runspace.
+    .PARAMETER Type
+        Software or Driver update action.
+    .PARAMETER State
+        Synchronized progress and cooperative cancellation state.
+    .EXAMPLE
+        $worker = Start-OOBEMenuUpdateWorker -Type Software -State $state
+    .NOTES
+        No background process, downloaded module or persistent job is created.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][ValidateSet('Software', 'Driver')][string]$Type,
+        [Parameter(Mandatory)][hashtable]$State
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Start worker"
+    $initialState = [Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
+    foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Invoke-OOBEMenuWindowsUpdate') {
+        $definition = (Get-Command -Name $name -CommandType Function -ErrorAction Stop).Definition
+        $initialState.Commands.Add([Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name, $definition))
+    }
+    $runspace = [Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace($initialState)
+    $pipeline = $null
+    try {
+        $runspace.ApartmentState = 'STA'
+        $runspace.ThreadOptions = 'ReuseThread'
+        $runspace.Open()
+        $pipeline = [PowerShell]::Create()
+        $pipeline.Runspace = $runspace
+        [void]$pipeline.AddCommand('Invoke-OOBEMenuWindowsUpdate').AddParameter('Type', $Type).AddParameter('State', $State)
+        $handle = $pipeline.BeginInvoke()
+        return [pscustomobject]@{ Pipeline = $pipeline; Runspace = $runspace; Handle = $handle }
+    }
+    catch {
+        if ($pipeline) { $pipeline.Dispose() }
+        $runspace.Dispose()
+        throw
+    }
 }
 
 function Initialize-OOBEMenuNative {
@@ -848,17 +1059,30 @@ function Show-OOBEMenuWindow {
                                        MaxWidth="144" Margin="12,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
+                    <Button x:Name="WindowsUpdateButton" Style="{StaticResource SidebarButtonStyle}" Visibility="Collapsed"
+                            AutomationProperties.Name="Windows Update - Windows 11" ToolTip="Windows Update - Windows 11">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE895;" Style="{StaticResource IconStyle}" FontSize="18" Width="20"/>
+                            <TextBlock x:Name="WindowsUpdateLabel" Text="Windows Update - Windows 11" TextWrapping="Wrap"
+                                       MaxWidth="144" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="DriverUpdateButton" Style="{StaticResource SidebarButtonStyle}" Visibility="Collapsed"
+                            AutomationProperties.Name="Windows Update - Drivers" ToolTip="Windows Update - Drivers">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE713;" Style="{StaticResource IconStyle}" FontSize="18" Width="20"/>
+                            <TextBlock x:Name="DriverUpdateLabel" Text="Windows Update - Drivers" TextWrapping="Wrap"
+                                       MaxWidth="144" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </ScrollViewer>
         </Border>
         <Grid Grid.Row="1" Grid.Column="1" Margin="24">
             <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-            <StackPanel Margin="0,0,0,16">
-                <TextBlock x:Name="PageTitleText" Text="Technician tools" Style="{StaticResource CardTitleStyle}" TextWrapping="Wrap"/>
-                <TextBlock Text="Windows Setup is waiting. Close this menu to continue."
-                           Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
-            </StackPanel>
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <TextBlock x:Name="PageTitleText" Visibility="Collapsed" Margin="0,0,0,16"
+                       Style="{StaticResource CardTitleStyle}" TextWrapping="Wrap"/>
+            <ScrollViewer x:Name="PageScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <Border Background="{StaticResource SurfaceBrush}" CornerRadius="4" Padding="16">
                     <Grid>
                         <StackPanel x:Name="ToolsPage">
@@ -868,8 +1092,15 @@ function Show-OOBEMenuWindow {
                             <Button x:Name="OpenSetupCompleteButton" AutomationProperties.Name="Open setupcomplete.cmd in Notepad">
                                 <TextBlock Text="Open setupcomplete.cmd" TextWrapping="Wrap"/>
                             </Button>
-                            <TextBlock Text="Open a setup script in Notepad. Use the shortcuts on the left to open SYSTEM shells."
-                                       Foreground="{StaticResource SecondaryTextBrush}" TextWrapping="Wrap" Margin="0,12,0,0"/>
+                        </StackPanel>
+                        <StackPanel x:Name="UpdatePage" Visibility="Collapsed">
+                            <ProgressBar x:Name="UpdateProgressBar" Height="4" BorderThickness="0" Foreground="{StaticResource AccentBrush}"
+                                         Background="{StaticResource ControlBrush}" IsIndeterminate="False" Margin="0,0,0,12"/>
+                            <TextBox x:Name="UpdateOutputTextBox" IsReadOnly="True" TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto" Height="120"
+                                     AutomationProperties.Name="Windows Update results"/>
+                            <Button x:Name="CancelUpdateButton" Content="Cancel updates" IsEnabled="False" Margin="0,12,0,0"
+                                    AutomationProperties.Name="Cancel after current update operation"/>
                         </StackPanel>
                         <StackPanel x:Name="ClockPage" Visibility="Collapsed">
                             <UniformGrid x:Name="ClockDateTimeGrid" Columns="2">
@@ -896,7 +1127,7 @@ function Show-OOBEMenuWindow {
                 </Border>
             </ScrollViewer>
             <TextBlock x:Name="StatusText" Grid.Row="2" Margin="0,12,0,0" TextWrapping="Wrap"
-                       Foreground="{StaticResource SecondaryTextBrush}" Text="Shell windows remain open when this menu closes."
+                       Foreground="{StaticResource SecondaryTextBrush}" Text=""
                        AutomationProperties.LiveSetting="Polite"/>
         </Grid>
         <Border Grid.Row="2" Grid.ColumnSpan="2" Background="{StaticResource SidebarBrush}" Padding="16,10"
@@ -915,17 +1146,22 @@ function Show-OOBEMenuWindow {
     $reader = [System.Xml.XmlNodeReader]::new($xaml)
     try { $window = [System.Windows.Markup.XamlReader]::Load($reader) }
     finally { $reader.Close() }
-    $state = @{ ExitCode = 0; Source = $null; PaneExpanded = $true; ClockLoaded = $false }
+    $state = @{ ExitCode = 0; Source = $null; PaneExpanded = $true; ClockLoaded = $false
+        Worker = $null; UpdateState = $null; CloseRequested = $false; RebootRequired = $false }
     $status = $window.FindName('StatusText')
     $commandButton = $window.FindName('CommandButton')
     $powerShellButton = $window.FindName('PowerShellButton')
     $continueButton = $window.FindName('ContinueButton')
-    $title = "OSDCloud $Phase Menu"
+    $title = "OSDCloud - $Phase.cmd"
     $window.Title = $title
     $window.FindName('TitleText').Text = $title
     [System.Windows.Automation.AutomationProperties]::SetName($window, $title)
     $clockButton = $window.FindName('ClockButton')
+    $windowsUpdateButton = $window.FindName('WindowsUpdateButton')
+    $driverUpdateButton = $window.FindName('DriverUpdateButton')
     $clockButton.Visibility = if ($Phase -eq 'SetupComplete') { 'Visible' } else { 'Collapsed' }
+    $windowsUpdateButton.Visibility = $clockButton.Visibility
+    $driverUpdateButton.Visibility = $clockButton.Visibility
     $window.FindName('DatePicker').Add_DateValidationError({
         $_.ThrowException = $false
         $message = "Invalid date: $($_.Exception.Message). Select a date using the calendar."
@@ -1016,9 +1252,12 @@ function Show-OOBEMenuWindow {
     $toolsButton.Add_Click({
         $window.FindName('ToolsPage').Visibility = 'Visible'
         $window.FindName('ClockPage').Visibility = 'Collapsed'
-        $window.FindName('PageTitleText').Text = 'Technician tools'
+        $window.FindName('UpdatePage').Visibility = 'Collapsed'
+        $window.FindName('PageTitleText').Visibility = 'Collapsed'
         $toolsButton.Background = $window.Resources['ControlBrush']
         $clockButton.Background = [System.Windows.Media.Brushes]::Transparent
+        $windowsUpdateButton.Background = [System.Windows.Media.Brushes]::Transparent
+        $driverUpdateButton.Background = [System.Windows.Media.Brushes]::Transparent
     })
     $clockButton.Add_Click({
         if ($Phase -ne 'SetupComplete') { return }
@@ -1034,10 +1273,14 @@ function Show-OOBEMenuWindow {
             }
             $window.FindName('ToolsPage').Visibility = 'Collapsed'
             $window.FindName('ClockPage').Visibility = 'Visible'
+            $window.FindName('UpdatePage').Visibility = 'Collapsed'
+            $window.FindName('PageTitleText').Visibility = 'Visible'
             $window.FindName('PageTitleText').Text = 'Date, Time & TimeZone'
             $clockButton.Background = $window.Resources['ControlBrush']
             $toolsButton.Background = [System.Windows.Media.Brushes]::Transparent
-            $status.Text = 'Select local date, time and time zone, then Apply. Nothing changes until you apply.'
+            $windowsUpdateButton.Background = [System.Windows.Media.Brushes]::Transparent
+            $driverUpdateButton.Background = [System.Windows.Media.Brushes]::Transparent
+            if (-not $state.Worker) { $status.Text = '' }
         }
         catch {
             $message = "Unable to load clock settings: $($_.Exception.Message)"
@@ -1062,14 +1305,128 @@ function Show-OOBEMenuWindow {
             Write-OOBEMenuLog -Message $message
         }
     })
+    $updateOutput = $window.FindName('UpdateOutputTextBox')
+    $window.FindName('PageScrollViewer').Add_SizeChanged({
+        $updateOutput.Height = [Math]::Max(60, [Math]::Min(180, $window.FindName('PageScrollViewer').ActualHeight - 110))
+    })
+    $cancelUpdateButton = $window.FindName('CancelUpdateButton')
+    $updateProgress = $window.FindName('UpdateProgressBar')
+    $updateTimer = [System.Windows.Threading.DispatcherTimer]::new()
+    $updateTimer.Interval = [TimeSpan]::FromMilliseconds(250)
+    $refreshUpdateStatus = {
+        $message = $null
+        while ($state.UpdateState.Messages.TryDequeue([ref]$message)) {
+            $updateOutput.AppendText("$message`r`n")
+            $updateOutput.ScrollToEnd()
+        }
+        $status.Text = $state.UpdateState.Status
+    }
+    $updateTimer.Add_Tick({
+        if (-not $state.Worker) { return }
+        & $refreshUpdateStatus
+        if (-not $state.Worker.Handle.IsCompleted) { return }
+        $updateTimer.Stop()
+        try {
+            [void]$state.Worker.Pipeline.EndInvoke($state.Worker.Handle)
+            & $refreshUpdateStatus
+            if ($state.UpdateState.RebootRequired) {
+                $state.RebootRequired = $true
+                $window.FindName('ContextText').Text = 'OSDCloud by Recast | SYSTEM | Reboot required'
+            }
+            if ($state.Worker.Pipeline.Streams.Error.Count -gt 0) {
+                throw ($state.Worker.Pipeline.Streams.Error | Out-String)
+            }
+        }
+        catch {
+            $message = "Windows Update worker failed: $($_.Exception.Message)"
+            $status.Text = $message
+            $updateOutput.AppendText("$message`r`n")
+            Write-Error -Message $message -ErrorAction Continue
+            Write-OOBEMenuLog -Message $message
+        }
+        finally {
+            $state.Worker.Pipeline.Dispose()
+            $state.Worker.Runspace.Dispose()
+            $state.Worker = $null
+            $cancelUpdateButton.IsEnabled = $false
+            $updateProgress.IsIndeterminate = $false
+            $windowsUpdateButton.IsEnabled = $true
+            $driverUpdateButton.IsEnabled = $true
+            $window.FindName('ApplyClockButton').IsEnabled = $true
+        }
+        if ($state.CloseRequested) { $window.Close() }
+    })
+    $startUpdates = {
+        param ([string]$Type)
+        if ($Phase -ne 'SetupComplete' -or $state.Worker) { return }
+        $window.FindName('ToolsPage').Visibility = 'Collapsed'
+        $window.FindName('ClockPage').Visibility = 'Collapsed'
+        $window.FindName('UpdatePage').Visibility = 'Visible'
+        $window.FindName('PageTitleText').Visibility = 'Visible'
+        $action = if ($Type -eq 'Software') { 'Windows Update - Windows 11' } else { 'Windows Update - Drivers' }
+        $window.FindName('PageTitleText').Text = $action
+        $toolsButton.Background = [System.Windows.Media.Brushes]::Transparent
+        $clockButton.Background = [System.Windows.Media.Brushes]::Transparent
+        $windowsUpdateButton.Background = if ($Type -eq 'Software') { $window.Resources['ControlBrush'] } else { [System.Windows.Media.Brushes]::Transparent }
+        $driverUpdateButton.Background = if ($Type -eq 'Driver') { $window.Resources['ControlBrush'] } else { [System.Windows.Media.Brushes]::Transparent }
+        $updateOutput.Clear()
+        if ($Preview) {
+            $status.Text = "Preview: would search, download and install $Type updates. No reboot."
+            $updateOutput.Text = $status.Text
+            return
+        }
+        try {
+            $state.UpdateState = [hashtable]::Synchronized(@{
+                Messages = [Collections.Concurrent.ConcurrentQueue[string]]::new()
+                Status = "Starting $action."
+                CancelRequested = $false
+                RebootRequired = $state.RebootRequired
+                Succeeded = $false
+            })
+            $state.Worker = Start-OOBEMenuUpdateWorker -Type $Type -State $state.UpdateState
+            $windowsUpdateButton.IsEnabled = $false
+            $driverUpdateButton.IsEnabled = $false
+            $window.FindName('ApplyClockButton').IsEnabled = $false
+            $cancelUpdateButton.IsEnabled = $true
+            $updateProgress.IsIndeterminate = $true
+            $status.Text = $state.UpdateState.Status
+            $updateTimer.Start()
+        }
+        catch {
+            $message = "Unable to start Windows Update: $($_.Exception.Message)"
+            $status.Text = $message
+            $updateOutput.Text = $message
+            Write-Error -Message $message -ErrorAction Continue
+            Write-OOBEMenuLog -Message $message
+        }
+    }
+    $windowsUpdateButton.Add_Click({ & $startUpdates 'Software' })
+    $driverUpdateButton.Add_Click({ & $startUpdates 'Driver' })
+    $cancelUpdateButton.Add_Click({
+        if ($state.Worker) {
+            $state.UpdateState.CancelRequested = $true
+            $cancelUpdateButton.IsEnabled = $false
+            Write-OOBEMenuUpdateStatus -State $state.UpdateState -Message 'Cancellation requested. Waiting for the current update operation.'
+        }
+    })
+    $window.Add_Closing({
+        if ($state.Worker) {
+            $_.Cancel = $true
+            $state.CloseRequested = $true
+            $state.UpdateState.CancelRequested = $true
+            Write-OOBEMenuUpdateStatus -State $state.UpdateState -Message 'Closing after the current update operation finishes safely.'
+            $status.Text = $state.UpdateState.Status
+        }
+    })
+    $window.Add_Closed({ $updateTimer.Stop() })
     $paneToggle = $window.FindName('PaneToggleButton')
     $paneToggle.Add_Click({
         $state.PaneExpanded = -not $state.PaneExpanded
         $window.FindName('SidebarColumn').Width = if ($state.PaneExpanded) { 200 } else { 56 }
-        foreach ($labelName in 'CommandLabel', 'PowerShellLabel', 'ToolsLabel', 'ClockLabel') {
+        foreach ($labelName in 'CommandLabel', 'PowerShellLabel', 'ToolsLabel', 'ClockLabel', 'WindowsUpdateLabel', 'DriverUpdateLabel') {
             $window.FindName($labelName).Visibility = if ($state.PaneExpanded) { 'Visible' } else { 'Collapsed' }
         }
-        foreach ($button in $commandButton, $powerShellButton, $toolsButton, $clockButton) {
+        foreach ($button in $commandButton, $powerShellButton, $toolsButton, $clockButton, $windowsUpdateButton, $driverUpdateButton) {
             $button.HorizontalContentAlignment = if ($state.PaneExpanded) { 'Stretch' } else { 'Center' }
         }
         $name = if ($state.PaneExpanded) { 'Collapse navigation' } else { 'Expand navigation' }
@@ -1113,7 +1470,19 @@ function Show-OOBEMenuWindow {
             $window.Close()
         }
     })
-    [void]$window.ShowDialog()
+    try { [void]$window.ShowDialog() }
+    finally {
+        $updateTimer.Stop()
+        if ($state.Worker) {
+            $state.UpdateState.CancelRequested = $true
+            try { [void]$state.Worker.Pipeline.EndInvoke($state.Worker.Handle) }
+            finally {
+                $state.Worker.Pipeline.Dispose()
+                $state.Worker.Runspace.Dispose()
+                $state.Worker = $null
+            }
+        }
+    }
     return $state.ExitCode
 }
 
