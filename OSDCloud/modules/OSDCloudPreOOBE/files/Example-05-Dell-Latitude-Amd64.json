@@ -1,0 +1,16 @@
+{
+    "Version": 1,
+    "Name": "Example - Dell Latitude AMD64",
+    "Executable": "LatitudeSetup.exe",
+    "Arguments": "/silent /norestart",
+    "DefaultSelected": false,
+    "CopyToLocal": true,
+    "Conditions": {
+        "ComputerManufacturer": "Dell*",
+        "ComputerModel": [
+            "Latitude 5*",
+            "Latitude 7*"
+        ],
+        "OSArchitecture": "amd64"
+    }
+}

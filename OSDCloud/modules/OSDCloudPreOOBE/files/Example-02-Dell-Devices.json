@@ -1,0 +1,10 @@
+{
+    "Version": 1,
+    "Name": "Example - Dell devices",
+    "Executable": "DellUtilitySetup.exe",
+    "Arguments": "/S /norestart",
+    "DefaultSelected": true,
+    "Conditions": {
+        "ComputerManufacturer": "Dell*"
+    }
+}

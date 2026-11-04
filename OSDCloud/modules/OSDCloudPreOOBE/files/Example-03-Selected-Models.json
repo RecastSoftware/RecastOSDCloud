@@ -1,0 +1,13 @@
+{
+    "Version": 1,
+    "Name": "Example - selected models",
+    "Executable": "ModelSupportSetup.exe",
+    "Arguments": "/quiet",
+    "DefaultSelected": true,
+    "Conditions": {
+        "ComputerModel": [
+            "Latitude 7*",
+            "Precision 3*"
+        ]
+    }
+}

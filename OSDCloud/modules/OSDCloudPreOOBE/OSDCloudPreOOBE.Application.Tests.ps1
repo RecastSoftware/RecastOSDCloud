@@ -323,27 +323,132 @@ InModuleScope OSDCloudPreOOBE {
             Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { -not $ArgumentList }
         }
 
-        It 'copies the complete package to a new Windows Temp folder and installs from the copy' {
+        It 'streams prefixed stdout and stderr lines while the installer is still running' {
+            $state.ProcessOutput = [Collections.Concurrent.ConcurrentQueue[string]]::new()
+            $state.ApplicationName = 'My App [G:]'
+            # Mock bodies do not share the test's script scope, so exchange live state globally.
+            $global:OSDCloudPreOOBELiveTest = [hashtable]::Synchronized(@{
+                Queue = $state.ProcessOutput; Process = $process; SeenWhileRunning = $false
+            })
+            Mock Start-Process {
+                $live = $global:OSDCloudPreOOBELiveTest
+                $stream = [IO.FileStream]::new($RedirectStandardOutput, 'Create', 'Write', 'Read')
+                $writer = [IO.StreamWriter]::new($stream, [Text.UTF8Encoding]::new($false))
+                try {
+                    $writer.Write("first line`r`n"); $writer.Flush()
+                    $watch = [Diagnostics.Stopwatch]::StartNew()
+                    while (-not $live.SeenWhileRunning -and $watch.Elapsed.TotalSeconds -lt 10) {
+                        $live.SeenWhileRunning = $live.Queue.ToArray() -contains 'My App [G:]: first line'
+                        Start-Sleep -Milliseconds 50
+                    }
+                    $writer.Write("progress 50%`rprogress 100%`n`n$('x' * 1500)`ntrailing partial")
+                }
+                finally { $writer.Dispose() }
+                [IO.File]::WriteAllText($RedirectStandardError, "warning line`n", [Text.Encoding]::Unicode)
+                $live.Process
+            }
+            try {
+                Invoke-OSDCloudPreOOBETask -Type Application -State $state
+                $seenWhileRunning = $global:OSDCloudPreOOBELiveTest.SeenWhileRunning
+            }
+            finally { Remove-Variable -Name OSDCloudPreOOBELiveTest -Scope Global -ErrorAction SilentlyContinue }
+            $state.Outcome | Should -Be Succeeded -Because ($state.Messages.ToArray() -join '; ')
+            $seenWhileRunning | Should -BeTrue -Because ("output: " + ($state.ProcessOutput.ToArray() -join ' | ') +
+                "; messages: " + ($state.Messages.ToArray() -join ' | '))
+            $lines = $state.ProcessOutput.ToArray()
+            $lines[0..2] | Should -Be @('My App [G:]: first line', 'My App [G:]: progress 50%', 'My App [G:]: progress 100%')
+            $lines[3] | Should -Be "My App [G:]: $('x' * 1000) ... [truncated]"
+            $lines | Should -Contain 'My App [G:]: trailing partial'
+            $lines | Should -Contain 'My App [G:] [stderr]: warning line'
+            $lines.Count | Should -Be 6
+            $state.Messages.ToArray() | Should -Not -Contain 'My App [G:]: first line'
+        }
+
+        It 'installs normally when live output cannot start or stop cleanly: <Case>' -TestCases @(
+            @{ Case = 'start'; Expected = '*Live installer output unavailable*' }
+            @{ Case = 'stop'; Expected = '*Live installer output stopped early: reader stuck*' }
+        ) {
+            param($Case, $Expected)
+            if ($Case -eq 'start') { Mock Start-OSDCloudPreOOBEOutputTail { throw 'no runspace' } }
+            else {
+                Mock Start-OSDCloudPreOOBEOutputTail { @{} }
+                Mock Stop-OSDCloudPreOOBEOutputTail { 'reader stuck' }
+            }
+            Invoke-OSDCloudPreOOBETask -Type Application -State $state
+            $state.Outcome | Should -Be Succeeded
+            ($state.Messages.ToArray() -join "`n") | Should -BeLike $Expected
+            Should -Invoke Start-Process -Times 1 -Exactly
+        }
+
+        It 'stops live output when the installer cannot be started' {
+            Mock Start-OSDCloudPreOOBEOutputTail { @{ Marker = $true } }
+            Mock Stop-OSDCloudPreOOBEOutputTail {}
+            Mock Start-Process { throw 'Access denied' }
+            Invoke-OSDCloudPreOOBETask -Type Application -State $state
+            $state.Outcome | Should -Be Failed
+            $state.InstallationActive | Should -BeFalse
+            Should -Invoke Stop-OSDCloudPreOOBEOutputTail -Times 1 -Exactly -ParameterFilter { $Tail.Marker }
+        }
+
+        It 'copies ISO-style content to writable Temp storage and retains it after exit <Code>' -TestCases @(
+            @{ Code = 0; Outcome = 'Succeeded' }
+            @{ Code = 1603; Outcome = 'Failed' }
+        ) {
+            param($Code, $Outcome)
             $nested = Join-Path $package 'Content\Data'
             New-Item -Path $nested -ItemType Directory -Force | Out-Null
-            Set-Content -LiteralPath (Join-Path $nested 'payload.txt') -Value 'payload'
+            $payload = Join-Path $nested "payload-$Code.txt"
+            Set-Content -LiteralPath $payload -Value 'payload'
+            $sourcePayload = Get-Item -LiteralPath $payload
+            $sourcePayload.Attributes = [IO.FileAttributes]::ReadOnly -bor [IO.FileAttributes]::Hidden
             Set-Content -LiteralPath (Join-Path $package 'AgentRegistration.cer') -Value 'certificate'
             $arguments = '--certificate AgentRegistration.cer --startDeployment --wait'
             $state.ApplicationCommand = [pscustomobject]@{
                 Executable = 'Invoke-AppDeployToolkit.exe'; WorkingDirectory = $package; Arguments = $arguments; CopyToLocal = $true
             }
+            $process.ExitCode = $Code
+            Mock Start-Process {
+                $readOnlyItems = @(Get-ChildItem -LiteralPath $WorkingDirectory -Recurse -Force |
+                    Where-Object { $_.Attributes -band [IO.FileAttributes]::ReadOnly })
+                if ($readOnlyItems.Count) { throw 'Copied files are still read-only when the installer starts.' }
+                $script:appProcess
+            }
             Invoke-OSDCloudPreOOBETask -Type Application -State $state
-            $state.Outcome | Should -Be Succeeded -Because ($state.Messages.ToArray() -join '; ')
-            $copies = @(Get-ChildItem -LiteralPath (Join-Path $env:WINDIR 'Temp\OSDCloudPreOOBE\Applications') -Directory)
+            $state.Outcome | Should -Be $Outcome -Because ($state.Messages.ToArray() -join '; ')
+            $copies = @(Get-ChildItem -LiteralPath (Join-Path $env:WINDIR 'Temp\OSDCloudOOBE') -Directory)
             $copies.Count | Should -Be 1
             $copy = $copies[0].FullName
-            $copies[0].Name | Should -BeLike 'My App-*'
-            Get-Content -LiteralPath (Join-Path $copy 'Content\Data\payload.txt') | Should -Be 'payload'
+            $copies[0].Name | Should -Be 'My App'
+            $copiedPayload = Join-Path $copy "Content\Data\payload-$Code.txt"
+            Get-Content -LiteralPath $copiedPayload | Should -Be 'payload'
+            $copiedAttributes = (Get-Item -LiteralPath $copiedPayload -Force).Attributes
+            ($copiedAttributes -band [IO.FileAttributes]::ReadOnly) | Should -Be 0
+            ($copiedAttributes -band [IO.FileAttributes]::Hidden) | Should -Not -Be 0
+            ((Get-Item -LiteralPath $payload -Force).Attributes -band [IO.FileAttributes]::ReadOnly) | Should -Not -Be 0
             Test-Path -LiteralPath (Join-Path $copy 'AgentRegistration.cer') | Should -BeTrue
             Test-Path -LiteralPath (Join-Path $package 'AgentRegistration.cer') | Should -BeTrue
             Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter {
                 $FilePath -eq (Join-Path $copy 'Invoke-AppDeployToolkit.exe') -and
                 $WorkingDirectory -eq $copy -and $ArgumentList -eq $arguments
+            }
+        }
+
+        It 'keeps earlier copies and installer-created files when the same application runs again' {
+            $state.ApplicationCommand = [pscustomobject]@{
+                Executable = 'Invoke-AppDeployToolkit.exe'; WorkingDirectory = $package; Arguments = ''; CopyToLocal = $true
+            }
+            $destination = Join-Path $env:WINDIR 'Temp\OSDCloudOOBE\My App'
+            1..3 | ForEach-Object {
+                Set-Content -LiteralPath (Join-Path $package 'version.txt') -Value $_
+                Invoke-OSDCloudPreOOBETask -Type Application -State $state
+                $state.Outcome | Should -Be Succeeded -Because ($state.Messages.ToArray() -join '; ')
+                $copy = if ($_ -eq 1) { $destination } else { "$destination-$_" }
+                Set-Content -LiteralPath (Join-Path $copy 'installer-created.txt') -Value 'retained'
+            }
+            1..3 | ForEach-Object {
+                $copy = if ($_ -eq 1) { $destination } else { "$destination-$_" }
+                Get-Content -LiteralPath (Join-Path $copy 'version.txt') | Should -Be "$_"
+                Get-Content -LiteralPath (Join-Path $copy 'installer-created.txt') | Should -Be 'retained'
             }
         }
 
@@ -356,7 +461,7 @@ InModuleScope OSDCloudPreOOBE {
             } -ParameterFilter { $Recurse }
             Invoke-OSDCloudPreOOBETask -Type Application -State $state
             $state.Outcome | Should -Be Failed
-            Test-Path -LiteralPath (Join-Path $env:WINDIR 'Temp\OSDCloudPreOOBE') | Should -BeFalse
+            Test-Path -LiteralPath (Join-Path $env:WINDIR 'Temp\OSDCloudOOBE') | Should -BeFalse
             Should -Invoke Start-Process -Times 0
         }
 
@@ -388,7 +493,7 @@ InModuleScope OSDCloudPreOOBE {
             $state.Outcome | Should -Be Succeeded
             Should -Invoke Start-Process -Times 0 -Exactly
             Test-Path -LiteralPath (Join-Path $env:WINDIR 'Temp\osdcloud-logs') | Should -BeFalse
-            Test-Path -LiteralPath (Join-Path $env:WINDIR 'Temp\OSDCloudPreOOBE') | Should -BeFalse
+            Test-Path -LiteralPath (Join-Path $env:WINDIR 'Temp\OSDCloudOOBE') | Should -BeFalse
         }
     }
 }

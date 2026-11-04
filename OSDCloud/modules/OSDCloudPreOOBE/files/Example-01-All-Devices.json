@@ -1,0 +1,7 @@
+{
+    "Version": 1,
+    "Name": "Example - all devices",
+    "Executable": "Setup.exe",
+    "Arguments": "/quiet /norestart",
+    "DefaultSelected": true
+}

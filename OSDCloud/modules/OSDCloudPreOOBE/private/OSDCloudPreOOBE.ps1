@@ -3,29 +3,31 @@ function Write-OOBEMenuLog {
     .SYNOPSIS
         Writes local menu diagnostics.
     .DESCRIPTION
-        Appends a timestamp and process ID; log-write errors are reported to stderr.
+        Appends a timestamp and process ID to each line in one write; log-write
+        errors are reported to stderr.
     .PARAMETER Message
-        Diagnostic message without credentials.
+        Diagnostic message or lines without credentials.
     .EXAMPLE
         Write-OOBEMenuLog -Message 'Menu closed.'
     .NOTES
         Preview diagnostics use the current user's TEMP, not Windows setup paths.
     #>
     [CmdletBinding()]
-    param ([Parameter(Mandatory)][string]$Message)
+    param ([Parameter(Mandatory)][string[]]$Message)
     $Error.Clear()
-    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] $Message"
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] $($Message -join ' | ')"
     $logRoot = if ($Preview) { $env:TEMP } else { Join-Path $env:WINDIR 'Temp\osdcloud-logs' }
     try {
         [void][System.IO.Directory]::CreateDirectory($logRoot)
+        $stamp = "[$(Get-Date -Format s)] [PID $PID] "
         [System.IO.File]::AppendAllText(
             (Join-Path $logRoot 'OSDCloudPreOOBE.log'),
-            "[$(Get-Date -Format s)] [PID $PID] $Message`r`n",
+            (-join ($Message | ForEach-Object { "$stamp$_`r`n" })),
             [System.Text.Encoding]::UTF8
         )
     }
     catch {
-        Write-Error -Message "Could not write OOBE menu diagnostics: $($_.Exception.Message). Original message: $Message" -ErrorAction Continue
+        Write-Error -Message "Could not write OOBE menu diagnostics: $($_.Exception.Message). Original message: $($Message -join ' | ')" -ErrorAction Continue
     }
 }
 
@@ -982,6 +984,183 @@ function Get-OSDCloudPreOOBEApplication {
     }
 }
 
+function Start-OSDCloudPreOOBEOutputTail {
+    <#
+    .SYNOPSIS
+        Follows redirected installer output files on a background runspace.
+
+    .DESCRIPTION
+        Polls each file every 250 ms with shared read access while the installer
+        writes it, decodes it as UTF-8 unless a byte-order mark says otherwise, and
+        enqueues each complete nonblank line with its source prefix. CR, LF and
+        CRLF end lines; incomplete lines wait for more output. Lines longer than
+        1,000 characters are truncated for display only. Missing files are waited
+        for. The runspace imports no module functions and changes nothing.
+
+    .PARAMETER Source
+        Objects with Path and Prefix properties, read in the order given.
+
+    .PARAMETER Queue
+        Thread-safe queue that receives formatted lines.
+
+    .EXAMPLE
+        PS> $tail = Start-OSDCloudPreOOBEOutputTail -Source $sources -Queue $queue
+
+        Starts following the files; stop it with Stop-OSDCloudPreOOBEOutputTail.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        System.Collections.Hashtable. Tail handle for Stop-OSDCloudPreOOBEOutputTail.
+
+    .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-04
+        Display only; the redirected files remain the complete record.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][object[]]$Source,
+        [Parameter(Mandatory)][Collections.Concurrent.ConcurrentQueue[string]]$Queue
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Start output tail"
+    $control = [hashtable]::Synchronized(@{ Stop = $false })
+    $script = {
+        param ($Sources, $Queue, $Control)
+        $maxLength = 1000
+        $readers = @{}
+        $pending = @{}
+        $skipLineFeed = @{}
+        $buffer = [char[]]::new(8192)
+        $emit = {
+            param ($Prefix, $Text)
+            $line = $Text.TrimEnd()
+            if ($line.Length -eq 0) { return }
+            if ($line.Length -gt $maxLength) { $line = $line.Substring(0, $maxLength) + ' ... [truncated]' }
+            $Queue.Enqueue("$Prefix`: $line")
+        }
+        try {
+            while ($true) {
+                $stopping = $Control.Stop
+                foreach ($source in $Sources) {
+                    $key = $source.Path
+                    if (-not $readers.ContainsKey($key)) {
+                        if (-not [IO.File]::Exists($key)) { continue }
+                        $stream = [IO.FileStream]::new($key, [IO.FileMode]::Open, [IO.FileAccess]::Read,
+                            [IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete)
+                        $readers[$key] = [IO.StreamReader]::new($stream, [Text.UTF8Encoding]::new($false), $true)
+                        $pending[$key] = [Text.StringBuilder]::new()
+                        $skipLineFeed[$key] = $false
+                    }
+                    $text = $pending[$key]
+                    while (($count = $readers[$key].Read($buffer, 0, $buffer.Length)) -gt 0) {
+                        for ($index = 0; $index -lt $count; $index++) {
+                            $character = $buffer[$index]
+                            if ($skipLineFeed[$key]) {
+                                $skipLineFeed[$key] = $false
+                                if ($character -eq "`n") { continue }
+                            }
+                            if ($character -eq "`r" -or $character -eq "`n") {
+                                & $emit $source.Prefix $text.ToString()
+                                [void]$text.Clear()
+                                $skipLineFeed[$key] = ($character -eq "`r")
+                            }
+                            elseif ($text.Length -le $maxLength) { [void]$text.Append($character) }
+                        }
+                    }
+                }
+                if ($stopping) { break }
+                Start-Sleep -Milliseconds 250
+            }
+            foreach ($source in $Sources) {
+                if ($pending.ContainsKey($source.Path)) { & $emit $source.Prefix $pending[$source.Path].ToString() }
+            }
+        }
+        finally {
+            foreach ($reader in $readers.Values) { $reader.Dispose() }
+        }
+    }
+    $runspace = [Management.Automation.Runspaces.RunspaceFactory]::CreateRunspace()
+    $pipeline = $null
+    try {
+        $runspace.Open()
+        $pipeline = [PowerShell]::Create()
+        $pipeline.Runspace = $runspace
+        [void]$pipeline.AddScript($script.ToString()).AddArgument(@($Source)).AddArgument($Queue).AddArgument($control)
+        $handle = $pipeline.BeginInvoke()
+    }
+    catch {
+        if ($pipeline) { $pipeline.Dispose() }
+        $runspace.Dispose()
+        throw
+    }
+    return @{ Control = $control; Pipeline = $pipeline; Runspace = $runspace; Handle = $handle }
+}
+
+function Stop-OSDCloudPreOOBEOutputTail {
+    <#
+    .SYNOPSIS
+        Drains remaining installer output and releases the tail runspace.
+
+    .DESCRIPTION
+        Signals the tail to read once more, emit any final incomplete line, close
+        its files and exit. Waits up to TimeoutSeconds, then abandons the read
+        without affecting the installer outcome.
+
+    .PARAMETER Tail
+        Handle returned by Start-OSDCloudPreOOBEOutputTail.
+
+    .PARAMETER TimeoutSeconds
+        Maximum time to wait for the final drain.
+
+    .EXAMPLE
+        PS> Stop-OSDCloudPreOOBEOutputTail -Tail $tail
+
+        Returns $null after a clean stop, or a short failure description.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        System.String. Failure description, or nothing when the tail stopped cleanly.
+
+    .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-04
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][hashtable]$Tail,
+        [ValidateRange(1, 60)][int]$TimeoutSeconds = 5
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Stop output tail"
+    $Tail.Control.Stop = $true
+    $problem = $null
+    try {
+        if (-not $Tail.Handle.AsyncWaitHandle.WaitOne([TimeSpan]::FromSeconds($TimeoutSeconds))) {
+            $problem = "did not finish within $TimeoutSeconds seconds"
+            [void]$Tail.Pipeline.BeginStop($null, $null)
+        }
+        else {
+            [void]$Tail.Pipeline.EndInvoke($Tail.Handle)
+            if ($Tail.Pipeline.Streams.Error.Count -gt 0) { $problem = $Tail.Pipeline.Streams.Error[0].Exception.Message }
+        }
+    }
+    catch { $problem = $_.Exception.Message }
+    finally {
+        $Tail.Pipeline.Dispose()
+        $Tail.Runspace.Dispose()
+    }
+    return $problem
+}
+
 function Invoke-OSDCloudPreOOBEApplication {
     <#
     .SYNOPSIS
@@ -991,9 +1170,13 @@ function Invoke-OSDCloudPreOOBEApplication {
         Runs a validated manifest command from its package directory, or runs
         Invoke-AppDeployToolkit.exe with Install and Silent arguments.
         CopyToLocal manifests are first copied to a new folder under
-        WINDIR\Temp\OSDCloudPreOOBE\Applications, then run from that copy.
-        Copied content is retained for diagnostics.
+        WINDIR\Temp\OSDCloudOOBE using the package folder name, with a numeric
+        suffix when needed to preserve earlier copies. Read-only attributes are
+        cleared on copied files and folders before execution; source attributes
+        are unchanged. Copied content is retained even if installation fails.
         Waits for the process tree without force cancellation.
+        While it runs, new stdout and stderr lines are shown in the window,
+        prefixed with the application name; the log files stay complete.
         Logs stdout, stderr and exit code. Exit 3010 records a reboot requirement.
 
     .PARAMETER State
@@ -1048,11 +1231,22 @@ function Invoke-OSDCloudPreOOBEApplication {
                 throw "Application package contains a reparse point: $($item.FullName)"
             }
         }
-        $destination = Join-Path $env:WINDIR "Temp\OSDCloudPreOOBE\Applications\$(Split-Path -Path $source -Leaf)-$runId"
+        $destinationRoot = Join-Path $env:WINDIR "Temp\OSDCloudOOBE\$(Split-Path -Path $source -Leaf)"
+        $destination = $destinationRoot
+        $copyNumber = 1
+        while (Test-Path -LiteralPath $destination -ErrorAction Stop) {
+            $copyNumber++
+            $destination = "$destinationRoot-$copyNumber"
+        }
         [void][IO.Directory]::CreateDirectory($destination)
         Write-OOBEMenuUpdateStatus -State $State -Message "Copying application package from $source to $destination."
         foreach ($item in Get-ChildItem -LiteralPath $source -Force -ErrorAction Stop) {
             Copy-Item -LiteralPath $item.FullName -Destination $destination -Recurse -Force -ErrorAction Stop
+        }
+        foreach ($item in Get-ChildItem -LiteralPath $destination -Recurse -Force -ErrorAction Stop) {
+            if ($item.Attributes -band [IO.FileAttributes]::ReadOnly) {
+                $item.Attributes = $item.Attributes -band (-bnot [IO.FileAttributes]::ReadOnly)
+            }
         }
         $path = Resolve-OSDCloudPreOOBEApplicationPath -WorkingDirectory $destination -Executable $State.ApplicationCommand.Executable
         $workingDirectory = $destination
@@ -1063,12 +1257,36 @@ function Invoke-OSDCloudPreOOBEApplication {
     $errors = Join-Path $logs "PreOOBE-$runId-App.stderr.log"
     $State.InstallationActive = $true
     $process = $null
+    $tail = $null
     try {
         Write-OOBEMenuUpdateStatus -State $State -Message "Installing application: $path; output $output; errors $errors. Waiting for safe completion."
+        $label = if ($State.ApplicationName) { [string]$State.ApplicationName } else { [IO.Path]::GetFileName($path) }
+        # Assign directly; emitting the queue from an if expression would unroll an empty queue to $null.
+        $outputQueue = $State.ProcessOutput
+        if ($null -eq $outputQueue) { $outputQueue = $State.Messages }
+        try {
+            $tail = Start-OSDCloudPreOOBEOutputTail -Queue $outputQueue -Source @(
+                [pscustomobject]@{ Path = $output; Prefix = $label }
+                [pscustomobject]@{ Path = $errors; Prefix = "$label [stderr]" }
+            )
+        }
+        catch {
+            Write-OOBEMenuUpdateStatus -State $State -Message "Live installer output unavailable: $($_.Exception.Message). See $output and $errors."
+        }
         $startParameters = @{ FilePath = $path; WorkingDirectory = $workingDirectory }
         if (-not [string]::IsNullOrEmpty($arguments)) { $startParameters.ArgumentList = $arguments }
-        $process = Start-Process @startParameters -Wait -PassThru -NoNewWindow `
-            -RedirectStandardOutput $output -RedirectStandardError $errors -ErrorAction Stop
+        try {
+            $process = Start-Process @startParameters -Wait -PassThru -NoNewWindow `
+                -RedirectStandardOutput $output -RedirectStandardError $errors -ErrorAction Stop
+        }
+        finally {
+            if ($tail) {
+                $problem = Stop-OSDCloudPreOOBEOutputTail -Tail $tail
+                if ($problem) {
+                    Write-OOBEMenuUpdateStatus -State $State -Message "Live installer output stopped early: $problem. See $output and $errors."
+                }
+            }
+        }
         $code = $process.ExitCode
         Write-OOBEMenuUpdateStatus -State $State -Message "Application PID $($process.Id) exited with code $code."
         if ($code -eq 3010) { $State.RebootRequired = $true }
@@ -1193,7 +1411,7 @@ function Start-OOBEMenuUpdateWorker {
         'Sync-OSDCloudPreOOBETime', 'Test-OSDCloudPreOOBEConnectivity', 'Set-OSDCloudPreOOBEUtcClock', 'Test-OSDCloudPreOOBEClockShift',
         'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Resolve-OSDCloudPreOOBEApplicationPath',
         'Initialize-OSDCloudPreOOBEWireless', 'Invoke-OSDCloudPreOOBEWirelessRecovery', 'Show-OSDCloudPreOOBEWireless',
-        'Invoke-OSDCloudPreOOBEApplication', 'Invoke-OSDCloudPreOOBETask') {
+        'Invoke-OSDCloudPreOOBEApplication', 'Invoke-OSDCloudPreOOBETask', 'Start-OSDCloudPreOOBEOutputTail', 'Stop-OSDCloudPreOOBEOutputTail') {
         $definition = (Get-Command -Name $name -CommandType Function -ErrorAction Stop).Definition
         $initialState.Commands.Add([Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name, $definition))
     }

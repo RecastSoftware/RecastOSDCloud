@@ -287,6 +287,48 @@ InModuleScope OSDCloudPreOOBE {
             $engine.Output | Should -Contain 'Final worker message'
         }
 
+        It 'shows live installer output while running and logs it in one batch per tick, including after exit' {
+            Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+            $engine.Worker.Handle.IsCompleted = $false
+            $engine.Shared.ProcessOutput.Enqueue('App: one')
+            $engine.Shared.ProcessOutput.Enqueue('App [stderr]: two')
+            Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+            $engine.Output[-2..-1] | Should -Be @('App: one', 'App [stderr]: two')
+            Should -Invoke Write-OOBEMenuLog -Times 1 -Exactly -ParameterFilter {
+                $Message.Count -eq 2 -and $Message[0] -eq 'App: one' -and $Message[1] -eq 'App [stderr]: two'
+            }
+            $engine.Shared.ProcessOutput.Enqueue('App: last')
+            $engine.Worker.Handle.IsCompleted = $true
+            Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+            $engine.Output | Should -Contain 'App: last'
+        }
+
+        It 'passes the application label to the worker for output prefixes' {
+            $engine.Tasks = @([pscustomobject]@{
+                Type = 'Application'; Name = 'Agent [G:]'; Path = 'G:\OSDCloud\PreOOBE\Agent\Invoke-AppDeployToolkit.exe'
+                Command = $null; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null
+            })
+            Mock Start-OOBEMenuUpdateWorker { $script:sharedName = $State.ApplicationName; throw 'stop here' }
+            Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+            $script:sharedName | Should -Be 'Agent [G:]'
+        }
+
+        It 'appends output in one update and keeps only the most recent lines' {
+            $box = [pscustomobject]@{ Text = ''; Appends = 0 }
+            $box | Add-Member ScriptMethod AppendText { param($value) $this.Text += $value; $this.Appends++ }
+            $box | Add-Member ScriptMethod ScrollToEnd {}
+            $ui = @{ OutputCount = 0 }
+            $output = [Collections.Generic.List[string]]::new()
+            1..11 | ForEach-Object { $output.Add("line $_") }
+            Add-OSDCloudPreOOBEOutputText -TextBox $box -Output $output -Ui $ui -MaximumLines 10
+            $box.Appends | Should -Be 1
+            ($box.Text -split "`r`n" | Where-Object { $_ }).Count | Should -Be 11
+            $output.Add('line 12')
+            Add-OSDCloudPreOOBEOutputText -TextBox $box -Output $output -Ui $ui -MaximumLines 10
+            $box.Text | Should -Be ((3..12 | ForEach-Object { "line $_`r`n" }) -join '')
+            $ui.OutputCount | Should -Be 12
+        }
+
         It 'continues updates when internet time fails' {
             Mock Start-OOBEMenuUpdateWorker { throw 'Time source unreachable' } -ParameterFilter { $Type -eq 'Time' }
             1..5 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }

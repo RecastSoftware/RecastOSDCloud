@@ -1,0 +1,11 @@
+{
+    "Version": 1,
+    "Name": "Example - ARM64 local install",
+    "Executable": "Arm64Setup.exe",
+    "Arguments": "/quiet /norestart",
+    "DefaultSelected": true,
+    "CopyToLocal": true,
+    "Conditions": {
+        "OSArchitecture": "arm64"
+    }
+}

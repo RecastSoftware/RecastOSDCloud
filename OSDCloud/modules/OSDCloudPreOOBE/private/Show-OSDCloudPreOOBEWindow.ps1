@@ -159,6 +159,7 @@ function Update-OSDCloudPreOOBEState {
     if ($State.Worker) {
         $message = $null
         while ($State.Shared.Messages.TryDequeue([ref]$message)) { $State.Output.Add($message) }
+        Receive-OSDCloudPreOOBEProcessOutput -State $State
         if (-not $State.Worker.Handle.IsCompleted) { return }
         try {
             [void]$State.Worker.Pipeline.EndInvoke($State.Worker.Handle)
@@ -179,6 +180,7 @@ function Update-OSDCloudPreOOBEState {
         }
         finally {
             while ($State.Shared.Messages.TryDequeue([ref]$message)) { $State.Output.Add($message) }
+            Receive-OSDCloudPreOOBEProcessOutput -State $State
             $State.RebootRequired = $State.RebootRequired -or $State.Shared.RebootRequired
             $State.Active.DurationMs = $State.Shared.DurationMs
             $State.Active.Finished = (Get-Date).ToUniversalTime().ToString('o')
@@ -227,12 +229,14 @@ function Update-OSDCloudPreOOBEState {
         $State.Active.Started = (Get-Date).ToUniversalTime().ToString('o')
         $State.Shared = [hashtable]::Synchronized(@{
             Messages = [Collections.Concurrent.ConcurrentQueue[string]]::new()
+            ProcessOutput = [Collections.Concurrent.ConcurrentQueue[string]]::new()
             Status = $State.Active.Name; CancelRequested = $false; RebootRequired = $State.RebootRequired
             Succeeded = $false; Outcome = 'Running'; DurationMs = 0L; InstallationActive = $false; ClockTestActive = $false
         })
         if ($State.Active.Type -eq 'Application') {
             $State.Shared.ApplicationPath = $State.Active.Path
             $State.Shared.ApplicationCommand = $State.Active.Command
+            $State.Shared.ApplicationName = $State.Active.Name
         }
         Write-OOBEMenuLog -Message "Starting task $($State.Active.Name)."
         try {
@@ -282,6 +286,82 @@ function Update-OSDCloudPreOOBEState {
         $State.Done = $true
         Write-OOBEMenuLog -Message "PreOOBE finished; exit 0. Reboot required $($State.RebootRequired); no reboot initiated."
     }
+}
+
+function Receive-OSDCloudPreOOBEProcessOutput {
+    <#
+    .SYNOPSIS
+        Moves live installer output from the worker into the window output.
+    .DESCRIPTION
+        Drains the active worker's ProcessOutput queue into State.Output and
+        writes the drained lines to OSDCloudPreOOBE.log in one append.
+    .PARAMETER State
+        Engine state from New-OSDCloudPreOOBEState.
+    .EXAMPLE
+        Receive-OSDCloudPreOOBEProcessOutput -State $state
+    .NOTES
+        Called on the dispatcher thread by Update-OSDCloudPreOOBEState.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][hashtable]$State)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Drain installer output"
+    if (-not $State.Shared -or $null -eq $State.Shared.ProcessOutput) { return }
+    $lines = [Collections.Generic.List[string]]::new()
+    $line = $null
+    while ($State.Shared.ProcessOutput.TryDequeue([ref]$line)) { $lines.Add($line) }
+    if ($lines.Count -eq 0) { return }
+    $State.Output.AddRange($lines)
+    Write-OOBEMenuLog -Message $lines.ToArray()
+}
+
+function Add-OSDCloudPreOOBEOutputText {
+    <#
+    .SYNOPSIS
+        Appends new output lines to the window and limits retained lines.
+    .DESCRIPTION
+        Appends all new State.Output lines in one update, scrolls to the end,
+        and removes the oldest displayed lines once more than MaximumLines plus
+        a 10 percent margin are shown, keeping MaximumLines. Log files keep
+        the complete output.
+    .PARAMETER TextBox
+        Output text box.
+    .PARAMETER Output
+        Engine output list.
+    .PARAMETER Ui
+        Window state holding OutputCount and DisplayedLengths.
+    .PARAMETER MaximumLines
+        Number of most recent lines kept in the text box.
+    .EXAMPLE
+        Add-OSDCloudPreOOBEOutputText -TextBox $box -Output $engine.Output -Ui $ui
+    .NOTES
+        Called on the dispatcher thread.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]$TextBox,
+        [Parameter(Mandatory)][AllowEmptyCollection()][Collections.Generic.List[string]]$Output,
+        [Parameter(Mandatory)][hashtable]$Ui,
+        [ValidateRange(10, 100000)][int]$MaximumLines = 5000
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Append output"
+    if ($Ui.OutputCount -ge $Output.Count) { return }
+    if (-not $Ui.DisplayedLengths) { $Ui.DisplayedLengths = [Collections.Generic.Queue[int]]::new() }
+    $text = [Text.StringBuilder]::new()
+    while ($Ui.OutputCount -lt $Output.Count) {
+        $line = "$($Output[$Ui.OutputCount])`r`n"
+        [void]$text.Append($line)
+        $Ui.DisplayedLengths.Enqueue($line.Length)
+        $Ui.OutputCount++
+    }
+    $TextBox.AppendText($text.ToString())
+    if ($Ui.DisplayedLengths.Count -gt [int]($MaximumLines * 1.1)) {
+        $remove = 0
+        while ($Ui.DisplayedLengths.Count -gt $MaximumLines) { $remove += $Ui.DisplayedLengths.Dequeue() }
+        $TextBox.Text = $TextBox.Text.Substring($remove)
+    }
+    $TextBox.ScrollToEnd()
 }
 
 function Show-OOBEMenuWindow {
@@ -692,11 +772,7 @@ function Show-OOBEMenuWindow {
     $timer.Add_Tick({
         try {
             Update-OSDCloudPreOOBEState -State $engine -PreviewOnly:$Preview
-            while ($ui.OutputCount -lt $engine.Output.Count) {
-                $window.FindName('OutputTextBox').AppendText("$($engine.Output[$ui.OutputCount])`r`n")
-                $ui.OutputCount++
-                $window.FindName('OutputTextBox').ScrollToEnd()
-            }
+            Add-OSDCloudPreOOBEOutputText -TextBox $window.FindName('OutputTextBox') -Output $engine.Output -Ui $ui
             for ($index = 0; $index -lt $engine.Tasks.Count; $index++) {
                 $task = $engine.Tasks[$index]
                 $outcome = if ($engine.StepDelay -and $engine.StepTask -eq $task -and $task.Outcome -eq 'Pending') { "Starting in $($engine.StepRemaining) seconds" }
