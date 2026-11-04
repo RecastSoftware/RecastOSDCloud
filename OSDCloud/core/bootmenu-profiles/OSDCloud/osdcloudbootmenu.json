@@ -36,7 +36,10 @@
     },
     "main": {
       "enabled": true,
-      "commands": ["Show-OSDCloudDeviceInfo"],
+      "commands": [
+        "Show-OSDCloudDeviceInfo",
+        "Deploy-OSDCloud"
+      ],
       "noExit": true,
       "errorAction": "Continue"
     },
@@ -46,10 +49,5 @@
       "noExit": false,
       "errorAction": "Continue"
     }
-  },
-  "deployOSDCloud": {
-    "enabled": true,
-    "command": "Deploy-OSDCloud",
-    "parameters": {}
   }
 }

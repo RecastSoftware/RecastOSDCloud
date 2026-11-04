@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "info": {
+    "id": "a5bad3d5-47d0-4921-b10f-44900d608de0",
+    "name": "PowerShell",
+    "author": "OSDeploy",
+    "description": "PowerShell console with OSDCloud device information."
+  },
+  "env": {
+    "OSDCLOUDBOOT_AUTHOR": "OSDeploy",
+    "OSDCLOUDBOOTMENU_PROFILE": "PowerShell"
+  },
+  "osdcloudBoot": {
+    "requireWinRE": false,
+    "installModule": []
+  },
+  "osdcloudBootMenu": {
+    "enabled": false,
+    "command": "Invoke-OSDCloudBootMenu",
+    "parameters": {}
+  },
+  "osdcloudBootStartup": {
+    "enabled": true,
+    "onScreenKeyboard": true,
+    "showPnpDevices": false,
+    "showPnpErrors": false,
+    "wifi": true,
+    "ipConfig": true,
+    "updateOSDCloud": true,
+    "installModules": [],
+    "startup": {
+      "enabled": false,
+      "commands": [],
+      "noExit": false,
+      "errorAction": "Continue"
+    },
+    "main": {
+      "enabled": true,
+      "commands": [
+        "Show-OSDCloudDeviceInfo"
+      ],
+      "noExit": true,
+      "errorAction": "Continue"
+    },
+    "shutdown": {
+      "enabled": false,
+      "commands": [],
+      "noExit": false,
+      "errorAction": "Continue"
+    }
+  }
+}
