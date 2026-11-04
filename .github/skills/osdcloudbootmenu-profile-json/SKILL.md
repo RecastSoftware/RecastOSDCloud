@@ -1,6 +1,6 @@
 ---
 name: osdcloudbootmenu-profile-json
-description: "Create, edit, validate, or consume osdcloudbootmenu.json BootMenu Profiles. Use for Invoke-OSDCloudBootMenu, bootmenu-profiles, info GUID identity, osdcloudBoot build requirements and modules, osdcloudBootStartup phases, env, and deployOSDCloud settings. Keep Invoke-WinpeStartup and winpestartup.json legacy behavior separate."
+description: "Create, edit, validate, or consume osdcloudbootmenu.json BootMenu Profiles. Use for Invoke-OSDCloudBootMenu, bootmenu-profiles, info GUID identity, osdcloudBoot build requirements and modules, osdcloudBootStartup phases, env, and osdcloudBootMenu settings. Keep Invoke-WinpeStartup and winpestartup.json legacy behavior separate."
 ---
 
 # OSDCloud BootMenu Profiles
@@ -33,7 +33,6 @@ examples. Do not execute stored commands during authoring or validation.
 | `env` | Map of environment variable names to strings; no secrets |
 | `osdcloudBoot` | `requireWinPE`, `requireWinRE`, `installModule`, `buildPacks`, `importPacks` |
 | `osdcloudBootStartup` | `enabled`, `onScreenKeyboard`, `showPnpDevices`, `showPnpErrors`, `wifi`, `ipConfig`, `updateOSDCloud`, `installModules`, `startup`, `main`, `shutdown` |
-| `deployOSDCloud` | `enabled`, `command` (`Deploy-OSDCloud`), `parameters` object |
 | `osdcloudBootMenu` | `enabled`, `command` (`Invoke-OSDCloudBootMenu`), `parameters` object |
 
 - Keep native JSON types: `schemaVersion: 1`, booleans, string arrays, and objects.
@@ -59,11 +58,13 @@ examples. Do not execute stored commands during authoring or validation.
 - Each `startup`/`main`/`shutdown` object accepts `enabled`, `commands` (string
   array), `noExit`, and `errorAction` (`Continue` or `Stop`). Commands for each
   phase execute in one child Windows PowerShell process. URLs are supported.
+- Add deployment commands directly to `osdcloudBootStartup.main.commands`.
+  Import OSDCloud explicitly in that command list when needed.
 - An omitted startup enable flag defaults to enabled. `enabled: false` disables
   the checks, module updates, and startup command stages; explicitly enabled
   deployment/menu commands still apply. Disabled command stages clear commands.
-- Enabled `deployOSDCloud` and `osdcloudBootMenu` commands append to the main
-  phase. Parameter values are strings, numbers, or booleans; true becomes a
+- Enabled `osdcloudBootMenu` commands append to the main phase. Parameter values
+  are strings, numbers, or booleans; true becomes a
   switch, false is omitted, and strings are quoted literally. Enabling a menu
   command re-enters the menu, so leave it disabled unless that is intended.
 - `env` overrides process environment values. `info.name`/`info.author` supply
@@ -73,6 +74,16 @@ examples. Do not execute stored commands during authoring or validation.
   defaults with the `Invoke-OSDCloudBootMenu:` prefix.
 
 ## Lifecycle and validation
+
+The standalone runtime is bundled at `OSDCloud\modules\OSDCloudBootMenu`.
+Import its manifest explicitly on a technician host; Invoke/Test commands are
+not exported by OSDCloud. OSDCloudBoot stages the complete folder as a top-level
+Windows PowerShell module and explicitly imports it in standard startnet.cmd.
+Do not add OSDCloudBootMenu to Gallery `installModule` entries.
+Profile child sessions import BootMenu automatically. OSDCloud commands should
+import OSDCloud explicitly.
+Keep bundled examples mirrored in the runtime's `core\bootmenu-profiles`,
+OSDCloud's `core\bootmenu-profiles`, and OSDCloudBoot's matching folders.
 
 The builder copies the new JSON unchanged to the image's `OSDCloud\bootmenu-profiles`;
 it does not render `winpestartup.json`. Standard startnet.cmd launches
@@ -84,7 +95,7 @@ Dot-source `Assert-OSDCloudBootMenuProfile.ps1` and
 `ConvertFrom-OSDCloudBootMenuProfile.ps1` from the owning module's `private`
 directory, then validate with `Assert-OSDCloudBootMenuProfile -Path <file>`.
 Conversion returns settings without executing commands. The helper sources in
-OSDCloudBoot and OSDCloud are mirrored to support independent module deployment;
+OSDCloudBoot and `OSDCloud\modules\OSDCloudBootMenu` are mirrored to support independent module deployment;
 keep their schema and conversion behavior aligned and test on PowerShell 5.1.
 
 `Invoke-WinpeStartup`, `core\winpestartup-profiles`, and the flat

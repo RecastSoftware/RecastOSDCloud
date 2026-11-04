@@ -11,10 +11,10 @@ Keep the dark, Windows Settings-inspired runtime profile selector consistent.
 Use its existing WPF window and local shared resources; do not introduce a web
 UI, WinUI, external theme, icon package, or new dependency.
 
-- Public entry point: [Invoke-OSDCloudBootMenu.ps1](../../../OSDCloud/public/WinPE/Invoke-OSDCloudBootMenu.ps1)
+- Public entry point: [Invoke-OSDCloudBootMenu.ps1](../../../OSDCloud/modules/OSDCloudBootMenu/public/Invoke-OSDCloudBootMenu.ps1)
 - Executable inline XAML, resources, dynamic controls, and events:
-  [Show-OSDCloudBootMenuProfileWindow.ps1](../../../OSDCloud/private/WinpeStartup/Show-OSDCloudBootMenuProfileWindow.ps1)
-- Runtime behavior tests: [Invoke-OSDCloudBootMenu.Tests.ps1](../../../OSDCloud/public/WinPE/Invoke-OSDCloudBootMenu.Tests.ps1)
+  [Show-OSDCloudBootMenuProfileWindow.ps1](../../../OSDCloud/modules/OSDCloudBootMenu/private/Show-OSDCloudBootMenuProfileWindow.ps1)
+- Runtime behavior tests: [Invoke-OSDCloudBootMenu.Tests.ps1](../../../OSDCloud/modules/OSDCloudBootMenu/public/Invoke-OSDCloudBootMenu.Tests.ps1)
 - Profile schema and command lifecycle:
   [osdcloudbootmenu-profile-json](../osdcloudbootmenu-profile-json/SKILL.md)
 
@@ -162,13 +162,15 @@ authority if the theme is deliberately changed.
    Pester tests from the repository root:
 
    ```powershell
-   Invoke-Pester -Path .\OSDCloud\public\WinPE\Invoke-OSDCloudBootMenu.Tests.ps1
+   Invoke-Pester -Path .\OSDCloud\modules\OSDCloudBootMenu
    ```
 
 6. Inspect the real WPF window using inert profile data and mocked external
    actions. The runtime tests mock the window; they do not prove rendered
    layout. Do not invoke the public startup command merely to show the UI.
-   WinPE-only public functions are not normally imported on full Windows.
+   The standalone module imports its commands on full Windows, but the runtime
+   Invoke command still refuses startup outside WinPE. Import its manifest
+   explicitly; use Test-OSDCloudBootMenu for the inert preview.
 
 ## Acceptance Scenarios
 
