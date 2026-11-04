@@ -54,8 +54,8 @@ InModuleScope OSDCloudPreOOBE {
 
         It 'appends checked applications after drivers, passes their paths, and skips unchecked applications' {
             Mock Get-OSDCloudPreOOBEApplication {
-                [pscustomobject]@{ Name = 'Local App'; Path = 'C:\Windows\Setup\PostOOBE\Local App\Invoke-AppDeployToolkit.exe' }
-                [pscustomobject]@{ Name = 'USB App [G:]'; Path = 'G:\OSDCloud\PostOOBE\USB App\Invoke-AppDeployToolkit.exe' }
+                [pscustomobject]@{ Name = 'Local App'; Path = 'C:\Windows\Setup\PreOOBE\Local App\Invoke-AppDeployToolkit.exe' }
+                [pscustomobject]@{ Name = 'USB App [G:]'; Path = 'G:\OSDCloud\PreOOBE\USB App\Invoke-AppDeployToolkit.exe' }
             }
             $engine = New-OSDCloudPreOOBEState
             $engine.Started = $true
@@ -67,7 +67,7 @@ InModuleScope OSDCloudPreOOBE {
             $engine.Tasks[4].Outcome | Should -Be Succeeded
             $engine.Tasks[5].Outcome | Should -Be Skipped
             Should -Invoke Start-OOBEMenuUpdateWorker -Times 1 -Exactly -ParameterFilter {
-                $Type -eq 'Application' -and $State.ApplicationPath -eq 'C:\Windows\Setup\PostOOBE\Local App\Invoke-AppDeployToolkit.exe'
+                $Type -eq 'Application' -and $State.ApplicationPath -eq 'C:\Windows\Setup\PreOOBE\Local App\Invoke-AppDeployToolkit.exe'
             }
             $engine.Complete | Should -BeTrue
         }
@@ -75,7 +75,7 @@ InModuleScope OSDCloudPreOOBE {
         It 'waits for an active application on close without requesting cancellation' {
             $engine.Started = $true
             $engine.Tasks[0].Type = 'Application'
-            $engine.Tasks[0] | Add-Member NoteProperty Path 'G:\OSDCloud\PostOOBE\App\Invoke-AppDeployToolkit.exe'
+            $engine.Tasks[0] | Add-Member NoteProperty Path 'G:\OSDCloud\PreOOBE\App\Invoke-AppDeployToolkit.exe'
             Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
             $engine.Worker.Handle.IsCompleted = $false
             $engine.CloseRequested = $true
@@ -363,7 +363,7 @@ InModuleScope OSDCloudPreOOBE {
         It 'renders discovered application checkboxes after Updating Drivers and allows unchecking' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {
-                    [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\PostOOBE\App$_\Invoke-AppDeployToolkit.exe" }
+                    [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
                 }
             }
             $uiProbeTimer.Add_Tick({

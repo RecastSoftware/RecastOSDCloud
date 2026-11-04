@@ -15,7 +15,7 @@ InModuleScope OSDCloudPreOOBE {
         }
 
         It 'finds only immediate toolkit folders, local first, and labels drive-hosted applications' {
-            $local = Join-Path $env:SystemRoot 'Setup\PostOOBE'
+            $local = Join-Path $env:SystemRoot 'Setup\PreOOBE'
             $usb = Join-Path $TestDrive 'USB'
             $script:usbPath = $usb
             foreach ($folder in @("$local\My App", "$local\No Toolkit", "$local\Nested\Child", "$usb\My App")) {
@@ -24,11 +24,11 @@ InModuleScope OSDCloudPreOOBE {
             foreach ($folder in @("$local\My App", "$local\Nested\Child", "$usb\My App")) {
                 New-Item -Path (Join-Path $folder 'Invoke-AppDeployToolkit.exe') -ItemType File | Out-Null
             }
-            Mock Test-Path { $LiteralPath -eq 'G:\OSDCloud\PostOOBE' } -ParameterFilter {
-                $LiteralPath -match '^[A-Z]:\\OSDCloud\\PostOOBE$'
+            Mock Test-Path { $LiteralPath -eq 'G:\OSDCloud\PreOOBE' } -ParameterFilter {
+                $LiteralPath -match '^[A-Z]:\\OSDCloud\\PreOOBE$'
             }
             Mock Get-ChildItem { Get-ChildItem -LiteralPath $script:usbPath } -ParameterFilter {
-                $LiteralPath -eq 'G:\OSDCloud\PostOOBE'
+                $LiteralPath -eq 'G:\OSDCloud\PreOOBE'
             }
             $apps = @(Get-OSDCloudPreOOBEApplication)
             $apps.Count | Should -Be 2 -Because ($script:discoveryLog -join '; ')
@@ -36,14 +36,14 @@ InModuleScope OSDCloudPreOOBE {
             $apps[0].Path | Should -Be "$local\My App\Invoke-AppDeployToolkit.exe"
             $apps[1].Name | Should -Be 'My App [G:]'
             Should -Invoke Test-Path -Times 26 -Exactly -ParameterFilter {
-                $LiteralPath -match '^[A-Z]:\\OSDCloud\\PostOOBE$'
+                $LiteralPath -match '^[A-Z]:\\OSDCloud\\PreOOBE$'
             }
         }
 
         It 'reports an unreadable root and continues searching later drives' {
             Mock Test-Path {
-                if ($LiteralPath -eq 'G:\OSDCloud\PostOOBE') { throw 'Drive unavailable' }
-                $LiteralPath -eq 'H:\OSDCloud\PostOOBE' -or $LiteralPath -like '*Invoke-AppDeployToolkit.exe'
+                if ($LiteralPath -eq 'G:\OSDCloud\PreOOBE') { throw 'Drive unavailable' }
+                $LiteralPath -eq 'H:\OSDCloud\PreOOBE' -or $LiteralPath -like '*Invoke-AppDeployToolkit.exe'
             }
             $script:laterPath = Join-Path $TestDrive 'Later App'
             Mock Get-ChildItem { [pscustomobject]@{ Name = 'Later App'; FullName = $script:laterPath; PSIsContainer = $true } }

@@ -183,7 +183,7 @@ Tasks run in this order:
    applicable driver updates.
 5. **Custom applications**: when the window opens, discover immediate application
    folders containing `Invoke-AppDeployToolkit.exe` under
-   `%SystemRoot%\Setup\PostOOBE` and `<drive>:\OSDCloud\PostOOBE` on A: through Z:.
+   `%SystemRoot%\Setup\PreOOBE` and `<drive>:\OSDCloud\PreOOBE` on A: through Z:.
    Local applications appear first, followed by drive-hosted applications in
    drive-letter order; folders within each root are sorted by name.
    Each application appears below **Updating Drivers** with a checked checkbox.

@@ -1,6 +1,6 @@
 ---
 name: osdcloud-preoobe
-description: "Use when creating, changing, testing, or troubleshooting OSDCloud PreOOBE: its WinPE staging step, first-boot runtime, technician window, driver handoff, Windows Update tasks, PostOOBE custom applications and Invoke-AppDeployToolkit.exe discovery, time sync, connectivity checks, or OOBE diagnostics."
+description: "Use when creating, changing, testing, or troubleshooting OSDCloud PreOOBE: its WinPE staging step, first-boot runtime, technician window, driver handoff, Windows Update tasks, PreOOBE custom applications and Invoke-AppDeployToolkit.exe discovery, time sync, connectivity checks, or OOBE diagnostics."
 ---
 
 # OSDCloud PreOOBE
@@ -49,8 +49,8 @@ current operator-facing behavior and real-device validation requirements.
   updates, then discovered custom applications. Do not add an automatic reboot
   or automatic continuation.
 - Application discovery searches immediate folders under
-  `%SystemRoot%\Setup\PostOOBE` first, then `A:\OSDCloud\PostOOBE` through
-  `Z:\OSDCloud\PostOOBE`. Only `Invoke-AppDeployToolkit.exe` packages become
+  `%SystemRoot%\Setup\PreOOBE` first, then `A:\OSDCloud\PreOOBE` through
+  `Z:\OSDCloud\PreOOBE`. Only `Invoke-AppDeployToolkit.exe` packages become
   checked tasks; drive-hosted labels append `[G:]`-style drive identifiers.
   Run selected packages sequentially with Install/Silent arguments and their
   folder as the working directory. Do not force-cancel active installers.

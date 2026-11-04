@@ -705,8 +705,8 @@ function Get-OSDCloudPreOOBEApplication {
         Discovers local application toolkit packages
 
     .DESCRIPTION
-        Searches immediate application folders under SystemRoot\Setup\PostOOBE,
-        then A: through Z: under OSDCloud\PostOOBE. Only folders containing
+        Searches immediate application folders under SystemRoot\Setup\PreOOBE,
+        then A: through Z: under OSDCloud\PreOOBE. Only folders containing
         Invoke-AppDeployToolkit.exe are returned. Discovery does not execute packages.
         Unreadable roots are reported and remaining roots are searched.
 
@@ -731,10 +731,10 @@ function Get-OSDCloudPreOOBEApplication {
     param ()
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Discover applications"
-    $roots = @([pscustomobject]@{ Path = (Join-Path $env:SystemRoot 'Setup\PostOOBE'); Drive = $null })
+    $roots = @([pscustomobject]@{ Path = (Join-Path $env:SystemRoot 'Setup\PreOOBE'); Drive = $null })
     $roots += foreach ($letter in 65..90) {
         $drive = "$([char]$letter):"
-        [pscustomobject]@{ Path = "$drive\OSDCloud\PostOOBE"; Drive = $drive }
+        [pscustomobject]@{ Path = "$drive\OSDCloud\PreOOBE"; Drive = $drive }
     }
     foreach ($root in $roots) {
         try {
@@ -1397,4 +1397,3 @@ function Invoke-OOBEMenu {
         return 1
     }
 }
-
