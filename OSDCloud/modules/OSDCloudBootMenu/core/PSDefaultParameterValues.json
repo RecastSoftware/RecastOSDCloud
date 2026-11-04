@@ -1,0 +1,9 @@
+{
+  "Invoke-OSDCloudBootMenu:SkipOnScreenKeyboard": false,
+  "Invoke-OSDCloudBootMenu:ShowPnpDevices": false,
+  "Invoke-OSDCloudBootMenu:ShowPnpErrors": false,
+  "Invoke-OSDCloudBootMenu:SkipWiFi": false,
+  "Invoke-OSDCloudBootMenu:SkipIPConfig": false,
+  "Invoke-OSDCloudBootMenu:InstallModule": [],
+  "Invoke-OSDCloudBootMenu:SkipUpdateOSDCloud": false
+}

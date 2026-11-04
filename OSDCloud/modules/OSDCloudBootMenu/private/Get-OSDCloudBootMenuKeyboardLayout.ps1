@@ -1,7 +1,7 @@
 function Get-OSDCloudBootMenuKeyboardLayout {
     <#
     .SYNOPSIS
-        Lists the keyboard layouts available to the OSDCloud BootMenu.
+        Lists the keyboard layouts available to the standalone OSDCloud BootMenu.
 
     .DESCRIPTION
         Reads keyboard layouts from

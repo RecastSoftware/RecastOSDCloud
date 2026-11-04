@@ -3,7 +3,7 @@
 function ConvertFrom-OSDCloudBootMenuProfile {
     <#
     .SYNOPSIS
-        Converts an OSDCloud BootMenu profile to runtime settings
+        Converts a standalone OSDCloud BootMenu profile to runtime settings
 
     .DESCRIPTION
         Reads an osdcloudbootmenu.json file and returns the flat settings consumed by
@@ -14,9 +14,10 @@ function ConvertFrom-OSDCloudBootMenuProfile {
         environment variables. A disabled startup, main, or shutdown command section
         returns an empty command list.
 
-        When deployOSDCloud or osdcloudBootMenu is enabled, its command and parameters are
-        appended to the main command list. Boolean parameters become switches when
-        true and are omitted when false. Other values are single-quoted.
+        When osdcloudBootMenu is enabled, its command and parameters are appended to
+        the main command list. Boolean parameters become switches when true and are
+        omitted when false. Other values are single-quoted. Deployment commands are
+        configured directly in osdcloudBootStartup.main.commands.
 
         Environment variables OSDCLOUDBOOTMENU_PROFILE and OSDCLOUDBOOT_AUTHOR are set from
         info.name and info.author when present. Entries in the env object are added
@@ -113,7 +114,7 @@ function ConvertFrom-OSDCloudBootMenuProfile {
         }
     }
 
-    foreach ($Key in 'deployOSDCloud', 'osdcloudBootMenu') {
+    foreach ($Key in 'osdcloudBootMenu') {
         $Section = $Profile.$Key
         if (-not $Section -or -not $Section.enabled -or -not $Section.command) { continue }
         $Parts = [System.Collections.Generic.List[string]]::new()

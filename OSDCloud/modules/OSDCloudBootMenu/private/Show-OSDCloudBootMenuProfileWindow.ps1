@@ -6,7 +6,7 @@ function Show-OSDCloudBootMenuProfileWindow {
     .DESCRIPTION
         Displays the discovered OSDCloud BootMenu profiles in a small dark window
         styled like OSDCloud Boot, with a custom title bar showing
-        "Recast Software - OSDCloud BootMenu" and the OSDCloud module version, and the Recast logo
+        "Recast Software - OSDCloud BootMenu" and the BootMenu module version, and the Recast logo
         in the footer. Only profile names are listed; hovering over a
         profile shows its JSON path and asset folder. Start, Enter, or a
         double-click returns the selected profile. Cancel, Escape, or closing
@@ -627,7 +627,7 @@ function Show-OSDCloudBootMenuProfileWindow {
 
     $moduleVersion = $null
     try {
-        $moduleVersion = [string](Import-PowerShellDataFile -LiteralPath (Join-Path $PSScriptRoot '..\..\OSDCloud.psd1') -ErrorAction Stop).ModuleVersion
+        $moduleVersion = [string](Import-PowerShellDataFile -LiteralPath (Join-Path $PSScriptRoot '..\OSDCloudBootMenu.psd1') -ErrorAction Stop).ModuleVersion
     }
     catch {
         Write-Verbose "[$($MyInvocation.MyCommand.Name)] Module version unavailable: $($_.Exception.Message)"
@@ -635,7 +635,7 @@ function Show-OSDCloudBootMenuProfileWindow {
     $windowSubtitle.Text = if ($TestMode) { "$moduleVersion (Test)".Trim() } else { $moduleVersion }
     $window.Title = ("Recast Software - OSDCloud BootMenu $($windowSubtitle.Text)").Trim()
 
-    $logoPath = Join-Path $PSScriptRoot '..\..\core\recast-logo.png'
+    $logoPath = Join-Path $PSScriptRoot '..\core\recast-logo.png'
     try {
         $logo = [System.Windows.Media.Imaging.BitmapImage]::new()
         $logo.BeginInit()
@@ -868,6 +868,7 @@ function Show-OSDCloudBootMenuProfileWindow {
 
     $explorerButton.Add_Click({
             try {
+                Import-Module -Name OSDCloud -DisableNameChecking -ErrorAction Stop
                 Start-OSDCloudExplorer -ErrorAction Stop
                 $footerStatusText.Text = 'OSDCloud Explorer opened in a separate window.'
             }

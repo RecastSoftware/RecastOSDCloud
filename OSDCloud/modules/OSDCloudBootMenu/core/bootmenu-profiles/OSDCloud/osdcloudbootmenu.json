@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "info": {
+    "id": "235fcd11-ff37-4382-9f18-edc9f0ee642e",
+    "name": "OSDCloud",
+    "author": "OSDeploy",
+    "description": "Displays OSDCloud device information and starts Windows deployment."
+  },
+  "env": {
+    "OSDCLOUDBOOT_AUTHOR": "OSDeploy",
+    "OSDCLOUDBOOTMENU_PROFILE": "OSDCloud"
+  },
+  "osdcloudBoot": {
+    "requireWinRE": false,
+    "installModule": []
+  },
+  "osdcloudBootMenu": {
+    "enabled": false,
+    "command": "Invoke-OSDCloudBootMenu",
+    "parameters": {}
+  },
+  "osdcloudBootStartup": {
+    "enabled": true,
+    "onScreenKeyboard": true,
+    "showPnpDevices": false,
+    "showPnpErrors": false,
+    "wifi": true,
+    "ipConfig": true,
+    "updateOSDCloud": true,
+    "installModules": [],
+    "startup": {
+      "enabled": false,
+      "commands": [],
+      "noExit": false,
+      "errorAction": "Continue"
+    },
+    "main": {
+      "enabled": true,
+      "commands": [
+        "Show-OSDCloudDeviceInfo",
+        "Deploy-OSDCloud"
+      ],
+      "noExit": true,
+      "errorAction": "Continue"
+    },
+    "shutdown": {
+      "enabled": false,
+      "commands": [],
+      "noExit": false,
+      "errorAction": "Continue"
+    }
+  }
+}

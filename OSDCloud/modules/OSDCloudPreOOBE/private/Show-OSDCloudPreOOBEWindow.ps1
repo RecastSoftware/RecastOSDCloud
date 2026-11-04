@@ -188,7 +188,7 @@ function Update-OSDCloudPreOOBEState {
             if ($State.Active.Type -eq 'Software' -and $State.Active.Outcome -eq 'Failed' -and -not $State.CloseRequested) {
                 $State.Paused = $true
                 $State.PausedTask = $State.Active
-                $message = "$($State.Active.Name) failed. Paused: select the calendar to verify Date, Time and TimeZone, then select Retry or Continue."
+                $message = "$($State.Active.Name) failed. Paused: verify the system date, time and time zone using Shell, then select Retry or Continue."
                 $State.Output.Add($message)
                 Write-OOBEMenuLog -Message $message
             }
@@ -252,7 +252,7 @@ function Update-OSDCloudPreOOBEState {
             if ($State.Active.Type -eq 'Software') {
                 $State.Paused = $true
                 $State.PausedTask = $State.Active
-                $message = "$($State.Active.Name) failed. Paused: select the calendar to verify Date, Time and TimeZone, then select Retry or Continue."
+                $message = "$($State.Active.Name) failed. Paused: verify the system date, time and time zone using Shell, then select Retry or Continue."
                 $State.Output.Add($message)
                 Write-OOBEMenuLog -Message $message
             }
@@ -369,7 +369,7 @@ function Show-OOBEMenuWindow {
     .SYNOPSIS
         Displays task progress and starts PreOOBE automation after rendering.
     .DESCRIPTION
-        Provides independent Shell/Scripts tools, calendar controls, a collapsible step
+        Provides independent Shell and Tools menus and an initially expanded step
         list with checkboxes, Start and Skip Step actions, and Continue to OOBE after
         completion. Output fills available height.
     .PARAMETER ReadyEventName
@@ -420,8 +420,14 @@ function Show-OOBEMenuWindow {
     </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
   </Style>
+  <Style x:Key="CaptionFocusVisual">
+   <Setter Property="Control.Template"><Setter.Value><ControlTemplate>
+    <Rectangle Margin="2" Stroke="{StaticResource AccentBrush}" StrokeThickness="1" RadiusX="2" RadiusY="2" SnapsToDevicePixels="True"/>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
   <Style x:Key="CaptionButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
    <Setter Property="Background" Value="Transparent"/><Setter Property="Height" Value="48"/>
+   <Setter Property="FocusVisualStyle" Value="{StaticResource CaptionFocusVisual}"/>
    <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
     <Border x:Name="CaptionBorder" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
@@ -430,7 +436,6 @@ function Show-OOBEMenuWindow {
     <ControlTemplate.Triggers>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
      <Trigger Property="IsPressed" Value="True"><Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource ControlBrush}"/></Trigger>
-     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
      <MultiTrigger><MultiTrigger.Conditions><Condition Property="Tag" Value="Close"/><Condition Property="IsMouseOver" Value="True"/></MultiTrigger.Conditions>
       <Setter TargetName="CaptionBorder" Property="Background" Value="#C42B1C"/>
      </MultiTrigger>
@@ -523,29 +528,31 @@ function Show-OOBEMenuWindow {
       </Track.IncreaseRepeatButton>
      </Track>
     </Grid>
+    <ControlTemplate.Triggers>
+     <Trigger Property="Orientation" Value="Horizontal"><Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/></Trigger>
+    </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
+   <Style.Triggers>
+    <Trigger Property="Orientation" Value="Horizontal">
+     <Setter Property="Width" Value="Auto"/><Setter Property="Height" Value="12"/>
+    </Trigger>
+   </Style.Triggers>
   </Style>
  </Window.Resources>
  <Grid>
   <Grid.RowDefinitions><RowDefinition Height="48"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <Grid Background="{StaticResource SidebarBrush}">
    <Grid.ColumnDefinitions><ColumnDefinition Width="56"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <Button x:Name="PaneToggleButton" Width="56" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Expand steps" AutomationProperties.Name="Expand steps">
+   <Button x:Name="PaneToggleButton" Width="56" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Collapse steps" AutomationProperties.Name="Collapse steps">
     <TextBlock Text="&#xE700;" Style="{StaticResource IconStyle}"/>
    </Button>
    <TextBlock x:Name="TitleText" Grid.Column="1" Text="Recast Software - OSDCloud PreOOBE" FontWeight="SemiBold" Margin="4,0,4,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
    <StackPanel Grid.Column="2" Orientation="Horizontal">
-    <Border x:Name="UserBadge" Width="40" Height="48" Background="Transparent" ToolTip="SYSTEM" AutomationProperties.Name="Running as SYSTEM" shell:WindowChrome.IsHitTestVisibleInChrome="True">
-     <TextBlock Text="&#xE77B;" Style="{StaticResource IconStyle}" HorizontalAlignment="Center"/>
-    </Border>
-    <Button x:Name="ScriptsMenuButton" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open setup scripts" AutomationProperties.Name="Scripts">
-     <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE70F;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Scripts" VerticalAlignment="Center"/></StackPanel>
+    <Button x:Name="ToolsMenuButton" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open deployment files" AutomationProperties.Name="Tools">
+     <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE90F;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Tools" VerticalAlignment="Center"/></StackPanel>
     </Button>
     <Button x:Name="ShellMenuButton" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open a command shell" AutomationProperties.Name="Shell">
      <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE756;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Shell" VerticalAlignment="Center"/></StackPanel>
-    </Button>
-    <Button x:Name="CalendarButton" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Date, Time and TimeZone" AutomationProperties.Name="Date, Time and TimeZone">
-     <TextBlock Text="&#xE787;" Style="{StaticResource IconStyle}"/>
     </Button>
     <Button x:Name="MinimizeButton" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" AutomationProperties.Name="Minimize"><TextBlock Text="&#xE921;" Style="{StaticResource IconStyle}"/></Button>
     <Button x:Name="MaximizeButton" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Maximize" AutomationProperties.Name="Maximize"><TextBlock x:Name="MaximizeGlyph" Text="&#xE922;" Style="{StaticResource IconStyle}"/></Button>
@@ -553,9 +560,9 @@ function Show-OOBEMenuWindow {
    </StackPanel>
   </Grid>
   <Grid Grid.Row="1">
-   <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="56"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="220"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Background="{StaticResource SidebarBrush}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <StackPanel x:Name="StepPanel" Margin="0,8,0,0" AutomationProperties.Name="PreOOBE steps"/>
     </ScrollViewer>
    </Border>
@@ -575,7 +582,7 @@ function Show-OOBEMenuWindow {
    </DockPanel>
   </Grid>
   </Grid>
-  <Border Grid.Row="2" Background="{StaticResource SidebarBrush}" Padding="16,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+  <Border x:Name="ContextBorder" Grid.Row="2" Background="{StaticResource SidebarBrush}" Padding="16,10" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Visibility="Collapsed">
    <TextBlock x:Name="ContextText" Text="" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
   </Border>
  </Grid>
@@ -589,21 +596,15 @@ function Show-OOBEMenuWindow {
     $window.Title = $windowTitle
     $window.FindName('TitleText').Text = $windowTitle
     if ($Preview) { $window.Title += ' (Preview)' }
-    try {
-        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-        $userName = if ($identity.IsSystem) { 'SYSTEM' } else { $identity.Name }
-    }
-    catch { $userName = $env:USERNAME }
-    $window.FindName('UserBadge').ToolTip = $userName
-    [Windows.Automation.AutomationProperties]::SetName($window.FindName('UserBadge'), "Running as $userName")
     $engine = New-OSDCloudPreOOBEState
-    $ui = @{ ExitCode = 0; Source = $null; OutputCount = 0; ClockWindow = $null; ClockSecond = $null }
+    $ui = @{ ExitCode = 0; Source = $null; OutputCount = 0 }
     $updateContext = {
-        try { $text = (Get-OSDCloudPreOOBEClock).Text }
-        catch { $text = "Clock unavailable: $($_.Exception.Message)" }
-        if ($Preview) { $text = "Preview | No network or system changes | $text" }
-        if ($engine.RebootRequired) { $text += ' | Reboot required; no automatic reboot' }
-        $window.FindName('ContextText').Text = $text
+        $messages = @(
+            if ($Preview) { 'Preview | No network or system changes' }
+            if ($engine.RebootRequired) { 'Reboot required; no automatic reboot' }
+        )
+        $window.FindName('ContextText').Text = $messages -join ' | '
+        $window.FindName('ContextBorder').Visibility = if ($messages.Count) { 'Visible' } else { 'Collapsed' }
     }
     $area = [Windows.SystemParameters]::WorkArea
     $window.Width = [Math]::Min($window.Width, $area.Width)
@@ -631,8 +632,13 @@ function Show-OOBEMenuWindow {
             }
             else {
                 $exe = Get-OOBEMenuNativePath -Notepad
-                $path = Join-Path $env:WINDIR "Setup\Scripts\$Action"
-                if (-not $Preview -and -not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Script missing: $path" }
+                $path = switch ($Action) {
+                    'Open oobe.cmd' { Join-Path $env:WINDIR 'Setup\Scripts\OOBE.cmd' }
+                    'Open setupcomplete.cmd' { Join-Path $env:WINDIR 'Setup\Scripts\SetupComplete.cmd' }
+                    'Open autopilot.csv' { 'C:\Windows\Temp\osdcloud-logs\Autopilot.csv' }
+                    default { throw "Unknown tool: $Action" }
+                }
+                if (-not $Preview -and -not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "File missing: $path" }
                 $arguments = "`"$path`""
             }
             if ($Preview) { $message = "Preview: would open $exe $arguments" }
@@ -653,7 +659,10 @@ function Show-OOBEMenuWindow {
     }
     foreach ($definition in @(
         @{ Button = 'ShellMenuButton'; Items = @('CMD Prompt','Windows PowerShell') },
-        @{ Button = 'ScriptsMenuButton'; Items = @('OOBE.cmd','SetupComplete.cmd') }
+        @{ Button = 'ToolsMenuButton'; Items = @(
+            'Open oobe.cmd','Open setupcomplete.cmd'
+            if (Test-Path -LiteralPath 'C:\Windows\Temp\osdcloud-logs\Autopilot.csv' -PathType Leaf) { 'Open autopilot.csv' }
+        ) }
     )) {
         $button = $window.FindName($definition.Button)
         $menu = [Windows.Controls.ContextMenu]::new()
@@ -671,52 +680,6 @@ function Show-OOBEMenuWindow {
         }
         $button.Add_Click({ $this.ContextMenu.IsOpen = $true })
     }
-    $window.FindName('CalendarButton').Add_Click({
-        try {
-            if ($ui.ClockWindow) { [void]$ui.ClockWindow.Activate(); return }
-            [xml]$clockXaml = @'
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="Date, Time and TimeZone" Width="420" SizeToContent="Height" ResizeMode="NoResize" Background="#161F5B" Foreground="#F5F5F5" WindowStartupLocation="CenterOwner">
- <StackPanel Margin="20">
-  <TextBlock Text="Date"/><DatePicker x:Name="DatePicker" Margin="0,4,0,12"/>
-  <TextBlock Text="Time (HH:mm:ss)"/><TextBox x:Name="TimeTextBox" Margin="0,4,0,12"/>
-  <TextBlock Text="TimeZone"/><ComboBox x:Name="TimeZoneComboBox" DisplayMemberPath="DisplayName" SelectedValuePath="Id" Margin="0,4,0,12"/>
-  <Button x:Name="ApplyClockButton" Content="Apply Date, Time and TimeZone"/>
-  <TextBlock x:Name="ClockStatusText" TextWrapping="Wrap" Margin="0,12,0,0"/>
- </StackPanel>
-</Window>
-'@
-            $clockReader = [Xml.XmlNodeReader]::new($clockXaml)
-            try { $clock = [Windows.Markup.XamlReader]::Load($clockReader) }
-            finally { $clockReader.Close() }
-            $ui.ClockWindow = $clock
-            $clock.Owner = $window
-            foreach ($controlName in 'DatePicker','TimeTextBox','TimeZoneComboBox','ApplyClockButton') {
-                [Windows.Automation.AutomationProperties]::SetName($clock.FindName($controlName), ($controlName -replace '([a-z])([A-Z])','$1 $2'))
-            }
-            $clock.FindName('DatePicker').SelectedDate = (Get-Date).Date
-            $clock.FindName('TimeTextBox').Text = (Get-Date).ToString('HH:mm:ss')
-            $clock.FindName('TimeZoneComboBox').ItemsSource = [TimeZoneInfo]::GetSystemTimeZones()
-            $clock.FindName('TimeZoneComboBox').SelectedValue = (Get-TimeZone -ErrorAction Stop).Id
-            $clock.FindName('ApplyClockButton').Add_Click({
-                try {
-                    $dialog = $ui.ClockWindow
-                    if (-not $Preview -and ($engine.Shared.InstallationActive -or $engine.Shared.ClockTestActive -or $engine.Active.Type -eq 'Time')) { throw 'Clock changes are disabled during synchronization, clock testing or installation.' }
-                    $message = Set-OOBEMenuClock -Date $dialog.FindName('DatePicker').SelectedDate -Time $dialog.FindName('TimeTextBox').Text `
-                        -TimeZoneId $dialog.FindName('TimeZoneComboBox').SelectedValue -PreviewOnly:$Preview
-                    $dialog.FindName('ClockStatusText').Text = $message
-                }
-                catch { $ui.ClockWindow.FindName('ClockStatusText').Text = $_.Exception.Message; Write-OOBEMenuLog -Message $_.Exception.Message }
-            })
-            $clock.Add_Closed({ $ui.ClockWindow = $null })
-            $clock.Show()
-        }
-        catch {
-            $engine.Output.Add("Calendar tool failed: $($_.Exception.Message)")
-            Write-OOBEMenuLog -Message $_.Exception.Message
-            if ($ui.ClockWindow) { $ui.ClockWindow.Close(); $ui.ClockWindow = $null }
-        }
-    })
     $window.FindName('StepButton').Add_Click({
         if (-not $engine.Started -or $engine.StepDelay) { Start-OSDCloudPreOOBEState -State $engine; return }
         if ($engine.Worker -and $engine.Active.Type -in 'Software','Driver') {
@@ -728,7 +691,7 @@ function Show-OOBEMenuWindow {
         Write-OOBEMenuLog -Message 'Continue to OOBE selected.'
         $window.Close()
     })
-    $ui.PaneExpanded = $false
+    $ui.PaneExpanded = $true
     $ui.StepBoxes = [Collections.Generic.List[object]]::new()
     $setPane = {
         $window.FindName('SidebarColumn').Width = [Windows.GridLength]::new($(if ($ui.PaneExpanded) { 220 } else { 56 }))
@@ -800,17 +763,13 @@ function Show-OOBEMenuWindow {
             $window.FindName('RetryButton').Visibility = $pausedVisibility
             $window.FindName('ContinueButton').Visibility = $pausedVisibility
             $window.FindName('ProgressBar').IsIndeterminate = $null -ne $engine.Worker
-            if ($ui.ClockWindow) {
-                $ui.ClockWindow.FindName('ApplyClockButton').IsEnabled = $Preview -or (-not $engine.Shared.InstallationActive -and -not $engine.Shared.ClockTestActive -and $engine.Active.Type -ne 'Time')
-            }
             if ($engine.Complete) { $window.FindName('StatusText').Text = 'OSDCloud PreOOBE complete. Select Continue to OOBE.' }
             elseif ($engine.CloseRequested) { $window.FindName('StatusText').Text = 'Closing after the active operation finishes safely.' }
             elseif (-not $engine.Started) { $window.FindName('StatusText').Text = 'Ready. Select Start to begin OSDCloud PreOOBE.' }
-            elseif ($engine.Paused) { $window.FindName('StatusText').Text = "$($engine.PausedTask.Name) failed. Select the calendar to verify Date, Time and TimeZone, then select Retry or Continue." }
+            elseif ($engine.Paused) { $window.FindName('StatusText').Text = "$($engine.PausedTask.Name) failed. Verify the system date, time and time zone using Shell, then select Retry or Continue." }
             elseif ($engine.StepDelay) { $window.FindName('StatusText').Text = "$($engine.StepTask.Name) - Starting in $($engine.StepRemaining) seconds." }
             elseif ($engine.Shared) { $window.FindName('StatusText').Text = $engine.Shared.Status }
-            $second = [datetime]::UtcNow.ToString('yyyyMMddHHmmss')
-            if ($ui.ClockSecond -ne $second) { $ui.ClockSecond = $second; & $updateContext }
+            & $updateContext
             if ($engine.Done) { $timer.Stop(); $window.Close() }
         }
         catch {
@@ -842,7 +801,6 @@ function Show-OOBEMenuWindow {
     })
     $window.Add_Closed({
         $timer.Stop()
-        if ($ui.ClockWindow) { $ui.ClockWindow.Close() }
         if ($ui.Source) { $ui.Source.RemoveHook($hook) }
     })
     $window.Add_ContentRendered({

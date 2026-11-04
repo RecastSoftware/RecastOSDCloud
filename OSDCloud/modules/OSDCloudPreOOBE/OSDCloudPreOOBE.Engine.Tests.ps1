@@ -180,7 +180,7 @@ InModuleScope OSDCloudPreOOBE {
             1..2 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
             $engine.Tasks[2].Outcome | Should -Be 'Failed'
             $engine.Tasks[3].Outcome | Should -Be 'Succeeded'
-            ($engine.Output -join "`n") | Should -BeLike '*Simulated startup error*calendar*'
+            ($engine.Output -join "`n") | Should -BeLike '*Simulated startup error*Shell*'
         }
 
         It 'pauses after Updating Windows 11 fails and retries it after the clock is corrected' {
@@ -458,6 +458,7 @@ InModuleScope OSDCloudPreOOBE {
     Describe 'PreOOBE rendered automation' -Tag Interactive {
         BeforeEach {
             Mock Get-OSDCloudPreOOBEApplication {}
+            Mock Test-Path { $false } -ParameterFilter { $LiteralPath -eq 'C:\Windows\Temp\osdcloud-logs\Autopilot.csv' }
             Mock Get-OOBEMenuContext {
                 [pscustomobject]@{ IsSystem = $false; IsInputDesktop = $true; Identity = 'Preview' }
             }
@@ -484,7 +485,6 @@ InModuleScope OSDCloudPreOOBE {
                 $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
                     Select-Object -ExpandProperty RootVisual)[0]
                 try {
-                    $testWindow.FindName('PaneToggleButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
                     $boxes = $testWindow.FindName('StepPanel').Children
                     $result.Count = $boxes.Count
                     $result.Drivers = $boxes[3].Content
@@ -509,6 +509,49 @@ InModuleScope OSDCloudPreOOBE {
             $result.Enabled | Should -BeFalse
             $result.Last | Should -Be 'Custom App 12 [G:] - Pending'
             $result.OutputHeight | Should -BeGreaterThan 0
+        }
+
+        It 'shows no horizontal scrollbar in the collapsed step sidebar' {
+            $uiProbeTimer.Add_Tick({
+                $uiProbeTimer.Stop()
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $testWindow.FindName('PaneToggleButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                    $testWindow.UpdateLayout()
+                    $sidebar = [Windows.Media.VisualTreeHelper]::GetParent($testWindow.FindName('StepPanel'))
+                    while ($sidebar -isnot [Windows.Controls.ScrollViewer]) { $sidebar = [Windows.Media.VisualTreeHelper]::GetParent($sidebar) }
+                    $result.Horizontal = $sidebar.ComputedHorizontalScrollBarVisibility
+                }
+                catch { $result.Error = $_ }
+                finally { $testWindow.Close() }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            $result.Horizontal | Should -Be ([Windows.Visibility]::Collapsed)
+        }
+
+        It 'returns the focused menu button to its normal background after a click' {
+            $uiProbeTimer.Add_Tick({
+                $uiProbeTimer.Stop()
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $button = $testWindow.FindName('PaneToggleButton')
+                    $result.Focused = $button.Focus()
+                    $button.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                    $testWindow.UpdateLayout()
+                    $result.Background = $button.Template.FindName('CaptionBorder', $button).Background.Color.ToString()
+                }
+                catch { $result.Error = $_ }
+                finally { $testWindow.Close() }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            $result.Focused | Should -BeTrue
+            $result.Background | Should -Be '#00FFFFFF'
         }
 
         It 'renders a manifest application initially unchecked and allows selecting it' {
@@ -537,7 +580,13 @@ InModuleScope OSDCloudPreOOBE {
             $result.Enabled | Should -BeTrue
         }
 
-        It 'keeps title-bar shell, script and calendar actions inert in preview' {
+        It 'shows autopilot only when present and keeps shell and file actions inert in preview: <AutopilotExists>' -TestCases @(
+            @{ AutopilotExists = $false }, @{ AutopilotExists = $true }
+        ) {
+            param($AutopilotExists)
+            Mock Test-Path { $AutopilotExists } -ParameterFilter { $LiteralPath -eq 'C:\Windows\Temp\osdcloud-logs\Autopilot.csv' }
+            Mock Set-Date { throw 'Preview must not set the clock' }
+            Mock Start-Process { throw 'Preview must not launch a process' }
             $result.Ticks = 0
             $uiProbeTimer.Add_Tick({
                 $result.Ticks++
@@ -547,17 +596,11 @@ InModuleScope OSDCloudPreOOBE {
                 try {
                     if ($result.Ticks -eq 1) {
                         $testWindow.FindName('ShellMenuButton').ContextMenu.Items[0].RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.MenuItem]::ClickEvent))
-                        $testWindow.FindName('ScriptsMenuButton').ContextMenu.Items[0].RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.MenuItem]::ClickEvent))
-                        $testWindow.FindName('CalendarButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
-                        $clockWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object {
-                            $_.RootVisual -is [Windows.Window] -and $_.RootVisual.Title -eq 'Date, Time and TimeZone'
-                        } | Select-Object -ExpandProperty RootVisual)[0]
-                        $clockWindow.FindName('DatePicker').SelectedDate = [datetime]'2030-06-15'
-                        $clockWindow.FindName('TimeTextBox').Text = '14:30:00'
-                        $clockWindow.FindName('TimeZoneComboBox').SelectedValue = 'UTC'
-                        $clockWindow.FindName('ApplyClockButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
-                        $result.ClockText = $clockWindow.FindName('ClockStatusText').Text
-                        $clockWindow.Close()
+                        $items = $testWindow.FindName('ToolsMenuButton').ContextMenu.Items
+                        $result.Headers = @($items | ForEach-Object Header)
+                        foreach ($item in $items) {
+                            $item.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.MenuItem]::ClickEvent))
+                        }
                         return
                     }
                     if ($result.Ticks -lt 5) { return }
@@ -576,10 +619,20 @@ InModuleScope OSDCloudPreOOBE {
             $result.Error | Should -BeNullOrEmpty
             $result.Output | Should -BeLike '*Preview: would open *cmd.exe /d /k*'
             $result.Output | Should -BeLike '*Preview: would open *notepad.exe*"*\OOBE.cmd"*'
-            $result.ClockText | Should -Be 'Preview: would set 2030-06-15 14:30:00 (UTC).'
+            $result.Output | Should -BeLike '*Preview: would open *notepad.exe*"*\SetupComplete.cmd"*'
+            if ($AutopilotExists) {
+                $result.Headers | Should -Contain 'Open autopilot.csv'
+                $result.Output | Should -BeLike '*Preview: would open *notepad.exe*"C:\Windows\Temp\osdcloud-logs\Autopilot.csv"*'
+            }
+            else {
+                $result.Headers | Should -Not -Contain 'Open autopilot.csv'
+                $result.Output | Should -Not -BeLike '*Autopilot.csv*'
+            }
+            Should -Invoke Set-Date -Times 0 -Exactly
+            Should -Invoke Start-Process -Times 0 -Exactly
         }
 
-        It 'has title-bar scripts, shells and calendar; output fills height and closure returns zero' {
+        It 'starts with expanded steps and Tools without account or calendar controls; output fills height and closure returns zero' {
             $uiProbeTimer.Add_Tick({
                 $uiProbeTimer.Stop()
                 $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
@@ -588,25 +641,27 @@ InModuleScope OSDCloudPreOOBE {
                     $result.Title = $testWindow.Title
                     $result.Topmost = $testWindow.Topmost
                     $result.TitleText = $testWindow.FindName('TitleText').Text
-                    $result.User = $testWindow.FindName('UserBadge').ToolTip
+                    $result.User = $testWindow.FindName('UserBadge')
                     $result.StepButton = $testWindow.FindName('StepButton').Content
                     $result.ContinueOobe = $testWindow.FindName('ContinueOobeButton').Visibility
                     $result.Steps = @($testWindow.FindName('StepPanel').Children).Count
-                    $result.Collapsed = $testWindow.FindName('SidebarColumn').Width.Value
-                    $testWindow.FindName('PaneToggleButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
                     $result.Expanded = $testWindow.FindName('SidebarColumn').Width.Value
                     $result.StepName = $testWindow.FindName('StepPanel').Children[0].Content
+                    $result.ToggleName = [Windows.Automation.AutomationProperties]::GetName($testWindow.FindName('PaneToggleButton'))
+                    $testWindow.FindName('PaneToggleButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                    $result.Collapsed = $testWindow.FindName('SidebarColumn').Width.Value
+                    $result.CollapsedStep = $testWindow.FindName('StepPanel').Children[0].Content
                     $result.Resize = [Windows.Shell.WindowChrome]::GetWindowChrome($testWindow).ResizeBorderThickness.Right
                     $result.Context = $testWindow.FindName('ContextText').Text
-                    $result.Scripts = @($testWindow.FindName('ScriptsMenuButton').ContextMenu.Items | ForEach-Object Header)
+                    $result.Tools = @($testWindow.FindName('ToolsMenuButton').ContextMenu.Items | ForEach-Object Header)
                     $result.Shells = @($testWindow.FindName('ShellMenuButton').ContextMenu.Items | ForEach-Object Header)
-                    $result.Calendar = [Windows.Automation.AutomationProperties]::GetName($testWindow.FindName('CalendarButton'))
+                    $result.Calendar = $testWindow.FindName('CalendarButton')
                     $result.Time = $testWindow.FindName('TaskText1').Text
                     $result.SkipSoftware = $testWindow.FindName('SkipSoftwareButton')
                     $result.SkipDrivers = $testWindow.FindName('SkipDriversButton')
-                    $testWindow.FindName('ScriptsMenuButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
-                    $result.Open = $testWindow.FindName('ScriptsMenuButton').ContextMenu.IsOpen
-                    $testWindow.FindName('ScriptsMenuButton').ContextMenu.IsOpen = $false
+                    $testWindow.FindName('ToolsMenuButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                    $result.Open = $testWindow.FindName('ToolsMenuButton').ContextMenu.IsOpen
+                    $testWindow.FindName('ToolsMenuButton').ContextMenu.IsOpen = $false
                     $testWindow.Height = 480
                     $testWindow.UpdateLayout()
                     $result.Initial = $testWindow.FindName('OutputTextBox').ActualHeight
@@ -630,19 +685,21 @@ InModuleScope OSDCloudPreOOBE {
             $version = (Import-PowerShellDataFile $OSDCloudPreOOBEModulePath).ModuleVersion
             $result.Title | Should -Be "Recast Software - OSDCloud PreOOBE $version (Preview)"
             $result.TitleText | Should -Be "Recast Software - OSDCloud PreOOBE $version"
-            $result.User | Should -Not -BeNullOrEmpty
+            $result.User | Should -BeNullOrEmpty
             $result.StepButton | Should -Be 'Start'
             $result.ContinueOobe | Should -Be ([Windows.Visibility]::Collapsed)
             $result.Steps | Should -Be 4
             $result.Collapsed | Should -Be 56
             $result.Expanded | Should -Be 220
             $result.StepName | Should -Be 'Driver unpack / install'
+            $result.ToggleName | Should -Be 'Collapse steps'
+            $result.CollapsedStep | Should -BeNullOrEmpty
             $result.Resize | Should -Be 8
-            $result.Context | Should -Not -BeLike '*OSDCloud by Recast*'
+            $result.Context | Should -Be 'Preview | No network or system changes'
             $result.Topmost | Should -BeTrue
-            ($result.Scripts -join ',') | Should -Be 'OOBE.cmd,SetupComplete.cmd'
+            ($result.Tools -join ',') | Should -Be 'Open oobe.cmd,Open setupcomplete.cmd'
             ($result.Shells -join ',') | Should -Be 'CMD Prompt,Windows PowerShell'
-            $result.Calendar | Should -Be 'Date, Time and TimeZone'
+            $result.Calendar | Should -BeNullOrEmpty
             $result.Time | Should -BeLike 'Synchronizing internet time*'
             $result.SkipSoftware | Should -BeNullOrEmpty
             $result.SkipDrivers | Should -BeNullOrEmpty

@@ -1,7 +1,7 @@
 function Test-OSDCloudBootMenu {
     <#
     .SYNOPSIS
-        Shows the OSDCloud BootMenu window in Windows for testing.
+        Shows the standalone OSDCloud BootMenu window in Windows for testing
 
     .DESCRIPTION
         Opens the BootMenu profile window that Invoke-OSDCloudBootMenu shows in
@@ -18,18 +18,20 @@ function Test-OSDCloudBootMenu {
         through Z:. Unlike Invoke-OSDCloudBootMenu, the window is shown even
         when only one profile is found. When no profiles are found, or discovery
         fails, sample profiles are shown instead and a warning explains why.
+        Import the standalone OSDCloudBootMenu manifest before calling this
+        command. OSDCloud is needed only if the Explorer action is selected.
 
     .PARAMETER SampleProfiles
         Shows built-in sample profiles without searching drives for profiles.
 
     .EXAMPLE
-        Test-OSDCloudBootMenu
+        PS> Test-OSDCloudBootMenu
 
         Shows the discovered BootMenu profiles, or sample profiles when none are
         found, and returns the profile selected with Start.
 
     .EXAMPLE
-        Test-OSDCloudBootMenu -SampleProfiles
+        PS> Test-OSDCloudBootMenu -SampleProfiles
 
         Shows the window with sample profiles only.
 
@@ -42,6 +44,10 @@ function Test-OSDCloudBootMenu {
         properties. Nothing is returned when the window is cancelled or closed.
 
     .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-04
         Requires Windows with WPF and a single-threaded apartment (STA)
         PowerShell session, which is the default for Windows PowerShell 5.1 and
         PowerShell 7 on Windows.

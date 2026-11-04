@@ -3,13 +3,13 @@
 function Assert-OSDCloudBootMenuProfile {
     <#
     .SYNOPSIS
-        Validates an OSDCloud BootMenu profile JSON file
+        Validates a standalone OSDCloud BootMenu profile JSON file
 
     .DESCRIPTION
         Parses one osdcloudbootmenu.json file and verifies that it uses only supported
         sections, properties, and value types. Supported top-level sections are
         schemaVersion (must be 1), info, env, osdcloudBoot, osdcloudBootStartup,
-        deployOSDCloud, and osdcloudBootMenu. osdcloudBoot.buildPacks and
+        and osdcloudBootMenu. osdcloudBoot.buildPacks and
         osdcloudBoot.importPacks contain objects with a GUID id and an optional name that
         reference OSDCloud BootPacks. Stored commands are not executed. Invalid content produces a
         terminating error that identifies the file.
@@ -137,7 +137,7 @@ function Assert-OSDCloudBootMenuProfile {
     }
 
     if (-not (& $IsObject $Profile)) { & $Fail 'The profile must contain one JSON object.' }
-    & $AssertKeys $Profile '' @('schemaVersion', 'info', 'env', 'osdcloudBoot', 'osdcloudBootStartup', 'deployOSDCloud', 'osdcloudBootMenu')
+    & $AssertKeys $Profile '' @('schemaVersion', 'info', 'env', 'osdcloudBoot', 'osdcloudBootStartup', 'osdcloudBootMenu')
 
     $SchemaVersion = $Profile.PSObject.Properties['schemaVersion']
     if (-not $SchemaVersion -or $SchemaVersion.Value -isnot [System.Int64] -and $SchemaVersion.Value -isnot [System.Int32] -or $SchemaVersion.Value -ne 1) {
@@ -213,6 +213,5 @@ function Assert-OSDCloudBootMenuProfile {
         foreach ($Key in 'startup', 'main', 'shutdown') { & $AssertCommandSection $WinpeStartup $Key }
     }
 
-    & $AssertRunSection $Profile 'deployOSDCloud'
     & $AssertRunSection $Profile 'osdcloudBootMenu'
 }

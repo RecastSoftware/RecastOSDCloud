@@ -1,8 +1,9 @@
 BeforeAll {
     . "$PSScriptRoot\Invoke-OSDCloudBootMenu.ps1"
-    . "$PSScriptRoot\..\..\private\Assert-OSDCloudBootMenuProfile.ps1"
-    . "$PSScriptRoot\..\..\private\ConvertFrom-OSDCloudBootMenuProfile.ps1"
-    . "$PSScriptRoot\..\..\private\Get-OSDCloudBootMenuProfileCandidates.ps1"
+    . "$PSScriptRoot\..\private\Assert-OSDCloudBootMenuProfile.ps1"
+    . "$PSScriptRoot\..\private\ConvertFrom-OSDCloudBootMenuProfile.ps1"
+    . "$PSScriptRoot\..\private\Get-OSDCloudBootMenuProfileCandidates.ps1"
+    function New-OSDCloudBootMenuChildCommand { param ($Command) $Command }
     function Initialize-WinpeStartupEnvironment { }
     function Initialize-WinpeStartupDrivers { }
     function Initialize-WinpeStartupFiles { }
@@ -16,7 +17,7 @@ BeforeAll {
     $script:originalSite = $env:BOOTMENU_TEST_SITE
     $script:originalProfile = $env:OSDCLOUDBOOTMENU_PROFILE
     $script:originalAuthor = $env:OSDCLOUDBOOT_AUTHOR
-    $script:OSDCloudPSDefaultParameterValuesPath = Join-Path $TestDrive 'missing-defaults.json'
+    $script:OSDCloudBootMenuDefaultsPath = Join-Path $TestDrive 'missing-defaults.json'
 }
 
 AfterAll {
@@ -38,9 +39,15 @@ Describe 'OSDCloud BootMenu schema conversion' {
   "osdcloudBootStartup": {
     "wifi": false, "showPnpDevices": true, "installModules": ["OSD"],
     "startup": { "enabled": false, "commands": ["throw 'not executed'"] },
-    "main": { "commands": ["Show-OSDCloudDeviceInfo"], "noExit": true, "errorAction": "Stop" }
+    "main": {
+      "commands": [
+        "Show-OSDCloudDeviceInfo",
+        "Import-Module -Name OSDCloud -DisableNameChecking -ErrorAction Stop",
+        "Deploy-OSDCloud"
+      ],
+      "noExit": true, "errorAction": "Stop"
+    }
   },
-  "deployOSDCloud": { "enabled": true, "command": "Deploy-OSDCloud", "parameters": { "CLI": true, "Skip": false, "Name": "O'Brien" } },
   "osdcloudBootMenu": { "enabled": false, "command": "Invoke-OSDCloudBootMenu" }
 }
 '@ | Set-Content -LiteralPath $file
@@ -50,7 +57,7 @@ Describe 'OSDCloud BootMenu schema conversion' {
         $settings['Invoke-OSDCloudBootMenu:ShowPnpDevices'] | Should -BeTrue
         $settings['Invoke-OSDCloudBootMenu:InvokeStartupCommand'] | Should -BeNullOrEmpty
         $settings['Invoke-OSDCloudBootMenu:InvokeMainCommand'] | Should -Be @(
-            'Show-OSDCloudDeviceInfo', "Deploy-OSDCloud -CLI -Name 'O''Brien'"
+            'Show-OSDCloudDeviceInfo', 'Import-Module -Name OSDCloud -DisableNameChecking -ErrorAction Stop', 'Deploy-OSDCloud'
         )
         $settings['Invoke-OSDCloudBootMenu:InvokeMainCommandNoExit'] | Should -BeTrue
         $settings['Invoke-OSDCloudBootMenu:InvokeMainCommandEA'] | Should -Be 'Stop'
@@ -61,6 +68,7 @@ Describe 'OSDCloud BootMenu schema conversion' {
         @{ Section = '"winpeStartup":{}' }
         @{ Section = '"osdcloud":{}' }
         @{ Section = '"osdcloudMenu":{}' }
+        @{ Section = '"deployOSDCloud":{"enabled":true}' }
         @{ Section = '"osdcloudBoot":{"requireWinPE":true,"requireWinRE":true}' }
     ) {
         $file = Join-Path $TestDrive 'invalid.json'
@@ -146,7 +154,7 @@ Describe 'OSDCloud BootMenu runtime' {
     It 'runs deployment when there are no profiles' {
         Mock Get-OSDCloudBootMenuProfileCandidates { }
         Invoke-OSDCloudBootMenu
-        $script:commands.ToArray() | Should -Be @('Deploy-OSDCloud')
+        $script:commands.ToArray() | Should -Be @("Import-Module -Name OSDCloud -DisableNameChecking -ErrorAction Stop`r`nDeploy-OSDCloud")
     }
 
     It 'does not run startup checks or commands when the startup section is disabled' {

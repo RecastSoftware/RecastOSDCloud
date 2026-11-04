@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "info": {
+    "id": "2f10c1a1-b297-44d6-a3d2-0c62858e0622",
+    "name": "Recovery Environment",
+    "author": "OSDeploy",
+    "description": "Starts the Windows Recovery Environment shell. Requires a Windows RE boot image source."
+  },
+  "env": {
+    "OSDCLOUDBOOT_AUTHOR": "OSDeploy",
+    "OSDCLOUDBOOTMENU_PROFILE": "Recovery Environment"
+  },
+  "osdcloudBoot": {
+    "requireWinRE": true,
+    "installModule": []
+  },
+  "osdcloudBootMenu": {
+    "enabled": false,
+    "command": "Invoke-OSDCloudBootMenu",
+    "parameters": {}
+  },
+  "osdcloudBootStartup": {
+    "enabled": true,
+    "onScreenKeyboard": true,
+    "showPnpDevices": false,
+    "showPnpErrors": false,
+    "wifi": true,
+    "ipConfig": true,
+    "updateOSDCloud": true,
+    "installModules": [],
+    "startup": {
+      "enabled": false,
+      "commands": [],
+      "noExit": false,
+      "errorAction": "Continue"
+    },
+    "main": {
+      "enabled": true,
+      "commands": ["X:\\sources\\recovery\\RecEnv.exe"],
+      "noExit": true,
+      "errorAction": "Continue"
+    },
+    "shutdown": {
+      "enabled": false,
+      "commands": [],
+      "noExit": false,
+      "errorAction": "Continue"
+    }
+  }
+}

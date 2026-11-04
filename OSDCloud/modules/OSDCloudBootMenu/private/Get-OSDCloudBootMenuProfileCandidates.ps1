@@ -1,7 +1,7 @@
 function Get-OSDCloudBootMenuProfileCandidates {
     <#
     .SYNOPSIS
-        Finds OSDCloud BootMenu profiles on attached drives.
+        Finds standalone OSDCloud BootMenu profiles on attached drives.
     .DESCRIPTION
         Reads only OSDCloud\bootmenu-profiles\<name>\osdcloudbootmenu.json on drives C:
         through Z:. The RAM disk is searched first. Names and GUIDs come from

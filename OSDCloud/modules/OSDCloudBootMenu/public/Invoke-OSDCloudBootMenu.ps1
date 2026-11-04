@@ -3,7 +3,7 @@
 function Invoke-OSDCloudBootMenu {
     <#
     .SYNOPSIS
-        Selects and runs an OSDCloud BootMenu profile.
+        Selects and runs an OSDCloud BootMenu profile
 
     .DESCRIPTION
         Executes the OSDCloud BootMenu sequence from a single entry point.
@@ -16,10 +16,17 @@ function Invoke-OSDCloudBootMenu {
         Discovers only OSDCloud\bootmenu-profiles\<name>\osdcloudbootmenu.json on attached
         drives. Names and IDs come from info. osdcloudBoot contains build-time
         requirements and module injection settings; osdcloudBootStartup controls
-        runtime checks and startup/main/shutdown commands. Enabled deployOSDCloud
-        and osdcloudBootMenu commands are appended to the main phase. With no
-        profiles, Deploy-OSDCloud runs after the standard startup checks.
+        runtime checks and startup/main/shutdown commands. Enabled osdcloudBootMenu
+        commands are appended to the main phase. Deployment can be configured
+        directly in osdcloudBootStartup.main.commands. With no profiles,
+        Deploy-OSDCloud runs after the standard startup checks.
         Legacy winpestartup.json and Invoke-WinpeStartup remain separate.
+
+        Import OSDCloudBootMenu before calling this command. All startup helpers,
+        defaults, licensing helpers, and UI resources belong to this module.
+        Child command sessions explicitly import the running BootMenu manifest.
+        OSDCloud-specific profile commands require OSDCloud; ordinary startup does
+        not import it. Requested OSDCloud updates still run.
 
         When more than one profile is found, a profile selection window is
         shown. Use -CLI to select from a numbered console prompt instead. A
@@ -67,32 +74,11 @@ function Invoke-OSDCloudBootMenu {
         (<profile folder>\boot-packs\<id>) are expanded to
         X:\OSDCloud\bootpack-expanded\<id> after the profile assets are
         imported, then their assets are imported and Execute scripts run.
-        .cmd scripts run with cmd.exe and .ps1 scripts run with Windows
+        Command scripts (.cmd) run with cmd.exe and .ps1 scripts run with Windows
         PowerShell. Invalid Packs and script failures warn and continue.
 
         This function only runs in WinPE where SystemDrive is X:. If it is called
         outside WinPE, it writes a warning and exits without running startup steps.
-
-    .EXAMPLE
-        Invoke-OSDCloudBootMenu
-
-        Runs the startup workflow with default behavior.
-
-    .EXAMPLE
-        Invoke-OSDCloudBootMenu -Verbose
-
-        Runs the startup workflow and writes verbose progress details.
-
-    .EXAMPLE
-        Invoke-OSDCloudBootMenu -SkipWiFi -SkipIPConfig
-
-        Runs startup but skips Wi-Fi and IP configuration display steps.
-
-    .EXAMPLE
-        Invoke-OSDCloudBootMenu -CLI
-
-        Runs startup and selects a profile with the numbered console prompt
-        instead of the profile selection window.
 
     .PARAMETER CLI
         Uses the numbered console prompt to select a profile when more than one
@@ -167,12 +153,39 @@ function Invoke-OSDCloudBootMenu {
         with a non-zero code. 'Continue' writes a warning and proceeds; 'Stop' throws
         a terminating error. Default is 'Continue'.
 
+    .EXAMPLE
+        PS> Invoke-OSDCloudBootMenu
+
+        Runs the startup workflow with default behavior.
+
+    .EXAMPLE
+        PS> Invoke-OSDCloudBootMenu -Verbose
+
+        Runs the startup workflow and writes verbose progress details.
+
+    .EXAMPLE
+        PS> Invoke-OSDCloudBootMenu -SkipWiFi -SkipIPConfig
+
+        Runs startup but skips Wi-Fi and IP configuration display steps.
+
+    .EXAMPLE
+        PS> Invoke-OSDCloudBootMenu -CLI
+
+        Runs startup and selects a profile with the numbered console prompt
+        instead of the profile selection window.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
     .OUTPUTS
-        System.Void
+        None.
 
     .NOTES
         Author:  David Segura
-        Module:  OSDCloud
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-04
+        Module:  OSDCloudBootMenu
         This function is intended for WinPE scenarios.
     #>
     [CmdletBinding()]
@@ -509,14 +522,14 @@ function Invoke-OSDCloudBootMenu {
             }
         }
 
-        if (Test-Path -LiteralPath $Script:OSDCloudPSDefaultParameterValuesPath -PathType Leaf) {
+        if (Test-Path -LiteralPath $script:OSDCloudBootMenuDefaultsPath -PathType Leaf) {
             try {
-                $rawDefaults = Get-Content -LiteralPath $Script:OSDCloudPSDefaultParameterValuesPath -Raw -ErrorAction Stop
+                $rawDefaults = Get-Content -LiteralPath $script:OSDCloudBootMenuDefaultsPath -Raw -ErrorAction Stop
                 $moduleDefaults = ConvertFrom-WinpeStartupJsonContent -RawContent $rawDefaults
-                Add-WinpeStartupDefaults -InputObject $moduleDefaults -SourceName $Script:OSDCloudPSDefaultParameterValuesPath -KeyFormat Prefixed
+                Add-WinpeStartupDefaults -InputObject $moduleDefaults -SourceName $script:OSDCloudBootMenuDefaultsPath -KeyFormat Prefixed
             }
             catch {
-                Write-Warning "Invoke-OSDCloudBootMenu: Failed to load defaults from '$Script:OSDCloudPSDefaultParameterValuesPath': $($_.Exception.Message)"
+                Write-Warning "Invoke-OSDCloudBootMenu: Failed to load defaults from '$script:OSDCloudBootMenuDefaultsPath': $($_.Exception.Message)"
             }
         }
 
@@ -634,7 +647,7 @@ function Invoke-OSDCloudBootMenu {
             }
         }
         else {
-            $resolvedDefaults['InvokeMainCommand'] = @('Deploy-OSDCloud')
+            $resolvedDefaults['InvokeMainCommand'] = @('Import-Module -Name OSDCloud -DisableNameChecking -ErrorAction Stop', 'Deploy-OSDCloud')
         }
 
         foreach ($parameterName in $knownParameters) {
@@ -787,7 +800,7 @@ function Invoke-OSDCloudBootMenu {
                             $entry
                         }
                     }
-                    $invokeCommand = $scriptLines -join [Environment]::NewLine
+                    $invokeCommand = New-OSDCloudBootMenuChildCommand -Command ($scriptLines -join [Environment]::NewLine)
                     $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($invokeCommand))
                     $psArgs = [System.Collections.Generic.List[string]]::new()
                     [void]$psArgs.Add('-NoLogo')
@@ -839,7 +852,7 @@ function Invoke-OSDCloudBootMenu {
                             $entry
                         }
                     }
-                    $invokeCommand = $scriptLines -join [Environment]::NewLine
+                    $invokeCommand = New-OSDCloudBootMenuChildCommand -Command ($scriptLines -join [Environment]::NewLine)
                     $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($invokeCommand))
                     $psArgs = [System.Collections.Generic.List[string]]::new()
                     [void]$psArgs.Add('-NoLogo')
@@ -891,7 +904,7 @@ function Invoke-OSDCloudBootMenu {
                             $entry
                         }
                     }
-                    $invokeCommand = $scriptLines -join [Environment]::NewLine
+                    $invokeCommand = New-OSDCloudBootMenuChildCommand -Command ($scriptLines -join [Environment]::NewLine)
                     $encodedCommand = [Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($invokeCommand))
                     $psArgs = [System.Collections.Generic.List[string]]::new()
                     [void]$psArgs.Add('-NoLogo')

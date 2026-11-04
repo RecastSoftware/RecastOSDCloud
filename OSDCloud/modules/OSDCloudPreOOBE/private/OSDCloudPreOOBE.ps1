@@ -316,7 +316,7 @@ function Get-OSDCloudPreOOBEClock {
     .SYNOPSIS
         Returns the running OS date, time and time zone.
     .DESCRIPTION
-        Refreshes cached time zone data so changes made by the calendar tool or
+        Refreshes cached time zone data so manual changes or
         internet time synchronization are reflected, and formats the full local
         date and time using the running OS culture.
     .EXAMPLE
@@ -551,7 +551,7 @@ function Test-OSDCloudPreOOBEClockShift {
     .EXAMPLE
         Test-OSDCloudPreOOBEClockShift -State $state
     .NOTES
-        Requires SYSTEM. Clock changes from the calendar are blocked meanwhile.
+        Requires SYSTEM. Do not change the clock manually during this test.
         Returns the connectivity result after the clock is restored.
     #>
     [CmdletBinding()]
@@ -590,7 +590,7 @@ function Test-OSDCloudPreOOBEClockShift {
     $status = if ($final.Connected) { 'connected' } else { "failed: $($final.Reason)" }
     Write-OOBEMenuUpdateStatus -State $State -Message "Clock test summary: $($results -join '; '); restored clock $status."
     if (-not $final.Connected -and ($results -like '*connected')) {
-        Write-OOBEMenuUpdateStatus -State $State -Message 'Clock test: connectivity works only with a shifted clock. Verify Date, Time and TimeZone with the calendar.'
+        Write-OOBEMenuUpdateStatus -State $State -Message 'Clock test: connectivity works only with a shifted clock. Verify the system date, time and time zone using Shell.'
     }
     elseif (-not $final.Connected) {
         Write-OOBEMenuUpdateStatus -State $State -Message 'Clock test: certificate validation fails at every tested time, so the clock is unlikely to be the cause. Review the certificate chain status above (for example UntrustedRoot, PartialChain or a TLS-inspecting proxy).'

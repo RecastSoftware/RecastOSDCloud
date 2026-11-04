@@ -66,6 +66,6 @@ function Send-OSDCloudResults {
             -TimeoutSec 2 -ErrorAction Stop | Out-Null
     }
     catch {
-        Write-Warning "Could not send OSDCloudResults analytics: $($_.Exception.Message)"
+       # Write-Warning "Could not send OSDCloudResults analytics: $($_.Exception.Message)"
     }
 }
