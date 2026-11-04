@@ -172,13 +172,32 @@ Tasks run in this order:
    The pause has no timeout; closing the window skips the remaining tasks.
 4. **Updating Drivers**: check connectivity again, then scan/download/install
    applicable driver updates.
+5. **Custom applications**: when the window opens, discover immediate application
+   folders containing `Invoke-AppDeployToolkit.exe` under
+   `%SystemRoot%\Setup\PostOOBE` and `<drive>:\OSDCloud\PostOOBE` on A: through Z:.
+   Local applications appear first, followed by drive-hosted applications in
+   drive-letter order; folders within each root are sorted by name.
+   Each application appears below **Updating Drivers** with a checked checkbox.
+   The label is the folder name, with the drive appended for drive-hosted content,
+   such as **My AppFolder [G:]**. Uncheck it before it starts to skip installation.
+   Identically named applications in different roots remain separate tasks.
+   Discovery is not recursive and does not download or copy packages.
+   Each selected package runs sequentially from its application folder with
+   `-DeploymentType Install -DeployMode Silent`, even if the connectivity probe
+   failed. Exit 0 means success; exit 3010 records a reboot requirement; other
+   exit codes are failures. A removed or unavailable executable is reported as a
+   failed task, and remaining tasks continue. An active application cannot be
+   force-cancelled: closing the window waits for its process tree to finish, then
+   skips remaining tasks. Deploy only trusted packages configured not to reboot
+   Windows; the runner does not override a package's own reboot behavior.
 
 The update actions honor configured Windows Update/WSUS policies, exclude hidden/
 Preview updates and updates requiring interactive input, and accept EULAs.
 No third-party module is imported and update-service settings are not changed.
 There are no per-update Skip buttons. **Skip Step** cooperatively cancels the
 active update after its current WUA operation. The next independent task still runs.
-OEM installation cannot be force-cancelled. There is no forced installation timeout.
+OEM and custom application installations cannot be force-cancelled.
+There is no forced installation timeout.
 
 Failures are logged and shown explicitly as a short message; full exception details and
 stack traces are written only to `OSDCloudPreOOBE.log`. The engine continues independent tasks.
@@ -303,6 +322,9 @@ access, including no-updates results, failures, reboot-required results, cancell
 and menu closure during an update. Local mocks/preview do not verify actual WUA
 installation during SYSTEM OOBE.
 Validate real Lenovo/Surface installation, offline skips and safe cancellation.
+Validate trusted application packages from both search roots, unchecked skips,
+missing/removable media, installer failures, reboot-required results, and closure
+during installation. Use package logs alongside the application stdout/stderr logs.
 Collect `OSDCloudPreOOBE.log`, results/installer logs, the staged `OOBE.cmd` and `SetupComplete.cmd`,
 `C:\Windows\Panther\setupact.log`, and
 `C:\Windows\Panther\UnattendGC\setupact.log` if a menu does not appear or setup

@@ -1,15 +1,16 @@
 function New-OSDCloudPreOOBEState {
     <#
     .SYNOPSIS
-        Creates the fixed ordered PreOOBE sequence.
+        Creates the ordered PreOOBE sequence with discovered applications.
     .DESCRIPTION
         Keeps UI-independent task results and worker ownership in one state object.
         OEM drivers run first because they may be required for network connectivity.
+        Discovers local application packages after the four built-in tasks.
         Nothing runs until Start-OSDCloudPreOOBEState is called.
     .EXAMPLE
         New-OSDCloudPreOOBEState
     .NOTES
-        No external actions occur until the scheduler is ticked.
+        Application discovery reads folders; installation waits for Start.
     #>
     [CmdletBinding()]
     param ()
@@ -30,6 +31,12 @@ function New-OSDCloudPreOOBEState {
             [pscustomobject]@{ Type = 'Time'; Name = 'Synchronizing internet time'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
             [pscustomobject]@{ Type = 'Software'; Name = 'Updating Windows 11'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
             [pscustomobject]@{ Type = 'Driver'; Name = 'Updating Drivers'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null }
+            foreach ($application in Get-OSDCloudPreOOBEApplication) {
+                [pscustomobject]@{
+                    Type = 'Application'; Name = $application.Name; Path = $application.Path
+                    Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null
+                }
+            }
         )
         Worker = $null; Active = $null; Shared = $null; CloseRequested = $false
         RebootRequired = $false; Started = $false; Complete = $false; Done = $false
@@ -117,7 +124,7 @@ function Update-OSDCloudPreOOBEState {
         Failure never becomes success; an Updating Windows 11 failure pauses until
         Retry or Continue. After all tasks finish the engine waits for Continue to OOBE
         (a close request). Close requests cancel updates safely, finish active OEM
-        operations, and skip pending work.
+        and application installations, and skip pending work.
     .PARAMETER State
         Engine state from New-OSDCloudPreOOBEState.
     .PARAMETER PreviewOnly
@@ -144,7 +151,7 @@ function Update-OSDCloudPreOOBEState {
                 Write-OOBEMenuLog -Message "Skipped $($task.Name): window closure requested."
             }
         }
-        if ($State.Worker -and $State.Active.Type -ne 'DriverPack') { $State.Shared.CancelRequested = $true }
+        if ($State.Worker -and $State.Active.Type -notin 'DriverPack','Application') { $State.Shared.CancelRequested = $true }
     }
     if (-not $State.Started -and -not $State.CloseRequested) { return }
     if ($State.Worker) {
@@ -221,6 +228,7 @@ function Update-OSDCloudPreOOBEState {
             Status = $State.Active.Name; CancelRequested = $false; RebootRequired = $State.RebootRequired
             Succeeded = $false; Outcome = 'Running'; DurationMs = 0L; InstallationActive = $false; ClockTestActive = $false
         })
+        if ($State.Active.Type -eq 'Application') { $State.Shared.ApplicationPath = $State.Active.Path }
         Write-OOBEMenuLog -Message "Starting task $($State.Active.Name)."
         try {
             $State.Worker = Start-OOBEMenuUpdateWorker -Type $State.Active.Type -State $State.Shared -PreviewOnly:$PreviewOnly
@@ -462,16 +470,15 @@ function Show-OOBEMenuWindow {
   <Grid Grid.Row="1">
    <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="56"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Background="{StaticResource SidebarBrush}">
-    <StackPanel x:Name="StepPanel" Margin="0,8,0,0" AutomationProperties.Name="PreOOBE steps"/>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+     <StackPanel x:Name="StepPanel" Margin="0,8,0,0" AutomationProperties.Name="PreOOBE steps"/>
+    </ScrollViewer>
    </Border>
   <Grid Grid.Column="1" Margin="24,16">
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <StackPanel>
-     <TextBlock x:Name="TaskText0" Margin="0,0,0,8"/>
-     <TextBlock x:Name="TaskText1" Margin="0,0,0,8"/>
-     <TextBlock x:Name="TaskText2" Margin="0,0,0,8"/>
-     <TextBlock x:Name="TaskText3" Margin="0,0,0,8"/>
-    </StackPanel>
+    <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto">
+     <StackPanel x:Name="TaskSummaryPanel"/>
+    </ScrollViewer>
    <ProgressBar x:Name="ProgressBar" Grid.Row="1" Height="4" BorderThickness="0" Margin="0,8,0,12" Foreground="{StaticResource AccentBrush}" Background="{StaticResource ControlBrush}"/>
    <TextBox x:Name="OutputTextBox" Grid.Row="2" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="PreOOBE task output"/>
    <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="True">
@@ -664,7 +671,15 @@ function Show-OOBEMenuWindow {
     }
     $window.FindName('PaneToggleButton').Add_Click({ $ui.PaneExpanded = -not $ui.PaneExpanded; & $setPane })
     & $setPane
-    for ($index = 0; $index -lt $engine.Tasks.Count; $index++) { $window.FindName("TaskText$index").Text = "$($engine.Tasks[$index].Name) - $($engine.Tasks[$index].Outcome)" }
+    for ($index = 0; $index -lt $engine.Tasks.Count; $index++) {
+        $text = [Windows.Controls.TextBlock]::new()
+        $text.Name = "TaskText$index"
+        $text.Margin = [Windows.Thickness]::new(0,0,0,8)
+        $text.TextWrapping = 'Wrap'
+        $text.Text = "$($engine.Tasks[$index].Name) - $($engine.Tasks[$index].Outcome)"
+        $window.RegisterName($text.Name, $text)
+        [void]$window.FindName('TaskSummaryPanel').Children.Add($text)
+    }
     $window.FindName('RetryButton').Add_Click({ Resume-OSDCloudPreOOBEState -State $engine -Retry })
     $window.FindName('ContinueButton').Add_Click({ Resume-OSDCloudPreOOBEState -State $engine })
     $timer = [Windows.Threading.DispatcherTimer]::new()

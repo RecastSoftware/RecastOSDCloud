@@ -5,6 +5,7 @@
 
 Describe 'PreOOBE ordered scheduler' {
     BeforeEach {
+        Mock Get-OSDCloudPreOOBEApplication {}
         Mock Write-OOBEMenuLog {}
         Mock Set-Content {}
         $engine = New-OSDCloudPreOOBEState
@@ -47,6 +48,42 @@ Describe 'PreOOBE ordered scheduler' {
         Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
         ($script:types -join ',') | Should -Be 'DriverPack'
         ($engine.Output -join "`n") | Should -BeLike '*OSDCloud PreOOBE started by technician.*'
+    }
+
+    It 'appends checked applications after drivers, passes their paths, and skips unchecked applications' {
+        Mock Get-OSDCloudPreOOBEApplication {
+            [pscustomobject]@{ Name = 'Local App'; Path = 'C:\Windows\Setup\PostOOBE\Local App\Invoke-AppDeployToolkit.exe' }
+            [pscustomobject]@{ Name = 'USB App [G:]'; Path = 'G:\OSDCloud\PostOOBE\USB App\Invoke-AppDeployToolkit.exe' }
+        }
+        $engine = New-OSDCloudPreOOBEState
+        $engine.Started = $true
+        $engine.StepDelaySeconds = 0
+        $engine.Tasks[5].Enabled = $false
+        1..7 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
+        ($script:types -join ',') | Should -Be 'DriverPack,Time,Software,Driver,Application'
+        $engine.Tasks[4].Name | Should -Be 'Local App'
+        $engine.Tasks[4].Outcome | Should -Be Succeeded
+        $engine.Tasks[5].Outcome | Should -Be Skipped
+        Should -Invoke Start-OOBEMenuUpdateWorker -Times 1 -Exactly -ParameterFilter {
+            $Type -eq 'Application' -and $State.ApplicationPath -eq 'C:\Windows\Setup\PostOOBE\Local App\Invoke-AppDeployToolkit.exe'
+        }
+        $engine.Complete | Should -BeTrue
+    }
+
+    It 'waits for an active application on close without requesting cancellation' {
+        $engine.Started = $true
+        $engine.Tasks[0].Type = 'Application'
+        $engine.Tasks[0] | Add-Member NoteProperty Path 'G:\OSDCloud\PostOOBE\App\Invoke-AppDeployToolkit.exe'
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $engine.Worker.Handle.IsCompleted = $false
+        $engine.CloseRequested = $true
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $engine.Shared.CancelRequested | Should -BeFalse
+        $engine.Done | Should -BeFalse
+        $engine.Worker.Handle.IsCompleted = $true
+        Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
+        $engine.Done | Should -BeTrue
+        $engine.Tasks[0].Outcome | Should -Be Succeeded
     }
 
     It 'closing before Start skips every task and finishes' {
@@ -305,8 +342,10 @@ Describe 'PreOOBE connectivity and task eligibility' {
 
 Describe 'PreOOBE rendered automation' -Tag Interactive {
     BeforeEach {
+        Mock Get-OSDCloudPreOOBEApplication {}
         $Preview = $true
-        Mock Write-OOBEMenuLog {}
+        $script:renderLog = [Collections.Generic.List[string]]::new()
+        Mock Write-OOBEMenuLog { $script:renderLog.Add($Message) }
         Mock Set-Content {}
         Mock Write-Error {}
         Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
@@ -315,6 +354,44 @@ Describe 'PreOOBE rendered automation' -Tag Interactive {
         $uiProbeTimer.Interval = [TimeSpan]::FromMilliseconds(100)
     }
     AfterEach { $uiProbeTimer.Stop() }
+
+    It 'renders discovered application checkboxes after Updating Drivers and allows unchecking' {
+        Mock Get-OSDCloudPreOOBEApplication {
+            1..12 | ForEach-Object {
+                [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\PostOOBE\App$_\Invoke-AppDeployToolkit.exe" }
+            }
+        }
+        $uiProbeTimer.Add_Tick({
+            $uiProbeTimer.Stop()
+            $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                Select-Object -ExpandProperty RootVisual)[0]
+            try {
+                $testWindow.FindName('PaneToggleButton').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                $boxes = $testWindow.FindName('StepPanel').Children
+                $result.Count = $boxes.Count
+                $result.Drivers = $boxes[3].Content
+                $result.App = $boxes[4].Content
+                $result.Checked = $boxes[4].IsChecked
+                $boxes[4].IsChecked = $false
+                $result.Enabled = $boxes[4].Tag.Enabled
+                $result.Last = $testWindow.FindName('TaskText15').Text
+                $testWindow.UpdateLayout()
+                $result.OutputHeight = $testWindow.FindName('OutputTextBox').ActualHeight
+            }
+            catch { $result.Error = $_ }
+            finally { $testWindow.Close() }
+        })
+        $uiProbeTimer.Start()
+        Show-OOBEMenuWindow | Should -Be 0 -Because ($script:renderLog -join '; ')
+        $result.Error | Should -BeNullOrEmpty
+        $result.Count | Should -Be 16
+        $result.Drivers | Should -Be 'Updating Drivers'
+        $result.App | Should -Be 'Custom App 1 [G:]'
+        $result.Checked | Should -BeTrue
+        $result.Enabled | Should -BeFalse
+        $result.Last | Should -Be 'Custom App 12 [G:] - Pending'
+        $result.OutputHeight | Should -BeGreaterThan 0
+    }
 
     It 'keeps title-bar shell, script and calendar actions inert in preview' {
         $result.Ticks = 0
@@ -351,7 +428,7 @@ Describe 'PreOOBE rendered automation' -Tag Interactive {
             }
         })
         $uiProbeTimer.Start()
-        Show-OOBEMenuWindow | Should -Be 0
+        Show-OOBEMenuWindow | Should -Be 0 -Because ($script:renderLog -join '; ')
         $result.Error | Should -BeNullOrEmpty
         $result.Output | Should -BeLike '*Preview: would open *cmd.exe /d /k*'
         $result.Output | Should -BeLike '*Preview: would open *notepad.exe*"*\OOBE.cmd"*'
@@ -404,7 +481,7 @@ Describe 'PreOOBE rendered automation' -Tag Interactive {
             catch { $result.Error = $_; $testWindow.Close() }
         })
         $uiProbeTimer.Start()
-        Show-OOBEMenuWindow | Should -Be 0
+        Show-OOBEMenuWindow | Should -Be 0 -Because ($script:renderLog -join '; ')
         $result.Error | Should -BeNullOrEmpty
         $version = (Import-PowerShellDataFile (Join-Path $PSScriptRoot '..\..\OSDCloud.psd1')).ModuleVersion
         $result.Title | Should -Be "Recast Software - OSDCloud PreOOBE $version (Preview)"

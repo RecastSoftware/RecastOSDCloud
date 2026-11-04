@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Runs automated driver and update tasks before Windows OOBE continues.
+    Runs driver, update and custom application tasks before Windows OOBE continues.
 .DESCRIPTION
     Self-contained inbox Windows PowerShell 5.1/WPF script for AMD64 and ARM64.
     Run synchronously at the end of OOBE.cmd as SYSTEM. If necessary, a copy of this script
@@ -733,16 +733,146 @@ namespace Recast.OOBE {
     }
 }
 
+function Get-OSDCloudPreOOBEApplication {
+    <#
+    .SYNOPSIS
+        Discovers local application toolkit packages
+
+    .DESCRIPTION
+        Searches immediate application folders under SystemRoot\Setup\PostOOBE,
+        then A: through Z: under OSDCloud\PostOOBE. Only folders containing
+        Invoke-AppDeployToolkit.exe are returned. Discovery does not execute packages.
+        Unreadable roots are reported and remaining roots are searched.
+
+    .EXAMPLE
+        PS> Get-OSDCloudPreOOBEApplication
+
+        Lists application names and executable paths in discovery order.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        System.Management.Automation.PSCustomObject. Application Name and Path.
+
+    .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-03
+    #>
+    [CmdletBinding()]
+    param ()
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Discover applications"
+    $roots = @([pscustomobject]@{ Path = (Join-Path $env:SystemRoot 'Setup\PostOOBE'); Drive = $null })
+    $roots += foreach ($letter in 65..90) {
+        $drive = "$([char]$letter):"
+        [pscustomobject]@{ Path = "$drive\OSDCloud\PostOOBE"; Drive = $drive }
+    }
+    foreach ($root in $roots) {
+        try {
+            if (-not (Test-Path -LiteralPath $root.Path -PathType Container -ErrorAction Stop)) { continue }
+            foreach ($folder in Get-ChildItem -LiteralPath $root.Path -Force -ErrorAction Stop |
+                Where-Object PSIsContainer | Sort-Object Name) {
+                $path = Join-Path $folder.FullName 'Invoke-AppDeployToolkit.exe'
+                if (Test-Path -LiteralPath $path -PathType Leaf -ErrorAction Stop) {
+                    $name = $folder.Name
+                    if ($root.Drive) { $name += " [$($root.Drive)]" }
+                    Write-OOBEMenuLog -Message "Discovered application $name`: $path."
+                    [pscustomobject]@{ Name = $name; Path = $path }
+                }
+            }
+        }
+        catch {
+            $message = "Application discovery failed in $($root.Path): $($_.Exception.Message)"
+            Write-OOBEMenuLog -Message $message
+            Write-Warning -Message $message
+        }
+    }
+}
+
+function Invoke-OSDCloudPreOOBEApplication {
+    <#
+    .SYNOPSIS
+        Installs one discovered application toolkit package
+
+    .DESCRIPTION
+        Runs Invoke-AppDeployToolkit.exe with Install and Silent arguments from its
+        application directory. Waits for the process tree without force cancellation.
+        Logs stdout, stderr and exit code. Exit 3010 records a reboot requirement.
+
+    .PARAMETER State
+        Shared task state containing ApplicationPath, progress and reboot status.
+
+    .EXAMPLE
+        PS> Invoke-OSDCloudPreOOBEApplication -State $state
+
+        Installs the application identified by the task state.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        None.
+
+    .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-03
+        Requires SYSTEM in full Windows. Packages must be trusted and configured
+        not to restart Windows; this runner does not initiate a reboot.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][hashtable]$State)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Install application"
+    if ($env:SystemDrive -eq 'X:' -or -not (Get-OOBEMenuContext).IsSystem) {
+        throw 'PreOOBE application installation requires SYSTEM in full Windows.'
+    }
+    $path = [string]$State.ApplicationPath
+    if ([IO.Path]::GetFileName($path) -ne 'Invoke-AppDeployToolkit.exe' -or
+        -not (Test-Path -LiteralPath $path -PathType Leaf -ErrorAction Stop)) {
+        throw "Application toolkit executable is missing or invalid: $path"
+    }
+    if ($State.CancelRequested) { $State.Outcome = 'Cancelled'; return }
+    $logs = Join-Path $env:WINDIR 'Temp\osdcloud-logs'
+    [void][IO.Directory]::CreateDirectory($logs)
+    $runId = [guid]::NewGuid().ToString('N')
+    $output = Join-Path $logs "PreOOBE-$runId-App.stdout.log"
+    $errors = Join-Path $logs "PreOOBE-$runId-App.stderr.log"
+    $State.InstallationActive = $true
+    $process = $null
+    try {
+        Write-OOBEMenuUpdateStatus -State $State -Message "Installing application: $path; output $output; errors $errors. Waiting for safe completion."
+        $process = Start-Process -FilePath $path -ArgumentList '-DeploymentType Install -DeployMode Silent' `
+            -WorkingDirectory (Split-Path -Path $path -Parent) -Wait -PassThru -NoNewWindow `
+            -RedirectStandardOutput $output -RedirectStandardError $errors -ErrorAction Stop
+        $code = $process.ExitCode
+        Write-OOBEMenuUpdateStatus -State $State -Message "Application PID $($process.Id) exited with code $code."
+        if ($code -eq 3010) { $State.RebootRequired = $true }
+        elseif ($code -ne 0) { throw "Application installation failed with exit code $code. See $output and $errors." }
+        $State.Succeeded = $true
+        $State.Outcome = 'Succeeded'
+    }
+    finally {
+        if ($process) { $process.Dispose() }
+        $State.InstallationActive = $false
+    }
+}
+
 function Invoke-OSDCloudPreOOBETask {
     <#
     .SYNOPSIS
-        Executes one fixed PreOOBE task with an explicit terminal outcome.
+        Executes one PreOOBE task with an explicit terminal outcome.
     .DESCRIPTION
         Internet time and driver work precede updates. Connectivity failures skip
-        updates, not drivers.
+        updates, not local drivers or applications. Application tasks use the
+        discovered executable path in State.ApplicationPath.
         Preview produces managed sample results without external calls.
     .PARAMETER Type
-        Time, DriverPack, Software, or Driver.
+        Time, DriverPack, Software, Driver, or Application.
     .PARAMETER State
         Shared task state.
     .PARAMETER PreviewOnly
@@ -754,7 +884,7 @@ function Invoke-OSDCloudPreOOBETask {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)][ValidateSet('Time', 'DriverPack', 'Software', 'Driver')][string]$Type,
+        [Parameter(Mandatory)][ValidateSet('Time', 'DriverPack', 'Software', 'Driver', 'Application')][string]$Type,
         [Parameter(Mandatory)][hashtable]$State,
         [switch]$PreviewOnly
     )
@@ -774,6 +904,9 @@ function Invoke-OSDCloudPreOOBETask {
         }
         elseif ($Type -eq 'DriverPack') {
             Invoke-OSDCloudPreOOBEDriverPack -State $State
+        }
+        elseif ($Type -eq 'Application') {
+            Invoke-OSDCloudPreOOBEApplication -State $State
         }
         else {
             $connection = Test-OSDCloudPreOOBEConnectivity -State $State
@@ -808,7 +941,7 @@ function Start-OOBEMenuUpdateWorker {
         Shares only managed status data with WPF and creates all COM objects on
         the worker. The caller owns and disposes the returned pipeline/runspace.
     .PARAMETER Type
-        Time, DriverPack, Software, or Driver action.
+        Time, DriverPack, Software, Driver, or Application action.
     .PARAMETER State
         Synchronized progress and cooperative cancellation state.
     .EXAMPLE
@@ -818,7 +951,7 @@ function Start-OOBEMenuUpdateWorker {
     #>
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)][ValidateSet('Time', 'DriverPack', 'Software', 'Driver')][string]$Type,
+        [Parameter(Mandatory)][ValidateSet('Time', 'DriverPack', 'Software', 'Driver', 'Application')][string]$Type,
         [Parameter(Mandatory)][hashtable]$State,
         [switch]$PreviewOnly
     )
@@ -827,7 +960,7 @@ function Start-OOBEMenuUpdateWorker {
     $initialState = [Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
     foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Get-OSDCloudPreOOBEErrorMessage', 'Invoke-OOBEMenuWindowsUpdate',
         'Sync-OSDCloudPreOOBETime', 'Test-OSDCloudPreOOBEConnectivity', 'Set-OSDCloudPreOOBEUtcClock', 'Test-OSDCloudPreOOBEClockShift',
-        'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Invoke-OSDCloudPreOOBETask') {
+        'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Invoke-OSDCloudPreOOBEApplication', 'Invoke-OSDCloudPreOOBETask') {
         $definition = (Get-Command -Name $name -CommandType Function -ErrorAction Stop).Definition
         $initialState.Commands.Add([Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name, $definition))
     }
