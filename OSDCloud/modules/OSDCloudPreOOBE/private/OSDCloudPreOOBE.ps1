@@ -699,16 +699,221 @@ namespace Recast.OOBE {
     }
 }
 
+function Resolve-OSDCloudPreOOBEApplicationPath {
+    <#
+    .SYNOPSIS
+        Validates a package-relative application executable
+
+    .DESCRIPTION
+        Resolves an existing .exe within the package directory. Rejects rooted
+        paths, directory escapes, alternate streams and reparse points within
+        the package. Does not execute the application.
+
+    .PARAMETER WorkingDirectory
+        Absolute application package directory.
+
+    .PARAMETER Executable
+        Relative .exe path beneath the package directory.
+
+    .EXAMPLE
+        PS> Resolve-OSDCloudPreOOBEApplicationPath -WorkingDirectory 'C:\Apps\Agent' -Executable 'AgentBootstrapper.exe'
+
+        Validates and returns the bootstrapper path.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        System.String. Full executable path.
+
+    .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-03
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][string]$WorkingDirectory,
+        [Parameter(Mandatory)][string]$Executable
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Validate application path"
+    if (-not [IO.Path]::IsPathRooted($WorkingDirectory) -or
+        [IO.Path]::IsPathRooted($Executable) -or $Executable.Contains(':') -or
+        [IO.Path]::GetExtension($Executable) -ne '.exe') {
+        throw 'Application requires an absolute package directory and a package-relative .exe path.'
+    }
+    $directory = [IO.Path]::GetFullPath($WorkingDirectory).TrimEnd('\') + '\'
+    $path = [IO.Path]::GetFullPath((Join-Path $directory $Executable))
+    if (-not $path.StartsWith($directory, [StringComparison]::OrdinalIgnoreCase) -or
+        -not (Test-Path -LiteralPath $path -PathType Leaf -ErrorAction Stop)) {
+        throw "Application executable is missing or outside its package: $path"
+    }
+    $itemPath = $path
+    while ($itemPath.Length -ge $directory.TrimEnd('\').Length) {
+        $item = Get-Item -LiteralPath $itemPath -Force -ErrorAction Stop
+        if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            throw "Application path contains a reparse point: $itemPath"
+        }
+        $itemPath = Split-Path -Path $itemPath -Parent
+    }
+    return $path
+}
+
+function Read-OSDCloudPreOOBEApplicationManifest {
+    <#
+    .SYNOPSIS
+        Reads and filters a custom application manifest
+
+    .DESCRIPTION
+        Validates OSDCloudPreOOBE.json and its package executable. Conditions use
+        AND across fields and OR within each field. Manufacturer/model patterns
+        are case-insensitive; architecture uses the native OS registry environment.
+        Returns nothing for nonmatching conditions; invalid input or unavailable
+        device facts throw for the discovery caller to report.
+
+    .PARAMETER Folder
+        Absolute directory containing OSDCloudPreOOBE.json.
+
+    .PARAMETER Context
+        Per-discovery cache of local device facts and query failures.
+
+    .EXAMPLE
+        PS> Read-OSDCloudPreOOBEApplicationManifest -Folder 'C:\Apps\Agent' -Context @{}
+
+        Returns a validated command if its conditions match this device.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        System.Management.Automation.PSCustomObject. Eligible application command.
+
+    .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-03
+        Reads local CIM and registry facts only when required by conditions.
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][string]$Folder,
+        [Parameter(Mandatory)][hashtable]$Context
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Read application manifest"
+    $json = Get-Content -LiteralPath (Join-Path $Folder 'OSDCloudPreOOBE.json') -Raw -ErrorAction Stop
+    if ([string]::IsNullOrWhiteSpace($json) -or -not $json.TrimStart().StartsWith('{')) {
+        throw 'Application manifest must be a JSON object.'
+    }
+    $manifest = $json | ConvertFrom-Json -ErrorAction Stop
+    if ($manifest -isnot [pscustomobject]) { throw 'Application manifest must be a JSON object.' }
+    foreach ($property in $manifest.PSObject.Properties.Name) {
+        if ($property -notin 'Version','Name','Executable','Arguments','DefaultSelected','CopyToLocal','Conditions') {
+            throw "Unknown application manifest field: $property"
+        }
+    }
+    if (($manifest.Version -isnot [int] -and $manifest.Version -isnot [long]) -or $manifest.Version -ne 1) {
+        throw 'Application manifest Version must be the integer 1.'
+    }
+    if ($manifest.Executable -isnot [string] -or [string]::IsNullOrWhiteSpace($manifest.Executable)) {
+        throw 'Application manifest Executable must be a nonempty string.'
+    }
+    $name = Split-Path -Path $Folder -Leaf
+    $arguments = ''
+    $selected = $true
+    if ($manifest.PSObject.Properties['Name']) {
+        if ($manifest.Name -isnot [string] -or [string]::IsNullOrWhiteSpace($manifest.Name)) {
+            throw 'Application manifest Name must be a nonempty string.'
+        }
+        $name = $manifest.Name
+    }
+    if ($manifest.PSObject.Properties['Arguments']) {
+        if ($manifest.Arguments -isnot [string]) { throw 'Application manifest Arguments must be a string.' }
+        $arguments = $manifest.Arguments
+    }
+    if ($manifest.PSObject.Properties['DefaultSelected']) {
+        if ($manifest.DefaultSelected -isnot [bool]) { throw 'Application manifest DefaultSelected must be a boolean.' }
+        $selected = $manifest.DefaultSelected
+    }
+    $copyToLocal = $false
+    if ($manifest.PSObject.Properties['CopyToLocal']) {
+        if ($manifest.CopyToLocal -isnot [bool]) { throw 'Application manifest CopyToLocal must be a boolean.' }
+        $copyToLocal = $manifest.CopyToLocal
+    }
+    $conditions = $manifest.Conditions
+    if ($manifest.PSObject.Properties['Conditions'] -and $conditions -isnot [pscustomobject]) {
+        throw 'Application manifest Conditions must be an object.'
+    }
+    foreach ($condition in $conditions.PSObject.Properties) {
+        if ($condition.Name -notin 'ComputerManufacturer','ComputerModel','OSArchitecture') {
+            throw "Unknown application condition: $($condition.Name)"
+        }
+        if (($condition.Value -isnot [string] -and $condition.Value -isnot [array]) -or
+            @($condition.Value).Count -eq 0) { throw "Application condition $($condition.Name) requires a string or nonempty string array." }
+        foreach ($pattern in $condition.Value) {
+            if ($pattern -isnot [string] -or [string]::IsNullOrWhiteSpace($pattern)) {
+                throw "Application condition $($condition.Name) contains an invalid value."
+            }
+            if ($condition.Name -eq 'OSArchitecture') {
+                if ($pattern -notin 'amd64','arm64') { throw 'OSArchitecture must be amd64 or arm64.' }
+            }
+            else { [void][Management.Automation.WildcardPattern]::new($pattern, 'IgnoreCase') }
+        }
+    }
+    $path = Resolve-OSDCloudPreOOBEApplicationPath -WorkingDirectory $Folder -Executable $manifest.Executable
+    foreach ($condition in $conditions.PSObject.Properties) {
+        if ($condition.Name -eq 'OSArchitecture') {
+            if (-not $Context.ContainsKey('OSArchitecture')) {
+                try {
+                    $Context.OSArchitecture = Get-ItemPropertyValue -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment' `
+                        -Name PROCESSOR_ARCHITECTURE -ErrorAction Stop
+                    if ($Context.OSArchitecture -notin 'AMD64','ARM64') { throw 'Unsupported or missing native OS architecture.' }
+                }
+                catch { $Context.ArchitectureError = $_.Exception.Message; $Context.OSArchitecture = $null }
+            }
+            if ($Context.ArchitectureError) { throw "Cannot evaluate architecture condition: $($Context.ArchitectureError)" }
+            $actual = $Context.OSArchitecture
+        }
+        else {
+            if (-not $Context.ContainsKey('ComputerSystem')) {
+                try { $Context.ComputerSystem = Get-CimInstance -ClassName Win32_ComputerSystem -Property Manufacturer,Model -ErrorAction Stop }
+                catch { $Context.ComputerSystemError = $_.Exception.Message; $Context.ComputerSystem = $null }
+            }
+            if ($Context.ComputerSystemError) { throw "Cannot evaluate device condition: $($Context.ComputerSystemError)" }
+            $actual = if ($condition.Name -eq 'ComputerManufacturer') { $Context.ComputerSystem.Manufacturer } else { $Context.ComputerSystem.Model }
+            if ([string]::IsNullOrWhiteSpace($actual)) { throw "Device fact unavailable for $($condition.Name)." }
+        }
+        $matched = $false
+        foreach ($pattern in $condition.Value) {
+            if ($actual -ilike $pattern) { $matched = $true; break }
+        }
+        if (-not $matched) {
+            Write-OOBEMenuLog -Message "Application $name excluded: $($condition.Name) did not match."
+            return
+        }
+    }
+    [pscustomobject]@{
+        Name = $name; Path = $path; Executable = $manifest.Executable
+        WorkingDirectory = $Folder; Arguments = $arguments; DefaultSelected = $selected
+        CopyToLocal = $copyToLocal
+    }
+}
+
 function Get-OSDCloudPreOOBEApplication {
     <#
     .SYNOPSIS
-        Discovers local application toolkit packages
+        Discovers local application packages
 
     .DESCRIPTION
         Searches immediate application folders under SystemRoot\Setup\PreOOBE,
-        then A: through Z: under OSDCloud\PreOOBE. Only folders containing
-        Invoke-AppDeployToolkit.exe are returned. Discovery does not execute packages.
-        Unreadable roots are reported and remaining roots are searched.
+        then A: through Z: under OSDCloud\PreOOBE. OSDCloudPreOOBE.json takes
+        precedence over Invoke-AppDeployToolkit.exe and supplies a custom command,
+        conditions and default selection. Nonmatches are hidden. Invalid packages
+        and unreadable roots are reported without preventing later discovery.
+        Discovery does not execute packages.
 
     .EXAMPLE
         PS> Get-OSDCloudPreOOBEApplication
@@ -719,7 +924,8 @@ function Get-OSDCloudPreOOBEApplication {
         None. This function does not accept pipeline input.
 
     .OUTPUTS
-        System.Management.Automation.PSCustomObject. Application Name and Path.
+        System.Management.Automation.PSCustomObject. Application Name, Path,
+        DefaultSelected and optional custom Command.
 
     .NOTES
         Author:  David Segura
@@ -731,6 +937,7 @@ function Get-OSDCloudPreOOBEApplication {
     param ()
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Discover applications"
+    $context = @{}
     $roots = @([pscustomobject]@{ Path = (Join-Path $env:SystemRoot 'Setup\PreOOBE'); Drive = $null })
     $roots += foreach ($letter in 65..90) {
         $drive = "$([char]$letter):"
@@ -741,12 +948,29 @@ function Get-OSDCloudPreOOBEApplication {
             if (-not (Test-Path -LiteralPath $root.Path -PathType Container -ErrorAction Stop)) { continue }
             foreach ($folder in Get-ChildItem -LiteralPath $root.Path -Force -ErrorAction Stop |
                 Where-Object PSIsContainer | Sort-Object Name) {
-                $path = Join-Path $folder.FullName 'Invoke-AppDeployToolkit.exe'
-                if (Test-Path -LiteralPath $path -PathType Leaf -ErrorAction Stop) {
+                try {
+                    $command = $null
                     $name = $folder.Name
+                    $selected = $true
+                    if (Test-Path -LiteralPath (Join-Path $folder.FullName 'OSDCloudPreOOBE.json') -ErrorAction Stop) {
+                        $command = Read-OSDCloudPreOOBEApplicationManifest -Folder $folder.FullName -Context $context
+                        if (-not $command) { continue }
+                        $name = $command.Name
+                        $path = $command.Path
+                        $selected = $command.DefaultSelected
+                    }
+                    else {
+                        $path = Join-Path $folder.FullName 'Invoke-AppDeployToolkit.exe'
+                        if (-not (Test-Path -LiteralPath $path -PathType Leaf -ErrorAction Stop)) { continue }
+                    }
                     if ($root.Drive) { $name += " [$($root.Drive)]" }
                     Write-OOBEMenuLog -Message "Discovered application $name`: $path."
-                    [pscustomobject]@{ Name = $name; Path = $path }
+                    [pscustomobject]@{ Name = $name; Path = $path; DefaultSelected = $selected; Command = $command }
+                }
+                catch {
+                    $message = "Application discovery failed in $($folder.FullName): $($_.Exception.Message)"
+                    Write-OOBEMenuLog -Message $message
+                    Write-Warning -Message $message
                 }
             }
         }
@@ -761,15 +985,20 @@ function Get-OSDCloudPreOOBEApplication {
 function Invoke-OSDCloudPreOOBEApplication {
     <#
     .SYNOPSIS
-        Installs one discovered application toolkit package
+        Installs one discovered application package
 
     .DESCRIPTION
-        Runs Invoke-AppDeployToolkit.exe with Install and Silent arguments from its
-        application directory. Waits for the process tree without force cancellation.
+        Runs a validated manifest command from its package directory, or runs
+        Invoke-AppDeployToolkit.exe with Install and Silent arguments.
+        CopyToLocal manifests are first copied to a new folder under
+        WINDIR\Temp\OSDCloudPreOOBE\Applications, then run from that copy.
+        Copied content is retained for diagnostics.
+        Waits for the process tree without force cancellation.
         Logs stdout, stderr and exit code. Exit 3010 records a reboot requirement.
 
     .PARAMETER State
-        Shared task state containing ApplicationPath, progress and reboot status.
+        Shared task state containing ApplicationPath, optional ApplicationCommand,
+        progress and reboot status.
 
     .EXAMPLE
         PS> Invoke-OSDCloudPreOOBEApplication -State $state
@@ -798,22 +1027,47 @@ function Invoke-OSDCloudPreOOBEApplication {
         throw 'PreOOBE application installation requires SYSTEM in full Windows.'
     }
     $path = [string]$State.ApplicationPath
-    if ([IO.Path]::GetFileName($path) -ne 'Invoke-AppDeployToolkit.exe' -or
+    $arguments = '-DeploymentType Install -DeployMode Silent'
+    $workingDirectory = Split-Path -Path $path -Parent
+    if ($State.ApplicationCommand) {
+        $command = $State.ApplicationCommand
+        $path = Resolve-OSDCloudPreOOBEApplicationPath -WorkingDirectory $command.WorkingDirectory -Executable $command.Executable
+        $workingDirectory = $command.WorkingDirectory
+        $arguments = $command.Arguments
+    }
+    elseif ([IO.Path]::GetFileName($path) -ne 'Invoke-AppDeployToolkit.exe' -or
         -not (Test-Path -LiteralPath $path -PathType Leaf -ErrorAction Stop)) {
         throw "Application toolkit executable is missing or invalid: $path"
     }
     if ($State.CancelRequested) { $State.Outcome = 'Cancelled'; return }
+    $runId = [guid]::NewGuid().ToString('N')
+    if ($State.ApplicationCommand -and $State.ApplicationCommand.CopyToLocal) {
+        $source = $State.ApplicationCommand.WorkingDirectory
+        foreach ($item in Get-ChildItem -LiteralPath $source -Recurse -Force -ErrorAction Stop) {
+            if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw "Application package contains a reparse point: $($item.FullName)"
+            }
+        }
+        $destination = Join-Path $env:WINDIR "Temp\OSDCloudPreOOBE\Applications\$(Split-Path -Path $source -Leaf)-$runId"
+        [void][IO.Directory]::CreateDirectory($destination)
+        Write-OOBEMenuUpdateStatus -State $State -Message "Copying application package from $source to $destination."
+        foreach ($item in Get-ChildItem -LiteralPath $source -Force -ErrorAction Stop) {
+            Copy-Item -LiteralPath $item.FullName -Destination $destination -Recurse -Force -ErrorAction Stop
+        }
+        $path = Resolve-OSDCloudPreOOBEApplicationPath -WorkingDirectory $destination -Executable $State.ApplicationCommand.Executable
+        $workingDirectory = $destination
+    }
     $logs = Join-Path $env:WINDIR 'Temp\osdcloud-logs'
     [void][IO.Directory]::CreateDirectory($logs)
-    $runId = [guid]::NewGuid().ToString('N')
     $output = Join-Path $logs "PreOOBE-$runId-App.stdout.log"
     $errors = Join-Path $logs "PreOOBE-$runId-App.stderr.log"
     $State.InstallationActive = $true
     $process = $null
     try {
         Write-OOBEMenuUpdateStatus -State $State -Message "Installing application: $path; output $output; errors $errors. Waiting for safe completion."
-        $process = Start-Process -FilePath $path -ArgumentList '-DeploymentType Install -DeployMode Silent' `
-            -WorkingDirectory (Split-Path -Path $path -Parent) -Wait -PassThru -NoNewWindow `
+        $startParameters = @{ FilePath = $path; WorkingDirectory = $workingDirectory }
+        if (-not [string]::IsNullOrEmpty($arguments)) { $startParameters.ArgumentList = $arguments }
+        $process = Start-Process @startParameters -Wait -PassThru -NoNewWindow `
             -RedirectStandardOutput $output -RedirectStandardError $errors -ErrorAction Stop
         $code = $process.ExitCode
         Write-OOBEMenuUpdateStatus -State $State -Message "Application PID $($process.Id) exited with code $code."
@@ -926,7 +1180,8 @@ function Start-OOBEMenuUpdateWorker {
     $initialState = [Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
     foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Get-OSDCloudPreOOBEErrorMessage', 'Invoke-OOBEMenuWindowsUpdate',
         'Sync-OSDCloudPreOOBETime', 'Test-OSDCloudPreOOBEConnectivity', 'Set-OSDCloudPreOOBEUtcClock', 'Test-OSDCloudPreOOBEClockShift',
-        'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Invoke-OSDCloudPreOOBEApplication', 'Invoke-OSDCloudPreOOBETask') {
+        'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Resolve-OSDCloudPreOOBEApplicationPath',
+        'Invoke-OSDCloudPreOOBEApplication', 'Invoke-OSDCloudPreOOBETask') {
         $definition = (Get-Command -Name $name -CommandType Function -ErrorAction Stop).Definition
         $initialState.Commands.Add([Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name, $definition))
     }

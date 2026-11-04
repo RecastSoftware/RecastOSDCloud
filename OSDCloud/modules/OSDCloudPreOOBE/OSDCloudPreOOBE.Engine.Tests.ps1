@@ -88,6 +88,36 @@ InModuleScope OSDCloudPreOOBE {
             $engine.Tasks[0].Outcome | Should -Be Succeeded
         }
 
+        It 'skips default-unchecked applications but runs a rechecked custom command with its metadata' {
+            $script:customCommand = [pscustomobject]@{
+                Executable = 'AgentBootstrapper.exe'; WorkingDirectory = 'G:\OSDCloud\PreOOBE\Agent'
+                Arguments = '--certificate AgentRegistration.cer --startDeployment --wait'
+            }
+            Mock Get-OSDCloudPreOOBEApplication {
+                [pscustomobject]@{
+                    Name = 'Unchecked App'; Path = 'G:\OSDCloud\PreOOBE\Agent\AgentBootstrapper.exe'
+                    DefaultSelected = $false; Command = $script:customCommand
+                }
+                [pscustomobject]@{
+                    Name = 'Rechecked App'; Path = 'G:\OSDCloud\PreOOBE\Agent\AgentBootstrapper.exe'
+                    DefaultSelected = $false; Command = $script:customCommand
+                }
+            }
+            $engine = New-OSDCloudPreOOBEState
+            $engine.Tasks[4].Enabled | Should -BeFalse
+            $engine.Tasks[5].Enabled | Should -BeFalse
+            $engine.Tasks[5].Enabled = $true
+            $engine.Started = $true
+            $engine.StepDelaySeconds = 0
+            1..7 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
+            $engine.Tasks[4].Outcome | Should -Be Skipped
+            $engine.Tasks[5].Outcome | Should -Be Succeeded
+            Should -Invoke Start-OOBEMenuUpdateWorker -Times 1 -Exactly -ParameterFilter {
+                $Type -eq 'Application' -and $State.ApplicationCommand -eq $script:customCommand -and
+                $State.ApplicationPath -eq 'G:\OSDCloud\PreOOBE\Agent\AgentBootstrapper.exe'
+            }
+        }
+
         It 'closing before Start skips every task and finishes' {
             $engine.Started = $false
             $engine.CloseRequested = $true
@@ -396,6 +426,32 @@ InModuleScope OSDCloudPreOOBE {
             $result.Enabled | Should -BeFalse
             $result.Last | Should -Be 'Custom App 12 [G:] - Pending'
             $result.OutputHeight | Should -BeGreaterThan 0
+        }
+
+        It 'renders a manifest application initially unchecked and allows selecting it' {
+            Mock Get-OSDCloudPreOOBEApplication {
+                [pscustomobject]@{ Name = 'Optional Agent'; Path = 'G:\OSDCloud\PreOOBE\Agent\AgentBootstrapper.exe'; DefaultSelected = $false }
+            }
+            $uiProbeTimer.Add_Tick({
+                $uiProbeTimer.Stop()
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $box = $testWindow.FindName('StepPanel').Children[4]
+                    $result.Checked = $box.IsChecked
+                    $result.InitialEnabled = $box.Tag.Enabled
+                    $box.IsChecked = $true
+                    $result.Enabled = $box.Tag.Enabled
+                }
+                catch { $result.Error = $_ }
+                finally { $testWindow.Close() }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            $result.Checked | Should -BeFalse
+            $result.InitialEnabled | Should -BeFalse
+            $result.Enabled | Should -BeTrue
         }
 
         It 'keeps title-bar shell, script and calendar actions inert in preview' {

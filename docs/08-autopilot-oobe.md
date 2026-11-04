@@ -182,23 +182,138 @@ Tasks run in this order:
 4. **Updating Drivers**: check connectivity again, then scan/download/install
    applicable driver updates.
 5. **Custom applications**: when the window opens, discover immediate application
-   folders containing `Invoke-AppDeployToolkit.exe` under
+   folders containing `OSDCloudPreOOBE.json` or `Invoke-AppDeployToolkit.exe` under
    `%SystemRoot%\Setup\PreOOBE` and `<drive>:\OSDCloud\PreOOBE` on A: through Z:.
    Local applications appear first, followed by drive-hosted applications in
    drive-letter order; folders within each root are sorted by name.
-   Each application appears below **Updating Drivers** with a checked checkbox.
-   The label is the folder name, with the drive appended for drive-hosted content,
+   Each eligible application appears below **Updating Drivers**, checked by default
+   unless its manifest specifies otherwise. The label is the manifest name or
+   folder name, with the drive appended for drive-hosted content,
    such as **My AppFolder [G:]**. Uncheck it before it starts to skip installation.
    Identically named applications in different roots remain separate tasks.
    Discovery is not recursive and does not download or copy packages.
-   Each selected package runs sequentially from its application folder with
-   `-DeploymentType Install -DeployMode Silent`, even if the connectivity probe
-   failed. Exit 0 means success; exit 3010 records a reboot requirement; other
+   Each selected package runs sequentially from its application folder using
+   its manifest command, or `-DeploymentType Install -DeployMode Silent` for
+   PSADT-only packages, even if the connectivity probe failed.
+   Exit 0 means success; exit 3010 records a reboot requirement; other
    exit codes are failures. A removed or unavailable executable is reported as a
    failed task, and remaining tasks continue. An active application cannot be
    force-cancelled: closing the window waits for its process tree to finish, then
    skips remaining tasks. Deploy only trusted packages configured not to reboot
    Windows; the runner does not override a package's own reboot behavior.
+
+### Custom installers without PSADT
+
+Put a file named **OSDCloudPreOOBE.json** beside your installer in an immediate
+application folder under one of the search roots above. For example:
+
+```text
+G:\OSDCloud\PreOOBE\Workspace Agent\
+    OSDCloudPreOOBE.json
+    AgentBootstrapper.exe
+    AgentRegistration.cer
+```
+
+```json
+{
+    "Version": 1,
+    "Name": "Workspace Agent",
+    "Executable": "AgentBootstrapper.exe",
+    "Arguments": "--certificate AgentRegistration.cer --startDeployment --wait",
+    "DefaultSelected": false
+}
+```
+
+The working directory is the folder containing the manifest unless
+`CopyToLocal` is `true`. The certificate argument above therefore resolves from
+the package folder.
+Use the installer's actual filename: the supplied Application Workspace package
+uses `Liquit-Universal-Agent-Win-4.5.4374.7448.exe` instead of
+`AgentBootstrapper.exe`. Neither the executable nor other package files are renamed.
+
+| Field | Required | Behavior |
+|---|---|---|
+| `Version` | Yes | Integer `1` |
+| `Executable` | Yes | Nonempty relative `.exe` path within the application folder; subfolders are allowed |
+| `Name` | No | Nonempty display name; defaults to the folder name |
+| `Arguments` | No | Literal command-line string; defaults to no arguments |
+| `DefaultSelected` | No | JSON boolean; defaults to `true`. `false` starts unchecked, but the technician can check it before it is reached |
+| `CopyToLocal` | No | JSON boolean; defaults to `false`. `true` copies the whole application folder to a new `C:\Windows\Temp\OSDCloudPreOOBE\Applications\<folder>-<id>` folder and runs from it |
+| `Conditions` | No | Object containing the supported condition fields below; omitted or empty means all devices |
+
+Use `CopyToLocal` for installers that must run from the local disk or unpack
+beside themselves, for example from a read-only USB drive:
+
+```json
+{
+    "Version": 1,
+    "Name": "Application Workspace",
+    "Executable": "AgentBootstrapper.exe",
+    "Arguments": "--certificate AgentRegistration.cer --startDeployment --wait",
+    "DefaultSelected": false,
+    "CopyToLocal": true
+}
+```
+
+The copy happens only when the task runs, never during discovery or preview.
+Each run gets a new folder, which becomes both the executable root and working
+directory, so relative arguments resolve within the copy. Packages containing
+reparse points are refused and copy failures fail the task without launching
+the installer. Copied content is kept for troubleshooting; it may contain
+certificates or configuration, so remove it after deployment if required.
+
+Optional conditions hide applications that do not match:
+
+```json
+{
+    "Version": 1,
+    "Executable": "AgentBootstrapper.exe",
+    "Arguments": "--certificate AgentRegistration.cer --startDeployment --wait",
+    "DefaultSelected": false,
+    "Conditions": {
+        "ComputerManufacturer": "Dell*",
+        "ComputerModel": ["Latitude*", "Precision*"],
+        "OSArchitecture": ["amd64", "arm64"]
+    }
+}
+```
+
+Every specified field must match (**AND**). A field accepts a nonempty string or
+an array of nonempty strings; any value within an array may match (**OR**).
+`ComputerManufacturer` and `ComputerModel` match the running device's raw
+`Win32_ComputerSystem.Manufacturer` and `.Model` using case-insensitive
+PowerShell wildcard patterns. Use `Dell*` to match `Dell Inc.`; `Dell` alone
+is an exact match, not a manufacturer alias. `OSArchitecture` accepts `amd64`
+or `arm64` and uses the installed OS architecture, not the architecture of an
+emulated PowerShell process. Device facts are read locally only when needed.
+If required facts cannot be read, affected packages are excluded with a warning
+and log entry; unconditional packages remain eligible.
+
+A manifest takes precedence over PSADT detection in its folder, producing one
+task, not two. Invalid JSON, unsupported versions, unknown fields or conditions,
+wrong field types, missing executables, rooted/escaping paths, alternate streams,
+and reparse points within the package are rejected with a warning and log entry.
+Invalid manifests do **not** fall back to PSADT. Other folders and search roots
+are still checked. PSADT-only packages keep their existing checked defaults and
+Install/Silent arguments.
+
+Arguments are passed directly to the executable; no PowerShell expression,
+shell command, environment-variable template, or script is evaluated.
+Quote argument values containing spaces using JSON escaping, for example
+`"--certificate \"Agent Registration.cer\" --startDeployment --wait"`.
+Only deploy trusted packages and manifests: selected commands run as SYSTEM.
+Keep credentials out of manifests and arguments; package stdout/stderr may
+contain installer-specific sensitive data. This manifest is not a signature
+verification or sandbox mechanism.
+
+Before deploying, verify discovery and the initial checkbox in `-Preview`
+(see the preview instructions below). Preview does not launch the installer.
+Then use a disposable Windows deployment to verify the real command,
+certificate/configuration resolution from the package directory, completion,
+exit-code handling, and safe closure, on each applicable OS architecture.
+Local tests and preview do not establish that the real installer succeeds.
+
+### Task completion and failures
 
 The update actions honor configured Windows Update/WSUS policies, exclude hidden/
 Preview updates and updates requiring interactive input, and accept EULAs.

@@ -34,7 +34,9 @@ function New-OSDCloudPreOOBEState {
             foreach ($application in Get-OSDCloudPreOOBEApplication) {
                 [pscustomobject]@{
                     Type = 'Application'; Name = $application.Name; Path = $application.Path
-                    Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null
+                    Command = $application.Command
+                    Enabled = ($application.DefaultSelected -ne $false)
+                    Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null
                 }
             }
         )
@@ -228,7 +230,10 @@ function Update-OSDCloudPreOOBEState {
             Status = $State.Active.Name; CancelRequested = $false; RebootRequired = $State.RebootRequired
             Succeeded = $false; Outcome = 'Running'; DurationMs = 0L; InstallationActive = $false; ClockTestActive = $false
         })
-        if ($State.Active.Type -eq 'Application') { $State.Shared.ApplicationPath = $State.Active.Path }
+        if ($State.Active.Type -eq 'Application') {
+            $State.Shared.ApplicationPath = $State.Active.Path
+            $State.Shared.ApplicationCommand = $State.Active.Command
+        }
         Write-OOBEMenuLog -Message "Starting task $($State.Active.Name)."
         try {
             $State.Worker = Start-OOBEMenuUpdateWorker -Type $State.Active.Type -State $State.Shared -PreviewOnly:$PreviewOnly
@@ -655,7 +660,7 @@ function Show-OOBEMenuWindow {
     foreach ($task in $engine.Tasks) {
         $box = [Windows.Controls.CheckBox]::new()
         $box.Style = $window.FindResource('StepCheckBoxStyle')
-        $box.IsChecked = $true
+        $box.IsChecked = $task.Enabled
         $box.Tag = $task
         $box.ToolTip = "$($task.Name) - uncheck to skip"
         [Windows.Automation.AutomationProperties]::SetName($box, $task.Name)
