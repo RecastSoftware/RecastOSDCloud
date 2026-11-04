@@ -7,6 +7,7 @@ $script:OSDCloudPreOOBERunning = $false
 
 . (Join-Path $PSScriptRoot 'private\OSDCloudPreOOBE.ps1')
 . (Join-Path $PSScriptRoot 'private\Invoke-OSDCloudPreOOBEDriverPack.ps1')
+. (Join-Path $PSScriptRoot 'private\Show-OSDCloudPreOOBEWireless.ps1')
 . (Join-Path $PSScriptRoot 'private\Show-OSDCloudPreOOBEWindow.ps1')
 . (Join-Path $PSScriptRoot 'public\Invoke-OSDCloudPreOOBE.ps1')
 

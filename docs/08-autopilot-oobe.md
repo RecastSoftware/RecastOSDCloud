@@ -332,7 +332,7 @@ Close/Escape/Alt+F4 requests safe completion of the active OEM operation or canc
 of the active update, skips remaining tasks, and then continues setup.
 Startup failure returns nonzero; the batch reports/logs it and continues.
 
-### Connectivity and future wireless recovery
+### Connectivity and wireless recovery
 
 Before each update, the Windows NCSI probe `http://www.msftconnecttest.com/connecttest.txt`
 must return the exact `Microsoft Connect Test` content. It does not follow redirects
@@ -353,8 +353,10 @@ When the HTTPS check fails with a certificate error, troubleshooting is logged:
   then 1 hour back and probed, and then restored (always, including on errors) and
   probed again. Calendar Apply is blocked while the test runs. Results are
   diagnostic only; if the restored probe connects, the update continues.
-Unavailable internet or a failed probe marks that update **Skipped**, with the reason
-logged. Local driver installation and the remaining tasks still proceed.
+If the probe still fails, PreOOBE checks for physical wireless hardware and offers
+the Wi-Fi dialog described below. If recovery is skipped or the internet check
+still fails, that update is **Skipped**, with the reason logged.
+Local driver installation and the remaining tasks still proceed.
 Cancellation is checked between attempts; an in-flight probe may take up to its timeout.
 
 This probe does not guarantee WU/WSUS availability; service-specific failures are still
@@ -362,12 +364,31 @@ reported by WUA. Blocking the Microsoft probe can cause offline skips even when 
 sites work. An internet-isolated device with reachable WSUS is deliberately skipped
 under this internet prerequisite.
 
-A **Wireless Connection wizard is planned, not shipped**. The future optional step
-will be offered only after failed connectivity and detection of Wi-Fi hardware, after
-OEM drivers have installed. It must not block unattended continuation. The design uses
-inbox Native Wi-Fi APIs, saved profiles first, bounded Connect/Skip/Cancel behavior,
-and no credential/profile-key logging. New-profile security and persistence policies
-need validation before implementation; no WinPE wireless tool is installed here.
+After failed connectivity and detection of a physical Wi-Fi adapter, a **Connect to
+Wi-Fi** dialog opens on the setup desktop. It runs after the OEM driver task, uses
+inbox Native Wi-Fi APIs, and starts WLAN AutoConfig if necessary. No OSDCloud module,
+WinPE wireless tool or logged-on user is needed. Missing drivers or a disabled radio
+must still be corrected before a connection can succeed.
+
+- Select an available network and **Connect**. Saved Windows profiles accessible to
+  SYSTEM use their existing authentication settings; no password is requested.
+- New connections support open networks and WPA2/WPA3-Personal with AES and an
+  8-to-63-character password. The password field is masked. Enterprise, WEP and
+  other security configurations require a pre-provisioned Windows profile.
+  Hidden networks must be provisioned and connected separately; this dialog does
+  not enter hidden SSIDs, provision enterprise profiles or handle portal sign-in.
+- New personal/open connections use an in-memory **temporary** profile. The dialog
+  does not save credentials or profile XML to disk, log keys, or change existing
+  saved profiles. The connection remains available for the current session; do not
+  rely on it reconnecting after reboot.
+- **Refresh** scans again. Association has a 25-second timeout and permits retry.
+  **Skip**, closing the dialog, or two minutes without interaction resumes offline
+  handling. Closing the main PreOOBE window or selecting **Skip Step** also closes
+  the dialog through cooperative cancellation.
+- After association, the original internet/TLS probe runs again (up to three checks
+  with two-second pauses for DHCP/DNS readiness). Association alone never starts
+  Windows Update. Each update task can offer recovery if its own check fails.
+  Preview never scans adapters, starts WLAN services or opens the Wi-Fi dialog.
 
 ### Technician tools and display
 
@@ -456,6 +477,13 @@ access, including no-updates results, failures, reboot-required results, cancell
 and menu closure during an update. Local mocks/preview do not verify actual WUA
 installation during SYSTEM OOBE.
 Validate real Lenovo/Surface installation, offline skips and safe cancellation.
+Validate Wi-Fi recovery as SYSTEM on AMD64 and ARM64: no adapter, stopped WLAN
+service, disabled radio, saved profiles, open and WPA2/WPA3-Personal networks,
+incorrect passwords, DHCP delay, captive portals, Refresh, Skip, idle timeout,
+and main-window closure during connection. Verify new credentials are not persisted
+in saved profiles or written to logs and that successful association is followed by
+the internet check before updates. Mocked dialog tests do not establish native
+radio/driver compatibility or setup-desktop visibility.
 Validate trusted application packages from both search roots, unchecked skips,
 missing/removable media, installer failures, reboot-required results, and closure
 during installation. Use package logs alongside the application stdout/stderr logs.

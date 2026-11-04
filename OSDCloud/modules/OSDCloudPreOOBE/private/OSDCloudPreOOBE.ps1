@@ -1087,8 +1087,9 @@ function Invoke-OSDCloudPreOOBETask {
     .SYNOPSIS
         Executes one PreOOBE task with an explicit terminal outcome.
     .DESCRIPTION
-        Internet time and driver work precede updates. Connectivity failures skip
-        updates, not local drivers or applications. Application tasks use the
+        Internet time and driver work precede updates. Failed connectivity offers
+        Wi-Fi recovery when wireless hardware is detected, then skips updates if
+        still offline, not local drivers or applications. Application tasks use the
         discovered executable path in State.ApplicationPath.
         Preview produces managed sample results without external calls.
     .PARAMETER Type
@@ -1130,6 +1131,16 @@ function Invoke-OSDCloudPreOOBETask {
         }
         else {
             $connection = Test-OSDCloudPreOOBEConnectivity -State $State
+            if (-not $connection.Connected -and -not $State.CancelRequested) {
+                if (Invoke-OSDCloudPreOOBEWirelessRecovery -State $State) {
+                    # Association can precede DHCP/DNS readiness.
+                    for ($retry = 0; $retry -lt 3 -and -not $State.CancelRequested; $retry++) {
+                        $connection = Test-OSDCloudPreOOBEConnectivity -State $State
+                        if ($connection.Connected) { break }
+                        if ($retry -lt 2) { Start-Sleep -Seconds 2 }
+                    }
+                }
+            }
             if ($State.CancelRequested) { $State.Outcome = 'Cancelled' }
             elseif (-not $connection.Connected) {
                 $State.Outcome = 'Skipped'
@@ -1181,6 +1192,7 @@ function Start-OOBEMenuUpdateWorker {
     foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Get-OSDCloudPreOOBEErrorMessage', 'Invoke-OOBEMenuWindowsUpdate',
         'Sync-OSDCloudPreOOBETime', 'Test-OSDCloudPreOOBEConnectivity', 'Set-OSDCloudPreOOBEUtcClock', 'Test-OSDCloudPreOOBEClockShift',
         'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Resolve-OSDCloudPreOOBEApplicationPath',
+        'Initialize-OSDCloudPreOOBEWireless', 'Invoke-OSDCloudPreOOBEWirelessRecovery', 'Show-OSDCloudPreOOBEWireless',
         'Invoke-OSDCloudPreOOBEApplication', 'Invoke-OSDCloudPreOOBETask') {
         $definition = (Get-Command -Name $name -CommandType Function -ErrorAction Stop).Definition
         $initialState.Commands.Add([Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name, $definition))

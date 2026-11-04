@@ -298,6 +298,7 @@ InModuleScope OSDCloudPreOOBE {
 
     Describe 'PreOOBE connectivity and task eligibility' {
         BeforeEach {
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery { $false }
             Mock Write-OOBEMenuLog {}
             Mock Invoke-OOBEMenuWindowsUpdate { $State.Succeeded = $true }
             Mock Invoke-OSDCloudPreOOBEDriverPack { $State.Outcome = 'NotApplicable' }
@@ -332,6 +333,44 @@ InModuleScope OSDCloudPreOOBE {
             Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 1 -ParameterFilter { $Type -eq 'Driver' }
         }
 
+        It 'offers wireless recovery after failure and starts updates only after the internet probe succeeds' {
+            $script:checks = 0
+            Mock Test-OSDCloudPreOOBEConnectivity {
+                $script:checks++
+                [pscustomobject]@{ Connected = ($script:checks -gt 1); Reason = 'offline' }
+            }
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery { $true }
+            Invoke-OSDCloudPreOOBETask -Type Software -State $state
+            $state.Outcome | Should -Be Succeeded
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 1 -Exactly
+            Should -Invoke Test-OSDCloudPreOOBEConnectivity -Times 2 -Exactly
+            Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 1 -Exactly
+        }
+
+        It 'does not treat wireless association as internet access and bounds DHCP retries' {
+            Mock Test-OSDCloudPreOOBEConnectivity { [pscustomobject]@{ Connected = $false; Reason = 'captive portal' } }
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery { $true }
+            Mock Start-Sleep {}
+            Invoke-OSDCloudPreOOBETask -Type Driver -State $state
+            $state.Outcome | Should -Be Skipped
+            Should -Invoke Test-OSDCloudPreOOBEConnectivity -Times 4 -Exactly
+            Should -Invoke Start-Sleep -Times 2 -Exactly
+            Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 0 -Exactly
+        }
+
+        It 'cancels without starting updates when closed during wireless recovery' {
+            Mock Test-OSDCloudPreOOBEConnectivity { [pscustomobject]@{ Connected = $false; Reason = 'offline' } }
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery { $State.CancelRequested = $true; $false }
+            Invoke-OSDCloudPreOOBETask -Type Software -State $state
+            $state.Outcome | Should -Be Cancelled
+            Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 0 -Exactly
+        }
+
+        It 'does not offer wireless recovery when internet is already connected' {
+            Invoke-OSDCloudPreOOBETask -Type Driver -State $state
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 0 -Exactly
+        }
+
         It 'does not gate local OEM drivers on internet access' {
             Invoke-OSDCloudPreOOBETask -Type DriverPack -State $state
             $state.Outcome | Should -Be NotApplicable
@@ -347,6 +386,7 @@ InModuleScope OSDCloudPreOOBE {
             Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 0 -Exactly
             Should -Invoke Invoke-OSDCloudPreOOBEDriverPack -Times 0 -Exactly
             Should -Invoke Sync-OSDCloudPreOOBETime -Times 0 -Exactly
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 0 -Exactly
         }
 
         It 'does not gate internet time retrieval on the HTTPS connectivity probe' {
@@ -355,6 +395,7 @@ InModuleScope OSDCloudPreOOBE {
             Should -Invoke Sync-OSDCloudPreOOBETime -Times 1 -Exactly
             Should -Invoke Test-OSDCloudPreOOBEConnectivity -Times 0 -Exactly
             Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 0 -Exactly
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 0 -Exactly
         }
 
         It 'never starts WUA when cancelled during a connectivity check' {

@@ -192,4 +192,221 @@ InModuleScope OSDCloudPreOOBE {
             ($script:logged -join "`n") | Should -BeLike '*System.AggregateException*'
         }
     }
+
+    Describe 'Wireless recovery eligibility' {
+        BeforeEach {
+            $Preview = $false
+            $state = @{ Messages = [Collections.Concurrent.ConcurrentQueue[string]]::new(); CancelRequested = $false }
+            Mock Write-OOBEMenuLog {}
+            Mock Get-CimInstance { [pscustomobject]@{ NdisPhysicalMedium = 9 } }
+            Mock Get-Service { [pscustomobject]@{ Status = 'Running' } }
+            Mock Start-Service {}
+            Mock Show-OSDCloudPreOOBEWireless { $true }
+        }
+        AfterEach { $Preview = $true }
+
+        It 'offers the dialog only for physical wireless adapters' {
+            Invoke-OSDCloudPreOOBEWirelessRecovery -State $state | Should -BeTrue
+            Should -Invoke Get-CimInstance -Times 1 -Exactly -ParameterFilter {
+                $ClassName -eq 'MSFT_NetAdapter' -and $Filter -eq 'HardwareInterface = TRUE'
+            }
+            Should -Invoke Show-OSDCloudPreOOBEWireless -Times 1 -Exactly
+            Mock Get-CimInstance { [pscustomobject]@{ NdisPhysicalMedium = 14 } }
+            Invoke-OSDCloudPreOOBEWirelessRecovery -State $state | Should -BeFalse
+            Should -Invoke Show-OSDCloudPreOOBEWireless -Times 1 -Exactly
+        }
+
+        It 'starts a stopped WLAN service before opening the dialog' {
+            $service = [pscustomobject]@{ Status = 'Stopped' }
+            $service | Add-Member ScriptMethod WaitForStatus { param($status, $timeout) }
+            Mock Get-Service { $service }
+            Invoke-OSDCloudPreOOBEWirelessRecovery -State $state | Should -BeTrue
+            Should -Invoke Start-Service -Times 1 -Exactly -ParameterFilter { $Name -eq 'WlanSvc' }
+        }
+
+        It 'does not access hardware or display a dialog in preview or after cancellation' {
+            $Preview = $true
+            Invoke-OSDCloudPreOOBEWirelessRecovery -State $state | Should -BeFalse
+            $Preview = $false
+            $state.CancelRequested = $true
+            Invoke-OSDCloudPreOOBEWirelessRecovery -State $state | Should -BeFalse
+            Should -Invoke Get-CimInstance -Times 0 -Exactly
+            Should -Invoke Show-OSDCloudPreOOBEWireless -Times 0 -Exactly
+        }
+
+        It 'reports wireless failures without leaking exception data and permits offline continuation' {
+            Mock Show-OSDCloudPreOOBEWireless { throw 'sensitive profile data' }
+            Invoke-OSDCloudPreOOBEWirelessRecovery -State $state | Should -BeFalse
+            ($state.Messages.ToArray() -join "`n") | Should -BeLike '*could not start*continuing offline*'
+            ($state.Messages.ToArray() -join "`n") | Should -Not -BeLike '*sensitive*'
+            Should -Invoke Write-OOBEMenuLog -Times 0 -Exactly -ParameterFilter { $Message -like '*sensitive*' }
+        }
+    }
+
+    Describe 'Temporary wireless profiles' {
+        BeforeAll { Initialize-OSDCloudPreOOBEWireless }
+
+        It 'builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes' {
+            $network = [Recast.PreOOBE.Wireless+Network]::new()
+            $network.Auth = 6
+            $network.Cipher = 4
+            $network.SsidHex = '436166652026203C'
+            $password = 'test&<password>'
+            [xml]$profile = [Recast.PreOOBE.Wireless]::ProfileXml($network, $password)
+            $profile.WLANProfile.SSIDConfig.SSID.hex | Should -Be $network.SsidHex
+            $profile.WLANProfile.MSM.security.sharedKey.keyMaterial | Should -Be $password
+            $profile.WLANProfile.MSM.security.authEncryption.authentication | Should -Be WPA2PSK
+            $network.Auth = 9
+            ([xml][Recast.PreOOBE.Wireless]::ProfileXml($network, $password)).WLANProfile.MSM.security.authEncryption.authentication |
+                Should -Be WPA3SAE
+        }
+
+        It 'omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials' {
+            $network = [Recast.PreOOBE.Wireless+Network]::new()
+            $network.SsidHex = '43616665'
+            $network.Auth = 1
+            [xml]$profile = [Recast.PreOOBE.Wireless]::ProfileXml($network, 'ignored')
+            $profile.WLANProfile.MSM.security.sharedKey | Should -BeNullOrEmpty
+            $network.Auth = 5
+            $network.Cipher = 4
+            { [Recast.PreOOBE.Wireless]::ProfileXml($network, 'password') } | Should -Throw '*saved Windows Wi-Fi profile*'
+            $network.Auth = 6
+            { [Recast.PreOOBE.Wireless]::ProfileXml($network, 'short') } | Should -Throw '*8 to 63*'
+        }
+    }
+
+    Describe 'Wireless dialog automation' -Tag Interactive {
+        BeforeEach {
+            $Preview = $false
+            Initialize-OSDCloudPreOOBEWireless
+            Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
+            $state = @{ Messages = [Collections.Concurrent.ConcurrentQueue[string]]::new(); CancelRequested = $false }
+            $script:associated = $false
+            $script:disposed = $false
+            $script:connectCalls = 0
+            Mock Write-OOBEMenuLog {}
+            $fakeWireless = [pscustomobject]@{}
+            $fakeWireless | Add-Member ScriptMethod Scan {}
+            $fakeWireless | Add-Member ScriptMethod Networks {
+                $network = [Recast.PreOOBE.Wireless+Network]::new()
+                $network.InterfaceId = [guid]'00000000-0000-0000-0000-000000000001'
+                $network.Name = 'Test Wi-Fi'
+                $network.SsidHex = '54657374'
+                $network.Auth = 6
+                $network.Cipher = 4
+                $network.Connectable = $true
+                $network.Connected = $script:associated
+                return $network
+            }
+            $fakeWireless | Add-Member ScriptMethod Connect {
+                param($network, $password)
+                $script:connectCalls++
+                $script:associated = $true
+            }
+            $fakeWireless | Add-Member ScriptMethod Dispose { $script:disposed = $true }
+            Mock New-Object { $fakeWireless } -ParameterFilter { $TypeName -eq 'Recast.PreOOBE.Wireless' }
+            $probe = [Windows.Threading.DispatcherTimer]::new()
+            $probe.Interval = [TimeSpan]::FromMilliseconds(100)
+            $result = @{ Error = $null }
+        }
+        AfterEach { $probe.Stop(); $Preview = $true }
+
+        It 'renders network selection and a masked password, then returns association without logging the password' {
+            $probe.Add_Tick({
+                $probe.Stop()
+                $dialog = @([Windows.PresentationSource]::CurrentSources | ForEach-Object RootVisual |
+                    Where-Object Title -eq 'OSDCloud PreOOBE - Connect to Wi-Fi')[0]
+                try {
+                    $dialog.FindName('Networks').SelectedIndex = 0
+                    $result.PasswordBox = $dialog.FindName('Password') -is [Windows.Controls.PasswordBox]
+                    $dialog.FindName('Password').Password = 'private-test-key'
+                    $dialog.FindName('Connect').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                    $result.Cleared = $dialog.FindName('Password').Password.Length -eq 0
+                }
+                catch { $result.Error = $_; if ($dialog) { $dialog.Close() } }
+            })
+            $probe.Start()
+            Show-OSDCloudPreOOBEWireless -State $state | Should -BeTrue
+            $result.Error | Should -BeNullOrEmpty
+            $result.PasswordBox | Should -BeTrue
+            $result.Cleared | Should -BeTrue
+            $script:connectCalls | Should -Be 1
+            $script:disposed | Should -BeTrue
+            ($state.Messages.ToArray() -join "`n") | Should -Not -BeLike '*private-test-key*'
+        }
+
+        It 'closes on cooperative cancellation without connecting and disposes native resources' {
+            $probe.Add_Tick({ $probe.Stop(); $state.CancelRequested = $true })
+            $probe.Start()
+            Show-OSDCloudPreOOBEWireless -State $state | Should -BeFalse
+            $script:connectCalls | Should -Be 0
+            $script:disposed | Should -BeTrue
+        }
+
+        It 'keeps the dialog open below the idle limit and skips at 120 seconds' {
+            $result.Phase = 0
+            $probe.Add_Tick({
+                $dialog = @([Windows.PresentationSource]::CurrentSources | ForEach-Object RootVisual |
+                    Where-Object Title -eq 'OSDCloud PreOOBE - Connect to Wi-Fi')[0]
+                try {
+                    if ($result.Phase -eq 0) {
+                        $ui.Ticks = 3
+                        $ui.Idle = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(119) }
+                        $result.Phase = 1
+                        $probe.Interval = [TimeSpan]::FromMilliseconds(1500)
+                    }
+                    else {
+                        $result.OpenBelowLimit = $dialog.IsVisible
+                        $ui.Idle = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(120) }
+                        $probe.Stop()
+                    }
+                }
+                catch { $result.Error = $_; $probe.Stop(); if ($dialog) { $dialog.Close() } }
+            })
+            $probe.Start()
+            Show-OSDCloudPreOOBEWireless -State $state | Should -BeFalse
+            $result.Error | Should -BeNullOrEmpty
+            $result.OpenBelowLimit | Should -BeTrue
+            $script:connectCalls | Should -Be 0
+            $script:disposed | Should -BeTrue
+        }
+
+        It 'allows retry at the 25-second association limit and Skip closes without success' {
+            $result.Phase = 0
+            $probe.Add_Tick({
+                $dialog = @([Windows.PresentationSource]::CurrentSources | ForEach-Object RootVisual |
+                    Where-Object Title -eq 'OSDCloud PreOOBE - Connect to Wi-Fi')[0]
+                try {
+                    if ($result.Phase -eq 0) {
+                        $dialog.FindName('Networks').SelectedIndex = 0
+                        $dialog.FindName('Password').Password = 'private-test-key'
+                        $dialog.FindName('Connect').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                        $script:associated = $false
+                        $ui.Attempt = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(24) }
+                        $result.Phase = 1
+                        $probe.Interval = [TimeSpan]::FromMilliseconds(1500)
+                    }
+                    elseif ($result.Phase -eq 1) {
+                        $result.DisabledBelowLimit = -not $dialog.FindName('Connect').IsEnabled
+                        $ui.Attempt = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(25) }
+                        $result.Phase = 2
+                    }
+                    else {
+                        $result.RetryEnabled = $dialog.FindName('Connect').IsEnabled
+                        $result.Status = $dialog.FindName('Status').Text
+                        $probe.Stop()
+                        $dialog.FindName('Skip').RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                    }
+                }
+                catch { $result.Error = $_; $probe.Stop(); if ($dialog) { $dialog.Close() } }
+            })
+            $probe.Start()
+            Show-OSDCloudPreOOBEWireless -State $state | Should -BeFalse
+            $result.Error | Should -BeNullOrEmpty
+            $result.DisabledBelowLimit | Should -BeTrue
+            $result.RetryEnabled | Should -BeTrue
+            $result.Status | Should -BeLike '*timed out*retry or Skip*'
+            $script:disposed | Should -BeTrue
+        }
+    }
 }
