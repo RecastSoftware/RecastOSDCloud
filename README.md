@@ -41,6 +41,48 @@ complete release notes and older history.
 - **26.9.25.1 — September 25:** Adds operating-system catalog refresh and synchronization, plus centralized Windows build metadata.
 - **26.9.24.1 — September 24:** Adds startup-profile environment variables and catalog discovery from ProgramData and attached OSDCloud drives.
 
+## Standalone BootMenu (development)
+
+BootMenu is bundled as a separate module in
+[OSDCloud/modules/OSDCloudBootMenu](OSDCloud/modules/OSDCloudBootMenu).
+`Invoke-OSDCloudBootMenu` and `Test-OSDCloudBootMenu` are no longer exported by
+OSDCloud. Import the embedded module explicitly on a technician host:
+
+```powershell
+Import-Module .\OSDCloud\OSDCloud.psd1
+Import-Module (Join-Path (Get-OSDCloudModulePath) 'modules\OSDCloudBootMenu\OSDCloudBootMenu.psd1')
+Test-OSDCloudBootMenu -SampleProfiles
+```
+
+The standalone folder contains its runtime, private startup helpers, defaults,
+license reader, logo, and bundled profile examples. Import alone does not start
+WinPE initialization or deployment. OSDCloudBoot copies this folder into a
+top-level Windows PowerShell module directory in new boot images; startup uses
+`Import-Module OSDCloudBootMenu -ErrorAction Stop` before invoking the menu.
+It is not a separately published Gallery package.
+
+BootMenu startup does not import OSDCloud. Deployment, device information, and
+OSDCloud Explorer still require it; selected OSDCloud updates remain supported.
+Custom profile commands using OSDCloud should import it explicitly. Profile
+command child sessions import BootMenu automatically. Zero runtime profiles
+still starts deployment; bundled examples are not automatically discovered.
+
+Wi-Fi and IPConfig utility windows launch Windows PowerShell directly, prioritize
+its built-in module path, and import the current BootMenu manifest to resolve
+its private helpers, without rerunning
+`wpeinit`. IPConfig opens minimized; Wi-Fi setup is skipped when internet access
+is already detected. Synchronous utility failures are reported to the caller.
+
+Runtime profiles remain at `<drive>:\OSDCloud\bootmenu-profiles`; BootPack and
+`WinpeStartup\core`, `Drivers`, and `Files` content locations are unchanged.
+Licensed asset imports retain the existing Recast validity policy.
+Legacy `Invoke-WinpeStartup`, its helpers, defaults, and profiles are unchanged.
+
+This is a breaking development change: rebuild boot images with a current
+OSDCloudBoot and an OSDCloud package containing the standalone module. Test real
+startup on disposable AMD64/ARM64 WinPE and WinRE images before deployment;
+mocked tests and the inert desktop preview do not establish native boot behavior.
+
 ## Licensed Features
 
 ### Catalog and startup automation

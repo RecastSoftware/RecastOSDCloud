@@ -144,7 +144,7 @@ countdown before it runs, giving clock changes time to apply and the technician 
 to review or correct the clock. During a countdown the button reads **Start** and
 starts that task immediately; while an update runs it reads **Skip Step**.
 
-The collapsed left pane (select the hamburger to expand it) lists every task with a
+The left pane is expanded by default (select the hamburger to collapse it) and lists every task with a
 checkbox. Unchecking a task before it starts skips it (logged as unchecked by
 technician); checking it again before it is reached runs it. Checkboxes are disabled
 once a task has started or finished.
@@ -176,7 +176,7 @@ Tasks run in this order:
    disable certificate validation for connectivity probes or Windows Update.
 3. **Updating Windows 11**: check connectivity, then scan/download/install applicable
    software updates (including Windows servicing and .NET). If this task **fails**,
-   the sequence pauses: use the title-bar calendar to verify Date, Time and TimeZone,
+   the sequence pauses: use **Shell** to verify the system date, time and time zone,
    then select **Retry** (runs it again after the 10-second countdown) or **Continue**.
    The pause has no timeout; closing the window skips the remaining tasks.
 4. **Updating Drivers**: check connectivity again, then scan/download/install
@@ -418,20 +418,15 @@ Windows Setup windows cannot cover it; minimize it when working in a launched sh
 
 - The title-bar **Shell** menu offers **CMD Prompt** and **Windows PowerShell**,
   opening independent SYSTEM shells.
-- The title-bar **Scripts** menu opens **OOBE.cmd** and **SetupComplete.cmd** in Notepad.
+- The title-bar **Tools** menu has a repair-tools icon and offers **Open oobe.cmd**
+  and **Open setupcomplete.cmd** in Notepad. **Open autopilot.csv** appears only when
+  `C:\Windows\Temp\osdcloud-logs\Autopilot.csv` exists and opens that file in Notepad.
   Save edits before continuing. Windows command processing may already have read
   parts of the current batch file; do not assume editing it changes the active run.
-- The title-bar calendar icon opens **Date, Time & TimeZone**. Select a local
-  calendar date, enter 24-hour `HH:mm:ss`, select a Windows time zone, then **Apply**.
-  The selected zone is applied first, then the chosen local time is applied as local
-  time in that zone. Input is validated before changes; daylight-saving
-  gaps/repeated hours are rejected. Errors remain visible. If setting the time
-  fails after the time zone changed, inspect the clock/zone before retrying. Applying
-  clock changes is disabled during time synchronization, clock testing and active
-  installation.
-- The status bar shows only the running OS date and time in the OS locale's full format
-  with the time zone name and UTC offset, refreshed every second.
-- The title-bar person icon shows the running account (**SYSTEM**) on hover.
+- No account icon, calendar control or live date/time display is shown.
+  The running OS clock is still recorded in the task output and logs at startup.
+  Use **Shell** for manual clock checks; do not change it during synchronization,
+  clock testing or an active installation.
 - The window resizes from an 8-pixel border around its edges.
 - Shell and Notepad windows remain open after the engine closes and are not waited on.
 - Tool errors remain visible and are logged without stopping task execution.

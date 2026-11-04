@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="35" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-11-04" time="16:13:21">
+  <environment clr-version="4.0.30319.42000" user-domain="OSDMAIN" cwd="C:\GitHub\recast-osd\RecastOSDCloud" platform="Microsoft Windows 11 Pro|C:\Windows|\Device\Harddisk0\Partition3" machine-name="OSDMAIN" nunit-version="2.5.8.0" os-version="10.0.26300" user="david" />
+  <culture-info current-culture="en-US" current-uiculture="en-US" />
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="16.1769" asserts="0" description="Pester">
+    <results>
+      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Time.Tests.ps1" executed="True" result="Success" success="True" time="6.5915" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Time.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="PreOOBE internet time bootstrap" executed="True" result="Success" success="True" time="4.1438" asserts="0" description="PreOOBE internet time bootstrap">
+            <results>
+              <test-case description="repairs a years-old clock using UTC HTTP time without TLS or changing the time zone" name="PreOOBE internet time bootstrap.repairs a years-old clock using UTC HTTP time without TLS or changing the time zone" time="2.7368" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="bounds unavailable time sources to two five-second attempts and logs timeout" name="PreOOBE internet time bootstrap.bounds unavailable time sources to two five-second attempts and logs timeout" time="0.1809" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not set the clock if closure requests cancellation during retrieval" name="PreOOBE internet time bootstrap.does not set the clock if closure requests cancellation during retrieval" time="0.0533" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not create a request when already cancelled" name="PreOOBE internet time bootstrap.does not create a request when already cancelled" time="0.0504" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="requires SYSTEM before retrieving or changing time" name="PreOOBE internet time bootstrap.requires SYSTEM before retrieving or changing time" time="0.0451" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="reports failure instead of success if setting the clock is denied" name="PreOOBE internet time bootstrap.reports failure instead of success if setting the clock is denied" time="0.1058" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="verifies the clock was actually corrected" name="PreOOBE internet time bootstrap.verifies the clock was actually corrected" time="0.0861" asserts="0" success="True" result="Success" executed="True" />
+              <test-suite type="ParameterizedTest" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: &lt;Case&gt;" executed="True" result="Success" success="True" time="0.4127" asserts="0" description="rejects missing, invalid or cached dates and redirects: &lt;Case&gt;">
+                <results>
+                  <test-case description="rejects missing, invalid or cached dates and redirects: missing" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: missing" time="0.1616" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects missing, invalid or cached dates and redirects: invalid" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: invalid" time="0.1302" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects missing, invalid or cached dates and redirects: cached" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: cached" time="0.0557" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects missing, invalid or cached dates and redirects: redirect" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: redirect" time="0.0653" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1" executed="True" result="Success" success="True" time="9.5854" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Bounded Microsoft connectivity probe" executed="True" result="Success" success="True" time="0.5836" asserts="0" description="Bounded Microsoft connectivity probe">
+            <results>
+              <test-case description="accepts the expected NCSI content over HTTP, validates HTTPS, and disposes transport resources" name="Bounded Microsoft connectivity probe.accepts the expected NCSI content over HTTP, validates HTTPS, and disposes transport resources" time="0.176" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects captive portals and retries only twice" name="Bounded Microsoft connectivity probe.rejects captive portals and retries only twice" time="0.0693" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="rejects redirects rather than treating them as internet connectivity" name="Bounded Microsoft connectivity probe.rejects redirects rather than treating them as internet connectivity" time="0.0411" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="bounds request waits to two attempts of five seconds and reports timeout" name="Bounded Microsoft connectivity probe.bounds request waits to two attempts of five seconds and reports timeout" time="0.0326" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not create a request when cancellation was already requested" name="Bounded Microsoft connectivity probe.does not create a request when cancellation was already requested" time="0.0191" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="runs TLS and clock troubleshooting only for certificate failures" name="Bounded Microsoft connectivity probe.runs TLS and clock troubleshooting only for certificate failures" time="0.24" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Clock shift troubleshooting" executed="True" result="Success" success="True" time="0.9701" asserts="0" description="Clock shift troubleshooting">
+            <results>
+              <test-case description="probes at +1 hour and -1 hour, restores the clock, then probes again" name="Clock shift troubleshooting.probes at +1 hour and -1 hour, restores the clock, then probes again" time="0.2125" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="reports when only a shifted clock connects" name="Clock shift troubleshooting.reports when only a shifted clock connects" time="0.047" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="always restores the clock when a probe throws" name="Clock shift troubleshooting.always restores the clock when a probe throws" time="0.0477" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not change the clock without SYSTEM" name="Clock shift troubleshooting.does not change the clock without SYSTEM" time="0.0752" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="UTC clock setter" executed="True" result="Success" success="True" time="1.0604" asserts="0" description="UTC clock setter">
+            <results>
+              <test-case description="sets UTC through local time in the running time zone and verifies it" name="UTC clock setter.sets UTC through local time in the running time zone and verifies it" time="0.0474" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="fails verification when the clock does not change" name="UTC clock setter.fails verification when the clock does not change" time="0.0392" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="User-facing task errors" executed="True" result="Success" success="True" time="1.1357" asserts="0" description="User-facing task errors">
+            <results>
+              <test-case description="shows only the innermost message and logs the full exception" name="User-facing task errors.shows only the innermost message and logs the full exception" time="0.0182" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="keeps stack traces out of the task output" name="User-facing task errors.keeps stack traces out of the task output" time="0.0532" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Wireless recovery eligibility" executed="True" result="Success" success="True" time="1.4687" asserts="0" description="Wireless recovery eligibility">
+            <results>
+              <test-case description="offers the dialog only for physical wireless adapters" name="Wireless recovery eligibility.offers the dialog only for physical wireless adapters" time="0.1515" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="starts a stopped WLAN service before opening the dialog" name="Wireless recovery eligibility.starts a stopped WLAN service before opening the dialog" time="0.0854" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not access hardware or display a dialog in preview or after cancellation" name="Wireless recovery eligibility.does not access hardware or display a dialog in preview or after cancellation" time="0.0326" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="reports wireless failures without leaking exception data and permits offline continuation" name="Wireless recovery eligibility.reports wireless failures without leaking exception data and permits offline continuation" time="0.0595" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Temporary wireless profiles" executed="True" result="Success" success="True" time="1.6176" asserts="0" description="Temporary wireless profiles">
+            <results>
+              <test-case description="builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes" name="Temporary wireless profiles.builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes" time="0.0251" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials" name="Temporary wireless profiles.omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials" time="0.0314" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+          <test-suite type="TestFixture" name="Wireless dialog automation" executed="True" result="Success" success="True" time="9.2761" asserts="0" description="Wireless dialog automation">
+            <results>
+              <test-case description="renders network selection and a masked password, then returns association without logging the password" name="Wireless dialog automation.renders network selection and a masked password, then returns association without logging the password" time="1.3261" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="closes on cooperative cancellation without connecting and disposes native resources" name="Wireless dialog automation.closes on cooperative cancellation without connecting and disposes native resources" time="1.0431" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="keeps the dialog open below the idle limit and skips at 120 seconds" name="Wireless dialog automation.keeps the dialog open below the idle limit and skips at 120 seconds" time="2.0677" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="allows retry at the 25-second association limit and Skip closes without success" name="Wireless dialog automation.allows retry at the 25-second association limit and Skip closes without success" time="3.2022" asserts="0" success="True" result="Success" executed="True" />
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
