@@ -31,7 +31,6 @@ Windows 11 26H2 GA Release
         'Deploy-OSDCloud',
         'Get-OSDCloudModulePath',
         'Get-OSDCloudModuleVersion',
-        'New-WinpeStartupProfile',
         'Show-OSDCloudDeviceInfo',
         'Start-OSDCloudExplorer',
         # WinPE

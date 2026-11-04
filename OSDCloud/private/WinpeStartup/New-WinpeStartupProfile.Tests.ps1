@@ -1,6 +1,6 @@
 BeforeAll {
     . "$PSScriptRoot\New-WinpeStartupProfile.ps1"
-    . "$PSScriptRoot\..\WinPE\Invoke-WinpeStartup.ps1"
+    . "$PSScriptRoot\..\..\public\WinPE\Invoke-WinpeStartup.ps1"
     $script:bootAssetsPath = 'C:\ProgramData\OSDeployCore\boot-assets\winpestartup-profiles'
     if (-not ('WinpeStartupProfileTests.DecliningHost' -as [type])) {
         Add-Type -TypeDefinition @'
@@ -535,10 +535,10 @@ Describe 'New-WinpeStartupProfile' {
         @($help.Examples.Example).Count | Should -BeGreaterOrEqual 2
     }
 
-    It 'registers the export in the manifest and loads the file in both environments' {
+    It 'loads the private function without exporting it in both environments' {
         $moduleRoot = [System.IO.Path]::GetFullPath("$PSScriptRoot\..\..")
         $manifest = Import-PowerShellDataFile -LiteralPath "$moduleRoot\OSDCloud.psd1"
-        $manifest.FunctionsToExport | Should -Contain 'New-WinpeStartupProfile'
+        $manifest.FunctionsToExport | Should -Not -Contain 'New-WinpeStartupProfile'
         foreach ($systemDrive in @('C:', 'X:')) {
             $session = [powershell]::Create()
             try {
@@ -548,7 +548,15 @@ Describe 'New-WinpeStartupProfile' {
                     try {
                         $env:SystemDrive = $SystemDrive
                         Import-Module "$ModuleRoot\OSDCloud.psd1" -Force -ErrorAction Stop
-                        Get-Command New-WinpeStartupProfile -Module OSDCloud -ErrorAction Stop | Select-Object -ExpandProperty Name
+                        $privateCommand = & (Get-Module OSDCloud) {
+                            Get-Command New-WinpeStartupProfile -ErrorAction Stop
+                        }
+                        $publicCommand = Get-Command -Module OSDCloud |
+                            Where-Object { $_.Name -eq 'New-WinpeStartupProfile' }
+                        [pscustomobject]@{
+                            Private = $privateCommand.Name
+                            Public = [bool]$publicCommand
+                        }
                     }
                     finally {
                         $env:SystemDrive = $originalSystemDrive
@@ -556,7 +564,8 @@ Describe 'New-WinpeStartupProfile' {
                 }).AddArgument($moduleRoot).AddArgument($systemDrive)
                 $result = $session.Invoke()
                 $session.HadErrors | Should -BeFalse -Because (($session.Streams.Error | Out-String).Trim())
-                $result | Should -Contain 'New-WinpeStartupProfile'
+                $result.Private | Should -Be 'New-WinpeStartupProfile'
+                $result.Public | Should -BeFalse
             }
             finally {
                 $session.Dispose()

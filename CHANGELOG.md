@@ -25,6 +25,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Move `New-WinpeStartupProfile` to private module scope; it is no longer exported as a public cmdlet.
 - Remove PreOOBE's per-update Skip buttons; retain safe active-update cancellation and automatic offline skips.
 - Renamed the standalone OOBEMenu runtime and staging step to OSDCloudPreOOBE and step-update-preoobe; legacy managed batch invocations are migrated. The runtime no longer accepts the menu's Phase parameter.
 - Stage the interactive menu only as the final OOBE.cmd block, removing legacy managed SetupComplete invocations. OOBE now offers clock and both update actions; update output fills the available height when resized.
