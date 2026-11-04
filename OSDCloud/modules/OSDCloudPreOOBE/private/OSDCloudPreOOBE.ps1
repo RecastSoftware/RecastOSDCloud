@@ -1,37 +1,3 @@
-<#
-.SYNOPSIS
-    Runs driver, update and custom application tasks before Windows OOBE continues.
-.DESCRIPTION
-    Self-contained inbox Windows PowerShell 5.1/WPF script for AMD64 and ARM64.
-    Run synchronously at the end of OOBE.cmd as SYSTEM. If necessary, a copy of this script
-    is launched as SYSTEM in the console session and attached to its input desktop.
-    The sequence waits for Start, and after the tasks finish it waits for Continue to OOBE,
-    then returns 0. Startup failures return 1.
-    Shells are independent SYSTEM processes and remain open when the menu closes.
-.PARAMETER Preview
-    Simulates tasks and tools without network or system changes.
-.PARAMETER InteractiveChild
-    Internal session-launch flag. Not needed in OOBE.cmd.
-.PARAMETER ReadyEvent
-    Internal SYSTEM-only named event used to acknowledge a visible child window.
-.EXAMPLE
-    powershell.exe -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File .\OSDCloudPreOOBE.ps1
-.EXAMPLE
-    powershell.exe -NoLogo -NoProfile -STA -File .\OSDCloudPreOOBE.ps1 -Preview
-.NOTES
-    No OSDCloud module, external executable, or user logon required.
-    Windows Update actions require network access to the configured update service.
-    Dot-sourcing defines helpers only; it does not show UI or exit the caller.
-#>
-[CmdletBinding()]
-param (
-    [switch]$Preview,
-    [Parameter(DontShow)][switch]$InteractiveChild,
-    [Parameter(DontShow)]
-    [ValidatePattern('^Global\\RecastOSDCloud\.OOBE\.[0-9a-f-]{36}$')]
-    [string]$ReadyEvent
-)
-
 function Write-OOBEMenuLog {
     <#
     .SYNOPSIS
@@ -1256,6 +1222,61 @@ function Get-OOBEMenuContext {
     finally { $identity.Dispose(); $process.Dispose() }
 }
 
+function Get-OSDCloudPreOOBEChildArguments {
+    <#
+    .SYNOPSIS
+        Builds a module-based interactive child command
+
+    .DESCRIPTION
+        Encodes the import and launch command as UTF-16LE for Windows PowerShell.
+        Escapes literal paths and propagates startup failures as a nonzero exit.
+
+    .PARAMETER ModulePath
+        Full path of the module manifest to import in the child process.
+
+    .PARAMETER ReadyEvent
+        SYSTEM-only readiness event passed to the child entry point.
+
+    .EXAMPLE
+        PS> Get-OSDCloudPreOOBEChildArguments -ModulePath $OSDCloudPreOOBEModulePath -ReadyEvent $eventName
+
+        Returns arguments for the native Windows PowerShell child process.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        System.String. Returns the executable arguments, including an encoded command.
+
+    .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-03
+    #>
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)][string]$ModulePath,
+        [Parameter(Mandatory)]
+        [ValidatePattern('^Global\\RecastOSDCloud\.OOBE\.[0-9a-f-]{36}$')]
+        [string]$ReadyEvent
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Build interactive launch command"
+    $command = @'
+try {{
+    Import-Module -Name '{0}' -ErrorAction Stop
+    exit (OSDCloudPreOOBE -InteractiveChild -ReadyEvent '{1}')
+}} catch {{
+    Write-Error -ErrorRecord $_ -ErrorAction Continue
+    exit 1
+}}
+'@
+    $command = $command -f $ModulePath.Replace("'", "''"), $ReadyEvent
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($command))
+    return "-NoLogo -NoProfile -STA -ExecutionPolicy Bypass -EncodedCommand $encoded"
+}
+
 function Invoke-OOBEMenuChild {
     <#
     .SYNOPSIS
@@ -1263,15 +1284,15 @@ function Invoke-OOBEMenuChild {
     .DESCRIPTION
         Requires a ready signal within 60 seconds. An invisible or failed child is
         terminated, with a nonzero result. A visible menu has no operator timeout.
-    .PARAMETER ScriptPath
-        Full path of this standalone script.
+    .PARAMETER ModulePath
+        Full path of the standalone module manifest.
     .EXAMPLE
-        Invoke-OOBEMenuChild -ScriptPath $PSCommandPath
+        Invoke-OOBEMenuChild -ModulePath $OSDCloudPreOOBEModulePath
     .NOTES
         The random global event grants access only to SYSTEM; no file-based IPC.
     #>
     [CmdletBinding()]
-    param ([Parameter(Mandatory)][string]$ScriptPath)
+    param ([Parameter(Mandatory)][string]$ModulePath)
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Launch interactive child"
     $eventName = "Global\RecastOSDCloud.OOBE.$([guid]::NewGuid())"
@@ -1288,7 +1309,7 @@ function Invoke-OOBEMenuChild {
     $child = $null
     try {
         if (-not $created) { throw 'The menu readiness event already exists.' }
-        $arguments = '-NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File "{0}" -InteractiveChild -ReadyEvent "{1}"' -f $ScriptPath, $eventName
+        $arguments = Get-OSDCloudPreOOBEChildArguments -ModulePath $ModulePath -ReadyEvent $eventName
         $child = [Recast.OOBE.Native]::Launch(
             (Get-OOBEMenuNativePath -PowerShell), $arguments, $false,
             [Recast.OOBE.Native]::WTSGetActiveConsoleSessionId()
@@ -1323,33 +1344,21 @@ function Invoke-OOBEMenuChild {
 
 
 
-#region PreOOBE version
-$OSDCloudPreOOBEVersion = try {
-    $manifestText = [IO.File]::ReadAllText((Join-Path $PSScriptRoot '..\..\OSDCloud.psd1'))
-    [regex]::Match($manifestText, "(?m)^\s*ModuleVersion\s*=\s*'([^']+)'").Groups[1].Value
-} catch { '' }
-#endregion
-
-#region PreOOBE components
-. (Join-Path $PSScriptRoot 'Invoke-OSDCloudPreOOBEDriverPack.ps1')
-. (Join-Path $PSScriptRoot 'Show-OSDCloudPreOOBEWindow.ps1')
-#endregion
-
 function Invoke-OOBEMenu {
     <#
     .SYNOPSIS
         Coordinates startup, optional session launch, and menu exit status.
     .DESCRIPTION
         Returns 0 for normal closure and 1 for failure; never exits the caller.
-    .PARAMETER ScriptPath
-        Full path to the standalone script for session relaunch.
+    .PARAMETER ModulePath
+        Full path to the standalone module manifest for session relaunch.
     .EXAMPLE
-        Invoke-OOBEMenu -ScriptPath $PSCommandPath
+        Invoke-OOBEMenu -ModulePath $OSDCloudPreOOBEModulePath
     .NOTES
         Default execution requires SYSTEM. Preview cannot launch elevated shells.
     #>
     [CmdletBinding()]
-    param ([Parameter(Mandatory)][string]$ScriptPath)
+    param ([Parameter(Mandatory)][string]$ModulePath)
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Start"
     try {
@@ -1375,7 +1384,7 @@ function Invoke-OOBEMenu {
             [Recast.OOBE.Native]::AttachInputDesktop()
         } elseif (-not $context.IsInputDesktop) {
             if ($Preview) { throw 'Preview must run on the local console input desktop.' }
-            return Invoke-OOBEMenuChild -ScriptPath $ScriptPath
+            return Invoke-OOBEMenuChild -ModulePath $ModulePath
         }
         $exitCode = Show-OOBEMenuWindow -ReadyEventName $ReadyEvent
         Write-OOBEMenuLog -Message "Menu closed with exit code $exitCode."
@@ -1389,6 +1398,3 @@ function Invoke-OOBEMenu {
     }
 }
 
-if ($MyInvocation.InvocationName -ne '.') {
-    exit (Invoke-OOBEMenu -ScriptPath $PSCommandPath)
-}

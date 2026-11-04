@@ -14,16 +14,16 @@ Describe 'step-update-preoobe' {
         $global:OSDCoreDevice = [pscustomobject]@{ IsWinPE = $true }
         Mock Test-Path { $true }
         Mock New-Item {}
-        Mock Save-OSDCloudPreOOBERuntime {}
+        Mock Save-OSDCloudPreOOBEModule {}
         Mock Write-Host {}
         Mock Write-OSDCloudSetupMenuScript {}
     }
 
-    It 'stages one runtime script, appends OOBE and cleans up legacy SetupComplete' {
+    It 'stages the complete module, appends OOBE and cleans up legacy SetupComplete' {
         step-update-preoobe
-        Should -Invoke Save-OSDCloudPreOOBERuntime -Times 1 -Exactly -ParameterFilter {
-            $DestinationPath -eq 'C:\Windows\Setup\Scripts\OSDCloudPreOOBE.ps1' -and
-            $SourcePath -like '*\core\preoobe\OSDCloudPreOOBE.ps1'
+        Should -Invoke Save-OSDCloudPreOOBEModule -Times 1 -Exactly -ParameterFilter {
+            $DestinationPath -eq 'C:\Windows\Setup\Modules\OSDCloudPreOOBE' -and
+            $SourcePath -like '*\modules\OSDCloudPreOOBE'
         }
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 1 -Exactly -ParameterFilter {
             $Path -eq 'C:\Windows\Setup\Scripts\OOBE.cmd' -and $Phase -eq 'OOBE'
@@ -36,17 +36,17 @@ Describe 'step-update-preoobe' {
     It 'does not stage files outside WinPE even if device metadata is stale' {
         $env:SystemDrive = 'C:'
         step-update-preoobe -WarningAction SilentlyContinue
-        Should -Invoke Save-OSDCloudPreOOBERuntime -Times 0 -Exactly
+        Should -Invoke Save-OSDCloudPreOOBEModule -Times 0 -Exactly
         Should -Invoke New-Item -Times 0 -Exactly
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 0 -Exactly
     }
 
     It 'reports missing assets without writing to the Windows image' {
-        Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\core\preoobe\*' }
+        Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\modules\OSDCloudPreOOBE' }
         Mock Write-Warning {}
         step-update-preoobe
         Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*source is missing*' }
-        Should -Invoke Save-OSDCloudPreOOBERuntime -Times 0 -Exactly
+        Should -Invoke Save-OSDCloudPreOOBEModule -Times 0 -Exactly
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 0 -Exactly
     }
 
@@ -55,11 +55,11 @@ Describe 'step-update-preoobe' {
         Mock Write-Warning {}
         step-update-preoobe
         Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*applied Windows image is missing*' }
-        Should -Invoke Save-OSDCloudPreOOBERuntime -Times 0 -Exactly
+        Should -Invoke Save-OSDCloudPreOOBEModule -Times 0 -Exactly
     }
 
     It 'reports copy errors without writing a success-shaped invocation' {
-        Mock Save-OSDCloudPreOOBERuntime { throw 'Disk write failed' }
+        Mock Save-OSDCloudPreOOBEModule { throw 'Disk write failed' }
         Mock Write-Warning {}
         step-update-preoobe
         Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*Disk write failed*' }
@@ -67,23 +67,62 @@ Describe 'step-update-preoobe' {
     }
 }
 
-Describe 'Setup menu batch invocation' {
-    It 'bundles all components into one parseable standalone script' {
-        $source = Join-Path $PSScriptRoot '..\..\..\core\preoobe\OSDCloudPreOOBE.ps1'
-        $destination = Join-Path $TestDrive 'OSDCloudPreOOBE.ps1'
-        Save-OSDCloudPreOOBERuntime -SourcePath $source -DestinationPath $destination
-        $text = [IO.File]::ReadAllText($destination)
-        $text | Should -Not -Match '#region PreOOBE components'
-        $version = (Import-PowerShellDataFile (Join-Path $PSScriptRoot '..\..\..\OSDCloud.psd1')).ModuleVersion
-        $text | Should -Match ([regex]::Escape("`$OSDCloudPreOOBEVersion = '$version'"))
-        $text | Should -Not -Match 'OSDCloud\.psd1'
-        $text | Should -Match 'function Invoke-OSDCloudPreOOBEDriverPack'
-        $text | Should -Match 'function Show-OOBEMenuWindow'
-        $tokens = $null; $errors = $null
-        [void][Management.Automation.Language.Parser]::ParseFile($destination,[ref]$tokens,[ref]$errors)
-        $errors | Should -BeNullOrEmpty
+Describe 'PreOOBE module staging' {
+    BeforeEach {
+        $package = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
+        $source = Join-Path $package 'modules\OSDCloudPreOOBE'
+        New-Item -Path (Split-Path $source) -ItemType Directory -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\..\..\modules\OSDCloudPreOOBE') -Destination $source -Recurse
+        [IO.File]::WriteAllText((Join-Path $package 'OSDCloud.psd1'), "@{ ModuleVersion = '26.11.3.7' }")
+        $destination = Join-Path $package 'Windows Setup\Modules\OSDCloudPreOOBE'
     }
 
+    It 'copies every file, stamps only the destination version and imports without the parent module' {
+        $manifest = Join-Path $source 'OSDCloudPreOOBE.psd1'
+        $original = [IO.File]::ReadAllText($manifest)
+        Save-OSDCloudPreOOBEModule -SourcePath $source -DestinationPath $destination
+        foreach ($file in Get-ChildItem -LiteralPath $source -Recurse -File) {
+            $relative = $file.FullName.Substring($source.Length + 1)
+            $copy = Join-Path $destination $relative
+            Test-Path -LiteralPath $copy -PathType Leaf | Should -BeTrue
+            if ($relative -ne 'OSDCloudPreOOBE.psd1') {
+                (Get-FileHash -LiteralPath $copy).Hash | Should -Be (Get-FileHash -LiteralPath $file.FullName).Hash
+            }
+        }
+        [IO.File]::ReadAllText($manifest) | Should -Be $original
+        $stagedManifest = Join-Path $destination 'OSDCloudPreOOBE.psd1'
+        (Test-ModuleManifest -Path $stagedManifest).Version | Should -Be ([version]'26.11.3.7')
+        $output = & powershell.exe -NoLogo -NoProfile -STA -Command "Import-Module -Name '$stagedManifest' -ErrorAction Stop; (Get-Command OSDCloudPreOOBE).Definition; (Get-Module OSDCloudPreOOBE).Version.ToString()"
+        $LASTEXITCODE | Should -Be 0
+        $output | Should -Contain 'Invoke-OSDCloudPreOOBE'
+        $output | Should -Contain '26.11.3.7'
+    }
+
+    It 'restages without nesting the module directory or changing file content' {
+        Save-OSDCloudPreOOBEModule -SourcePath $source -DestinationPath $destination
+        $first = @(Get-ChildItem -LiteralPath $destination -Recurse -File | Get-FileHash | ForEach-Object Hash)
+        Save-OSDCloudPreOOBEModule -SourcePath $source -DestinationPath $destination
+        $second = @(Get-ChildItem -LiteralPath $destination -Recurse -File | Get-FileHash | ForEach-Object Hash)
+        ($second -join ',') | Should -Be ($first -join ',')
+        Test-Path -LiteralPath (Join-Path $destination 'OSDCloudPreOOBE') | Should -BeFalse
+    }
+
+    It 'rejects a missing component before copying' {
+        Remove-Item -LiteralPath (Join-Path $source 'private\Show-OSDCloudPreOOBEWindow.ps1')
+        { Save-OSDCloudPreOOBEModule -SourcePath $source -DestinationPath $destination } |
+            Should -Throw '*component is missing*'
+        Test-Path -LiteralPath $destination | Should -BeFalse
+    }
+
+    It 'rejects invalid PowerShell before copying' {
+        [IO.File]::WriteAllText((Join-Path $source 'public\Invoke-OSDCloudPreOOBE.ps1'), 'function Broken {')
+        { Save-OSDCloudPreOOBEModule -SourcePath $source -DestinationPath $destination } |
+            Should -Throw '*parsing failed*'
+        Test-Path -LiteralPath $destination | Should -BeFalse
+    }
+}
+
+Describe 'Setup menu batch invocation' {
     It 'appends OOBE after all original commands preserving body bytes' {
         foreach ($phase in 'OOBE') {
             $path = Join-Path $TestDrive "$phase.cmd"
@@ -94,7 +133,9 @@ Describe 'Setup menu batch invocation' {
             $result = [IO.File]::ReadAllBytes($path)
             $text = [Text.Encoding]::GetEncoding(28591).GetString($result)
             $text | Should -Match ":: End RecastOSDCloud PreOOBE`r`n$"
-            $text | Should -Match 'OSDCloudPreOOBE.ps1'
+            $text | Should -Match 'Setup\\Modules\\OSDCloudPreOOBE\\OSDCloudPreOOBE.psd1'
+            $text | Should -Match 'Import-Module.*-ErrorAction Stop; exit \(OSDCloudPreOOBE\)'
+            $text | Should -Not -Match '-File'
             $text | Should -Not -Match '-Phase'
             $text | Should -Match 'Sysnative\\WindowsPowerShell'
             $text | Should -Match '-NoLogo -NoProfile -STA -ExecutionPolicy Bypass'
@@ -102,7 +143,7 @@ Describe 'Setup menu batch invocation' {
             $original = [byte[]]($body + $tail)
             [Convert]::ToBase64String($result[0..($original.Length - 1)]) |
                 Should -Be ([Convert]::ToBase64String($original))
-            $text.IndexOf('-File') | Should -BeGreaterThan $text.IndexOf('echo existing')
+            $text.IndexOf('-Command') | Should -BeGreaterThan $text.IndexOf('echo existing')
         }
     }
 
@@ -115,6 +156,66 @@ Describe 'Setup menu batch invocation' {
             [Convert]::ToBase64String([IO.File]::ReadAllBytes($path)) | Should -Be $first
             ([IO.File]::ReadAllText($path) -split ":: RecastOSDCloud PreOOBE").Count | Should -Be 2
         }
+    }
+
+    It 'executes the generated import command synchronously and propagates runtime status <Code>' -TestCases @(
+        @{ Code = 0 }, @{ Code = 7 }
+    ) {
+        param($Code)
+        $fakeWindows = Join-Path $TestDrive "Windows Module $Code"
+        $moduleRoot = Join-Path $fakeWindows 'Setup\Modules\OSDCloudPreOOBE'
+        New-Item -Path $moduleRoot -ItemType Directory -Force | Out-Null
+        $marker = Join-Path $fakeWindows 'Completed.txt'
+        $runtime = @'
+function Invoke-OSDCloudPreOOBE {
+    [CmdletBinding()]
+    param ()
+    Start-Sleep -Milliseconds 100
+    [IO.File]::WriteAllText((Join-Path $env:SystemRoot 'Completed.txt'), 'Completed')
+    return RETURN_CODE
+}
+Set-Alias OSDCloudPreOOBE Invoke-OSDCloudPreOOBE
+Export-ModuleMember -Function Invoke-OSDCloudPreOOBE -Alias OSDCloudPreOOBE
+'@
+        [IO.File]::WriteAllText((Join-Path $moduleRoot 'OSDCloudPreOOBE.psm1'), $runtime.Replace('RETURN_CODE', [string]$Code))
+        [IO.File]::WriteAllText((Join-Path $moduleRoot 'OSDCloudPreOOBE.psd1'),
+            "@{ RootModule = 'OSDCloudPreOOBE.psm1'; ModuleVersion = '1.0.0'; FunctionsToExport = 'Invoke-OSDCloudPreOOBE'; AliasesToExport = 'OSDCloudPreOOBE' }")
+        $path = Join-Path $fakeWindows 'OOBE.cmd'
+        Write-OSDCloudSetupMenuScript -Path $path -Phase OOBE
+        $line = [IO.File]::ReadAllLines($path) | Where-Object { $_.StartsWith('"%OSDCloudOOBEPowerShell%" ') }
+        $start = [Diagnostics.ProcessStartInfo]::new()
+        $start.FileName = (Get-Process -Id $PID).Path
+        $start.Arguments = $line.Substring('"%OSDCloudOOBEPowerShell%" '.Length)
+        $start.Arguments = $start.Arguments.Replace('-Command "', '-Command "$env:SystemRoot = ' + "'$fakeWindows'; ")
+        $start.UseShellExecute = $false
+        $process = [Diagnostics.Process]::Start($start)
+        try {
+            $process.WaitForExit()
+            $process.ExitCode | Should -Be $Code
+            [IO.File]::ReadAllText($marker) | Should -Be 'Completed'
+        }
+        finally { $process.Dispose() }
+    }
+
+    It 'fails explicitly when the generated import command cannot find its module' {
+        $path = Join-Path $TestDrive 'MissingModuleOOBE.cmd'
+        Write-OSDCloudSetupMenuScript -Path $path -Phase OOBE
+        $line = [IO.File]::ReadAllLines($path) | Where-Object { $_.StartsWith('"%OSDCloudOOBEPowerShell%" ') }
+        $start = [Diagnostics.ProcessStartInfo]::new()
+        $start.FileName = (Get-Process -Id $PID).Path
+        $start.Arguments = $line.Substring('"%OSDCloudOOBEPowerShell%" '.Length)
+        $fakeWindows = Join-Path $TestDrive 'No Windows Module'
+        $start.Arguments = $start.Arguments.Replace('-Command "', '-Command "$env:SystemRoot = ' + "'$fakeWindows'; ")
+        $start.UseShellExecute = $false
+        $start.RedirectStandardError = $true
+        $process = [Diagnostics.Process]::Start($start)
+        try {
+            $errorText = $process.StandardError.ReadToEnd()
+            $process.WaitForExit()
+            $process.ExitCode | Should -Be 1
+            $errorText | Should -Match 'OSDCloudPreOOBE.psd1'
+        }
+        finally { $process.Dispose() }
     }
 
     It 'moves a legacy OOBE block to the end without duplicating it' {

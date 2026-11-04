@@ -103,10 +103,14 @@ account. No additional configuration is needed.
 ## OSDCloudPreOOBE automated tasks (recast-winui-dark)
 
 Only the two `recast-winui-dark` tasks enable `step-update-preoobe`. During WinPE
-deployment it bundles [OSDCloudPreOOBE.ps1](../OSDCloud/core/preoobe/OSDCloudPreOOBE.ps1)
-and its source components into a single standalone script in
-`C:\Windows\Setup\Scripts` and **appends** a synchronous invocation as the last
-block in `OOBE.cmd`, after the original commands.
+deployment it copies the entire standalone
+[OSDCloudPreOOBE module](../OSDCloud/modules/OSDCloudPreOOBE) folder to
+`C:\Windows\Setup\Modules\OSDCloudPreOOBE` and **appends** a synchronous import
+and launch as the last block in `C:\Windows\Setup\Scripts\OOBE.cmd`, after the
+original commands. The module exports `Invoke-OSDCloudPreOOBE` and its launch alias
+`OSDCloudPreOOBE`; implementation helpers remain private. Import alone does not
+open the window or run tasks. No standalone runtime is generated in Setup\Scripts,
+and the old `core\preoobe` script path is no longer supported.
 No interactive invocation is added to `SetupComplete.cmd`: that hook is noninteractive.
 Staging removes a previously managed SetupComplete menu block if present, leaving
 all other content unchanged and not creating a missing SetupComplete script.
@@ -122,13 +126,18 @@ The batch invocation selects native Windows PowerShell (using Sysnative when
 needed) and runs the equivalent of:
 
 ```cmd
-"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File "%SystemRoot%\Setup\Scripts\OSDCloudPreOOBE.ps1"
+"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -Command "try { Import-Module -Name (Join-Path $env:SystemRoot 'Setup\Modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1') -ErrorAction Stop; exit (OSDCloudPreOOBE) } catch { Write-Error -ErrorRecord $_ -ErrorAction Continue; exit 1 }"
 ```
+
+The explicit manifest path avoids any dependence on `PSModulePath`. The launch
+command returns a numeric status without exiting its caller; the batch-launched
+PowerShell host converts that status to a process exit code. Import errors also
+produce a nonzero exit code for the existing batch failure logging.
 
 ### Automatic sequence
 
 The title is **Recast Software - OSDCloud PreOOBE** followed by the OSDCloud module
-version (stamped into the staged script). On start it logs the running OS date, time and
+version (stamped into the copied module manifest). On start it logs the running OS date, time and
 time zone, then waits: nothing runs until the technician selects **Start**, so the
 sequence can be presented in demos. Each task then shows a **Starting in 10 seconds**
 countdown before it runs, giving clock changes time to apply and the technician time
@@ -144,7 +153,7 @@ Tasks run in this order:
 
 1. **Driver unpack / install**: runs first because the OEM drivers may be required
    for network connectivity and time sync. The opted-in driver-download step stages
-   `OSDCloudPreOOBE.DriverPack.json` beside the runtime instead of appending Lenovo
+   `C:\Windows\Setup\Scripts\OSDCloudPreOOBE.DriverPack.json` instead of appending Lenovo
    or Surface installation commands to SetupComplete. The engine validates the local
    package path, manufacturer, extension, size and SHA-256 before execution.
    Lenovo uses the existing `/SILENT /SUPPRESSMSGBOXES` extraction method with
@@ -288,8 +297,9 @@ reboot requirements, technician Start/skip selections and final exit.
 `OSDCloudPreOOBE-results.json` records terminal task outcomes; `PreOOBE-*.stdout.log`,
 `PreOOBE-*.stderr.log` and Surface MSI logs preserve installer diagnostics.
 Setup's own logs can be consulted to establish the actual hook/order.
-SYSTEM alone does not imply a visible desktop. If necessary, the script launches
-itself as SYSTEM in the active console session and attaches to that session's
+SYSTEM alone does not imply a visible desktop. If necessary, the runtime launches
+a SYSTEM child that imports the same on-disk module in the active console session
+and attaches to that session's
 input desktop before loading WPF. It does not force a desktop switch, log on a
 user, or change OOBE configuration. A child that cannot acknowledge a
 rendered window on the console input desktop within 60 seconds fails instead of leaving an invisible menu blocking
@@ -300,7 +310,14 @@ if Windows subsequently changes desktops. The menu does not force a desktop swit
 For an inert **local console** preview, use:
 
 ```powershell
-powershell.exe -NoLogo -NoProfile -STA -File .\OSDCloud\core\preoobe\OSDCloudPreOOBE.ps1 -Preview
+powershell.exe -NoLogo -NoProfile -STA -Command "Import-Module .\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop; exit (OSDCloudPreOOBE -Preview)"
+```
+
+From an existing Windows PowerShell 5.1 STA console, the equivalent is:
+
+```powershell
+Import-Module .\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop
+Invoke-OSDCloudPreOOBE -Preview
 ```
 
 Preview simulates the sequence (including Start, step checkboxes and Continue to OOBE)
@@ -315,8 +332,10 @@ the actual SYSTEM hook on disposable AMD64 and ARM64 Windows 11 installations:
 the menu must be visible and keyboard/mouse interactive, setup must wait while
 it is open, both shells must work, and closing with shells still open must allow
 setup to proceed normally. Also test missing assets and unavailable desktops.
-Confirm the engine runs after original OOBE commands and that SetupComplete has
-no managed menu invocation. Verify date, time and time zone changes and normal continuation.
+Confirm the complete module is present under `C:\Windows\Setup\Modules\OSDCloudPreOOBE`
+with the deployment version in its manifest. Verify the OOBE hook imports that
+manifest and runs after original OOBE commands, and that SetupComplete has no
+managed menu invocation. Verify date, time and time zone changes and normal continuation.
 Test both update actions on disposable Windows 11 devices with working network
 access, including no-updates results, failures, reboot-required results, cancellation
 and menu closure during an update. Local mocks/preview do not verify actual WUA
@@ -325,7 +344,8 @@ Validate real Lenovo/Surface installation, offline skips and safe cancellation.
 Validate trusted application packages from both search roots, unchecked skips,
 missing/removable media, installer failures, reboot-required results, and closure
 during installation. Use package logs alongside the application stdout/stderr logs.
-Collect `OSDCloudPreOOBE.log`, results/installer logs, the staged `OOBE.cmd` and `SetupComplete.cmd`,
+Collect `OSDCloudPreOOBE.log`, results/installer logs, the staged module manifest,
+`OOBE.cmd` and `SetupComplete.cmd`,
 `C:\Windows\Panther\setupact.log`, and
 `C:\Windows\Panther\UnattendGC\setupact.log` if a menu does not appear or setup
 does not continue. SetupComplete can be disabled by Windows for OEM product keys
