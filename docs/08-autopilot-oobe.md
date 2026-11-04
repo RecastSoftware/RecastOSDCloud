@@ -238,11 +238,11 @@ uses `Liquit-Universal-Agent-Win-4.5.4374.7448.exe` instead of
 | `Name` | No | Nonempty display name; defaults to the folder name |
 | `Arguments` | No | Literal command-line string; defaults to no arguments |
 | `DefaultSelected` | No | JSON boolean; defaults to `true`. `false` starts unchecked, but the technician can check it before it is reached |
-| `CopyToLocal` | No | JSON boolean; defaults to `false`. `true` copies the whole application folder to a new `C:\Windows\Temp\OSDCloudPreOOBE\Applications\<folder>-<id>` folder and runs from it |
+| `CopyToLocal` | No | JSON boolean; defaults to `false`. `true` copies the whole application folder to `C:\Windows\Temp\OSDCloudOOBE\<folder>` (with a numeric suffix if that path already exists) and runs from it |
 | `Conditions` | No | Object containing the supported condition fields below; omitted or empty means all devices |
 
 Use `CopyToLocal` for installers that must run from the local disk or unpack
-beside themselves, for example from a read-only USB drive:
+beside themselves, for example from an ISO or read-only USB drive:
 
 ```json
 {
@@ -259,8 +259,13 @@ The copy happens only when the task runs, never during discovery or preview.
 Each run gets a new folder, which becomes both the executable root and working
 directory, so relative arguments resolve within the copy. Packages containing
 reparse points are refused and copy failures fail the task without launching
-the installer. Copied content is kept for troubleshooting; it may contain
-certificates or configuration, so remove it after deployment if required.
+the installer. Read-only attributes are removed recursively from the copied files
+and folders before installation; source attributes and other copied attributes
+are preserved. Copies and installer-created files persist in Temp after both
+successful and failed installations. Later runs use short numeric suffixes
+(`My App-2`, `My App-3`) rather than overwriting or deleting earlier copies.
+Copied content may contain certificates or configuration; any cleanup after
+deployment must be performed separately.
 
 Optional conditions hide applications that do not match:
 
@@ -305,6 +310,19 @@ Only deploy trusted packages and manifests: selected commands run as SYSTEM.
 Keep credentials out of manifests and arguments; package stdout/stderr may
 contain installer-specific sensitive data. This manifest is not a signature
 verification or sandbox mechanism.
+
+While a selected application runs, its stdout and stderr appear live in the
+PreOOBE output box (refreshed about every 250 ms), so you don't need to open
+the log files during OOBE. Lines are prefixed with the task label, for example
+`Application Workspace [D:]: <line>` and
+`Application Workspace [D:] [stderr]: <line>`, and are also written to
+`OSDCloudPreOOBE.log`. Blank lines are skipped, lines longer than 1,000
+characters are truncated, and the output box keeps about the most recent
+5,000 lines. The `PreOOBE-*-App.stdout.log` and `PreOOBE-*-App.stderr.log`
+files remain the complete record. Output is read as UTF-8 unless the file
+starts with a byte-order mark, so installers that write another code page may
+show garbled characters on screen. Live output covers custom applications
+only; the OEM driver pack task is unchanged.
 
 Before deploying, verify discovery and the initial checkbox in `-Preview`
 (see the preview instructions below). Preview does not launch the installer.
@@ -431,7 +449,8 @@ identity/session/desktop, package validation, task transitions/durations, connec
 failures, process IDs/exit codes, WUA identities/results/HRESULTs, cancellation,
 reboot requirements, technician Start/skip selections and final exit.
 `OSDCloudPreOOBE-results.json` records terminal task outcomes; `PreOOBE-*.stdout.log`,
-`PreOOBE-*.stderr.log` and Surface MSI logs preserve installer diagnostics.
+`PreOOBE-*.stderr.log` and Surface MSI logs preserve installer diagnostics;
+application stdout/stderr lines are also echoed to the window and the main log.
 Setup's own logs can be consulted to establish the actual hook/order.
 SYSTEM alone does not imply a visible desktop. If necessary, the runtime launches
 a SYSTEM child that imports the same on-disk module in the active console session
