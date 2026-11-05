@@ -11,16 +11,24 @@ image with OSDCloud Boot. Older runtimes reject the new profile section.
 
 ## Require a password to start a profile
 
-The builder's **OSDCloud BootMenu Profiles** card has an overflow menu for a
-single selected profile:
+The builder's **OSDCloud BootMenu Profiles** table lists in-module **Recast**
+profiles first, followed by **Custom** profiles stored under ProgramData.
+The first **Enable** column controls which profiles are included in the build,
+independently of the selected row. Profile names, sources, and boot-source
+requirements (**WinPE**, **WinRE**, or either) have separate columns;
+full paths remain available as row tooltips. Selected rows expose an overflow
+button, and right-click or the keyboard context-menu key opens the row menu:
 
 - **View** opens a read-only JSON preview.
 - **Clone** copies any profile and its supporting files into OSDeployCore.
+- **Open Folder** opens any profile's folder in Explorer.
+- **Rename** changes a Custom profile's display name (`info.name`), preserving
+  its folder, GUID, password, and enabled state. Recast profiles cannot be renamed.
 - **Edit in VS Code** is available only for editable OSDeployCore profiles,
   never built-in module profiles.
-- **Set Password** requests and confirms a masked password. For a built-in
-  profile, it then asks for a clone name and protects that copy, leaving the
-  original unchanged.
+- **Set Password** requests and confirms a masked password for a Custom profile.
+  It is disabled for Recast profiles. Clone a Recast profile first, then set a
+  password on the Custom copy; module content is never modified.
 
 Set Password writes an authenticated `OSDBS1:` token to the optional top-level
 `password` property. It does not store the password itself. Selecting or
