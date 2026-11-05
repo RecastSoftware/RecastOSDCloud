@@ -100,11 +100,144 @@ reboot — OOBE finds the profile.
 Just deploy. OOBE walks the operator through region, keyboard, network,
 account. No additional configuration is needed.
 
-## OSDCloudPreOOBE automated tasks (recast-winui-dark)
+## OSDCloudSetupComplete silent scripts (recast)
 
-Only the two `recast-winui-dark` tasks enable `step-update-preoobe`. During WinPE
+The two `recast` tasks enable `step-update-setupcomplete`. During
+WinPE deployment it validates and copies the standalone
+[OSDCloudSetupComplete module](../OSDCloud/core/modules/OSDCloudSetupComplete)
+to `C:\Windows\Setup\Modules\OSDCloudSetupComplete`, stamps its version from
+OSDCloud, and appends a synchronous, noninteractive invocation to
+`C:\Windows\Setup\Scripts\SetupComplete.cmd`.
+
+The hook explicitly imports the staged manifest and calls
+`Invoke-OSDCloudSetupComplete`. Import alone is inert; the runtime has no
+dependency on the parent OSDCloud module or PowerShell 7. It requires SYSTEM
+in full Windows using inbox Windows PowerShell 5.1, with AMD64 and ARM64
+native PowerShell selected by the hook. There is no GUI, Start button,
+confirmation, driver/update task, or automatic reboot.
+
+Existing batch commands, including OEM driver commands, remain before the
+appended hook. Repeated staging replaces only the new runner's managed block.
+Its markers are distinct from the legacy SetupComplete menu markers removed
+by PreOOBE staging. Early `exit` or `goto :eof` commands are preserved and
+warned about; they may prevent the appended runner from executing.
+
+### Package discovery and configuration
+
+The runtime searches immediate package folders in this order:
+
+1. `%SystemRoot%\Setup\SetupComplete`
+2. `A:\OSDCloud\core\SetupComplete` through `Z:\OSDCloud\core\SetupComplete`
+
+Folders are sorted by name within each root. Prefix names with numbers to
+control order within that root. Identically named folders on different drives
+are separate packages; all eligible packages run sequentially.
+
+Each package requires `OSDCloudSetupComplete.json`. Folders without this file
+are logged and skipped; no arbitrary script or PSADT fallback is used.
+
+```text
+G:\OSDCloud\core\SetupComplete\010-ConfigureAgent\
+    OSDCloudSetupComplete.json
+    ConfigureAgent.ps1
+    AgentSettings.json
+```
+
+```json
+{
+    "Version": 1,
+    "Name": "Configure agent",
+    "Script": "ConfigureAgent.ps1",
+    "Arguments": "-SettingsFile \"AgentSettings.json\"",
+    "Enabled": true,
+    "CopyToLocal": false,
+    "Conditions": {
+        "ComputerManufacturer": "Dell*",
+        "ComputerModel": ["Latitude*", "Precision*"],
+        "OSArchitecture": ["amd64", "arm64"]
+    }
+}
+```
+
+| Field | Required | Behavior |
+|---|---|---|
+| `Version` | Yes | Integer `1` |
+| `Script` | Yes | Existing `.ps1` filename directly inside the package folder; no directory components |
+| `Name` | No | Nonempty label; defaults to the folder name |
+| `Arguments` | No | Literal single-line Windows command-line string; defaults to no arguments |
+| `Enabled` | No | Boolean, defaults to `true`; false logs a skip |
+| `CopyToLocal` | No | Boolean, defaults to `false`; copies the entire package before execution |
+| `Conditions` | No | Same manufacturer/model/native architecture conditions as PreOOBE |
+
+Conditions use AND across fields, OR across strings in an array, and
+case-insensitive manufacturer/model wildcards. `OSArchitecture` accepts `amd64`
+or `arm64`, based on the installed OS rather than an emulated process.
+Disabled packages and condition nonmatches are skips. Invalid configurations,
+missing scripts, unavailable required device facts, rooted/escaping paths,
+alternate streams, and reparse points along the entry-script path are failures.
+Other packages and roots are still processed.
+
+The actual `.ps1` runs in a separate `-NoProfile -NonInteractive -File` Windows
+PowerShell process. Both `$PSScriptRoot` and the working directory are the package
+folder. Use `Join-Path $PSScriptRoot 'AgentSettings.json'` to access supporting
+content. Arguments are not evaluated as PowerShell expressions. Quote values
+containing spaces with JSON escaping, as shown above.
+
+With `CopyToLocal: true`, the whole folder is copied to
+`%SystemRoot%\Temp\OSDCloudSetupComplete\<FolderName>`; later copies use `-2`,
+`-3`, etc. Script root and working directory then point to the copy. Read-only
+attributes are cleared only on the copied content. Packages with reparse points
+in supporting content are refused before copying. Copies remain after success
+or failure and are not automatically cleaned up.
+
+The staging step copies the module, not external packages. Keep drive-hosted
+packages attached and accessible during Windows Setup, or separately stage
+them under the local Windows package root.
+
+Five numbered manifest templates, a harmless companion script, and supporting
+JSON are provided in the module's
+[example directory](../OSDCloud/core/modules/OSDCloudSetupComplete/files).
+The [packaging instructions](../OSDCloud/core/modules/OSDCloudSetupComplete/files/README.md)
+explain how to rename a chosen template to `OSDCloudSetupComplete.json`.
+Templates are not automatically discovered as tasks.
+
+### Failure handling, logs, and validation
+
+Scripts must run silently, wait for their own work, and never reboot. Use
+`$ErrorActionPreference = 'Stop'`, and check and propagate native installer/tool
+exit codes. A terminating error or explicit nonzero `exit` fails the child.
+PowerShell `-File` does not automatically fail for nonterminating errors or
+unchecked native failures. `-NonInteractive` prevents PowerShell prompts, but
+cannot make third-party GUI installers silent.
+
+Exit `0` succeeds; `3010` succeeds with a logged reboot requirement, without
+restarting Windows. Other exit codes and launch/copy/discovery failures set the
+overall result to `1`, but remaining packages continue. No failures, including
+no eligible packages, return `0`. The function returns an integer without
+exiting its caller; the batch-launched host converts it to a process exit code
+and logs invocation failures. Every invocation runs eligible packages again:
+write idempotent scripts. Concurrent runtime invocations are refused.
+
+Diagnostics append to
+`%SystemRoot%\Temp\osdcloud-logs\OSDCloudSetupComplete.log`. Each launched package
+has unique `SetupComplete-<GUID>.stdout.log` and `.stderr.log` files in the same
+directory, referenced in the runtime log with exit codes and elapsed time.
+Do not include credentials in configuration or output. Packages are trusted
+SYSTEM code, not sandboxed or signature-verified by this module.
+
+Windows controls the timing and availability of SetupComplete; some OEM product
+key scenarios suppress it. No scheduled-task fallback is installed, and no new
+ordering relative to the separate PreOOBE hook is guaranteed. Validate on
+disposable AMD64 and ARM64 deployments: verify the staged manifest and hook,
+script-root/content access, ordering, failure continuation, and retained logs.
+Mocked tests and local child-process tests do not establish that Windows Setup
+invokes the hook on a particular installation.
+
+## OSDCloudPreOOBE automated tasks (recast)
+
+Only the two `recast` tasks enable `step-update-preoobe`. During WinPE
 deployment it copies the entire standalone
-[OSDCloudPreOOBE module](../OSDCloud/modules/OSDCloudPreOOBE) folder to
+[OSDCloudPreOOBE module](../OSDCloud/core/modules/OSDCloudPreOOBE) folder to
 `C:\Windows\Setup\Modules\OSDCloudPreOOBE` and **appends** a synchronous import
 and launch as the last block in `C:\Windows\Setup\Scripts\OOBE.cmd`, after the
 original commands. The module exports `Invoke-OSDCloudPreOOBE` and its launch alias
@@ -112,8 +245,10 @@ original commands. The module exports `Invoke-OSDCloudPreOOBE` and its launch al
 open the window or run tasks. No standalone runtime is generated in Setup\Scripts,
 and the old `core\preoobe` script path is no longer supported.
 No interactive invocation is added to `SetupComplete.cmd`: that hook is noninteractive.
-Staging removes a previously managed SetupComplete menu block if present, leaving
+PreOOBE staging removes a previously managed SetupComplete menu block if present, leaving
 all other content unchanged and not creating a missing SetupComplete script.
+The separate `step-update-setupcomplete` step above installs the new silent
+script runner, not an interactive menu.
 Original batch content is preserved byte-for-byte, with a separating newline added
 if needed; repeated staging is idempotent. Earlier managed OOBE menu blocks are replaced.
 An original `exit` or `goto :eof` can bypass the appended engine; staging warns about
@@ -202,7 +337,9 @@ Tasks run in this order:
    applicable driver updates.
 5. **Custom applications**: when the window opens, discover immediate application
    folders containing `OSDCloudPreOOBE.json` or `Invoke-AppDeployToolkit.exe` under
-   `%SystemRoot%\Setup\PreOOBE` and `<drive>:\OSDCloud\PreOOBE` on A: through Z:.
+   `%SystemRoot%\Setup\PreOOBE` and `<drive>:\OSDCloud\core\PreOOBE` on A: through Z:.
+   The former drive-hosted `OSDCloud\PreOOBE` location is not searched or migrated;
+   the local `%SystemRoot%\Setup\PreOOBE` path is unchanged.
    Local applications appear first, followed by drive-hosted applications in
    drive-letter order; folders within each root are sorted by name.
    Each eligible application appears below **Updating Drivers**, checked by default
@@ -227,7 +364,7 @@ Put a file named **OSDCloudPreOOBE.json** beside your installer in an immediate
 application folder under one of the search roots above. For example:
 
 ```text
-G:\OSDCloud\PreOOBE\Workspace Agent\
+G:\OSDCloud\core\PreOOBE\Workspace Agent\
     OSDCloudPreOOBE.json
     AgentBootstrapper.exe
     AgentRegistration.cer
@@ -440,7 +577,11 @@ must still be corrected before a connection can succeed.
 The window opens 20 device-independent pixels inward from the top-left of the primary
 work area (reduced when needed to keep the window on-screen), with BootMenu-style
 caption controls and task progress. Output fills the available height with internal
-scrolling. The window stays topmost so ordinary
+scrolling. Multi-detail PreOOBE messages use separate lines for the primary status,
+timestamps, time zone, results and diagnostic paths instead of long combined lines.
+The first line remains the current status; all details are retained in the output
+and diagnostic log. Installer-provided text is not split at punctuation.
+The window stays topmost so ordinary
 Windows Setup windows cannot cover it; minimize it when working in a launched shell.
 
 - The title-bar **Shell** menu offers **CMD Prompt** and **Windows PowerShell**,
@@ -489,13 +630,13 @@ if Windows subsequently changes desktops. The menu does not force a desktop swit
 For an inert **local console** preview, use:
 
 ```powershell
-powershell.exe -NoLogo -NoProfile -STA -Command "Import-Module .\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop; exit (OSDCloudPreOOBE -Preview)"
+powershell.exe -NoLogo -NoProfile -STA -Command "Import-Module .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop; exit (OSDCloudPreOOBE -Preview)"
 ```
 
 From an existing Windows PowerShell 5.1 STA console, the equivalent is:
 
 ```powershell
-Import-Module .\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop
+Import-Module .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop
 Invoke-OSDCloudPreOOBE -Preview
 ```
 

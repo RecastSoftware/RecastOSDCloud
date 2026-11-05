@@ -22,6 +22,8 @@ a boot image and just want to deploy, start at [`04-deploy-windows.md`](04-deplo
 
 ## Function reference
 
+- [File locations](filelocations.md) - Searched paths, configuration inputs, and the purpose of each location.
+
 These how-tos focus on tasks. For cmdlet-by-cmdlet parameter reference
 see the available generated pages in [`../OSDCloud/docs/`](../OSDCloud/docs/).
 

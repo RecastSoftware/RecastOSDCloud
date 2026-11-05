@@ -53,15 +53,18 @@ the module; workflow OS choices and supported build mappings remain unchanged.
 
 Only the freshly validated catalog is also copied to online, writable USB volumes
 labeled **OSDCloud**, at
-`<USBDriveLetter>:\OSDCloud\catalogs\operatingsystems`. Missing destination folders
+`<USBDriveLetter>:\OSDCloud\core\operatingsystems`. Missing destination folders
 are created. Other drives are not copy destinations, and a failed USB copy warns
 without blocking copies to other eligible USB volumes.
 After each successful save, the updater displays the full catalog file path,
 identifying whether it was saved to the module or a USB volume. Failed writes
 and `-WhatIf` previews do not report a successful save.
 
-Catalog indexing checks this path on mounted drives, along with module and
-ProgramData catalogs. Reading cached catalogs does not require a license or
+Catalog indexing checks this path on mounted drives, along with module catalogs
+and `C:\ProgramData\OSDeployCore\OSDCloud\core\operatingsystems` (or the equivalent
+under `%ProgramData%`). The old `catalogs\operatingsystems` directories are no
+longer searched; existing data is not moved or deleted.
+Reading cached catalogs does not require a license or
 writable media. The latest revision per major build is used, with module catalogs
 preferred when an external catalog has the same revision.
 
