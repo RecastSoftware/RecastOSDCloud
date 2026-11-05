@@ -23,7 +23,7 @@ Describe 'step-update-preoobe' {
         step-update-preoobe
         Should -Invoke Save-OSDCloudPreOOBEModule -Times 1 -Exactly -ParameterFilter {
             $DestinationPath -eq 'C:\Windows\Setup\Modules\OSDCloudPreOOBE' -and
-            $SourcePath -like '*\modules\OSDCloudPreOOBE'
+            $SourcePath -like '*\core\modules\OSDCloudPreOOBE'
         }
         Should -Invoke Write-OSDCloudSetupMenuScript -Times 1 -Exactly -ParameterFilter {
             $Path -eq 'C:\Windows\Setup\Scripts\OOBE.cmd' -and $Phase -eq 'OOBE'
@@ -42,7 +42,7 @@ Describe 'step-update-preoobe' {
     }
 
     It 'reports missing assets without writing to the Windows image' {
-        Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\modules\OSDCloudPreOOBE' }
+        Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\core\modules\OSDCloudPreOOBE' }
         Mock Write-Warning {}
         step-update-preoobe
         Should -Invoke Write-Warning -Times 1 -ParameterFilter { $Message -like '*source is missing*' }
@@ -70,9 +70,9 @@ Describe 'step-update-preoobe' {
 Describe 'PreOOBE module staging' {
     BeforeEach {
         $package = Join-Path $TestDrive ([guid]::NewGuid().ToString('N'))
-        $source = Join-Path $package 'modules\OSDCloudPreOOBE'
+        $source = Join-Path $package 'core\modules\OSDCloudPreOOBE'
         New-Item -Path (Split-Path $source) -ItemType Directory -Force | Out-Null
-        Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\..\..\modules\OSDCloudPreOOBE') -Destination $source -Recurse
+        Copy-Item -LiteralPath (Join-Path $PSScriptRoot '..\..\..\core\modules\OSDCloudPreOOBE') -Destination $source -Recurse
         [IO.File]::WriteAllText((Join-Path $package 'OSDCloud.psd1'), "@{ ModuleVersion = '26.11.3.7' }")
         $destination = Join-Path $package 'Windows Setup\Modules\OSDCloudPreOOBE'
     }
@@ -304,7 +304,7 @@ Export-ModuleMember -Function Invoke-OSDCloudPreOOBE -Alias OSDCloudPreOOBE
 
 Describe 'Dark workflow setup menu integration' {
     It 'enables the staging step exactly once before finalization in both tasks' {
-        $taskRoot = Join-Path $PSScriptRoot '..\..\..\workflow\recast-winui-dark\tasks'
+        $taskRoot = Join-Path $PSScriptRoot '..\..\..\workflow\recast\tasks'
         foreach ($name in 'osdcloud.json', 'osdcloud-nofirmware.json') {
             $task = Get-Content -LiteralPath (Join-Path $taskRoot $name) -Raw | ConvertFrom-Json
             $task.amd64 | Should -BeTrue
@@ -327,6 +327,6 @@ Describe 'Dark workflow setup menu integration' {
             $references = @(Get-ChildItem -LiteralPath $root -Filter '*.json' -Recurse -File |
                 Where-Object { (Get-Content -LiteralPath $_.FullName -Raw) -match '"command"\s*:\s*"step-update-preoobe"' })
             $references.Count | Should -Be 2
-            foreach ($file in $references) { $file.FullName | Should -Match '\\recast-winui-dark\\tasks\\' }
+            foreach ($file in $references) { $file.FullName | Should -Match '\\recast\\tasks\\' }
     }
 }

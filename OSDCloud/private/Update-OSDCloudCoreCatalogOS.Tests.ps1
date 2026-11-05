@@ -140,6 +140,11 @@ Describe 'Licensed OS catalog refresh and USB publication' {
     It 'copies only the updated catalog to multiple named USBs even if module content is unchanged' {
         Copy-Item (Join-Path $fixtureRoot 'products.xml') (Join-Path $catalogRoot "$identity.xml")
         Set-Content (Join-Path $catalogRoot '26100.1.260101-1200.xml') 'older'
+        foreach ($letter in 'F', 'G') {
+            $oldRoot = Join-Path $usbRoot "$letter\OSDCloud\catalogs\operatingsystems"
+            $null = New-Item $oldRoot -ItemType Directory -Force
+            Set-Content (Join-Path $oldRoot '26100.1.260101-1200.xml') 'do not migrate'
+        }
         $fixtureModule.SessionState.PSVariable.Set('volumes', @(
             [pscustomobject]@{ FileSystemLabel = 'OSDCloud'; DriveLetter = 'F' }
             [pscustomobject]@{ FileSystemLabel = 'OSDCloud'; DriveLetter = 'G' }
@@ -150,9 +155,11 @@ Describe 'Licensed OS catalog refresh and USB publication' {
         $result.Published | Should -BeFalse
         $result.DriveCatalogPaths.Count | Should -Be 2
         foreach ($letter in 'F', 'G') {
-            $files = @(Get-ChildItem "$usbRoot\$letter\OSDCloud\catalogs\operatingsystems" -File)
+            $files = @(Get-ChildItem "$usbRoot\$letter\OSDCloud\core\operatingsystems" -File)
             $files.Count | Should -Be 1
             $files[0].Name | Should -Be "$identity.xml"
+            Get-Content "$usbRoot\$letter\OSDCloud\catalogs\operatingsystems\26100.1.260101-1200.xml" |
+                Should -Be 'do not migrate'
             $savedPath = $files[0].FullName
             Should -Invoke Write-Host -ModuleName CatalogRefreshFixture -Times 1 -Exactly -ParameterFilter {
                 $Object -like '*Saving USB OS Catalog:*' -and $Object.EndsWith($savedPath)
@@ -195,7 +202,7 @@ Describe 'Licensed OS catalog refresh and USB publication' {
         $fixtureModule.SessionState.PSVariable.Set('volumes', @([pscustomobject]@{ FileSystemLabel = 'OSDCloud'; DriveLetter = 'F' }))
         $result = Update-OSDCloudCoreCatalogOS -MinimumItemCount 2 -Confirm:$false
         $result.DriveCatalogPaths.Count | Should -Be 0
-        Test-Path "$usbRoot\F\OSDCloud\catalogs" | Should -BeFalse
+        Test-Path "$usbRoot\F\OSDCloud\core\operatingsystems" | Should -BeFalse
         Get-Content (Join-Path $existingFolder.FullName 'existing.txt') | Should -Be 'preserve'
     }
 

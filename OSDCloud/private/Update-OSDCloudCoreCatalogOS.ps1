@@ -15,7 +15,7 @@ function Update-OSDCloudCoreCatalogOS {
 		Publishes the validated catalog to the module operating system catalog directory using
 		the build and release timestamp from its ESD filenames, for example
 		26200.9457.260913-0221.xml. The catalog is also copied to
-		OSDCloud\catalogs\operatingsystems on each writable, online USB volume labeled
+		OSDCloud\core\operatingsystems on each writable, online USB volume labeled
 		OSDCloud, creating missing folders. Only the downloaded catalog is synchronized.
 		Existing module catalogs remain in place, and an existing module
 		catalog name is never overwritten with different content.
@@ -380,7 +380,7 @@ function Update-OSDCloudCoreCatalogOS {
 				Write-Warning "[$(Get-Date -format s)] [$functionName] Unable to inspect OSDCloud USB volume '$($drive.DriveLetter):': $($_.Exception.Message)"
 				continue
 			}
-			$driveCatalogDirectory = Join-Path "$($drive.DriveLetter):\" 'OSDCloud\catalogs\operatingsystems'
+			$driveCatalogDirectory = Join-Path "$($drive.DriveLetter):\" 'OSDCloud\core\operatingsystems'
 			$driveCatalogPath = Join-Path $driveCatalogDirectory $destinationName
 			if (-not $PSCmdlet.ShouldProcess($driveCatalogPath, 'Synchronize the OS catalog')) {
 				continue

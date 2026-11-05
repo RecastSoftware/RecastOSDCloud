@@ -61,14 +61,14 @@ function Initialize-ModuleCoreOperatingSystems {
 
     $externalCatalogPaths = @()
     if (-not [string]::IsNullOrWhiteSpace($env:ProgramData)) {
-        $externalCatalogPaths += Join-Path -Path $env:ProgramData -ChildPath 'OSDeployCore\OSDCloud\catalogs\operatingsystems'
+        $externalCatalogPaths += Join-Path -Path $env:ProgramData -ChildPath 'OSDeployCore\OSDCloud\core\operatingsystems'
     }
-    $externalCatalogPaths += 'C:\ProgramData\OSDeployCore\OSDCloud\catalogs\operatingsystems'
+    $externalCatalogPaths += 'C:\ProgramData\OSDeployCore\OSDCloud\core\operatingsystems'
 
     $driveCatalogPaths = Get-PSDrive -PSProvider FileSystem -ErrorAction SilentlyContinue |
     Where-Object { $_.Root -match '^[A-Z]:\\$' } |
     ForEach-Object {
-        Join-Path -Path $_.Root -ChildPath 'OSDCloud\catalogs\operatingsystems'
+        Join-Path -Path $_.Root -ChildPath 'OSDCloud\core\operatingsystems'
     }
     $externalCatalogPaths += $driveCatalogPaths
 

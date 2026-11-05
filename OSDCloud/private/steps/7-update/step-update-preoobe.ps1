@@ -9,7 +9,7 @@ function step-update-preoobe {
         return
     }
     try {
-        $source = Join-Path $PSScriptRoot '..\..\..\modules\OSDCloudPreOOBE'
+        $source = Join-Path $PSScriptRoot '..\..\..\core\modules\OSDCloudPreOOBE'
         $scriptsPath = 'C:\Windows\Setup\Scripts'
         if (-not (Test-Path -LiteralPath $source -PathType Container)) {
             throw "PreOOBE module source is missing: $source"
@@ -86,7 +86,7 @@ function Save-OSDCloudPreOOBEModule {
         [void][Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$tokens, [ref]$parseErrors)
         if ($parseErrors) { throw "PreOOBE parsing failed in $($file.Name): $($parseErrors.Message -join '; ')" }
     }
-    $parentManifest = Join-Path $SourcePath '..\..\OSDCloud.psd1'
+    $parentManifest = Join-Path $SourcePath '..\..\..\OSDCloud.psd1'
     $version = [string](Import-PowerShellDataFile -LiteralPath $parentManifest -ErrorAction Stop).ModuleVersion
     if ($version -notmatch '^\d+(\.\d+){1,3}$') { throw "Invalid OSDCloud module version: $version" }
     [void][version]::Parse($version)

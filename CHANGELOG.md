@@ -4,9 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## Unreleased
 
+### Changed
+
+- Rename the `recast-winui-dark` workflow to `recast`. Use `Deploy-OSDCloud -WorkflowName recast`; deployment settings and task behavior are unchanged.
+- Store USB and ProgramData OS catalogs under `OSDCloud\core\operatingsystems`, discover drive-hosted PreOOBE applications under `OSDCloud\core\PreOOBE`, and discover BootMenu Profiles under `OSDCloud\core\bootmenu-profiles`. Existing data is not migrated.
+- Move bundled standalone modules from `OSDCloud\modules` to `OSDCloud\core\modules` and update PreOOBE and Boot image staging paths.
+
 ### Fixed
 
-- Fix keyboard navigation in the `recast-winui-dark` deployment GUI: focus Start initially, use a text-only default Start button, and allow Tab/Shift+Tab through settings and actions. The status bar now shows manufacturer, model and product.
+- Fix keyboard navigation in the `recast` deployment GUI: focus Start initially, use a text-only default Start button, and allow Tab/Shift+Tab through settings and actions. The status bar now shows manufacturer, model and product.
 - Synchronize internet time before HTTPS probes and updates, so an incorrect clock does not block certificate validation. Log clock corrections and time-source failures without changing the time zone or bypassing TLS validation.
 - Fix PreOOBE internet time sync and the Date, Time & TimeZone dialog setting the clock to the UTC value as local time. Windows PowerShell `Set-Date` ignores `DateTimeKind`, so both now apply local time in the running OS time zone.
 - PreOOBE logs the running OS date, time and time zone at start, shows them in the status bar using the OS locale, waits with a `Starting in 10 seconds` countdown before each task, and pauses after an Updating Windows 11 failure so the clock can be corrected before Retry or Continue.
@@ -17,12 +23,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- PreOOBE discovers custom PSAppDeployToolkit applications in `%SystemRoot%\Setup\PreOOBE` and each drive's `OSDCloud\PreOOBE` folder. Checked application tasks run silently after Updating Drivers; drive-hosted names include the drive letter, and unchecked tasks are skipped.
+- Add the standalone `OSDCloudSetupComplete` module and `Invoke-OSDCloudSetupComplete` for sequential, noninteractive PowerShell packages with device conditions, optional local copying, and retained runtime/output logs. The two dark workflows stage its synchronous SetupComplete hook without changing PreOOBE. Includes five PreOOBE-style configuration examples; actual first-boot AMD64/ARM64 invocation still requires deployment validation.
+- PreOOBE discovers custom PSAppDeployToolkit applications in `%SystemRoot%\Setup\PreOOBE` and each drive's `OSDCloud\core\PreOOBE` folder. Checked application tasks run silently after Updating Drivers; drive-hosted names include the drive letter, and unchecked tasks are skipped.
 - Added OSDCloudPreOOBE automated OEM driver installation, Updating Windows 11 and Updating Drivers in the two existing dark task sequences, with update cancellation, connectivity-based offline skips, detailed task/installer diagnostics and a 15-second automatic completion countdown. Scripts and calendar tools move to the title bar. Wireless recovery is design-only for a future iteration.
 - OOBE's standalone menu now offers Windows 11 software and driver updates through inbox Windows Update Agent, with responsive progress, per-update failure/HRESULT reporting, safe cooperative cancellation and reboot-required reporting without automatic reboot.
-- Added a self-contained Windows PowerShell 5.1 technician menu at the end of `OOBE.cmd` in both `recast-winui-dark` tasks. It opens at the top-left with BootMenu-style caption controls and a title-bar Shell menu for CMD Prompt/Windows PowerShell, opens setup scripts in Notepad, and returns 0 when closed. It also provides Date, Time and TimeZone settings. Includes an embedded console-session launcher, explicit failure logging, and an inert preview. Actual first-boot behavior on AMD64 and ARM64 still requires deployment validation.
-- Added the `recast-mui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-mui-light`). It keeps the `recast-winui-dark` tasks, OS settings, single-page layout, and deployment behavior, restyled in the light Recast Portal look with Material Design 3 controls: an OSDCloud by Recast title bar, a navy announcement banner, white cards, outlined dropdowns with floating labels, and a blue Start button. The UI uses MaterialDesignInXamlToolkit 5.4.0 (MIT), bundled in `OSDCloud\types\materialdesign` for Windows PowerShell and PowerShell 7. If those assemblies cannot be loaded, the default workflow UI is shown instead.
-- Added the `recast-winui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-winui-light`). It is the `recast-winui-dark` single-page layout in a light theme: a white title bar and cards on a light gray background, navy text, Recast blue accents, and the OSDCloud by Recast logo.
+- Added a self-contained Windows PowerShell 5.1 technician menu at the end of `OOBE.cmd` in both `recast` tasks. It opens at the top-left with BootMenu-style caption controls and a title-bar Shell menu for CMD Prompt/Windows PowerShell, opens setup scripts in Notepad, and returns 0 when closed. It also provides Date, Time and TimeZone settings. Includes an embedded console-session launcher, explicit failure logging, and an inert preview. Actual first-boot behavior on AMD64 and ARM64 still requires deployment validation.
+- Added the `recast-mui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-mui-light`). It keeps the `recast` tasks, OS settings, single-page layout, and deployment behavior, restyled in the light Recast Portal look with Material Design 3 controls: an OSDCloud by Recast title bar, a navy announcement banner, white cards, outlined dropdowns with floating labels, and a blue Start button. The UI uses MaterialDesignInXamlToolkit 5.4.0 (MIT), bundled in `OSDCloud\types\materialdesign` for Windows PowerShell and PowerShell 7. If those assemblies cannot be loaded, the default workflow UI is shown instead.
+- Added the `recast-winui-light` workflow (`Deploy-OSDCloud -WorkflowName recast-winui-light`). It is the `recast` single-page layout in a light theme: a white title bar and cards on a light gray background, navy text, Recast blue accents, and the OSDCloud by Recast logo.
 
 ### Changed
 
@@ -32,8 +39,8 @@ All notable changes to this project will be documented in this file.
 - Stage the interactive menu only as the final OOBE.cmd block, removing legacy managed SetupComplete invocations. OOBE now offers clock and both update actions; update output fills the available height when resized.
 - Moved OOBE and SetupComplete shell shortcuts into a dark title-bar Shell dropdown matching the deployment GUI.
 - Setup menu titles identify their callers as `OSDCloud - OOBE.cmd` and `OSDCloud - SetupComplete.cmd`. Removed introductory technician/setup text for a minimal interface.
-- Renamed workflows: `refreshalt` is now `recast-winui-dark`, `recast` is now `recast-mui-light`, and `refresh` is now `recast-demo-01`. Use the new names with `Deploy-OSDCloud -WorkflowName`.
-- The `recast-winui-dark` deployment UI combines Device and Identity into a single collapsible bar, initially collapsed to leave more room for deployment settings.
+- Earlier workflow renames: `refreshalt` became `recast-winui-dark` (now `recast`), the former `recast` became `recast-mui-light`, and `refresh` became `recast-demo-01`.
+- The `recast` deployment UI combines Device and Identity into a single collapsible bar, initially collapsed to leave more room for deployment settings.
 
 ## 26.11.1 - November 1, 2026
 

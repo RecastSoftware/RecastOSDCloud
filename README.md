@@ -43,13 +43,13 @@ complete release notes and older history.
 ## Standalone BootMenu (development)
 
 BootMenu is bundled as a separate module in
-[OSDCloud/modules/OSDCloudBootMenu](OSDCloud/modules/OSDCloudBootMenu).
+[OSDCloud/core/modules/OSDCloudBootMenu](OSDCloud/core/modules/OSDCloudBootMenu).
 `Invoke-OSDCloudBootMenu` and `Test-OSDCloudBootMenu` are no longer exported by
 OSDCloud. Import the embedded module explicitly on a technician host:
 
 ```powershell
 Import-Module .\OSDCloud\OSDCloud.psd1
-Import-Module (Join-Path (Get-OSDCloudModulePath) 'modules\OSDCloudBootMenu\OSDCloudBootMenu.psd1')
+Import-Module (Join-Path (Get-OSDCloudModulePath) 'core\modules\OSDCloudBootMenu\OSDCloudBootMenu.psd1')
 Test-OSDCloudBootMenu -SampleProfiles
 ```
 
@@ -72,7 +72,8 @@ its private helpers, without rerunning
 `wpeinit`. IPConfig opens minimized; Wi-Fi setup is skipped when internet access
 is already detected. Synchronous utility failures are reported to the caller.
 
-Runtime profiles remain at `<drive>:\OSDCloud\bootmenu-profiles`; BootPack and
+Runtime profiles are discovered at `<drive>:\OSDCloud\core\bootmenu-profiles`;
+the old `<drive>:\OSDCloud\bootmenu-profiles` location is not searched or migrated. BootPack and
 `WinpeStartup\core`, `Drivers`, and `Files` content locations are unchanged.
 Licensed asset imports retain the existing Recast validity policy.
 Legacy `Invoke-WinpeStartup`, its helpers, defaults, and profiles are unchanged.
