@@ -61,7 +61,12 @@ InModuleScope OSDCloudPreOOBE {
             }
             $script:timeProbe.Local.ToUniversalTime() | Should -Be $script:timeProbe.Date.UtcDateTime
             Should -Invoke Set-TimeZone -Times 0 -Exactly
-            ($state.Messages.ToArray() -join "`n") | Should -BeLike "*Clock before:*internet UTC:*correction:*Setting local time*$([TimeZoneInfo]::Local.Id)*synchronized*"
+            $lines = $state.Messages.ToArray()
+            $lines | Should -Contain "Clock before: $(([datetime]'2020-01-01T00:00:00Z').ToUniversalTime().ToString('o'))"
+            $lines | Should -Contain "Internet UTC: $($script:timeProbe.Date.UtcDateTime.ToString('o'))"
+            @($lines | Where-Object { $_ -like 'Correction: * seconds.' }).Count | Should -Be 1
+            $lines | Should -Contain 'Internet time synchronized.'
+            $lines | Should -Contain "Time zone $([TimeZoneInfo]::Local.Id) unchanged."
         }
 
         It 'rejects missing, invalid or cached dates and redirects: <Case>' -TestCases @(

@@ -13,7 +13,7 @@ function Invoke-OSDCloudBootMenu {
         updates, script execution, and optional URL/command invocations.
         Startup output is transcribed to X:\Windows\Temp\osdcloudbootmenu.log.
 
-        Discovers only OSDCloud\bootmenu-profiles\<name>\osdcloudbootmenu.json on attached
+        Discovers only OSDCloud\core\bootmenu-profiles\<name>\osdcloudbootmenu.json on attached
         drives. Names and IDs come from info. osdcloudBoot contains build-time
         requirements and module injection settings; osdcloudBootStartup controls
         runtime checks and startup/main/shutdown commands. Enabled osdcloudBootMenu

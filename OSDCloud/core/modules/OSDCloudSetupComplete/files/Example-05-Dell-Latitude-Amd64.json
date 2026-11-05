@@ -1,0 +1,12 @@
+{
+    "Version": 1,
+    "Name": "Example - Dell Latitude AMD64",
+    "Script": "Example-SetupComplete.ps1",
+    "Enabled": true,
+    "CopyToLocal": true,
+    "Conditions": {
+        "ComputerManufacturer": "Dell*",
+        "ComputerModel": ["Latitude 5*", "Latitude 7*"],
+        "OSArchitecture": "amd64"
+    }
+}

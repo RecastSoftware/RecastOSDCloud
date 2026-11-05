@@ -119,24 +119,43 @@ function Set-OOBEMenuClock {
 function Write-OOBEMenuUpdateStatus {
     <#
     .SYNOPSIS
-        Publishes update progress without accessing WPF from the worker.
+        Publishes update progress without accessing WPF from the worker
+
     .DESCRIPTION
-        Queues a message, updates the current status, and writes diagnostics.
+        Queues each message as a separate output line and writes diagnostics.
+        Uses the first message as the current status.
+
     .PARAMETER State
         Synchronized update state shared with the menu.
+
     .PARAMETER Message
-        Progress or error text.
+        One or more progress or error lines. Put the primary status first and
+        additional details on subsequent lines.
+
     .EXAMPLE
-        Write-OOBEMenuUpdateStatus -State $state -Message 'Searching for updates.'
+        PS> Write-OOBEMenuUpdateStatus -State $state -Message 'Searching for updates.'
+
+        Publishes one status line to the window and diagnostic log.
+
+    .INPUTS
+        None. This function does not accept pipeline input.
+
+    .OUTPUTS
+        None.
+
     .NOTES
+        Author:  David Segura
+        Company: Recast Software
+        Version: 1.0.0
+        Date:    2026-11-04
         Called on the update worker thread.
     #>
     [CmdletBinding()]
-    param ([Parameter(Mandatory)][hashtable]$State, [Parameter(Mandatory)][string]$Message)
+    param ([Parameter(Mandatory)][hashtable]$State, [Parameter(Mandatory)][string[]]$Message)
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] $Message"
-    $State.Status = $Message
-    $State.Messages.Enqueue($Message)
+    $State.Status = $Message[0]
+    foreach ($line in $Message) { $State.Messages.Enqueue($line) }
     Write-OOBEMenuLog -Message $Message
 }
 
@@ -214,7 +233,10 @@ function Invoke-OOBEMenuWindowsUpdate {
         Write-OOBEMenuUpdateStatus -State $State -Message "Searching for $Type updates."
         $search = $searcher.Search("IsInstalled=0 and IsHidden=0 and Type='$Type'")
         $owned.Add($search)
-        Write-OOBEMenuUpdateStatus -State $State -Message "WUA search result $($search.ResultCode); configured service selection $($searcher.ServerSelection)."
+        Write-OOBEMenuUpdateStatus -State $State -Message @(
+            "WUA search result: $($search.ResultCode)."
+            "Configured service selection: $($searcher.ServerSelection)."
+        )
         if ([int]$search.ResultCode -ne 2) {
             throw "Update search did not succeed (result $($search.ResultCode)); no updates were installed."
         }
@@ -241,7 +263,11 @@ function Invoke-OOBEMenuWindowsUpdate {
                 $itemObjects.Add($behavior)
                 $identity = $update.Identity
                 if ($identity) { $itemObjects.Add($identity) }
-                Write-OOBEMenuUpdateStatus -State $State -Message "Update $($index + 1): $($update.Title); identity $($identity.UpdateID); revision $($identity.RevisionNumber)."
+                Write-OOBEMenuUpdateStatus -State $State -Message @(
+                    "Update $($index + 1): $($update.Title)"
+                    "Identity: $($identity.UpdateID)"
+                    "Revision: $($identity.RevisionNumber)."
+                )
                 if ($update.Title -match 'Preview' -or $behavior.CanRequestUserInput) {
                     $skipped++
                     Write-OOBEMenuUpdateStatus -State $State -Message "Skipped: $($update.Title)"
@@ -257,7 +283,11 @@ function Invoke-OOBEMenuWindowsUpdate {
                 $itemObjects.Add($download)
                 $downloadResult = $download.GetUpdateResult(0)
                 $itemObjects.Add($downloadResult)
-                Write-OOBEMenuUpdateStatus -State $State -Message "Download results: overall $($download.ResultCode), individual $($downloadResult.ResultCode), HRESULT $('0x{0:X8}' -f ([long]$downloadResult.HResult -band 0xFFFFFFFFL)), content present $($update.IsDownloaded)."
+                Write-OOBEMenuUpdateStatus -State $State -Message @(
+                    "Download results: overall $($download.ResultCode), individual $($downloadResult.ResultCode)."
+                    "HRESULT: $('0x{0:X8}' -f ([long]$downloadResult.HResult -band 0xFFFFFFFFL))"
+                    "Content present: $($update.IsDownloaded)."
+                )
                 if ([int]$download.ResultCode -ne 2 -or [int]$downloadResult.ResultCode -ne 2 -or -not $update.IsDownloaded) {
                     $code = '0x{0:X8}' -f ([long]$downloadResult.HResult -band 0xFFFFFFFFL)
                     throw "Download failed (result $($downloadResult.ResultCode), HRESULT $code)."
@@ -271,7 +301,10 @@ function Invoke-OOBEMenuWindowsUpdate {
                 $itemObjects.Add($install)
                 $installResult = $install.GetUpdateResult(0)
                 $itemObjects.Add($installResult)
-                Write-OOBEMenuUpdateStatus -State $State -Message "Install results: overall $($install.ResultCode), individual $($installResult.ResultCode), reboot required $($install.RebootRequired -or $installResult.RebootRequired)."
+                Write-OOBEMenuUpdateStatus -State $State -Message @(
+                    "Install results: overall $($install.ResultCode), individual $($installResult.ResultCode)."
+                    "Reboot required: $($install.RebootRequired -or $installResult.RebootRequired)."
+                )
                 if ($install.RebootRequired -or $installResult.RebootRequired) { $State.RebootRequired = $true }
                 $code = '0x{0:X8}' -f ([long]$installResult.HResult -band 0xFFFFFFFFL)
                 if ([int]$install.ResultCode -ne 2 -or [int]$installResult.ResultCode -ne 2) {
@@ -372,7 +405,10 @@ function Sync-OSDCloudPreOOBETime {
         [void]$request.Headers.TryAddWithoutValidation('Cache-Control', 'no-cache, no-store')
         $response = $null
         try {
-            Write-OOBEMenuUpdateStatus -State $State -Message "Retrieving internet time from http://www.google.com (attempt $attempt, five-second timeout)."
+            Write-OOBEMenuUpdateStatus -State $State -Message @(
+                'Retrieving internet time from http://www.google.com'
+                "Attempt $attempt, five-second timeout."
+            )
             $pending = $client.SendAsync($request, [Net.Http.HttpCompletionOption]::ResponseHeadersRead)
             if (-not $pending.Wait(5000)) {
                 $client.CancelPendingRequests()
@@ -390,12 +426,25 @@ function Sync-OSDCloudPreOOBETime {
             $before = (Get-Date).ToUniversalTime()
             # Windows PowerShell Set-Date calls SetLocalTime and ignores Kind; convert UTC to the running OS time zone.
             $localTime = [datetime]::SpecifyKind([TimeZoneInfo]::ConvertTimeFromUtc($utcTime, $zone), [DateTimeKind]::Local)
-            Write-OOBEMenuUpdateStatus -State $State -Message "Clock before: $($before.ToString('o')); internet UTC: $($utcTime.ToString('o')); correction: $(($utcTime - $before).TotalSeconds) seconds."
-            Write-OOBEMenuUpdateStatus -State $State -Message "Setting local time $($localTime.ToString('F')) in time zone $($zone.Id) ($($zone.DisplayName))."
+            Write-OOBEMenuUpdateStatus -State $State -Message @(
+                "Clock before: $($before.ToString('o'))"
+                "Internet UTC: $($utcTime.ToString('o'))"
+                "Correction: $(($utcTime - $before).TotalSeconds) seconds."
+            )
+            Write-OOBEMenuUpdateStatus -State $State -Message @(
+                "Setting local time: $($localTime.ToString('F'))."
+                "Time zone: $($zone.Id)"
+                "Time zone display: $($zone.DisplayName)"
+            )
             Set-Date -Date $localTime -ErrorAction Stop | Out-Null
             $after = (Get-Date).ToUniversalTime()
             if ([Math]::Abs(($after - $utcTime).TotalSeconds) -gt 10) { throw "Clock verification failed; UTC after setting: $($after.ToString('o'))." }
-            Write-OOBEMenuUpdateStatus -State $State -Message "Internet time synchronized; UTC now $($after.ToString('o')), local $($after.ToLocalTime().ToString('F')). Time zone $($zone.Id) unchanged."
+            Write-OOBEMenuUpdateStatus -State $State -Message @(
+                'Internet time synchronized.'
+                "UTC now: $($after.ToString('o'))"
+                "Local now: $($after.ToLocalTime().ToString('F'))."
+                "Time zone $($zone.Id) unchanged."
+            )
             $State.Succeeded = $true
             $State.Outcome = 'Succeeded'
             return
@@ -468,7 +517,10 @@ function Test-OSDCloudPreOOBEConnectivity {
             $response = $request.GetAwaiter().GetResult()
             $content = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
             if ([int]$response.StatusCode -eq 200 -and $content.Trim() -eq 'Microsoft Connect Test') {
-                Write-OOBEMenuUpdateStatus -State $State -Message "Internet probe succeeded (attempt $attempt, $($watch.ElapsedMilliseconds) ms); checking HTTPS certificate validation."
+                Write-OOBEMenuUpdateStatus -State $State -Message @(
+                    "Internet probe succeeded (attempt $attempt, $($watch.ElapsedMilliseconds) ms)."
+                    'Checking HTTPS certificate validation.'
+                )
                 $tlsRequest = $client.GetAsync('https://sls.update.microsoft.com/', [Net.Http.HttpCompletionOption]::ResponseHeadersRead)
                 if (-not $tlsRequest.Wait(5000)) {
                     $client.CancelPendingRequests()
@@ -494,7 +546,11 @@ function Test-OSDCloudPreOOBEConnectivity {
             $client.Dispose()
             $handler.Dispose()
         }
-        Write-OOBEMenuUpdateStatus -State $State -Message "$reason Attempt $attempt, elapsed $($watch.ElapsedMilliseconds) ms; clock UTC $([datetime]::UtcNow.ToString('o'))."
+        Write-OOBEMenuUpdateStatus -State $State -Message @(
+            $reason
+            "Attempt $attempt, elapsed $($watch.ElapsedMilliseconds) ms."
+            "Clock UTC: $([datetime]::UtcNow.ToString('o'))."
+        )
     }
     if ($certificateError -and -not $NoDiagnostics -and -not $State.CancelRequested) {
         Write-OOBEMenuUpdateStatus -State $State -Message 'Certificate validation failed; starting TLS and clock troubleshooting.'
@@ -570,7 +626,11 @@ function Test-OSDCloudPreOOBEClockShift {
         foreach ($hours in 1, -1) {
             if ($State.CancelRequested) { break }
             $shifted = Set-OSDCloudPreOOBEUtcClock -UtcTime ($baseUtc.AddHours($hours) + $watch.Elapsed)
-            Write-OOBEMenuUpdateStatus -State $State -Message ("Clock test: shifted {0:+0;-0} hour; UTC now {1}, local {2}." -f $hours, $shifted.ToString('o'), $shifted.ToLocalTime().ToString('F'))
+            Write-OOBEMenuUpdateStatus -State $State -Message @(
+                ("Clock test: shifted {0:+0;-0} hour." -f $hours)
+                "UTC now: $($shifted.ToString('o'))"
+                "Local now: $($shifted.ToLocalTime().ToString('F'))."
+            )
             $result = Test-OSDCloudPreOOBEConnectivity -State $State -Attempts 1 -NoDiagnostics
             $status = if ($result.Connected) { 'connected' } else { "failed: $($result.Reason)" }
             $results.Add(("{0:+0;-0} hour {1}" -f $hours, $status))
@@ -588,7 +648,11 @@ function Test-OSDCloudPreOOBEClockShift {
     if ($State.CancelRequested) { return }
     $final = Test-OSDCloudPreOOBEConnectivity -State $State -Attempts 1 -NoDiagnostics
     $status = if ($final.Connected) { 'connected' } else { "failed: $($final.Reason)" }
-    Write-OOBEMenuUpdateStatus -State $State -Message "Clock test summary: $($results -join '; '); restored clock $status."
+    Write-OOBEMenuUpdateStatus -State $State -Message @(
+        'Clock test summary:'
+        $results
+        "Restored clock: $status."
+    )
     if (-not $final.Connected -and ($results -like '*connected')) {
         Write-OOBEMenuUpdateStatus -State $State -Message 'Clock test: connectivity works only with a shifted clock. Verify the system date, time and time zone using Shell.'
     }
@@ -911,7 +975,7 @@ function Get-OSDCloudPreOOBEApplication {
 
     .DESCRIPTION
         Searches immediate application folders under SystemRoot\Setup\PreOOBE,
-        then A: through Z: under OSDCloud\PreOOBE. OSDCloudPreOOBE.json takes
+        then A: through Z: under OSDCloud\core\PreOOBE. OSDCloudPreOOBE.json takes
         precedence over Invoke-AppDeployToolkit.exe and supplies a custom command,
         conditions and default selection. Nonmatches are hidden. Invalid packages
         and unreadable roots are reported without preventing later discovery.
@@ -943,7 +1007,7 @@ function Get-OSDCloudPreOOBEApplication {
     $roots = @([pscustomobject]@{ Path = (Join-Path $env:SystemRoot 'Setup\PreOOBE'); Drive = $null })
     $roots += foreach ($letter in 65..90) {
         $drive = "$([char]$letter):"
-        [pscustomobject]@{ Path = "$drive\OSDCloud\PreOOBE"; Drive = $drive }
+        [pscustomobject]@{ Path = "$drive\OSDCloud\core\PreOOBE"; Drive = $drive }
     }
     foreach ($root in $roots) {
         try {
@@ -1259,7 +1323,12 @@ function Invoke-OSDCloudPreOOBEApplication {
     $process = $null
     $tail = $null
     try {
-        Write-OOBEMenuUpdateStatus -State $State -Message "Installing application: $path; output $output; errors $errors. Waiting for safe completion."
+        Write-OOBEMenuUpdateStatus -State $State -Message @(
+            "Installing application: $path"
+            "Output: $output"
+            "Errors: $errors"
+            'Waiting for safe completion.'
+        )
         $label = if ($State.ApplicationName) { [string]$State.ApplicationName } else { [IO.Path]::GetFileName($path) }
         # Assign directly; emitting the queue from an if expression would unroll an empty queue to $null.
         $outputQueue = $State.ProcessOutput
@@ -1394,7 +1463,10 @@ function Invoke-OSDCloudPreOOBETask {
     }
     finally {
         $State.DurationMs = $watch.ElapsedMilliseconds
-        Write-OOBEMenuUpdateStatus -State $State -Message "$Type task $($State.Outcome), duration $($State.DurationMs) ms; reboot required $($State.RebootRequired)."
+        Write-OOBEMenuUpdateStatus -State $State -Message @(
+            "$Type task $($State.Outcome), duration $($State.DurationMs) ms."
+            "Reboot required: $($State.RebootRequired)."
+        )
     }
 }
 

@@ -1,0 +1,6 @@
+{
+    "Version": 1,
+    "Name": "Example - all devices",
+    "Script": "Example-SetupComplete.ps1",
+    "Enabled": true
+}

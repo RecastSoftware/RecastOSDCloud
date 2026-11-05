@@ -14,7 +14,7 @@ AfterAll {
 
 Describe 'Standalone BootMenu process isolation' {
     It 'keeps command ownership out of the parent manifest and all runtime files in the payload inventory' {
-        $parentManifest = Import-PowerShellDataFile (Join-Path $moduleRoot '..\..\OSDCloud.psd1')
+        $parentManifest = Import-PowerShellDataFile (Join-Path $moduleRoot '..\..\..\OSDCloud.psd1') -ErrorAction Stop
         $parentManifest.FunctionsToExport | Should -Not -Contain 'Invoke-OSDCloudBootMenu'
         $parentManifest.FunctionsToExport | Should -Not -Contain 'Test-OSDCloudBootMenu'
         $manifest = Import-PowerShellDataFile (Join-Path $moduleRoot 'OSDCloudBootMenu.psd1')

@@ -55,7 +55,7 @@ InModuleScope OSDCloudPreOOBE {
         It 'appends checked applications after drivers, passes their paths, and skips unchecked applications' {
             Mock Get-OSDCloudPreOOBEApplication {
                 [pscustomobject]@{ Name = 'Local App'; Path = 'C:\Windows\Setup\PreOOBE\Local App\Invoke-AppDeployToolkit.exe' }
-                [pscustomobject]@{ Name = 'USB App [G:]'; Path = 'G:\OSDCloud\PreOOBE\USB App\Invoke-AppDeployToolkit.exe' }
+                [pscustomobject]@{ Name = 'USB App [G:]'; Path = 'G:\OSDCloud\core\PreOOBE\USB App\Invoke-AppDeployToolkit.exe' }
             }
             $engine = New-OSDCloudPreOOBEState
             $engine.Started = $true
@@ -75,7 +75,7 @@ InModuleScope OSDCloudPreOOBE {
         It 'waits for an active application on close without requesting cancellation' {
             $engine.Started = $true
             $engine.Tasks[0].Type = 'Application'
-            $engine.Tasks[0] | Add-Member NoteProperty Path 'G:\OSDCloud\PreOOBE\App\Invoke-AppDeployToolkit.exe'
+            $engine.Tasks[0] | Add-Member NoteProperty Path 'G:\OSDCloud\core\PreOOBE\App\Invoke-AppDeployToolkit.exe'
             Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
             $engine.Worker.Handle.IsCompleted = $false
             $engine.CloseRequested = $true
@@ -90,16 +90,16 @@ InModuleScope OSDCloudPreOOBE {
 
         It 'skips default-unchecked applications but runs a rechecked custom command with its metadata' {
             $script:customCommand = [pscustomobject]@{
-                Executable = 'AgentBootstrapper.exe'; WorkingDirectory = 'G:\OSDCloud\PreOOBE\Agent'
+                Executable = 'AgentBootstrapper.exe'; WorkingDirectory = 'G:\OSDCloud\core\PreOOBE\Agent'
                 Arguments = '--certificate AgentRegistration.cer --startDeployment --wait'
             }
             Mock Get-OSDCloudPreOOBEApplication {
                 [pscustomobject]@{
-                    Name = 'Unchecked App'; Path = 'G:\OSDCloud\PreOOBE\Agent\AgentBootstrapper.exe'
+                    Name = 'Unchecked App'; Path = 'G:\OSDCloud\core\PreOOBE\Agent\AgentBootstrapper.exe'
                     DefaultSelected = $false; Command = $script:customCommand
                 }
                 [pscustomobject]@{
-                    Name = 'Rechecked App'; Path = 'G:\OSDCloud\PreOOBE\Agent\AgentBootstrapper.exe'
+                    Name = 'Rechecked App'; Path = 'G:\OSDCloud\core\PreOOBE\Agent\AgentBootstrapper.exe'
                     DefaultSelected = $false; Command = $script:customCommand
                 }
             }
@@ -114,7 +114,7 @@ InModuleScope OSDCloudPreOOBE {
             $engine.Tasks[5].Outcome | Should -Be Succeeded
             Should -Invoke Start-OOBEMenuUpdateWorker -Times 1 -Exactly -ParameterFilter {
                 $Type -eq 'Application' -and $State.ApplicationCommand -eq $script:customCommand -and
-                $State.ApplicationPath -eq 'G:\OSDCloud\PreOOBE\Agent\AgentBootstrapper.exe'
+                $State.ApplicationPath -eq 'G:\OSDCloud\core\PreOOBE\Agent\AgentBootstrapper.exe'
             }
         }
 
@@ -243,7 +243,10 @@ InModuleScope OSDCloudPreOOBE {
 
         It 'records the running OS date, time and time zone at start' {
             $engine.StartClock.TimeZoneId | Should -Be ([TimeZoneInfo]::Local.Id)
-            $engine.Output[0] | Should -BeLike "Running OS clock at start: *time zone $([TimeZoneInfo]::Local.Id)*"
+            $engine.Output[0] | Should -Be "Running OS clock at start: $($engine.StartClock.Local.ToString('F'))."
+            $engine.Output[1] | Should -Be "Time zone: $([TimeZoneInfo]::Local.Id) (UTC$($engine.StartClock.Local.ToString('zzz')))."
+            $engine.Output[2] | Should -Be "UTC at start: $($engine.StartClock.Utc.ToString('o'))."
+            $engine.Output[0..2] -join '' | Should -Not -Match ';'
         }
 
         It 'does not force cancel OEM installation when closing and skips remaining tasks' {
@@ -305,7 +308,7 @@ InModuleScope OSDCloudPreOOBE {
 
         It 'passes the application label to the worker for output prefixes' {
             $engine.Tasks = @([pscustomobject]@{
-                Type = 'Application'; Name = 'Agent [G:]'; Path = 'G:\OSDCloud\PreOOBE\Agent\Invoke-AppDeployToolkit.exe'
+                Type = 'Application'; Name = 'Agent [G:]'; Path = 'G:\OSDCloud\core\PreOOBE\Agent\Invoke-AppDeployToolkit.exe'
                 Command = $null; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null
             })
             Mock Start-OOBEMenuUpdateWorker { $script:sharedName = $State.ApplicationName; throw 'stop here' }
@@ -350,6 +353,16 @@ InModuleScope OSDCloudPreOOBE {
                 Messages = [Collections.Concurrent.ConcurrentQueue[string]]::new(); CancelRequested = $false
                 RebootRequired = $false; Succeeded = $false; Outcome = 'Pending'
             })
+        }
+
+        It 'publishes separate detail lines while keeping the primary status and literal semicolons intact' {
+            $lines = @('Installing application.', 'Output: C:\Tools; Cache\install.log', 'Waiting for safe completion.')
+            Write-OOBEMenuUpdateStatus -State $state -Message $lines
+            $state.Status | Should -Be $lines[0]
+            $state.Messages.ToArray() | Should -Be $lines
+            Should -Invoke Write-OOBEMenuLog -Times 1 -Exactly -ParameterFilter {
+                $Message.Count -eq 3 -and $Message[1] -eq 'Output: C:\Tools; Cache\install.log'
+            }
         }
 
         It 'skips updates without starting WUA when connectivity fails: <Reason>' -TestCases @(
@@ -537,7 +550,7 @@ InModuleScope OSDCloudPreOOBE {
         It 'focuses highlighted Start and tabs through every action and offscreen application in both directions' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {
-                    [pscustomobject]@{ Name = "Custom App $_"; Path = "G:\OSDCloud\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
+                    [pscustomobject]@{ Name = "Custom App $_"; Path = "G:\OSDCloud\core\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
                 }
             }
             $uiProbeTimer.Add_Tick({
@@ -706,7 +719,7 @@ InModuleScope OSDCloudPreOOBE {
         It 'renders discovered application checkboxes after Updating Drivers and allows unchecking' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {
-                    [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
+                    [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\core\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
                 }
             }
             $uiProbeTimer.Add_Tick({
@@ -785,7 +798,7 @@ InModuleScope OSDCloudPreOOBE {
 
         It 'renders a manifest application initially unchecked and allows selecting it' {
             Mock Get-OSDCloudPreOOBEApplication {
-                [pscustomobject]@{ Name = 'Optional Agent'; Path = 'G:\OSDCloud\PreOOBE\Agent\AgentBootstrapper.exe'; DefaultSelected = $false }
+                [pscustomobject]@{ Name = 'Optional Agent'; Path = 'G:\OSDCloud\core\PreOOBE\Agent\AgentBootstrapper.exe'; DefaultSelected = $false }
             }
             $uiProbeTimer.Add_Tick({
                 $uiProbeTimer.Stop()

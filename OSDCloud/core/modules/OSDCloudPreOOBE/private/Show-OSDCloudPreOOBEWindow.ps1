@@ -20,11 +20,15 @@ function New-OSDCloudPreOOBEState {
     $startClock = $null
     try {
         $startClock = Get-OSDCloudPreOOBEClock
-        $message = "Running OS clock at start: $($startClock.Text); time zone $($startClock.TimeZoneId); UTC $($startClock.Utc.ToString('o'))."
+        $messages = @(
+            "Running OS clock at start: $($startClock.Local.ToString('F'))."
+            "Time zone: $($startClock.TimeZoneId) (UTC$($startClock.Local.ToString('zzz')))."
+            "UTC at start: $($startClock.Utc.ToString('o'))."
+        )
     }
-    catch { $message = "Unable to read the running OS clock: $($_.Exception.Message)" }
-    $output.Add($message)
-    Write-OOBEMenuLog -Message $message
+    catch { $messages = @("Unable to read the running OS clock: $($_.Exception.Message)") }
+    $output.AddRange([string[]]$messages)
+    Write-OOBEMenuLog -Message $messages
     return @{
         Tasks = @(
             [pscustomobject]@{ Type = 'DriverPack'; Name = 'Driver unpack / install'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },

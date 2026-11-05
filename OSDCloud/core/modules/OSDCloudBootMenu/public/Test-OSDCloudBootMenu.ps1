@@ -14,7 +14,7 @@ function Test-OSDCloudBootMenu {
         - OSDCloud Explorer opens Start-OSDCloudExplorer in a separate window.
 
         By default, profiles are discovered the same way as in WinPE, from
-        OSDCloud\bootmenu-profiles\<name>\osdcloudbootmenu.json on drives C:
+        OSDCloud\core\bootmenu-profiles\<name>\osdcloudbootmenu.json on drives C:
         through Z:. Unlike Invoke-OSDCloudBootMenu, the window is shown even
         when only one profile is found. When no profiles are found, or discovery
         fails, sample profiles are shown instead and a warning explains why.
@@ -93,7 +93,7 @@ function Test-OSDCloudBootMenu {
                     @{ Id = '7b5a2c3d-1e4f-4a6b-9c7d-8e9f0a1b2c3d'; Name = 'Sample: Autopilot'; Folder = 'sample-autopilot' },
                     @{ Id = '8c6b3d4e-2f5a-4b7c-8d8e-9f0a1b2c3d4e'; Name = 'Sample: Kiosk'; Folder = 'sample-kiosk' }
                 )) {
-                $assetPath = "X:\OSDCloud\bootmenu-profiles\$($sample.Folder)"
+                $assetPath = "X:\OSDCloud\core\bootmenu-profiles\$($sample.Folder)"
                 [pscustomobject]@{
                     Index     = 0
                     Id        = $sample.Id

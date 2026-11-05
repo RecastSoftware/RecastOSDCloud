@@ -24,11 +24,11 @@ InModuleScope OSDCloudPreOOBE {
             foreach ($folder in @("$local\My App", "$local\Nested\Child", "$usb\My App")) {
                 New-Item -Path (Join-Path $folder 'Invoke-AppDeployToolkit.exe') -ItemType File | Out-Null
             }
-            Mock Test-Path { $LiteralPath -eq 'G:\OSDCloud\PreOOBE' } -ParameterFilter {
-                $LiteralPath -match '^[A-Z]:\\OSDCloud\\PreOOBE$'
+            Mock Test-Path { $LiteralPath -eq 'G:\OSDCloud\core\PreOOBE' } -ParameterFilter {
+                $LiteralPath -match '^[A-Z]:\\OSDCloud\\core\\PreOOBE$'
             }
             Mock Get-ChildItem { Get-ChildItem -LiteralPath $script:usbPath } -ParameterFilter {
-                $LiteralPath -eq 'G:\OSDCloud\PreOOBE'
+                $LiteralPath -eq 'G:\OSDCloud\core\PreOOBE'
             }
             $apps = @(Get-OSDCloudPreOOBEApplication)
             $apps.Count | Should -Be 2 -Because ($script:discoveryLog -join '; ')
@@ -36,14 +36,17 @@ InModuleScope OSDCloudPreOOBE {
             $apps[0].Path | Should -Be "$local\My App\Invoke-AppDeployToolkit.exe"
             $apps[1].Name | Should -Be 'My App [G:]'
             Should -Invoke Test-Path -Times 26 -Exactly -ParameterFilter {
+                $LiteralPath -match '^[A-Z]:\\OSDCloud\\core\\PreOOBE$'
+            }
+            Should -Invoke Test-Path -Times 0 -Exactly -ParameterFilter {
                 $LiteralPath -match '^[A-Z]:\\OSDCloud\\PreOOBE$'
             }
         }
 
         It 'reports an unreadable root and continues searching later drives' {
             Mock Test-Path {
-                if ($LiteralPath -eq 'G:\OSDCloud\PreOOBE') { throw 'Drive unavailable' }
-                $LiteralPath -eq 'H:\OSDCloud\PreOOBE' -or $LiteralPath -like '*Invoke-AppDeployToolkit.exe'
+                if ($LiteralPath -eq 'G:\OSDCloud\core\PreOOBE') { throw 'Drive unavailable' }
+                $LiteralPath -eq 'H:\OSDCloud\core\PreOOBE' -or $LiteralPath -like '*Invoke-AppDeployToolkit.exe'
             }
             $script:laterPath = Join-Path $TestDrive 'Later App'
             Mock Get-ChildItem { [pscustomobject]@{ Name = 'Later App'; FullName = $script:laterPath; PSIsContainer = $true } }
@@ -75,7 +78,7 @@ InModuleScope OSDCloudPreOOBE {
             $script:manifestDiscoveryLog = [Collections.Generic.List[string]]::new()
             Mock Write-OOBEMenuLog { $script:manifestDiscoveryLog.Add($Message) }
             Mock Write-Warning {}
-            Mock Test-Path { $false } -ParameterFilter { $LiteralPath -match '^[A-Z]:\\OSDCloud\\PreOOBE$' }
+            Mock Test-Path { $false } -ParameterFilter { $LiteralPath -match '^[A-Z]:\\OSDCloud\\core\\PreOOBE$' }
             Mock Get-CimInstance { [pscustomobject]@{ Manufacturer = 'Dell Inc.'; Model = 'Latitude 7450' } }
             Mock Get-ItemPropertyValue { 'ARM64' }
         }

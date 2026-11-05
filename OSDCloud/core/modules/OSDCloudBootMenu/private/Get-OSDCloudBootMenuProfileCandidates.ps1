@@ -3,7 +3,7 @@ function Get-OSDCloudBootMenuProfileCandidates {
     .SYNOPSIS
         Finds standalone OSDCloud BootMenu profiles on attached drives.
     .DESCRIPTION
-        Reads only OSDCloud\bootmenu-profiles\<name>\osdcloudbootmenu.json on drives C:
+        Reads only OSDCloud\core\bootmenu-profiles\<name>\osdcloudbootmenu.json on drives C:
         through Z:. The RAM disk is searched first. Names and GUIDs come from
         info, not folder names. Duplicate IDs use the first discovered profile.
         Invalid profiles throw to prevent an unintended default deployment. Legacy WinpeStartup profiles are
@@ -22,7 +22,7 @@ function Get-OSDCloudBootMenuProfileCandidates {
     Write-Verbose "[$(Get-Date -format s)] [$($MyInvocation.MyCommand.Name)] Discovering BootMenu Profiles"
     $seen = [System.Collections.Generic.HashSet[guid]]::new()
     foreach ($driveLetter in @('X') + @([char[]](67..90) | Where-Object { $_ -ne 'X' })) {
-        $root = '{0}:\OSDCloud\bootmenu-profiles' -f $driveLetter
+        $root = '{0}:\OSDCloud\core\bootmenu-profiles' -f $driveLetter
         if (-not (Test-Path -LiteralPath $root -PathType Container)) { continue }
         try {
             $folders = @(Get-ChildItem -LiteralPath $root -Directory -ErrorAction Stop | Sort-Object FullName)

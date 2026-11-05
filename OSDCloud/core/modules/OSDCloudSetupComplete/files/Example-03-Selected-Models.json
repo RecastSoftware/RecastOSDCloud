@@ -1,0 +1,8 @@
+{
+    "Version": 1,
+    "Name": "Example - selected models",
+    "Script": "Example-SetupComplete.ps1",
+    "Conditions": {
+        "ComputerModel": ["Latitude*", "Precision*", "Surface*"]
+    }
+}

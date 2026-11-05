@@ -1,0 +1,10 @@
+{
+    "Version": 1,
+    "Name": "Example - ARM64 local copy",
+    "Script": "Example-SetupComplete.ps1",
+    "Arguments": "-Message \"Local ARM64 package\"",
+    "CopyToLocal": true,
+    "Conditions": {
+        "OSArchitecture": "arm64"
+    }
+}

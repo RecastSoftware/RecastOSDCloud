@@ -6,7 +6,7 @@ BeforeAll {
 
 Describe 'Test-OSDCloudBootMenu' {
     It 'shows a single discovered profile in test mode and returns the selection' {
-        $candidate = [pscustomobject]@{ Index = 0; Id = '11111111-1111-1111-1111-111111111111'; Profile = 'Menu'; Path = 'C:\OSDCloud\bootmenu-profiles\menu\osdcloudbootmenu.json'; AssetPath = 'C:\OSDCloud\bootmenu-profiles\menu' }
+        $candidate = [pscustomobject]@{ Index = 0; Id = '11111111-1111-1111-1111-111111111111'; Profile = 'Menu'; Path = 'C:\OSDCloud\core\bootmenu-profiles\menu\osdcloudbootmenu.json'; AssetPath = 'C:\OSDCloud\core\bootmenu-profiles\menu' }
         Mock Get-OSDCloudBootMenuProfileCandidates { $candidate }
         Mock Show-OSDCloudBootMenuProfileWindow { $Profiles[0] }
 
@@ -28,7 +28,7 @@ Describe 'Test-OSDCloudBootMenu' {
         Should -Invoke Show-OSDCloudBootMenuProfileWindow -Times 1 -Exactly -ParameterFilter {
             $TestMode -and @($Profiles).Count -eq 3 -and @($Profiles | Where-Object { $_.Profile -notlike 'Sample:*' }).Count -eq 0 -and
             (@($Profiles.Index) -join ',') -eq '1,2,3' -and
-            @($Profiles | Where-Object { $_.Path -notlike 'X:\OSDCloud\bootmenu-profiles\sample-*\osdcloudbootmenu.json' }).Count -eq 0
+            @($Profiles | Where-Object { $_.Path -notlike 'X:\OSDCloud\core\bootmenu-profiles\sample-*\osdcloudbootmenu.json' }).Count -eq 0
         }
     }
 

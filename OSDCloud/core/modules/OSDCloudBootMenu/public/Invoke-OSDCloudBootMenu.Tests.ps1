@@ -217,15 +217,15 @@ Describe 'OSDCloud BootMenu discovery' {
             $false
         }
         @(Get-OSDCloudBootMenuProfileCandidates).Count | Should -Be 0
-        $expected = @('X:\OSDCloud\bootmenu-profiles') + @(
+        $expected = @('X:\OSDCloud\core\bootmenu-profiles') + @(
             [char[]](67..90) | Where-Object { $_ -ne 'X' } |
-                ForEach-Object { '{0}:\OSDCloud\bootmenu-profiles' -f $_ }
+                ForEach-Object { '{0}:\OSDCloud\core\bootmenu-profiles' -f $_ }
         )
         $script:searchedRoots.ToArray() | Should -Be $expected
     }
 
     It 'uses info identity, ignores legacy JSON and deduplicates GUIDs' {
-        $root = Join-Path $TestDrive 'OSDCloud\bootmenu-profiles'
+        $root = Join-Path $TestDrive 'OSDCloud\core\bootmenu-profiles'
         $null = New-Item -ItemType Directory -Path (Join-Path $root 'Folder'), (Join-Path $root 'Legacy'), (Join-Path $root 'Duplicate') -Force
         $json = '{"schemaVersion":1,"info":{"name":"Display Name","id":"11111111-1111-1111-1111-111111111111"}}'
         $json | Set-Content -LiteralPath (Join-Path $root 'Folder\osdcloudbootmenu.json')
@@ -233,7 +233,7 @@ Describe 'OSDCloud BootMenu discovery' {
         '{}' | Set-Content -LiteralPath (Join-Path $root 'Legacy\winpestartup.json')
         $createdDrive = -not (Get-PSDrive -Name X -ErrorAction SilentlyContinue)
         if ($createdDrive) { $null = New-PSDrive -Name X -PSProvider FileSystem -Root $TestDrive }
-        Mock Test-Path { $LiteralPath -eq 'X:\OSDCloud\bootmenu-profiles' } -ParameterFilter { $LiteralPath -match '^[A-Z]:\\OSDCloud\\bootmenu-profiles$' }
+        Mock Test-Path { $LiteralPath -eq 'X:\OSDCloud\core\bootmenu-profiles' } -ParameterFilter { $LiteralPath -match '^[A-Z]:\\OSDCloud\\core\\bootmenu-profiles$' }
         try { $items = @(Get-OSDCloudBootMenuProfileCandidates) }
         finally { if ($createdDrive) { Remove-PSDrive -Name X } }
         $items.Count | Should -Be 1

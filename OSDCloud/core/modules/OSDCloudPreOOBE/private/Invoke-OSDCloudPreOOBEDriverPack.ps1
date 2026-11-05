@@ -50,7 +50,11 @@ function Invoke-OSDCloudPreOOBEDriverPack {
             (Get-FileHash -LiteralPath $package -Algorithm SHA256 -ErrorAction Stop).Hash -ne $manifest.Sha256) {
             throw 'Staged driver package size or SHA-256 does not match.'
         }
-        Write-OOBEMenuUpdateStatus -State $State -Message "Validated $($manifest.Manufacturer) package: $package; $($file.Length) bytes; SHA256 $($manifest.Sha256)."
+        Write-OOBEMenuUpdateStatus -State $State -Message @(
+            "Validated $($manifest.Manufacturer) package: $package"
+            "Size: $($file.Length) bytes."
+            "SHA256: $($manifest.Sha256)"
+        )
         if ($State.CancelRequested) { $State.Outcome = 'Cancelled'; return }
         $logs = Join-Path $env:WINDIR 'Temp\osdcloud-logs'
         [void][IO.Directory]::CreateDirectory($logs)
@@ -59,7 +63,11 @@ function Invoke-OSDCloudPreOOBEDriverPack {
             param ([string]$Executable, [string]$Arguments, [string]$Label)
             $output = Join-Path $logs "PreOOBE-$runId-$Label.stdout.log"
             $errors = Join-Path $logs "PreOOBE-$runId-$Label.stderr.log"
-            Write-OOBEMenuUpdateStatus -State $State -Message "Starting $Label`: $Executable $Arguments; output $output; errors $errors."
+            Write-OOBEMenuUpdateStatus -State $State -Message @(
+                "Starting $Label`: $Executable $Arguments"
+                "Output: $output"
+                "Errors: $errors"
+            )
             $watch = [Diagnostics.Stopwatch]::StartNew()
             $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -PassThru -NoNewWindow `
                 -RedirectStandardOutput $output -RedirectStandardError $errors -ErrorAction Stop

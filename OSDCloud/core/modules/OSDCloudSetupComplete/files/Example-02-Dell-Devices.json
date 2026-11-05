@@ -1,0 +1,8 @@
+{
+    "Version": 1,
+    "Name": "Example - Dell devices",
+    "Script": "Example-SetupComplete.ps1",
+    "Conditions": {
+        "ComputerManufacturer": "Dell*"
+    }
+}
