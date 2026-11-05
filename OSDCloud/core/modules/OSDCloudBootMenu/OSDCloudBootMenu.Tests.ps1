@@ -39,7 +39,7 @@ function global:Start-Transcript { throw 'Unexpected startup during import' }
 `$module = Import-Module '$manifestPath' -PassThru -ErrorAction Stop
 if (Get-Module OSDCloud) { throw 'OSDCloud was loaded' }
 `$commands = @(Get-Command -Module OSDCloudBootMenu)
-if (`$commands.Count -ne 2) { throw 'Unexpected exports' }
+if (`$commands.Count -ne 4) { throw 'Unexpected exports' }
 `$scriptText = & `$module { New-OSDCloudBootMenuChildCommand -Command '(Get-Command Initialize-WinpeStartupEnvironment).ModuleName' -Private }
 `$encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes(`$scriptText))
 `$result = & '$windowsPowerShell' -NoProfile -EncodedCommand `$encoded

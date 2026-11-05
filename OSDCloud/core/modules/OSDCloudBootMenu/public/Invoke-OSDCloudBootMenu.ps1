@@ -31,6 +31,11 @@ function Invoke-OSDCloudBootMenu {
         When more than one profile is found, a profile selection window is
         shown. Use -CLI to select from a numbered console prompt instead. A
         single profile is selected automatically.
+        A profile with a password token requires a successful masked password
+        prompt before its assets or commands run, including single-profile startup.
+        The WPF password dialog retries incorrect entries; -CLI uses console entry.
+        Cancellation stops startup without falling back to deployment. This gates
+        normal selection only; profile JSON and scripts are not encrypted.
 
         Environment setup imports literal NAME=VALUE entries from
         X:\WinpeStartup\core\*\*.env, including hidden .env files, in sorted
@@ -50,6 +55,16 @@ function Invoke-OSDCloudBootMenu {
         values are assigned to the current
         process, overwriting existing values. Child PowerShell command sessions
         inherit the resulting environment.
+
+        Optional encryptedEnv maps names to tokens from Protect-OSDCloudBootString.
+        After profile selection, a masked console prompt unlocks all entries using
+        one shared password. Authentication failures retry; empty input or Ctrl+C
+        cancels without running selected-profile assets or commands. Malformed tokens
+        stop execution. Existing system-wide initialization precedes profile selection.
+        Unlocked variables override selected-profile .env entries before Import Pack
+        scripts and command phases run. Original parent-process values are restored
+        when this function exits; children retain their inherited values. Values are
+        plaintext in memory and must not be printed by consuming scripts.
 
         After valid profile JSON and its environment section are applied, a
         selected folder-based profile imports immediate *.env files (including
@@ -153,6 +168,17 @@ function Invoke-OSDCloudBootMenu {
         with a non-zero code. 'Continue' writes a warning and proceeds; 'Stop' throws
         a terminating error. Default is 'Continue'.
 
+    .PARAMETER EnvironmentPassword
+        Supplies a SecureString password for the selected profile's encryptedEnv.
+        Omit it for masked console entry with retries. A supplied incorrect or empty
+        password stops execution without prompting. The caller owns the SecureString.
+        This parameter cannot be set in profile JSON.
+
+    .PARAMETER ProfilePassword
+        Supplies a SecureString for a password-protected profile without prompting.
+        An incorrect password terminates; empty input cancels. Independent of
+        EnvironmentPassword, which unlocks encryptedEnv. The caller owns it.
+
     .EXAMPLE
         PS> Invoke-OSDCloudBootMenu
 
@@ -243,13 +269,21 @@ function Invoke-OSDCloudBootMenu {
 
         [Parameter()]
         [ValidateSet('Continue', 'Stop')]
-        [string]$InvokeShutdownCommandEA = 'Continue'
+        [string]$InvokeShutdownCommandEA = 'Continue',
+
+        [Parameter()]
+        [System.Security.SecureString]$EnvironmentPassword,
+
+        [Parameter()]
+        [System.Security.SecureString]$ProfilePassword
     )
 
-    begin {
-        $Error.Clear()
-        $skipExecution = $false
-        $startupTranscriptStarted = $false
+    $Error.Clear()
+    $skipExecution = $false
+    $startupTranscriptStarted = $false
+    $originalEncryptedEnvironment = [ordered]@{}
+    $unlockedEnvironment = $null
+    try {
 
         if ($env:SystemDrive -ne 'X:') {
             Write-Warning 'Invoke-OSDCloudBootMenu: Not running in WinPE (SystemDrive is not X:). Exiting.'
@@ -483,7 +517,7 @@ function Invoke-OSDCloudBootMenu {
                     continue
                 }
 
-                if ($KeyFormat -eq 'Any' -and $entry.Name -eq 'env') {
+                if ($KeyFormat -eq 'Any' -and $entry.Name -in @('env', 'encryptedEnv', 'password')) {
                     continue
                 }
 
@@ -650,6 +684,31 @@ function Invoke-OSDCloudBootMenu {
             $resolvedDefaults['InvokeMainCommand'] = @('Import-Module -Name OSDCloud -DisableNameChecking -ErrorAction Stop', 'Deploy-OSDCloud')
         }
 
+        if ($selectedProfile -and $profileDefaults.Contains('password')) {
+            $passwordParameters = @{ Token = $profileDefaults['password']; CLI = ([bool]$CLI -or $useConsolePrompt) }
+            if ($PSBoundParameters.ContainsKey('ProfilePassword')) { $passwordParameters.Password = $ProfilePassword }
+            if (-not (Confirm-OSDCloudBootMenuProfilePassword @passwordParameters)) {
+                Write-Warning 'Invoke-OSDCloudBootMenu: Profile password entry cancelled. No profile commands will run.'
+                $skipExecution = $true
+                return
+            }
+        }
+        if ($selectedProfile -and $profileDefaults.Contains('encryptedEnv')) {
+            $unlockParameters = @{ Environment = $profileDefaults['encryptedEnv'] }
+            if ($PSBoundParameters.ContainsKey('EnvironmentPassword')) { $unlockParameters.Password = $EnvironmentPassword }
+            try {
+                $unlockedEnvironment = Unlock-OSDCloudBootEnvironment @unlockParameters
+            }
+            catch [System.OperationCanceledException] {
+                Write-Warning 'Invoke-OSDCloudBootMenu: Profile environment unlock cancelled. No profile commands will run.'
+                $skipExecution = $true
+                return
+            }
+            foreach ($name in $unlockedEnvironment.Keys) {
+                $originalEncryptedEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+            }
+        }
+
         foreach ($parameterName in $knownParameters) {
             if ($PSBoundParameters.ContainsKey($parameterName) -and -not $globalPreBoundParameters.Contains($parameterName)) {
                 Write-Verbose "Invoke-OSDCloudBootMenu: Skipping JSON default '$parameterName' because it is already bound."
@@ -735,6 +794,7 @@ function Invoke-OSDCloudBootMenu {
             Set-WinpeStartupProfileEnvironment -InputObject $profileEnvironment -SourceName $selectedProfile.Path
         }
 
+        $profileImportPackPaths = @()
         if ($selectedProfile -and $selectedProfile.AssetPath) {
             Import-WinpeStartupAssets -Path $selectedProfile.AssetPath -SystemDrive $startupSystemDrive
 
@@ -743,17 +803,20 @@ function Invoke-OSDCloudBootMenu {
                     -Destination "$startupSystemDrive\OSDCloud\bootpack-expanded" -SystemDrive $startupSystemDrive)
             if ($profileImportPackPaths.Count -gt 0) {
                 Import-WinpeStartupAssets -Path $profileImportPackPaths -SystemDrive $startupSystemDrive
-                Invoke-WinpeStartupBootPackScripts -Path $profileImportPackPaths
             }
         }
 
+        if ($unlockedEnvironment) {
+            foreach ($name in $unlockedEnvironment.Keys) {
+                [Environment]::SetEnvironmentVariable($name, $unlockedEnvironment[$name], 'Process')
+            }
+            $unlockedEnvironment.Clear()
+        }
+        if ($profileImportPackPaths.Count -gt 0) {
+            Invoke-WinpeStartupBootPackScripts -Path $profileImportPackPaths
+        }
+
         Write-Verbose 'Invoke-OSDCloudBootMenu: Starting full WinpeStartup sequence'
-    }
-
-    process {
-        if ($skipExecution) { return }
-
-        try {
         # On Screen Keyboard if one is not detected
         if (-not $SkipOnScreenKeyboard) {
             Invoke-WinpeStartupManager OSK
@@ -940,25 +1003,15 @@ function Invoke-OSDCloudBootMenu {
                 }
             }
         }
-        }
-        finally {
-            if ($startupTranscriptStarted) {
-                try {
-                    $null = Stop-Transcript -ErrorAction Stop
-                }
-                catch {
-                    Write-Warning "Invoke-OSDCloudBootMenu: Failed to stop log '$startupLogPath': $($_.Exception.Message)"
-                }
-                $startupTranscriptStarted = $false
-            }
-        }
-    }
-
-    end {
         if (-not $skipExecution) {
             Write-Verbose 'Invoke-OSDCloudBootMenu: Complete'
         }
-
+    }
+    finally {
+        if ($null -ne $unlockedEnvironment) { $unlockedEnvironment.Clear() }
+        foreach ($name in $originalEncryptedEnvironment.Keys) {
+            [Environment]::SetEnvironmentVariable($name, $originalEncryptedEnvironment[$name], 'Process')
+        }
         if ($startupTranscriptStarted) {
             try {
                 $null = Stop-Transcript -ErrorAction Stop

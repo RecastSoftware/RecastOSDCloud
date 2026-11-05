@@ -8,7 +8,7 @@
     Description          = 'Standalone OSDCloud BootMenu runtime and profile selector.'
     PowerShellVersion    = '5.1'
     CompatiblePSEditions = @('Desktop', 'Core')
-    FunctionsToExport    = @('Invoke-OSDCloudBootMenu', 'Test-OSDCloudBootMenu')
+    FunctionsToExport    = @('Invoke-OSDCloudBootMenu', 'Test-OSDCloudBootMenu', 'Protect-OSDCloudBootString', 'Unprotect-OSDCloudBootString')
     AliasesToExport      = @()
     CmdletsToExport      = @()
     VariablesToExport    = @()
@@ -22,6 +22,12 @@
         'core\bootmenu-profiles\Recovery Environment\osdcloudbootmenu.json'
         'public\Invoke-OSDCloudBootMenu.ps1'
         'public\Test-OSDCloudBootMenu.ps1'
+        'public\Protect-OSDCloudBootString.ps1'
+        'public\Unprotect-OSDCloudBootString.ps1'
+        'private\OSDCloudBootString.ps1'
+        'private\Unlock-OSDCloudBootEnvironment.ps1'
+        'private\Confirm-OSDCloudBootMenuProfilePassword.ps1'
+        'private\Show-OSDCloudBootPasswordDialog.ps1'
         'private\Assert-OSDCloudBootMenuProfile.ps1'
         'private\Assert-OSDCloudBootPackManifest.ps1'
         'private\ConvertFrom-OSDCloudBootMenuProfile.ps1'

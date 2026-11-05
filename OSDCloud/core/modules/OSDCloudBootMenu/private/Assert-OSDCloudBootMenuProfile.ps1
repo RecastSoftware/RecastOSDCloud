@@ -8,11 +8,13 @@ function Assert-OSDCloudBootMenuProfile {
     .DESCRIPTION
         Parses one osdcloudbootmenu.json file and verifies that it uses only supported
         sections, properties, and value types. Supported top-level sections are
-        schemaVersion (must be 1), info, env, osdcloudBoot, osdcloudBootStartup,
+        schemaVersion (must be 1), info, env, encryptedEnv, password, osdcloudBoot, osdcloudBootStartup,
         and osdcloudBootMenu. osdcloudBoot.buildPacks and
         osdcloudBoot.importPacks contain objects with a GUID id and an optional name that
         reference OSDCloud BootPacks. Stored commands are not executed. Invalid content produces a
-        terminating error that identifies the file.
+        terminating error that identifies the file. encryptedEnv maps environment names
+        to OSDBS1 encrypted tokens. Validation never prompts or decrypts values.
+        The optional password token gates starting the selected profile, not reading its JSON.
 
     .PARAMETER Path
         Specifies the osdcloudbootmenu.json file to validate.
@@ -137,7 +139,7 @@ function Assert-OSDCloudBootMenuProfile {
     }
 
     if (-not (& $IsObject $Profile)) { & $Fail 'The profile must contain one JSON object.' }
-    & $AssertKeys $Profile '' @('schemaVersion', 'info', 'env', 'osdcloudBoot', 'osdcloudBootStartup', 'osdcloudBootMenu')
+    & $AssertKeys $Profile '' @('schemaVersion', 'info', 'env', 'encryptedEnv', 'password', 'osdcloudBoot', 'osdcloudBootStartup', 'osdcloudBootMenu')
 
     $SchemaVersion = $Profile.PSObject.Properties['schemaVersion']
     if (-not $SchemaVersion -or $SchemaVersion.Value -isnot [System.Int64] -and $SchemaVersion.Value -isnot [System.Int32] -or $SchemaVersion.Value -ne 1) {
@@ -163,6 +165,61 @@ function Assert-OSDCloudBootMenuProfile {
         foreach ($Property in $Env.PSObject.Properties) {
             if ($Property.Name -notmatch '^[A-Za-z_][A-Za-z0-9_]*$') { & $Fail "'env.$($Property.Name)' is not a valid environment variable name." }
             if ($Property.Value -isnot [System.String]) { & $Fail "'env.$($Property.Name)' must be a string." }
+        }
+    }
+
+    $AssertEncryptedToken = {
+        param ($Token)
+        if ($Token -isnot [string] -or $Token.Length -gt 1398262 -or $Token -notmatch '^OSDBS1:[A-Za-z0-9+/]+={0,2}$') {
+            & $Fail 'Expected a supported encrypted string token.'
+        }
+        try { $Bytes = [Convert]::FromBase64String($Token.Substring(7)) }
+        catch { & $Fail 'Invalid encrypted string encoding.' }
+        if ($Bytes.Length -lt 97 -or $Bytes.Length -gt 1048673 -or $Bytes[0] -ne 1 -or ($Bytes.Length - 81) % 16 -ne 0) {
+            & $Fail 'Invalid or unsupported encrypted string envelope.'
+        }
+    }
+    $Password = $Profile.PSObject.Properties['password']
+    if ($Password) { & $AssertEncryptedToken $Password.Value }
+    $EncryptedEnv = & $AssertSection $Profile 'encryptedEnv'
+    if ($EncryptedEnv) {
+        # ConvertFrom-Json can discard exact duplicate keys; inspect JSON keys before conversion loses them.
+        $Depth = 0
+        $EncryptedDepth = -1
+        $PendingEncrypted = $false
+        $SeenEncryptedSection = $false
+        $RawNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        foreach ($Match in [regex]::Matches($Raw, '"(?:\\.|[^"\\])*"\s*:?|[{}]')) {
+            $Lexeme = $Match.Value.Trim()
+            if ($Lexeme -eq '{') {
+                $Depth++
+                if ($PendingEncrypted) { $EncryptedDepth = $Depth; $PendingEncrypted = $false }
+            }
+            elseif ($Lexeme -eq '}') {
+                if ($Depth -eq $EncryptedDepth) { $EncryptedDepth = -1 }
+                $Depth--
+            }
+            elseif ($Lexeme.EndsWith(':')) {
+                $Key = ConvertFrom-Json -InputObject $Lexeme.Substring(0, $Lexeme.Length - 1)
+                if ($Depth -eq 1 -and $Key -eq 'encryptedEnv') {
+                    if ($SeenEncryptedSection) { & $Fail 'Duplicate encryptedEnv section.' }
+                    $SeenEncryptedSection = $true
+                    $PendingEncrypted = $true
+                }
+                elseif ($Depth -eq $EncryptedDepth -and -not $RawNames.Add($Key)) {
+                    & $Fail 'encryptedEnv contains duplicate environment variable names.'
+                }
+            }
+        }
+        $SeenNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        if ($Env) {
+            foreach ($Property in $Env.PSObject.Properties) { $null = $SeenNames.Add($Property.Name) }
+        }
+        foreach ($Property in $EncryptedEnv.PSObject.Properties) {
+            if ($Property.Name -notmatch '^[A-Za-z_][A-Za-z0-9_]*$' -or -not $SeenNames.Add($Property.Name)) {
+                & $Fail 'encryptedEnv contains an invalid or conflicting environment variable name.'
+            }
+            & $AssertEncryptedToken $Property.Value
         }
     }
 

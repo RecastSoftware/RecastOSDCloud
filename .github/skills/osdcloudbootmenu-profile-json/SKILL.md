@@ -31,6 +31,8 @@ examples. Do not execute stored commands during authoring or validation.
 |---|---|
 | `info` | `id` (GUID string), `name`, `author`, `description` |
 | `env` | Map of environment variable names to strings; no secrets |
+| `encryptedEnv` | Map of environment names to password-encrypted `OSDBS1:` string tokens |
+| `password` | Optional `OSDBS1:` profile access token, not a plaintext password |
 | `osdcloudBoot` | `requireWinPE`, `requireWinRE`, `installModule`, `buildPacks`, `importPacks` |
 | `osdcloudBootStartup` | `enabled`, `onScreenKeyboard`, `showPnpDevices`, `showPnpErrors`, `wifi`, `ipConfig`, `updateOSDCloud`, `installModules`, `startup`, `main`, `shutdown` |
 | `osdcloudBootMenu` | `enabled`, `command` (`Invoke-OSDCloudBootMenu`), `parameters` object |
@@ -72,6 +74,30 @@ examples. Do not execute stored commands during authoring or validation.
   values override. Licensed selected-profile `.env` assets apply afterwards.
 - Explicit caller parameters override profile settings, which override module
   defaults with the `Invoke-OSDCloudBootMenu:` prefix.
+- `password` encrypts the exact marker `OSDCloudBootMenu profile access` using
+  `Protect-OSDCloudBootString`; it is not bound to `info.id`, so clones preserve
+  their password. Validate without prompting/decrypting; return the token as
+  metadata, never a command parameter or environment setting.
+- The builder's profile overflow menu provides read-only View and Clone for all
+  profiles, VS Code editing only for OSDeployCore profiles, and Set Password.
+  Setting a built-in profile's password first clones it into OSDeployCore.
+- Runtime verifies `password` after every selection, including auto-selection,
+  before selected-profile assets, encryptedEnv unlock, or commands. WPF uses
+  masked PasswordBox input; `-CLI` uses a masked console prompt. Incorrect input
+  retries; cancellation stops without deployment fallback. `-ProfilePassword`
+  accepts an independently owned SecureString for automation, failing without
+  retry on an incorrect supplied password. This does not unlock encryptedEnv.
+  The gate does not encrypt profile JSON or resist modified boot-media code.
+- `encryptedEnv` tokens come from `Protect-OSDCloudBootString` in the standalone
+  BootMenu module. Use one shared password, never store it in JSON, and reject
+  case-insensitive duplicate names or collisions with `env`. Validation/conversion
+  must not prompt or decrypt. Rebuild media with the updated runtime.
+- After profile selection, BootMenu prompts with masked console input and retries
+  authentication failures; empty input or Ctrl+C cancels the profile. All values
+  unlock before assignment. Unlocked process variables override selected-profile
+  `.env` entries before profile Pack scripts and child phases run; previous values
+  are restored when BootMenu exits. Children retain inherited values. Build-level
+  initialization before profile selection is not gated by this password.
 
 ## Lifecycle and validation
 

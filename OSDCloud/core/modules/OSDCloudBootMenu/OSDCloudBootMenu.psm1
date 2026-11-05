@@ -8,4 +8,4 @@ foreach ($directory in @('private', 'public')) {
     }
 }
 
-Export-ModuleMember -Function Invoke-OSDCloudBootMenu, Test-OSDCloudBootMenu
+Export-ModuleMember -Function Invoke-OSDCloudBootMenu, Test-OSDCloudBootMenu, Protect-OSDCloudBootString, Unprotect-OSDCloudBootString

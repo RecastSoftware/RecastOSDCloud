@@ -21,7 +21,9 @@ function ConvertFrom-OSDCloudBootMenuProfile {
 
         Environment variables OSDCLOUDBOOTMENU_PROFILE and OSDCLOUDBOOT_AUTHOR are set from
         info.name and info.author when present. Entries in the env object are added
-        as environment variables and override those defaults. Stored commands are not executed.
+        as environment variables and override those defaults. Optional encryptedEnv tokens
+        and the profile password token are returned separately without prompting or
+        decrypting. Stored commands are not executed.
 
     .PARAMETER Path
         Specifies the osdcloudbootmenu.json file or its containing profile folder.
@@ -65,6 +67,7 @@ function ConvertFrom-OSDCloudBootMenuProfile {
     $Profile = Get-Content -LiteralPath $ProfileFilePath -Raw | ConvertFrom-Json
 
     $Result = [ordered]@{}
+    if ($Profile.password) { $Result['password'] = $Profile.password }
     $Environment = [ordered]@{}
     if ($Profile.info.name) { $Environment['OSDCLOUDBOOTMENU_PROFILE'] = $Profile.info.name }
     if ($Profile.info.author) { $Environment['OSDCLOUDBOOT_AUTHOR'] = $Profile.info.author }
@@ -72,6 +75,11 @@ function ConvertFrom-OSDCloudBootMenuProfile {
         foreach ($Variable in $Profile.env.PSObject.Properties) { $Environment[$Variable.Name] = $Variable.Value }
     }
     if ($Environment.Count -gt 0) { $Result['env'] = $Environment }
+    if ($Profile.encryptedEnv) {
+        $EncryptedEnvironment = [ordered]@{}
+        foreach ($Variable in $Profile.encryptedEnv.PSObject.Properties) { $EncryptedEnvironment[$Variable.Name] = $Variable.Value }
+        if ($EncryptedEnvironment.Count -gt 0) { $Result['encryptedEnv'] = $EncryptedEnvironment }
+    }
 
     $Startup = $Profile.osdcloudBootStartup
     $StartupEnabled = $Startup -and ($null -eq $Startup.enabled -or $Startup.enabled)

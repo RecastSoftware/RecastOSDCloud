@@ -23,6 +23,7 @@ a boot image and just want to deploy, start at [`04-deploy-windows.md`](04-deplo
 ## Function reference
 
 - [File locations](filelocations.md) - Searched paths, configuration inputs, and the purpose of each location.
+- [Password-protected BootMenu environment variables](about_osdcloudbootmenu-encrypted-env.md) - Encrypt string tokens and unlock selected-profile variables in WinPE.
 
 These how-tos focus on tasks. For cmdlet-by-cmdlet parameter reference
 see the available generated pages in [`../OSDCloud/docs/`](../OSDCloud/docs/).
