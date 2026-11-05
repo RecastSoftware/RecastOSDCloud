@@ -14,16 +14,16 @@ current operator-facing behavior and real-device validation requirements.
 ## Architecture and invariants
 
 - The standalone module lives under
-  [OSDCloudPreOOBE](../../../OSDCloud/modules/OSDCloudPreOOBE).
+  [OSDCloudPreOOBE](../../../OSDCloud/core/modules/OSDCloudPreOOBE).
   Its public entry point is
-  [Invoke-OSDCloudPreOOBE](../../../OSDCloud/modules/OSDCloudPreOOBE/public/Invoke-OSDCloudPreOOBE.ps1),
+  [Invoke-OSDCloudPreOOBE](../../../OSDCloud/core/modules/OSDCloudPreOOBE/public/Invoke-OSDCloudPreOOBE.ps1),
   exported with the `OSDCloudPreOOBE` alias. Import alone is inert; the entry point
   returns a numeric status and never exits the caller. Runtime helpers are private in
-  [OSDCloudPreOOBE.ps1](../../../OSDCloud/modules/OSDCloudPreOOBE/private/OSDCloudPreOOBE.ps1).
+  [OSDCloudPreOOBE.ps1](../../../OSDCloud/core/modules/OSDCloudPreOOBE/private/OSDCloudPreOOBE.ps1).
   Its driver installer and WPF window are maintained in
-  [Invoke-OSDCloudPreOOBEDriverPack.ps1](../../../OSDCloud/modules/OSDCloudPreOOBE/private/Invoke-OSDCloudPreOOBEDriverPack.ps1)
+  [Invoke-OSDCloudPreOOBEDriverPack.ps1](../../../OSDCloud/core/modules/OSDCloudPreOOBE/private/Invoke-OSDCloudPreOOBEDriverPack.ps1)
   and
-  [Show-OSDCloudPreOOBEWindow.ps1](../../../OSDCloud/modules/OSDCloudPreOOBE/private/Show-OSDCloudPreOOBEWindow.ps1).
+  [Show-OSDCloudPreOOBEWindow.ps1](../../../OSDCloud/core/modules/OSDCloudPreOOBE/private/Show-OSDCloudPreOOBEWindow.ps1).
 - The WinPE-only
   [step-update-preoobe](../../../OSDCloud/private/steps/7-update/step-update-preoobe.ps1)
   copies the entire module folder to `C:\Windows\Setup\Modules\OSDCloudPreOOBE`,
@@ -38,7 +38,7 @@ current operator-facing behavior and real-device validation requirements.
   supports AMD64 and ARM64 and runs as SYSTEM during setup. It is standalone:
   do not introduce a dependency on the OSDCloud module, PowerShell 7,
   downloaded tools, or an interactive user logon.
-- The feature is enabled only in the intended `recast-winui-dark` workflow
+- The feature is enabled only in the intended `recast` workflow
   tasks. Driver installation is deferred only when the driver step opts in
   with `PreOOBE` and the PreOOBE staging step is enabled. Preserve the
   original driver-install path when either condition is false.
@@ -49,8 +49,8 @@ current operator-facing behavior and real-device validation requirements.
   updates, then discovered custom applications. Do not add an automatic reboot
   or automatic continuation.
 - Application discovery searches immediate folders under
-  `%SystemRoot%\Setup\PreOOBE` first, then `A:\OSDCloud\PreOOBE` through
-  `Z:\OSDCloud\PreOOBE`. Only `Invoke-AppDeployToolkit.exe` packages become
+  `%SystemRoot%\Setup\PreOOBE` first, then `A:\OSDCloud\core\PreOOBE` through
+  `Z:\OSDCloud\core\PreOOBE`. Only `Invoke-AppDeployToolkit.exe` packages become
   checked tasks; drive-hosted labels append `[G:]`-style drive identifiers.
   Run selected packages sequentially with Install/Silent arguments and their
   folder as the working directory. Do not force-cancel active installers.
@@ -83,7 +83,7 @@ current operator-facing behavior and real-device validation requirements.
 ## Tests and validation
 
 Run the smallest relevant Pester tests. The main coverage is under
-`OSDCloud/modules/OSDCloudPreOOBE/`. Tests use module scope for private helpers:
+`OSDCloud/core/modules/OSDCloudPreOOBE/`. Tests use module scope for private helpers:
 
 - `OSDCloudPreOOBE.Tests.ps1` for the runtime entry point
 - `OSDCloudPreOOBE.Engine.Tests.ps1` for task ordering and UI automation
@@ -100,8 +100,8 @@ Run the smallest relevant Pester tests. The main coverage is under
 For example, run a focused selection from the repository root:
 
 ```powershell
-Invoke-Pester -Path .\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Engine.Tests.ps1,
-    .\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1
+Invoke-Pester -Path .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Engine.Tests.ps1,
+    .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1
 ```
 
 The local preview command is documented in the

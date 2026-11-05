@@ -16,7 +16,7 @@ examples. Do not execute stored commands during authoring or validation.
   in OSDCloudBoot, OSDCloud, and OSD.
 - Optional build-profile-local content: `bootmenu-profiles\<name>\osdcloudbootmenu.json`
   beside the build's `osdcloudboot.json`.
-- Image/runtime content: `<drive>:\OSDCloud\bootmenu-profiles\<name>\osdcloudbootmenu.json`.
+- Image/runtime content: `<drive>:\OSDCloud\core\bootmenu-profiles\<name>\osdcloudbootmenu.json`.
 - Only that exact filename in profile folders is discovered. Do not list legacy
   `winpestartup.json`, root-level JSON, or saved paths outside discovery roots.
 - Display names and IDs come from `info.name` and `info.id`, not folder names.
@@ -49,7 +49,7 @@ examples. Do not execute stored commands during authoring or validation.
   BootPacks (licensed). `id` is required and matched to `bootpack.json` `info.id`
   in the build profile's `boot-packs` folder, then `boot-assets\boot-packs`; `name`
   is informational. Build Packs are applied to the image when the profile is built.
-  Import Packs are copied to `OSDCloud\bootmenu-profiles\<profile>\boot-packs\<id>`
+  Import Packs are copied to `OSDCloud\core\bootmenu-profiles\<profile>\boot-packs\<id>`
   and applied by `Invoke-OSDCloudBootMenu` only when that profile is selected:
   `.env`, `.reg`, and `.cer` items are imported, then Execute scripts run. Use the
   OSDCloudBoot Packs page (or `Set-OSDCloudBootMenuProfilePack`) to edit them.
@@ -75,7 +75,7 @@ examples. Do not execute stored commands during authoring or validation.
 
 ## Lifecycle and validation
 
-The standalone runtime is bundled at `OSDCloud\modules\OSDCloudBootMenu`.
+The standalone runtime is bundled at `OSDCloud\core\modules\OSDCloudBootMenu`.
 Import its manifest explicitly on a technician host; Invoke/Test commands are
 not exported by OSDCloud. OSDCloudBoot stages the complete folder as a top-level
 Windows PowerShell module and explicitly imports it in standard startnet.cmd.
@@ -85,7 +85,7 @@ import OSDCloud explicitly.
 Keep bundled examples mirrored in the runtime's `core\bootmenu-profiles`,
 OSDCloud's `core\bootmenu-profiles`, and OSDCloudBoot's matching folders.
 
-The builder copies the new JSON unchanged to the image's `OSDCloud\bootmenu-profiles`;
+The builder copies the new JSON unchanged to the image's `OSDCloud\core\bootmenu-profiles`;
 it does not render `winpestartup.json`. Standard startnet.cmd launches
 `Invoke-OSDCloudBootMenu`. Zero profiles runs `Deploy-OSDCloud` after startup
 checks; one auto-selects; multiple show a window (or `-CLI` prompt). Cancellation
@@ -95,7 +95,7 @@ Dot-source `Assert-OSDCloudBootMenuProfile.ps1` and
 `ConvertFrom-OSDCloudBootMenuProfile.ps1` from the owning module's `private`
 directory, then validate with `Assert-OSDCloudBootMenuProfile -Path <file>`.
 Conversion returns settings without executing commands. The helper sources in
-OSDCloudBoot and `OSDCloud\modules\OSDCloudBootMenu` are mirrored to support independent module deployment;
+OSDCloudBoot and `OSDCloud\core\modules\OSDCloudBootMenu` are mirrored to support independent module deployment;
 keep their schema and conversion behavior aligned and test on PowerShell 5.1.
 
 `Invoke-WinpeStartup`, `core\winpestartup-profiles`, and the flat
