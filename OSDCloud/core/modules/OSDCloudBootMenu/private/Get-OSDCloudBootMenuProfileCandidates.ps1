@@ -3,9 +3,10 @@ function Get-OSDCloudBootMenuProfileCandidates {
     .SYNOPSIS
         Finds standalone OSDCloud BootMenu profiles on attached drives.
     .DESCRIPTION
-        Reads only OSDCloud\core\bootmenu-profiles\<name>\osdcloudbootmenu.json on drives C:
-        through Z:. The RAM disk is searched first. Names and GUIDs come from
-        info, not folder names. Duplicate IDs use the first discovered profile.
+        Reads only OSDCloud\core\bootmenu-profiles\<id>\osdcloudbootmenu.json on drives C:
+        through Z:. The RAM disk is searched first. Each folder name matches
+        info.id; info.name is the display name. Duplicate IDs use the first
+        discovered profile.
         Invalid profiles throw to prevent an unintended default deployment. Legacy WinpeStartup profiles are
         not read or modified.
     .EXAMPLE

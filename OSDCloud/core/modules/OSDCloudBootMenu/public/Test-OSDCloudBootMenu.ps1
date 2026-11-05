@@ -14,7 +14,7 @@ function Test-OSDCloudBootMenu {
         - OSDCloud Explorer opens Start-OSDCloudExplorer in a separate window.
 
         By default, profiles are discovered the same way as in WinPE, from
-        OSDCloud\core\bootmenu-profiles\<name>\osdcloudbootmenu.json on drives C:
+        OSDCloud\core\bootmenu-profiles\<id>\osdcloudbootmenu.json on drives C:
         through Z:. Unlike Invoke-OSDCloudBootMenu, the window is shown even
         when only one profile is found. When no profiles are found, or discovery
         fails, sample profiles are shown instead and a warning explains why.

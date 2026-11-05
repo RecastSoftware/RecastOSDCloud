@@ -55,10 +55,19 @@ if (`$LASTEXITCODE -ne 0 -or `$result -ne 'OSDCloudBootMenu') { throw 'Private c
     Describe 'Standalone BootMenu bundled profiles' {
         InModuleScope OSDCloudBootMenu {
             It 'validates every bundled profile without changing command or environment types' {
-                $root = Join-Path (Split-Path $script:OSDCloudBootMenuModulePath -Parent) 'core\bootmenu-profiles'
-                foreach ($file in @(Get-ChildItem $root -Filter osdcloudbootmenu.json -Recurse -File)) {
-                    { Assert-OSDCloudBootMenuProfile -Path $file.FullName } | Should -Not -Throw
-                    ConvertFrom-OSDCloudBootMenuProfile -Path $file.FullName | Should -BeOfType ([System.Collections.Specialized.OrderedDictionary])
+                $moduleRoot = Split-Path $script:OSDCloudBootMenuModulePath -Parent
+                $roots = @(
+                    (Join-Path $moduleRoot 'core\bootmenu-profiles'),
+                    (Join-Path $moduleRoot '..\..\bootmenu-profiles')
+                )
+                foreach ($root in $roots) {
+                    foreach ($file in @(Get-ChildItem $root -Filter osdcloudbootmenu.json -Recurse -File)) {
+                        { Assert-OSDCloudBootMenuProfile -Path $file.FullName } | Should -Not -Throw
+                        $profile = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+                        (Split-Path -Path $file.DirectoryName -Leaf) | Should -BeExactly $profile.info.id
+                        ConvertFrom-OSDCloudBootMenuProfile -Path $file.FullName |
+                            Should -BeOfType ([System.Collections.Specialized.OrderedDictionary])
+                    }
                 }
             }
         }

@@ -11,17 +11,18 @@ examples. Do not execute stored commands during authoring or validation.
 
 ## Locations and identity
 
-- Shared user content: `C:\ProgramData\OSDeployCore\boot-assets\bootmenu-profiles\<name>\osdcloudbootmenu.json`.
-- Bundled content: `{ModuleRoot}\core\bootmenu-profiles\<name>\osdcloudbootmenu.json`
+- Shared user content: `C:\ProgramData\OSDeployCore\boot-assets\bootmenu-profiles\<id>\osdcloudbootmenu.json`.
+- Bundled content: `{ModuleRoot}\core\bootmenu-profiles\<id>\osdcloudbootmenu.json`
   in OSDCloudBoot, OSDCloud, and OSD.
-- Optional build-profile-local content: `bootmenu-profiles\<name>\osdcloudbootmenu.json`
+- Optional build-profile-local content: `bootmenu-profiles\<id>\osdcloudbootmenu.json`
   beside the build's `osdcloudboot.json`.
-- Image/runtime content: `<drive>:\OSDCloud\core\bootmenu-profiles\<name>\osdcloudbootmenu.json`.
+- Image/runtime content: `<drive>:\OSDCloud\core\bootmenu-profiles\<id>\osdcloudbootmenu.json`.
 - Only that exact filename in profile folders is discovered. Do not list legacy
   `winpestartup.json`, root-level JSON, or saved paths outside discovery roots.
-- Display names and IDs come from `info.name` and `info.id`, not folder names.
-  Supply a nonempty name and a unique `[guid]::NewGuid().ToString()` ID. Preserve
-  IDs on edits; generate a new ID when cloning.
+- Each profile folder is named with the same GUID as `info.id`; `info.name` is
+  the display name. Supply a nonempty name and a unique
+  `[guid]::NewGuid().ToString()` ID. Preserve IDs on edits; generate a new ID
+  and matching folder name when cloning.
 - Runtime searches X: first, then C: through Z:, and ignores duplicate GUIDs.
   A malformed profile stops discovery rather than triggering default deployment.
 
@@ -79,8 +80,9 @@ examples. Do not execute stored commands during authoring or validation.
   their password. Validate without prompting/decrypting; return the token as
   metadata, never a command parameter or environment setting.
 - The builder's profile overflow menu provides read-only View and Clone for all
-  profiles, VS Code editing only for OSDeployCore profiles, and Set Password.
-  Setting a built-in profile's password first clones it into OSDeployCore.
+  profiles, Rename and VS Code editing for OSDeployCore profiles, and Set/Clear
+  Password for editable profiles. Setting a built-in profile's password first
+  clones it into OSDeployCore.
 - Runtime verifies `password` after every selection, including auto-selection,
   before selected-profile assets, encryptedEnv unlock, or commands. WPF uses
   masked PasswordBox input; `-CLI` uses a masked console prompt. Incorrect input

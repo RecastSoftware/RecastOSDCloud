@@ -20,15 +20,19 @@ full paths remain available as row tooltips. Selected rows expose an overflow
 button, and right-click or the keyboard context-menu key opens the row menu:
 
 - **View** opens a read-only JSON preview.
-- **Clone** copies any profile and its supporting files into OSDeployCore.
+- **Clone** copies any profile and its supporting files into OSDeployCore with a
+  new GUID identity and a matching GUID-named folder.
 - **Open Folder** opens any profile's folder in Explorer.
 - **Rename** changes a Custom profile's display name (`info.name`), preserving
-  its folder, GUID, password, and enabled state. Recast profiles cannot be renamed.
+  its GUID-named folder, ID, password, and enabled state. Builtin profiles cannot
+  be renamed.
 - **Edit in VS Code** is available only for editable OSDeployCore profiles,
   never built-in module profiles.
 - **Set Password** requests and confirms a masked password for a Custom profile.
-  It is disabled for Recast profiles. Clone a Recast profile first, then set a
+  It is disabled for Builtin profiles. Clone a Builtin profile first, then set a
   password on the Custom copy; module content is never modified.
+- **Clear Password** removes the saved password token from a protected Custom
+  profile without changing its folder or ID.
 
 Set Password writes an authenticated `OSDBS1:` token to the optional top-level
 `password` property. It does not store the password itself. Selecting or
@@ -79,7 +83,7 @@ with masked input and verifies the confirmation.
 ## Add tokens to a BootMenu profile
 
 Add the tokens to an existing profile in
-`C:\ProgramData\OSDeployCore\boot-assets\bootmenu-profiles\<name>\osdcloudbootmenu.json`.
+`C:\ProgramData\OSDeployCore\boot-assets\bootmenu-profiles\<id>\osdcloudbootmenu.json`.
 For example, replace the placeholders below with the generated token strings;
 placeholders themselves do not pass validation.
 

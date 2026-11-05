@@ -71,7 +71,7 @@ See [cache behavior](about_osdcorecache.md) for deployment safety and caching de
 
 | Searched or read path | Purpose | Discovery rules |
 |---|---|---|
-| `<drive>:\OSDCloud\core\bootmenu-profiles\<name>\osdcloudbootmenu.json` | Runtime BootMenu Profiles. | Searches X: first, then C: through Z: excluding the already-searched X:. Only this filename in immediate profile folders is discovered. Identity comes from `info.name` and `info.id`; duplicate GUIDs use the first discovered profile. |
+| `<drive>:\OSDCloud\core\bootmenu-profiles\<id>\osdcloudbootmenu.json` | Runtime BootMenu Profiles. | Searches X: first, then C: through Z: excluding the already-searched X:. Only this filename in immediate profile folders is discovered. The folder name matches `info.id`; `info.name` is the display name. Duplicate GUIDs use the first discovered profile. |
 | `<BootMenuRoot>\core\PSDefaultParameterValues.json` | Standalone BootMenu defaults. | Fixed module-relative input, not a drive scan. Explicit caller parameters override profile settings, which override these defaults. |
 | `X:\OSDCloud\boot-packs\<id>\bootpack.cab` and `bootpack.json` | Build-level Import Packs. | Immediate Pack folders; processed before standard startup initialization when licensed. |
 | `<selected-BootMenu-profile>\boot-packs\<id>\bootpack.cab` and `bootpack.json` | Selected-profile Import Packs. | Immediate Pack folders; processed after profile selection when licensed. |
