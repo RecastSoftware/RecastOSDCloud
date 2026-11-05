@@ -474,6 +474,175 @@ InModuleScope OSDCloudPreOOBE {
         }
         AfterEach { $uiProbeTimer.Stop() }
 
+        It 'focuses highlighted Start and tabs through every action and offscreen application in both directions' {
+            Mock Get-OSDCloudPreOOBEApplication {
+                1..12 | ForEach-Object {
+                    [pscustomobject]@{ Name = "Custom App $_"; Path = "G:\OSDCloud\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
+                }
+            }
+            $uiProbeTimer.Add_Tick({
+                $uiProbeTimer.Stop()
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $start = $testWindow.FindName('StepButton')
+                    $result.InitialFocus = [Windows.Input.Keyboard]::FocusedElement -eq $start
+                    $testWindow.UpdateLayout()
+                    $result.Highlight = $start.Background.Color.ToString()
+                    $result.FocusBorder = $start.Template.FindName('ButtonBorder', $start).BorderThickness.Left
+                    $result.Default = $start.IsDefault
+                    $result.Forward = [Collections.Generic.List[object]]::new()
+                    $result.Backward = [Collections.Generic.List[object]]::new()
+                    foreach ($direction in 'Next','Previous') {
+                        [void]$start.Focus()
+                        if ($direction -eq 'Next') { $visited = $result.Forward }
+                        else { $visited = $result.Backward }
+                        for ($index = 0; $index -lt 40; $index++) {
+                            [void]([Windows.Input.Keyboard]::FocusedElement).MoveFocus(
+                                [Windows.Input.TraversalRequest]::new([Windows.Input.FocusNavigationDirection]::$direction))
+                            $focused = [Windows.Input.Keyboard]::FocusedElement
+                            $visited.Add($focused)
+                            if ($focused -eq $start) { break }
+                        }
+                    }
+                    $result.Expected = @(
+                        foreach ($name in 'PaneToggleButton','ToolsMenuButton','ShellMenuButton','MinimizeButton',
+                            'MaximizeButton','CloseButton','TaskSummaryScrollViewer','OutputTextBox','StepButton') {
+                            $testWindow.FindName($name)
+                        }
+                        $testWindow.FindName('StepPanel').Children
+                    )
+                    $result.Hidden = $testWindow.FindName('ContinueOobeButton')
+                    $result.Pointer = $testWindow.Cursor -ne $null -and $testWindow.ForceCursor
+                    $result.PointerPath = $testWindow.Cursor.ToString()
+                }
+                catch { $result.Error = "$($_.Exception.Message) at $($_.InvocationInfo.PositionMessage)" }
+                finally { $testWindow.Close() }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            $result.InitialFocus | Should -BeTrue
+            $result.Highlight | Should -Be '#FF31D1FF'
+            $result.FocusBorder | Should -Be 3
+            $result.Default | Should -BeTrue
+            $result.Pointer | Should -BeTrue
+            $result.PointerPath | Should -BeLike '*\Cursors\aero_arrow_xl.cur'
+            foreach ($control in $result.Expected) {
+                $result.Forward | Should -Contain $control
+                $result.Backward | Should -Contain $control
+            }
+            $result.Forward | Should -Not -Contain $result.Hidden
+            $result.Forward[-1] | Should -Be $result.Expected[8]
+            $result.Backward[-1] | Should -Be $result.Expected[8]
+        }
+
+        It 'focuses the first Tools and Shell item and reaches every menu action with Tab' {
+            $uiProbeTimer.Add_Tick({
+                $uiProbeTimer.Stop()
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $result.Menus = @(
+                        foreach ($name in 'ToolsMenuButton','ShellMenuButton') {
+                            $button = $testWindow.FindName($name)
+                            [void]$button.Focus()
+                            $button.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.Button]::ClickEvent))
+                            $menu = $button.ContextMenu
+                            $visited = [Collections.Generic.List[object]]::new()
+                            $firstFocused = [Windows.Input.Keyboard]::FocusedElement -eq $menu.Items[0]
+                            for ($index = 0; $index -lt $menu.Items.Count; $index++) {
+                                $visited.Add([Windows.Input.Keyboard]::FocusedElement)
+                                [void]([Windows.Input.Keyboard]::FocusedElement).MoveFocus(
+                                    [Windows.Input.TraversalRequest]::new([Windows.Input.FocusNavigationDirection]::Next))
+                            }
+                            [pscustomobject]@{ FirstFocused = $firstFocused; Expected = @($menu.Items); Visited = $visited }
+                            $menu.IsOpen = $false
+                        }
+                    )
+                }
+                catch { $result.Error = $_ }
+                finally { $testWindow.Close() }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            foreach ($menu in $result.Menus) {
+                $menu.FirstFocused | Should -BeTrue
+                foreach ($item in $menu.Expected) { $menu.Visited | Should -Contain $item }
+            }
+        }
+
+        It 'keeps Retry, Continue and Continue to OOBE reachable when the focused action is replaced' {
+            $script:uiStateTicks = 0
+            Mock Update-OSDCloudPreOOBEState {
+                if ($State.CloseRequested) { $State.Done = $true; return }
+                $script:uiStateTicks++
+                $State.Started = $true
+                $State.Paused = $script:uiStateTicks -eq 1
+                $State.PausedTask = $State.Tasks[2]
+                $State.Complete = $script:uiStateTicks -gt 1
+            }
+            $result.Phase = 0
+            $uiProbeTimer.Add_Tick({
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $retry = $testWindow.FindName('RetryButton')
+                    if ($result.Phase -eq 0 -and $retry.IsVisible) {
+                        $result.RetryFocused = [Windows.Input.Keyboard]::FocusedElement -eq $retry
+                        [void]$retry.MoveFocus([Windows.Input.TraversalRequest]::new([Windows.Input.FocusNavigationDirection]::Next))
+                        $result.ContinueFocused = [Windows.Input.Keyboard]::FocusedElement -eq $testWindow.FindName('ContinueButton')
+                        $result.Phase = 1
+                    }
+                    $continueOobe = $testWindow.FindName('ContinueOobeButton')
+                    if ($result.Phase -eq 1 -and $continueOobe.IsVisible) {
+                        $result.OobeFocused = [Windows.Input.Keyboard]::FocusedElement -eq $continueOobe
+                        $result.OobeDefault = $continueOobe.IsDefault
+                        $uiProbeTimer.Stop()
+                        $testWindow.Close()
+                    }
+                }
+                catch {
+                    $result.Error = $_
+                    $uiProbeTimer.Stop()
+                    $testWindow.Close()
+                }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            $result.RetryFocused | Should -BeTrue
+            $result.ContinueFocused | Should -BeTrue
+            $result.OobeFocused | Should -BeTrue
+            $result.OobeDefault | Should -BeTrue
+        }
+
+        It 'uses a standard window-local arrow and reports when the extra-large pointer is unavailable' {
+            Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\Cursors\aero_arrow_xl.cur' }
+            Mock Write-Warning {}
+            $uiProbeTimer.Add_Tick({
+                $uiProbeTimer.Stop()
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $result.Cursor = $testWindow.Cursor
+                    $result.Forced = $testWindow.ForceCursor
+                    $result.MenuCursor = $testWindow.FindName('ToolsMenuButton').ContextMenu.Cursor
+                }
+                catch { $result.Error = $_ }
+                finally { $testWindow.Close() }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            $result.Cursor | Should -Be ([Windows.Input.Cursors]::Arrow)
+            $result.MenuCursor | Should -Be $result.Cursor
+            $result.Forced | Should -BeTrue
+            Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*Pointer file missing*' }
+            ($script:renderLog -join '; ') | Should -BeLike '*using the standard arrow*'
+        }
+
         It 'renders discovered application checkboxes after Updating Drivers and allows unchecking' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {

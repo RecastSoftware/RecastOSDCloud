@@ -391,7 +391,8 @@ function Show-OOBEMenuWindow {
  Title="OSDCloudPreOOBE" Width="820" Height="480" MinWidth="520" MinHeight="360"
  WindowStartupLocation="Manual" Background="#161F5B" Foreground="#F5F5F5"
  FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Topmost="True"
- UseLayoutRounding="True" SnapsToDevicePixels="True" AutomationProperties.Name="OSDCloudPreOOBE task engine">
+ UseLayoutRounding="True" SnapsToDevicePixels="True" KeyboardNavigation.TabNavigation="Cycle"
+ Cursor="Arrow" ForceCursor="True" AutomationProperties.Name="OSDCloudPreOOBE task engine">
  <shell:WindowChrome.WindowChrome>
   <shell:WindowChrome CaptionHeight="48" GlassFrameThickness="0"
    ResizeBorderThickness="8" UseAeroCaptionButtons="False"/>
@@ -405,20 +406,34 @@ function Show-OOBEMenuWindow {
   <SolidColorBrush x:Key="SidebarBrush" Color="#111949"/>
   <SolidColorBrush x:Key="SecondaryTextBrush" Color="#CDD9F3"/>
   <Style TargetType="Button">
+   <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
    <Setter Property="Foreground" Value="#F5F5F5"/><Setter Property="Background" Value="{StaticResource ControlBrush}"/>
    <Setter Property="Padding" Value="12,7"/><Setter Property="Cursor" Value="Hand"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
-    <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{StaticResource BorderBrush}"
+    <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
      BorderThickness="1" CornerRadius="4" Padding="{TemplateBinding Padding}">
      <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
     </Border>
     <ControlTemplate.Triggers>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
      <Trigger Property="IsPressed" Value="True"><Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource SurfaceBrush}"/></Trigger>
-     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True">
+      <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#FFFFFF"/>
+      <Setter TargetName="ButtonBorder" Property="BorderThickness" Value="3"/>
+     </Trigger>
      <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
     </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+   <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+   <Setter Property="Foreground" Value="#111949"/><Setter Property="FontWeight" Value="SemiBold"/>
+   <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+   <Setter Property="MinWidth" Value="96"/><Setter Property="MinHeight" Value="36"/>
+   <Style.Triggers>
+    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></Trigger>
+    <Trigger Property="IsPressed" Value="True"><Setter Property="Foreground" Value="#FFFFFF"/></Trigger>
+   </Style.Triggers>
   </Style>
   <Style x:Key="CaptionFocusVisual">
    <Setter Property="Control.Template"><Setter.Value><ControlTemplate>
@@ -436,6 +451,10 @@ function Show-OOBEMenuWindow {
     <ControlTemplate.Triggers>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
      <Trigger Property="IsPressed" Value="True"><Setter TargetName="CaptionBorder" Property="Background" Value="{StaticResource ControlBrush}"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True">
+      <Setter TargetName="CaptionBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+      <Setter TargetName="CaptionBorder" Property="BorderThickness" Value="2"/>
+     </Trigger>
      <MultiTrigger><MultiTrigger.Conditions><Condition Property="Tag" Value="Close"/><Condition Property="IsMouseOver" Value="True"/></MultiTrigger.Conditions>
       <Setter TargetName="CaptionBorder" Property="Background" Value="#C42B1C"/>
      </MultiTrigger>
@@ -467,12 +486,16 @@ function Show-OOBEMenuWindow {
       <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
      </Trigger>
      <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="StepBorder" Property="Background" Value="{StaticResource HoverBrush}"/></Trigger>
-     <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Box" Property="BorderBrush" Value="#F5F5F5"/></Trigger>
+     <Trigger Property="IsKeyboardFocused" Value="True">
+      <Setter TargetName="StepBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+      <Setter TargetName="StepBorder" Property="BorderThickness" Value="2"/>
+     </Trigger>
      <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.45"/></Trigger>
     </ControlTemplate.Triggers>
    </ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style TargetType="ContextMenu">
+   <Setter Property="KeyboardNavigation.TabNavigation" Value="Cycle"/>
    <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/><Setter Property="Foreground" Value="#F5F5F5"/>
    <Setter Property="FontFamily" Value="Segoe UI Variable Text, Segoe UI"/><Setter Property="FontSize" Value="13"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ContextMenu">
@@ -482,6 +505,7 @@ function Show-OOBEMenuWindow {
    </ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style TargetType="MenuItem">
+   <Setter Property="KeyboardNavigation.IsTabStop" Value="True"/>
    <Setter Property="Foreground" Value="#F5F5F5"/><Setter Property="Padding" Value="12,7"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="MenuItem">
     <Border x:Name="MenuBorder" Background="Transparent" CornerRadius="4" Padding="{TemplateBinding Padding}">
@@ -543,41 +567,41 @@ function Show-OOBEMenuWindow {
   <Grid.RowDefinitions><RowDefinition Height="48"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <Grid Background="{StaticResource SidebarBrush}">
    <Grid.ColumnDefinitions><ColumnDefinition Width="56"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-   <Button x:Name="PaneToggleButton" Width="56" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Collapse steps" AutomationProperties.Name="Collapse steps">
+   <Button x:Name="PaneToggleButton" KeyboardNavigation.TabIndex="10" Width="56" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Collapse steps" AutomationProperties.Name="Collapse steps">
     <TextBlock Text="&#xE700;" Style="{StaticResource IconStyle}"/>
    </Button>
    <TextBlock x:Name="TitleText" Grid.Column="1" Text="Recast Software - OSDCloud PreOOBE" FontWeight="SemiBold" Margin="4,0,4,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
    <StackPanel Grid.Column="2" Orientation="Horizontal">
-    <Button x:Name="ToolsMenuButton" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open deployment files" AutomationProperties.Name="Tools">
+    <Button x:Name="ToolsMenuButton" KeyboardNavigation.TabIndex="11" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open deployment files" AutomationProperties.Name="Tools">
      <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE90F;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Tools" VerticalAlignment="Center"/></StackPanel>
     </Button>
-    <Button x:Name="ShellMenuButton" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open a command shell" AutomationProperties.Name="Shell">
+    <Button x:Name="ShellMenuButton" KeyboardNavigation.TabIndex="12" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open a command shell" AutomationProperties.Name="Shell">
      <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE756;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Shell" VerticalAlignment="Center"/></StackPanel>
     </Button>
-    <Button x:Name="MinimizeButton" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" AutomationProperties.Name="Minimize"><TextBlock Text="&#xE921;" Style="{StaticResource IconStyle}"/></Button>
-    <Button x:Name="MaximizeButton" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Maximize" AutomationProperties.Name="Maximize"><TextBlock x:Name="MaximizeGlyph" Text="&#xE922;" Style="{StaticResource IconStyle}"/></Button>
-    <Button x:Name="CloseButton" Width="40" Padding="0" Tag="Close" Style="{StaticResource CaptionButtonStyle}" ToolTip="Finish active operation and continue setup" AutomationProperties.Name="Cancel remaining tasks and continue setup"><TextBlock Text="&#xE8BB;" Style="{StaticResource IconStyle}"/></Button>
+    <Button x:Name="MinimizeButton" KeyboardNavigation.TabIndex="13" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Minimize" AutomationProperties.Name="Minimize"><TextBlock Text="&#xE921;" Style="{StaticResource IconStyle}"/></Button>
+    <Button x:Name="MaximizeButton" KeyboardNavigation.TabIndex="14" Width="40" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Maximize" AutomationProperties.Name="Maximize"><TextBlock x:Name="MaximizeGlyph" Text="&#xE922;" Style="{StaticResource IconStyle}"/></Button>
+    <Button x:Name="CloseButton" KeyboardNavigation.TabIndex="15" Width="40" Padding="0" Tag="Close" Style="{StaticResource CaptionButtonStyle}" ToolTip="Finish active operation and continue setup" AutomationProperties.Name="Cancel remaining tasks and continue setup"><TextBlock Text="&#xE8BB;" Style="{StaticResource IconStyle}"/></Button>
    </StackPanel>
   </Grid>
   <Grid Grid.Row="1">
    <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="220"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Background="{StaticResource SidebarBrush}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer Focusable="False" KeyboardNavigation.IsTabStop="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <StackPanel x:Name="StepPanel" Margin="0,8,0,0" AutomationProperties.Name="PreOOBE steps"/>
     </ScrollViewer>
    </Border>
   <Grid Grid.Column="1" Margin="24,16">
    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto">
+    <ScrollViewer x:Name="TaskSummaryScrollViewer" Focusable="True" KeyboardNavigation.IsTabStop="True" KeyboardNavigation.TabIndex="1000000" MaxHeight="120" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="PreOOBE task summary">
      <StackPanel x:Name="TaskSummaryPanel"/>
     </ScrollViewer>
    <ProgressBar x:Name="ProgressBar" Grid.Row="1" Height="4" BorderThickness="0" Margin="0,8,0,12" Foreground="{StaticResource AccentBrush}" Background="{StaticResource ControlBrush}"/>
-   <TextBox x:Name="OutputTextBox" Grid.Row="2" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="PreOOBE task output"/>
+   <TextBox x:Name="OutputTextBox" KeyboardNavigation.TabIndex="1000001" Grid.Row="2" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="PreOOBE task output"/>
    <DockPanel Grid.Row="3" Margin="0,12,0,0" LastChildFill="True">
-    <Button x:Name="StepButton" DockPanel.Dock="Right" Content="Start" Margin="12,0,0,0" AutomationProperties.Name="Start OSDCloud PreOOBE"/>
-    <Button x:Name="ContinueOobeButton" DockPanel.Dock="Right" Content="Continue to OOBE" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Continue to OOBE"/>
-    <Button x:Name="ContinueButton" DockPanel.Dock="Right" Content="Continue" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Continue with the remaining tasks"/>
-    <Button x:Name="RetryButton" DockPanel.Dock="Right" Content="Retry" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Retry Updating Windows 11"/>
+    <Button x:Name="StepButton" KeyboardNavigation.TabIndex="0" IsDefault="True" Style="{StaticResource PrimaryButtonStyle}" DockPanel.Dock="Right" Content="Start" Margin="12,0,0,0" AutomationProperties.Name="Start OSDCloud PreOOBE"/>
+    <Button x:Name="ContinueOobeButton" KeyboardNavigation.TabIndex="0" Style="{StaticResource PrimaryButtonStyle}" DockPanel.Dock="Right" Content="Continue to OOBE" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Continue to OOBE"/>
+    <Button x:Name="ContinueButton" KeyboardNavigation.TabIndex="2" DockPanel.Dock="Right" Content="Continue" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Continue with the remaining tasks"/>
+    <Button x:Name="RetryButton" KeyboardNavigation.TabIndex="1" DockPanel.Dock="Right" Content="Retry" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Retry Updating Windows 11"/>
     <TextBlock x:Name="StatusText" Text="Starting..." TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource SecondaryTextBrush}" AutomationProperties.LiveSetting="Polite"/>
    </DockPanel>
   </Grid>
@@ -598,6 +622,17 @@ function Show-OOBEMenuWindow {
     if ($Preview) { $window.Title += ' (Preview)' }
     $engine = New-OSDCloudPreOOBEState
     $ui = @{ ExitCode = 0; Source = $null; OutputCount = 0 }
+    $pointerPath = Join-Path $env:WINDIR 'Cursors\aero_arrow_xl.cur'
+    try {
+        if (-not (Test-Path -LiteralPath $pointerPath -PathType Leaf)) { throw "Pointer file missing: $pointerPath" }
+        $ui.Cursor = [Windows.Input.Cursor]::new($pointerPath)
+        $window.Cursor = $ui.Cursor
+    }
+    catch {
+        $message = "Unable to load the extra-large PreOOBE pointer; using the standard arrow: $($_.Exception.Message)"
+        Write-Warning -Message $message
+        Write-OOBEMenuLog -Message $message
+    }
     $updateContext = {
         $messages = @(
             if ($Preview) { 'Preview | No network or system changes' }
@@ -669,6 +704,9 @@ function Show-OOBEMenuWindow {
         $menu.Style = $window.FindResource([Windows.Controls.ContextMenu])
         $menu.PlacementTarget = $button
         $menu.Placement = 'Bottom'
+        $menu.Cursor = $window.Cursor
+        $menu.ForceCursor = $true
+        $menu.Add_Opened({ [void]$this.Items[0].Focus() })
         $button.ContextMenu = $menu
         foreach ($header in $definition.Items) {
             $item = [Windows.Controls.MenuItem]::new()
@@ -703,6 +741,7 @@ function Show-OOBEMenuWindow {
     foreach ($task in $engine.Tasks) {
         $box = [Windows.Controls.CheckBox]::new()
         $box.Style = $window.FindResource('StepCheckBoxStyle')
+        [Windows.Input.KeyboardNavigation]::SetTabIndex($box, 20 + $ui.StepBoxes.Count)
         $box.IsChecked = $task.Enabled
         $box.Tag = $task
         $box.ToolTip = "$($task.Name) - uncheck to skip"
@@ -734,6 +773,7 @@ function Show-OOBEMenuWindow {
     $timer.Interval = [TimeSpan]::FromMilliseconds(250)
     $timer.Add_Tick({
         try {
+            $focusedControl = [Windows.Input.Keyboard]::FocusedElement
             Update-OSDCloudPreOOBEState -State $engine -PreviewOnly:$Preview
             Add-OSDCloudPreOOBEOutputText -TextBox $window.FindName('OutputTextBox') -Output $engine.Output -Ui $ui
             for ($index = 0; $index -lt $engine.Tasks.Count; $index++) {
@@ -762,6 +802,16 @@ function Show-OOBEMenuWindow {
             $pausedVisibility = if ($engine.Paused) { 'Visible' } else { 'Collapsed' }
             $window.FindName('RetryButton').Visibility = $pausedVisibility
             $window.FindName('ContinueButton').Visibility = $pausedVisibility
+            $stepButton.IsDefault = $stepButton.Content -eq 'Start' -and $stepButton.IsEnabled -and $stepButton.IsVisible
+            $window.FindName('ContinueOobeButton').IsDefault = $engine.Complete
+            if ($window.IsActive -and $focusedControl -is [Windows.UIElement] -and
+                (-not $focusedControl.IsVisible -or -not $focusedControl.IsEnabled)) {
+                $focusTarget = if ($engine.Complete) { $window.FindName('ContinueOobeButton') }
+                elseif ($engine.Paused) { $window.FindName('RetryButton') }
+                elseif ($stepButton.IsEnabled) { $stepButton }
+                else { $window.FindName('PaneToggleButton') }
+                [void]$focusTarget.Focus()
+            }
             $window.FindName('ProgressBar').IsIndeterminate = $null -ne $engine.Worker
             if ($engine.Complete) { $window.FindName('StatusText').Text = 'OSDCloud PreOOBE complete. Select Continue to OOBE.' }
             elseif ($engine.CloseRequested) { $window.FindName('StatusText').Text = 'Closing after the active operation finishes safely.' }
@@ -807,6 +857,7 @@ function Show-OOBEMenuWindow {
         try {
             if (-not [Recast.OOBE.Native]::IsInputDesktop()) { throw 'Not on the console input desktop.' }
             $activated = $window.Activate()
+            [void]$window.FindName('StepButton').Focus()
             Write-OOBEMenuLog -Message "PreOOBE rendered: session $([Diagnostics.Process]::GetCurrentProcess().SessionId), desktop $([Recast.OOBE.Native]::Desktop), activated $activated, topmost $($window.Topmost), bounds $($window.Left),$($window.Top) $($window.ActualWidth)x$($window.ActualHeight)."
             if ($ReadyEventName) {
                 $signal = [Threading.EventWaitHandle]::OpenExisting($ReadyEventName)
@@ -825,6 +876,7 @@ function Show-OOBEMenuWindow {
     try { [void]$window.ShowDialog() }
     finally {
         $timer.Stop()
+        if ($ui.Cursor) { $ui.Cursor.Dispose() }
         if ($engine.Worker) {
             $engine.Shared.CancelRequested = $true
             try { [void]$engine.Worker.Pipeline.EndInvoke($engine.Worker.Handle) }

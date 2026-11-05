@@ -422,6 +422,8 @@ $deviceTextBindings = @{
 foreach ($deviceTextBinding in $deviceTextBindings.GetEnumerator()) {
     $window.FindName($deviceTextBinding.Key).Text = $global:OSDCoreDevice.$($deviceTextBinding.Value)
 }
+$SummaryText.Text = '{0} | {1} | {2}' -f $global:OSDCoreDevice.OSDManufacturer,
+    $global:OSDCoreDevice.OSDModel, $global:OSDCoreDevice.OSDProduct
 $deviceSerialNumberText = $window.FindName('deviceSerialNumberText')
 $deviceUUIDText = $window.FindName('deviceUUIDText')
 $deviceSerialNumberText.Add_MouseLeftButtonUp({ Copy-MainWindowValue -Text ([string]$deviceSerialNumberText.Text) -Label 'Serial Number' })
@@ -474,19 +476,6 @@ function Get-ComboValue {
 function Set-StartButtonState {
     # Deployment can only proceed after the current picker state resolves to an OS catalog object.
     $StartButton.IsEnabled = ($null -ne $global:OSDCloudDeploy.OperatingSystemCloudObject)
-}
-function Update-SelectionSummary {
-    $summaryParts = @(
-        (Get-ComboValue -ComboBox $TaskSequenceCombo)
-        (@(
-                (Get-ComboValue -ComboBox $OperatingSystemCombo)
-                (Get-ComboValue -ComboBox $OSEditionCombo)
-                (Get-ComboValue -ComboBox $OSActivationCombo)
-                (Get-ComboValue -ComboBox $OSLanguageCodeCombo)
-            ) | Where-Object { $_ }) -join ' '
-        (Get-ComboValue -ComboBox $DriverPackCombo)
-    ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-    $SummaryText.Text = $summaryParts -join '  |  '
 }
 function Update-SelectedDetails {
     param(
@@ -561,7 +550,6 @@ function Update-OsResults {
     Update-SelectedDetails -Item $script:SelectedImage
 
     Set-StartButtonState
-    Update-SelectionSummary
 }
 function Update-DriverPackResults {
     # Persist the selected driver pack immediately so the final deployment state reflects the latest UI selection.
@@ -581,9 +569,7 @@ function Update-DriverPackResults {
     else {
         [string]$global:OSDCloudDeploy.DriverPackCloudObject.Url
     }
-    Update-SelectionSummary
 }
-$TaskSequenceCombo.Add_SelectionChanged({ Update-SelectionSummary })
 $DriverPackCombo.Add_SelectionChanged({ Update-DriverPackResults })
 $OperatingSystemCombo.Add_SelectionChanged({ Update-OsResults })
 $OSActivationCombo.Add_SelectionChanged({ Update-OsResults })
@@ -600,7 +586,14 @@ $StartButton.Add_Click({
 Update-OsResults
 Update-DriverPackResults
 
-$window.Add_ContentRendered({ $TaskSequenceCombo.Focus() | Out-Null })
+$window.Add_ContentRendered({
+        if ($StartButton.IsEnabled) {
+            $StartButton.Focus() | Out-Null
+        }
+        else {
+            $window.FindName('CancelButton').Focus() | Out-Null
+        }
+    })
 $null = $window.ShowDialog()
 
 if ($script:SelectionConfirmed) {

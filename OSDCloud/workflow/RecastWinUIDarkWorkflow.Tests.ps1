@@ -14,6 +14,18 @@ BeforeAll {
         $root.Arrange([System.Windows.Rect]::new(0, 0, $Width, $Height))
         $root.UpdateLayout()
     }
+    $uiAst = [System.Management.Automation.Language.Parser]::ParseFile(
+        (Join-Path $path 'ui\MainWindow.ps1'), [ref]$null, [ref]$null)
+    $initialFocusStatement = $uiAst.Find({
+            param($node)
+            $node -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and
+            $node.Member.Value -eq 'Add_ContentRendered'
+        }, $true).Extent.Text
+    $hardwareSummaryStatement = $uiAst.Find({
+            param($node)
+            $node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+            $node.Left.Extent.Text -eq '$SummaryText.Text'
+        }, $true).Extent.Text
 }
 
 Describe 'recast-winui-dark workflow' {
@@ -28,7 +40,7 @@ Describe 'recast-winui-dark workflow' {
         foreach ($control in $controls) {
             $window.FindName($control) | Should -Not -BeNullOrEmpty -Because "$control is used by MainWindow.ps1"
         }
-        $window.FindName('StartButton').IsDefault | Should -BeFalse
+        $window.FindName('StartButton').IsDefault | Should -BeTrue
         $window.FindName('StartButton').IsEnabled | Should -BeFalse
         $window.FindName('CancelButton').IsCancel | Should -BeTrue
     }
@@ -100,6 +112,100 @@ Describe 'recast-winui-dark workflow' {
         $origin = $start.TranslatePoint([System.Windows.Point]::new(0, 0), $root)
         ($origin.X + $start.ActualWidth) | Should -BeLessOrEqual 760
         ($origin.Y + $start.ActualHeight) | Should -BeLessOrEqual 560
+    }
+}
+
+Describe 'recast-winui-dark keyboard navigation and hardware summary' {
+    BeforeEach {
+        $window = Get-WorkflowWindow
+        $StartButton = $window.FindName('StartButton')
+        foreach ($name in @(
+                'TaskSequenceCombo', 'OperatingSystemCombo', 'OSLanguageCodeCombo',
+                'OSEditionCombo', 'OSActivationCombo', 'DriverPackCombo'
+            )) {
+            $combo = $window.FindName($name)
+            $null = $combo.Items.Add('Synthetic selection')
+            $combo.SelectedIndex = 0
+        }
+        . ([scriptblock]::Create($initialFocusStatement))
+    }
+
+    AfterEach {
+        $window.Close()
+    }
+
+    It 'focuses the text-only Start action when a valid selection enables deployment' {
+        $StartButton.IsEnabled = $true
+        $window.Show()
+        $window.Dispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::ApplicationIdle)
+
+        $StartButton.IsKeyboardFocused | Should -BeTrue
+        $StartButton.Content | Should -BeExactly 'Start'
+        $window.FindName('TaskSequenceCombo').IsKeyboardFocusWithin | Should -BeFalse
+        $window.IsVisible | Should -BeTrue -Because 'initial focus must not confirm deployment'
+    }
+
+    It 'focuses Cancel instead of enabling Start when deployment is unavailable' {
+        $window.Show()
+        $window.Dispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::ApplicationIdle)
+
+        $StartButton.IsEnabled | Should -BeFalse
+        $window.FindName('CancelButton').IsKeyboardFocused | Should -BeTrue
+    }
+
+    It 'tabs forward and backward through all settings and both actions' {
+        $StartButton.IsEnabled = $true
+        $window.Show()
+        $window.Dispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::ApplicationIdle)
+        $names = @(
+            'TaskSequenceCombo', 'OperatingSystemCombo', 'OSLanguageCodeCombo', 'OSEditionCombo',
+            'OSActivationCombo', 'DriverPackCombo', 'CancelButton', 'StartButton'
+        )
+        $null = $window.FindName($names[0]).Focus()
+        foreach ($name in $names | Select-Object -Skip 1) {
+            $focused = [System.Windows.Input.Keyboard]::FocusedElement
+            $focused.MoveFocus([System.Windows.Input.TraversalRequest]::new(
+                    [System.Windows.Input.FocusNavigationDirection]::Next)) | Should -BeTrue
+            [System.Windows.Input.Keyboard]::FocusedElement.Name | Should -Be $name
+        }
+        for ($index = $names.Count - 2; $index -ge 0; $index--) {
+            $focused = [System.Windows.Input.Keyboard]::FocusedElement
+            $focused.MoveFocus([System.Windows.Input.TraversalRequest]::new(
+                    [System.Windows.Input.FocusNavigationDirection]::Previous)) | Should -BeTrue
+            [System.Windows.Input.Keyboard]::FocusedElement.Name | Should -Be $names[$index]
+        }
+    }
+
+    It 'skips disabled activation and keeps the actions reachable' {
+        $StartButton.IsEnabled = $true
+        $window.FindName('OSActivationCombo').IsEnabled = $false
+        $window.Show()
+        $window.Dispatcher.Invoke([action]{}, [System.Windows.Threading.DispatcherPriority]::ApplicationIdle)
+        $null = $window.FindName('OSEditionCombo').Focus()
+        foreach ($name in 'DriverPackCombo', 'CancelButton', 'StartButton') {
+            [System.Windows.Input.Keyboard]::FocusedElement.MoveFocus(
+                [System.Windows.Input.TraversalRequest]::new(
+                    [System.Windows.Input.FocusNavigationDirection]::Next)) | Should -BeTrue
+            [System.Windows.Input.Keyboard]::FocusedElement.Name | Should -Be $name
+        }
+    }
+
+    It 'shows manufacturer, model and product in that order with the full text in its tooltip' {
+        $originalDevice = $global:OSDCoreDevice
+        try {
+            $global:OSDCoreDevice = [pscustomobject]@{
+                OSDManufacturer = 'Microsoft'
+                OSDModel = 'Virtual Machine'
+                OSDProduct = 'Hyper-V UEFI Release v4.1'
+            }
+            $SummaryText = $window.FindName('SummaryText')
+            . ([scriptblock]::Create($hardwareSummaryStatement))
+            $SummaryText.Text | Should -BeExactly 'Microsoft | Virtual Machine | Hyper-V UEFI Release v4.1'
+            $SummaryText.ToolTip | Should -BeExactly $SummaryText.Text
+        }
+        finally {
+            $global:OSDCoreDevice = $originalDevice
+        }
     }
 }
 

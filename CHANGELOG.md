@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fix keyboard navigation in the `recast-winui-dark` deployment GUI: focus Start initially, use a text-only default Start button, and allow Tab/Shift+Tab through settings and actions. The status bar now shows manufacturer, model and product.
 - Synchronize internet time before HTTPS probes and updates, so an incorrect clock does not block certificate validation. Log clock corrections and time-source failures without changing the time zone or bypassing TLS validation.
 - Fix PreOOBE internet time sync and the Date, Time & TimeZone dialog setting the clock to the UTC value as local time. Windows PowerShell `Set-Date` ignores `DateTimeKind`, so both now apply local time in the running OS time zone.
 - PreOOBE logs the running OS date, time and time zone at start, shows them in the status bar using the OS locale, waits with a `Starting in 10 seconds` countdown before each task, and pauses after an Updating Windows 11 failure so the clock can be corrected before Retry or Continue.

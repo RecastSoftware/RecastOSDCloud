@@ -5,7 +5,7 @@
         Title="Recast Software - OSDCloud" Width="1000" Height="760" MinWidth="760" MinHeight="560"
         WindowStartupLocation="CenterScreen" Background="#161F5B" BorderBrush="#000000" BorderThickness="1"
         FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Foreground="#F5F5F5"
-        UseLayoutRounding="True" SnapsToDevicePixels="True"
+        UseLayoutRounding="True" SnapsToDevicePixels="True" KeyboardNavigation.TabNavigation="Cycle"
         AutomationProperties.Name="Recast Software - OSDCloud">
     <shell:WindowChrome.WindowChrome>
         <shell:WindowChrome CaptionHeight="48" GlassFrameThickness="0,0,0,1"
@@ -501,6 +501,8 @@
             </Setter>
         </Style>
         <Style TargetType="ComboBox">
+            <Setter Property="IsTabStop" Value="True"/>
+            <Setter Property="KeyboardNavigation.TabNavigation" Value="Once"/>
             <Setter Property="Foreground" Value="#F5F5F5"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="MinHeight" Value="30"/>
@@ -515,7 +517,7 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <ToggleButton x:Name="DropDownToggle" Focusable="False" ClickMode="Press"
+                            <ToggleButton x:Name="DropDownToggle" Focusable="False" IsTabStop="False" ClickMode="Press"
                                           IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                                 <ToggleButton.Template>
                                     <ControlTemplate TargetType="ToggleButton">
@@ -615,7 +617,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Background="{StaticResource SidebarBrush}">
+        <Grid Grid.Row="0" Background="{StaticResource SidebarBrush}" KeyboardNavigation.TabIndex="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
@@ -663,7 +665,8 @@
                 </Button>
             </StackPanel>
         </Grid>
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                      Focusable="False" KeyboardNavigation.TabIndex="0">
             <StackPanel Margin="24,20,24,16">
                 <Expander x:Name="DeviceIdentityExpander" Style="{StaticResource DeviceIdentityExpanderStyle}"
                           IsExpanded="False" Margin="0,0,0,8" AutomationProperties.Name="Device and Identity">
@@ -794,7 +797,8 @@
                 </Border>
             </StackPanel>
         </ScrollViewer>
-        <Border Grid.Row="2" Background="{StaticResource SidebarBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="16,10">
+        <Border Grid.Row="2" Background="{StaticResource SidebarBrush}" BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0" Padding="16,10" KeyboardNavigation.TabIndex="1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -809,13 +813,9 @@
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Button x:Name="CancelButton" Content="Cancel" IsCancel="True" MinWidth="96" AutomationProperties.Name="Cancel"/>
-                    <Button x:Name="StartButton" Style="{StaticResource RunButtonStyle}" IsEnabled="False"
-                            AutomationProperties.Name="Start deployment" ToolTip="Start the OSDCloud deployment with the selected settings">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="&#xF5B0;" Style="{StaticResource ButtonIconStyle}" Margin="0,0,8,0"/>
-                            <TextBlock Text="Start" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
+                    <Button x:Name="StartButton" Content="Start" Style="{StaticResource RunButtonStyle}"
+                            IsEnabled="False" IsDefault="True" AutomationProperties.Name="Start deployment"
+                            ToolTip="Start the OSDCloud deployment with the selected settings"/>
                 </StackPanel>
             </Grid>
         </Border>

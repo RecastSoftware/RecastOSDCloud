@@ -144,6 +144,18 @@ countdown before it runs, giving clock changes time to apply and the technician 
 to review or correct the clock. During a countdown the button reads **Start** and
 starts that task immediately; while an update runs it reads **Skip Step**.
 
+**Start** is highlighted in cyan and receives keyboard focus when the window opens.
+Use **Tab** / **Shift+Tab** to cycle through available actions, caption buttons,
+task checkboxes (including applications), the task summary and output. **Space**
+toggles a focused checkbox or activates a button; **Enter** activates Start.
+Tools and Shell menus focus their first item on opening and support Tab and arrow
+keys; Escape dismisses the menu. Focus outlines identify the current control.
+When a focused action becomes unavailable, focus moves to an available action.
+PreOOBE uses the inbox extra-large arrow within its window and menus when available,
+otherwise logs a warning and uses the standard arrow. System pointer settings are
+not changed. Verify pointer visibility and keyboard navigation on the actual OOBE
+desktop; a preview cannot establish setup-desktop pointer rendering.
+
 The left pane is expanded by default (select the hamburger to collapse it) and lists every task with a
 checkbox. Unchecking a task before it starts skips it (logged as unchecked by
 technician); checking it again before it is reached runs it. Checkboxes are disabled
