@@ -1,6 +1,6 @@
 <#!
 .SYNOPSIS
-    OSDCloud deployment settings window for the recast-winui-dark workflow.
+    OSDCloud deployment settings window for the recast workflow.
 .DESCRIPTION
     Dark single-page card layout that matches OSDCloud Boot and OSDCloud BootMenu.
     Provides the same selections and deployment write-back as the default workflow UI.

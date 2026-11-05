@@ -1,6 +1,6 @@
 BeforeAll {
     $workflowRoot = $PSScriptRoot
-    $workflowName = 'recast-winui-dark'
+    $workflowName = 'recast'
     $path = Join-Path $workflowRoot $workflowName
     Add-Type -AssemblyName PresentationFramework
     function Get-WorkflowWindow {
@@ -28,7 +28,7 @@ BeforeAll {
         }, $true).Extent.Text
 }
 
-Describe 'recast-winui-dark workflow' {
+Describe 'recast workflow' {
     It 'loads MainWindow.xaml with the required controls' {
         $window = Get-WorkflowWindow
         $controls = @(
@@ -115,7 +115,7 @@ Describe 'recast-winui-dark workflow' {
     }
 }
 
-Describe 'recast-winui-dark keyboard navigation and hardware summary' {
+Describe 'recast keyboard navigation and hardware summary' {
     BeforeEach {
         $window = Get-WorkflowWindow
         $StartButton = $window.FindName('StartButton')
@@ -209,7 +209,7 @@ Describe 'recast-winui-dark keyboard navigation and hardware summary' {
     }
 }
 
-Describe 'recast-winui-dark device and identity bar' {
+Describe 'recast device and identity bar' {
     BeforeEach {
         $window = Get-WorkflowWindow
         $expander = $window.FindName('DeviceIdentityExpander')

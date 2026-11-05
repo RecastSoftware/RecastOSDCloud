@@ -204,6 +204,11 @@
             "skip": false
         },
         {
+            "name": "Stage OSDCloudSetupComplete",
+            "command": "step-update-setupcomplete",
+            "skip": false
+        },
+        {
             "name": "Export OS Information to Logs",
             "command": "step-finalize-exportofflineosinfo"
         },
