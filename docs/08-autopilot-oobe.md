@@ -151,9 +151,9 @@ toggles a focused checkbox or activates a button; **Enter** activates Start.
 Tools and Shell menus focus their first item on opening and support Tab and arrow
 keys; Escape dismisses the menu. Focus outlines identify the current control.
 When a focused action becomes unavailable, focus moves to an available action.
-PreOOBE uses the inbox extra-large arrow within its window and menus when available,
-otherwise logs a warning and uses the standard arrow. System pointer settings are
-not changed. Verify pointer visibility and keyboard navigation on the actual OOBE
+PreOOBE explicitly uses the standard-size arrow throughout its window and menus;
+it does not load an enlarged pointer or change system pointer settings.
+Verify pointer visibility and keyboard navigation on the actual OOBE
 desktop; a preview cannot establish setup-desktop pointer rendering.
 
 The left pane is expanded by default (select the hamburger to collapse it) and lists every task with a

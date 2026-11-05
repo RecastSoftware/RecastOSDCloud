@@ -573,8 +573,6 @@ InModuleScope OSDCloudPreOOBE {
                         $testWindow.FindName('StepPanel').Children
                     )
                     $result.Hidden = $testWindow.FindName('ContinueOobeButton')
-                    $result.Pointer = $testWindow.Cursor -ne $null -and $testWindow.ForceCursor
-                    $result.PointerPath = $testWindow.Cursor.ToString()
                 }
                 catch { $result.Error = "$($_.Exception.Message) at $($_.InvocationInfo.PositionMessage)" }
                 finally { $testWindow.Close() }
@@ -586,8 +584,6 @@ InModuleScope OSDCloudPreOOBE {
             $result.Highlight | Should -Be '#FF31D1FF'
             $result.FocusBorder | Should -Be 3
             $result.Default | Should -BeTrue
-            $result.Pointer | Should -BeTrue
-            $result.PointerPath | Should -BeLike '*\Cursors\aero_arrow_xl.cur'
             foreach ($control in $result.Expected) {
                 $result.Forward | Should -Contain $control
                 $result.Backward | Should -Contain $control
@@ -678,9 +674,7 @@ InModuleScope OSDCloudPreOOBE {
             $result.OobeDefault | Should -BeTrue
         }
 
-        It 'uses a standard window-local arrow and reports when the extra-large pointer is unavailable' {
-            Mock Test-Path { $false } -ParameterFilter { $LiteralPath -like '*\Cursors\aero_arrow_xl.cur' }
-            Mock Write-Warning {}
+        It 'keeps the standard arrow visible throughout the window and both menus without enlarging it' {
             $uiProbeTimer.Add_Tick({
                 $uiProbeTimer.Stop()
                 $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
@@ -688,7 +682,12 @@ InModuleScope OSDCloudPreOOBE {
                 try {
                     $result.Cursor = $testWindow.Cursor
                     $result.Forced = $testWindow.ForceCursor
-                    $result.MenuCursor = $testWindow.FindName('ToolsMenuButton').ContextMenu.Cursor
+                    $result.Menus = @(
+                        foreach ($name in 'ToolsMenuButton','ShellMenuButton') {
+                            $menu = $testWindow.FindName($name).ContextMenu
+                            [pscustomobject]@{ Cursor = $menu.Cursor; Forced = $menu.ForceCursor }
+                        }
+                    )
                 }
                 catch { $result.Error = $_ }
                 finally { $testWindow.Close() }
@@ -697,10 +696,11 @@ InModuleScope OSDCloudPreOOBE {
             Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
             $result.Error | Should -BeNullOrEmpty
             $result.Cursor | Should -Be ([Windows.Input.Cursors]::Arrow)
-            $result.MenuCursor | Should -Be $result.Cursor
             $result.Forced | Should -BeTrue
-            Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*Pointer file missing*' }
-            ($script:renderLog -join '; ') | Should -BeLike '*using the standard arrow*'
+            foreach ($menu in $result.Menus) {
+                $menu.Cursor | Should -Be $result.Cursor
+                $menu.Forced | Should -BeTrue
+            }
         }
 
         It 'renders discovered application checkboxes after Updating Drivers and allows unchecking' {

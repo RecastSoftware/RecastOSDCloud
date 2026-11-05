@@ -622,17 +622,6 @@ function Show-OOBEMenuWindow {
     if ($Preview) { $window.Title += ' (Preview)' }
     $engine = New-OSDCloudPreOOBEState
     $ui = @{ ExitCode = 0; Source = $null; OutputCount = 0 }
-    $pointerPath = Join-Path $env:WINDIR 'Cursors\aero_arrow_xl.cur'
-    try {
-        if (-not (Test-Path -LiteralPath $pointerPath -PathType Leaf)) { throw "Pointer file missing: $pointerPath" }
-        $ui.Cursor = [Windows.Input.Cursor]::new($pointerPath)
-        $window.Cursor = $ui.Cursor
-    }
-    catch {
-        $message = "Unable to load the extra-large PreOOBE pointer; using the standard arrow: $($_.Exception.Message)"
-        Write-Warning -Message $message
-        Write-OOBEMenuLog -Message $message
-    }
     $updateContext = {
         $messages = @(
             if ($Preview) { 'Preview | No network or system changes' }
@@ -905,7 +894,6 @@ function Show-OOBEMenuWindow {
     try { [void]$window.ShowDialog() }
     finally {
         $timer.Stop()
-        if ($ui.Cursor) { $ui.Cursor.Dispose() }
         if ($engine.Worker) {
             $engine.Shared.CancelRequested = $true
             try { [void]$engine.Worker.Pipeline.EndInvoke($engine.Worker.Handle) }
