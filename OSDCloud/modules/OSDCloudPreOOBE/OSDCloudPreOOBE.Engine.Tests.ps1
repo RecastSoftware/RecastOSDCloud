@@ -440,6 +440,66 @@ InModuleScope OSDCloudPreOOBE {
             Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 0 -Exactly
         }
 
+        It 'recovers failed time sync over Wi-Fi and retries time before any HTTPS probe' {
+            $script:timeCalls = 0
+            $script:timeOrder = [Collections.Generic.List[string]]::new()
+            Mock Sync-OSDCloudPreOOBETime {
+                $script:timeOrder.Add('Time')
+                $script:timeCalls++
+                if ($script:timeCalls -eq 1) { throw 'No network' }
+                $State.Succeeded = $true
+                $State.Outcome = 'Succeeded'
+            }
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery { $script:timeOrder.Add('Wi-Fi'); $true }
+            Mock Start-Sleep {}
+            Invoke-OSDCloudPreOOBETask -Type Time -State $state
+            $state.Outcome | Should -Be Succeeded
+            ($script:timeOrder -join ',') | Should -Be 'Time,Wi-Fi,Time'
+            Should -Invoke Start-Sleep -Times 1 -Exactly -ParameterFilter { $Seconds -eq 2 }
+            Should -Invoke Test-OSDCloudPreOOBEConnectivity -Times 0 -Exactly
+            Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 0 -Exactly
+        }
+
+        It 'keeps failed time sync failed when Wi-Fi recovery is skipped or no adapter is available' {
+            Mock Sync-OSDCloudPreOOBETime { throw 'Time source unavailable' }
+            Invoke-OSDCloudPreOOBETask -Type Time -State $state
+            $state.Outcome | Should -Be Failed
+            $state.Succeeded | Should -BeFalse
+            Should -Invoke Sync-OSDCloudPreOOBETime -Times 1 -Exactly
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 1 -Exactly
+            ($state.Messages.ToArray() -join "`n") | Should -BeLike '*Time source unavailable*'
+        }
+
+        It 'bounds time recovery to one dialog and one retry when the time source remains unavailable' {
+            Mock Sync-OSDCloudPreOOBETime { throw 'Time source blocked' }
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery { $true }
+            Mock Start-Sleep {}
+            Invoke-OSDCloudPreOOBETask -Type Time -State $state
+            $state.Outcome | Should -Be Failed
+            Should -Invoke Sync-OSDCloudPreOOBETime -Times 2 -Exactly
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 1 -Exactly
+        }
+
+        It 'cancels time recovery without retrying when closed during <Stage>' -TestCases @(
+            @{ Stage = 'time request' }, @{ Stage = 'Wi-Fi dialog' }, @{ Stage = 'DHCP wait' }
+        ) {
+            param($Stage)
+            Mock Sync-OSDCloudPreOOBETime {
+                if ($Stage -eq 'time request') { $State.CancelRequested = $true }
+                throw 'No network'
+            }
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery {
+                if ($Stage -eq 'Wi-Fi dialog') { $State.CancelRequested = $true }
+                $true
+            }
+            Mock Start-Sleep { $state.CancelRequested = $true }
+            Invoke-OSDCloudPreOOBETask -Type Time -State $state
+            $state.Outcome | Should -Be Cancelled
+            Should -Invoke Sync-OSDCloudPreOOBETime -Times 1 -Exactly
+            if ($Stage -eq 'time request') { Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 0 -Exactly }
+            else { Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 1 -Exactly }
+        }
+
         It 'never starts WUA when cancelled during a connectivity check' {
             Mock Test-OSDCloudPreOOBEConnectivity { $State.CancelRequested = $true; [pscustomobject]@{ Connected = $true } }
             Invoke-OSDCloudPreOOBETask -Type Software -State $state
@@ -749,6 +809,53 @@ InModuleScope OSDCloudPreOOBE {
             $result.Enabled | Should -BeTrue
         }
 
+        It 'opens Wi-Fi manually from Tools without starting tasks and resumes the scheduler afterward' {
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery {
+                $result.MainDisabled = -not $testWindow.IsEnabled
+                $State.Messages.Enqueue('Manual Wi-Fi connection completed.')
+                $true
+            }
+            Mock Start-OOBEMenuUpdateWorker { throw 'Manual Wi-Fi must not start a task' }
+            $result.Ticks = 0
+            $uiProbeTimer.Add_Tick({
+                $result.Ticks++
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    if ($result.Ticks -eq 1) {
+                        $item = $testWindow.FindName('ToolsMenuButton').ContextMenu.Items |
+                            Where-Object Header -eq 'Connect to Wi-Fi'
+                        $item.RaiseEvent([Windows.RoutedEventArgs]::new([Windows.Controls.MenuItem]::ClickEvent))
+                        $result.MainRestored = $testWindow.IsEnabled
+                        return
+                    }
+                    if ($result.Ticks -lt 5) { return }
+                    $result.Output = $testWindow.FindName('OutputTextBox').Text
+                    $result.Start = $testWindow.FindName('StepButton').Content
+                    $uiProbeTimer.Stop()
+                    $testWindow.Close()
+                }
+                catch {
+                    $result.Error = $_
+                    $uiProbeTimer.Stop()
+                    $testWindow.Close()
+                }
+            })
+            $Preview = $false
+            try {
+                $uiProbeTimer.Start()
+                Show-OOBEMenuWindow | Should -Be 0 -Because ($script:renderLog -join '; ')
+            }
+            finally { $Preview = $true }
+            $result.Error | Should -BeNullOrEmpty
+            $result.MainDisabled | Should -BeTrue
+            $result.MainRestored | Should -BeTrue
+            $result.Output | Should -BeLike '*Manual Wi-Fi connection completed.*'
+            $result.Start | Should -Be 'Start'
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 1 -Exactly
+            Should -Invoke Start-OOBEMenuUpdateWorker -Times 0 -Exactly
+        }
+
         It 'shows autopilot only when present and keeps shell and file actions inert in preview: <AutopilotExists>' -TestCases @(
             @{ AutopilotExists = $false }, @{ AutopilotExists = $true }
         ) {
@@ -756,6 +863,7 @@ InModuleScope OSDCloudPreOOBE {
             Mock Test-Path { $AutopilotExists } -ParameterFilter { $LiteralPath -eq 'C:\Windows\Temp\osdcloud-logs\Autopilot.csv' }
             Mock Set-Date { throw 'Preview must not set the clock' }
             Mock Start-Process { throw 'Preview must not launch a process' }
+            Mock Invoke-OSDCloudPreOOBEWirelessRecovery { throw 'Preview must not open Wi-Fi recovery' }
             $result.Ticks = 0
             $uiProbeTimer.Add_Tick({
                 $result.Ticks++
@@ -789,6 +897,9 @@ InModuleScope OSDCloudPreOOBE {
             $result.Output | Should -BeLike '*Preview: would open *cmd.exe /d /k*'
             $result.Output | Should -BeLike '*Preview: would open *notepad.exe*"*\OOBE.cmd"*'
             $result.Output | Should -BeLike '*Preview: would open *notepad.exe*"*\SetupComplete.cmd"*'
+            $result.Headers | Should -Contain 'Connect to Wi-Fi'
+            $result.Output | Should -BeLike '*Preview: would open Connect to Wi-Fi*'
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 0 -Exactly
             if ($AutopilotExists) {
                 $result.Headers | Should -Contain 'Open autopilot.csv'
                 $result.Output | Should -BeLike '*Preview: would open *notepad.exe*"C:\Windows\Temp\osdcloud-logs\Autopilot.csv"*'
@@ -866,7 +977,7 @@ InModuleScope OSDCloudPreOOBE {
             $result.Resize | Should -Be 8
             $result.Context | Should -Be 'Preview | No network or system changes'
             $result.Topmost | Should -BeTrue
-            ($result.Tools -join ',') | Should -Be 'Open oobe.cmd,Open setupcomplete.cmd'
+            ($result.Tools -join ',') | Should -Be 'Connect to Wi-Fi,Open oobe.cmd,Open setupcomplete.cmd'
             ($result.Shells -join ',') | Should -Be 'CMD Prompt,Windows PowerShell'
             $result.Calendar | Should -BeNullOrEmpty
             $result.Time | Should -BeLike 'Synchronizing internet time*'

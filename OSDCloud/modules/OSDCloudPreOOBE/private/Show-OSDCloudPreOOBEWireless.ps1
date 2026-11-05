@@ -219,8 +219,12 @@ function Invoke-OSDCloudPreOOBEWirelessRecovery {
     try {
         $adapters = @(Get-CimInstance -Namespace root\StandardCimv2 -ClassName MSFT_NetAdapter -Filter 'HardwareInterface = TRUE' -ErrorAction Stop |
             Where-Object { $_.NdisPhysicalMedium -in 1, 9 })
-        if (-not $adapters.Count -or $State.CancelRequested) { return $false }
-        Write-OOBEMenuUpdateStatus -State $State -Message 'Internet unavailable; wireless adapter detected. Opening Wi-Fi connection dialog.'
+        if ($State.CancelRequested) { return $false }
+        if (-not $adapters.Count) {
+            Write-OOBEMenuUpdateStatus -State $State -Message 'No physical Wi-Fi adapter detected. Check the wireless hardware and driver.'
+            return $false
+        }
+        Write-OOBEMenuUpdateStatus -State $State -Message 'Wireless adapter detected. Opening Wi-Fi connection dialog.'
         $service = Get-Service -Name WlanSvc -ErrorAction Stop
         if ($service.Status -ne 'Running') {
             Start-Service -Name WlanSvc -ErrorAction Stop
@@ -286,7 +290,7 @@ function Show-OSDCloudPreOOBEWireless {
    <RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/>
    <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
   </Grid.RowDefinitions>
-  <TextBlock Text="Internet unavailable. Select a wireless network." TextWrapping="Wrap" Margin="0,0,0,16"/>
+  <TextBlock Text="Select a wireless network." TextWrapping="Wrap" Margin="0,0,0,16"/>
   <ListBox x:Name="Networks" Grid.Row="1" Background="#1C2868" Foreground="#F5F5F5"
    AutomationProperties.Name="Available wireless networks" ScrollViewer.HorizontalScrollBarVisibility="Disabled"/>
   <StackPanel Grid.Row="2" Margin="0,16,0,0">
@@ -406,7 +410,7 @@ function Show-OSDCloudPreOOBEWireless {
         $timer.Stop()
         if ($wireless) { $wireless.Dispose() }
     }
-    $message = if ($ui.Connected) { 'Wi-Fi associated. Rechecking internet connectivity.' } else { 'Wi-Fi recovery skipped, cancelled or timed out; continuing without a new connection.' }
+    $message = if ($ui.Connected) { 'Wi-Fi associated. Association alone does not verify internet access.' } else { 'Wi-Fi recovery skipped, cancelled or timed out; continuing without a new connection.' }
     Write-OOBEMenuUpdateStatus -State $State -Message $message
     return $ui.Connected
 }

@@ -572,7 +572,7 @@ function Show-OOBEMenuWindow {
    </Button>
    <TextBlock x:Name="TitleText" Grid.Column="1" Text="Recast Software - OSDCloud PreOOBE" FontWeight="SemiBold" Margin="4,0,4,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
    <StackPanel Grid.Column="2" Orientation="Horizontal">
-    <Button x:Name="ToolsMenuButton" KeyboardNavigation.TabIndex="11" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open deployment files" AutomationProperties.Name="Tools">
+    <Button x:Name="ToolsMenuButton" KeyboardNavigation.TabIndex="11" Style="{StaticResource CaptionButtonStyle}" ToolTip="Deployment tools and Wi-Fi" AutomationProperties.Name="Tools">
      <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE90F;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Tools" VerticalAlignment="Center"/></StackPanel>
     </Button>
     <Button x:Name="ShellMenuButton" KeyboardNavigation.TabIndex="12" Style="{StaticResource CaptionButtonStyle}" ToolTip="Open a command shell" AutomationProperties.Name="Shell">
@@ -660,6 +660,32 @@ function Show-OOBEMenuWindow {
     $launch = {
         param ([string]$Action)
         try {
+            if ($Action -eq 'Connect to Wi-Fi') {
+                if ($Preview) {
+                    $message = 'Preview: would open Connect to Wi-Fi. No adapter scans or network changes.'
+                    $engine.Output.Add($message)
+                    Write-OOBEMenuLog -Message $message
+                    return
+                }
+                if ($engine.Worker -or $ui.WirelessState -or $engine.CloseRequested) {
+                    throw 'Wait for the active task or Wi-Fi dialog to finish before opening Connect to Wi-Fi.'
+                }
+                $timer.Stop()
+                $ui.WirelessState = @{
+                    Messages = [Collections.Concurrent.ConcurrentQueue[string]]::new()
+                    CancelRequested = $false
+                }
+                $window.IsEnabled = $false
+                try { [void](Invoke-OSDCloudPreOOBEWirelessRecovery -State $ui.WirelessState) }
+                finally {
+                    $message = $null
+                    while ($ui.WirelessState.Messages.TryDequeue([ref]$message)) { $engine.Output.Add($message) }
+                    $ui.WirelessState = $null
+                    $window.IsEnabled = $true
+                    if (-not $engine.Done) { $timer.Start() }
+                }
+                return
+            }
             if ($Action -in 'CMD Prompt','Windows PowerShell') {
                 $ps = $Action -eq 'Windows PowerShell'
                 $exe = Get-OOBEMenuNativePath -PowerShell:$ps
@@ -695,7 +721,7 @@ function Show-OOBEMenuWindow {
     foreach ($definition in @(
         @{ Button = 'ShellMenuButton'; Items = @('CMD Prompt','Windows PowerShell') },
         @{ Button = 'ToolsMenuButton'; Items = @(
-            'Open oobe.cmd','Open setupcomplete.cmd'
+            'Connect to Wi-Fi','Open oobe.cmd','Open setupcomplete.cmd'
             if (Test-Path -LiteralPath 'C:\Windows\Temp\osdcloud-logs\Autopilot.csv' -PathType Leaf) { 'Open autopilot.csv' }
         ) }
     )) {
@@ -711,6 +737,7 @@ function Show-OOBEMenuWindow {
         foreach ($header in $definition.Items) {
             $item = [Windows.Controls.MenuItem]::new()
             $item.Header = $header
+            if ($header -eq 'Connect to Wi-Fi') { $ui.WirelessMenuItem = $item }
             $item.Style = $window.FindResource([Windows.Controls.MenuItem])
             [Windows.Automation.AutomationProperties]::SetName($item, $header)
             $item.Add_Click({ & $launch ([string]$this.Header) })
@@ -775,6 +802,7 @@ function Show-OOBEMenuWindow {
         try {
             $focusedControl = [Windows.Input.Keyboard]::FocusedElement
             Update-OSDCloudPreOOBEState -State $engine -PreviewOnly:$Preview
+            $ui.WirelessMenuItem.IsEnabled = -not $engine.Worker -and -not $engine.CloseRequested
             Add-OSDCloudPreOOBEOutputText -TextBox $window.FindName('OutputTextBox') -Output $engine.Output -Ui $ui
             for ($index = 0; $index -lt $engine.Tasks.Count; $index++) {
                 $task = $engine.Tasks[$index]
@@ -843,6 +871,7 @@ function Show-OOBEMenuWindow {
         if ($_.Key -eq [Windows.Input.Key]::Escape) { $_.Handled = $true; $window.Close() }
     })
     $window.Add_Closing({
+        if ($ui.WirelessState) { $ui.WirelessState.CancelRequested = $true }
         if (-not $engine.Done) {
             $_.Cancel = $true
             $engine.CloseRequested = $true

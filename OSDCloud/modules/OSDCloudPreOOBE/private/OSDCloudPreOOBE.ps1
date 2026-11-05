@@ -1339,7 +1339,23 @@ function Invoke-OSDCloudPreOOBETask {
         }
         elseif ($State.CancelRequested) { $State.Outcome = 'Cancelled' }
         elseif ($Type -eq 'Time') {
-            Sync-OSDCloudPreOOBETime -State $State
+            try { Sync-OSDCloudPreOOBETime -State $State }
+            catch {
+                if ($State.CancelRequested) { $State.Outcome = 'Cancelled' }
+                else {
+                    Write-OOBEMenuLog -Message "Initial time synchronization failed: $($_.Exception.ToString())"
+                    Write-OOBEMenuUpdateStatus -State $State -Message "Time synchronization failed: $(Get-OSDCloudPreOOBEErrorMessage -Exception $_.Exception). Offering Wi-Fi recovery."
+                    $associated = Invoke-OSDCloudPreOOBEWirelessRecovery -State $State
+                    if ($State.CancelRequested) { $State.Outcome = 'Cancelled' }
+                    elseif ($associated) {
+                        Write-OOBEMenuUpdateStatus -State $State -Message 'Wi-Fi associated. Waiting two seconds for DHCP/DNS, then retrying internet time synchronization.'
+                        Start-Sleep -Seconds 2
+                        if ($State.CancelRequested) { $State.Outcome = 'Cancelled' }
+                        else { Sync-OSDCloudPreOOBETime -State $State }
+                    }
+                    else { throw }
+                }
+            }
         }
         elseif ($Type -eq 'DriverPack') {
             Invoke-OSDCloudPreOOBEDriverPack -State $State

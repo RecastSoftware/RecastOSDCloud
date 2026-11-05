@@ -183,7 +183,14 @@ Tasks run in this order:
    The internet UTC time is converted to the running OS time zone before it is applied
    (Windows PowerShell `Set-Date` sets local time and ignores `DateTimeKind`).
    The UTC correction, applied local time and verified resulting clock are logged; the
-   time zone is unchanged. Failure is reported explicitly and independent tasks continue.
+   time zone is unchanged. If synchronization fails, PreOOBE offers **Connect to
+   Wi-Fi** when a physical wireless adapter is detected. After association it waits
+   two seconds for DHCP/DNS and retries time synchronization once (again allowing
+   two five-second HTTP attempts), before advancing to Windows Update. No HTTPS
+   probe is required before this retry because the clock may still be incorrect.
+   Skipping recovery, unavailable wireless hardware or a failed retry leaves the
+   time task **Failed**; independent tasks continue. Cancellation stops recovery
+   without another time request.
    HTTP time is unauthenticated: use a trusted deployment network. This does not
    disable certificate validation for connectivity probes or Windows Update.
 3. **Updating Windows 11**: check connectivity, then scan/download/install applicable
@@ -394,9 +401,15 @@ reported by WUA. Blocking the Microsoft probe can cause offline skips even when 
 sites work. An internet-isolated device with reachable WSUS is deliberately skipped
 under this internet prerequisite.
 
-After failed connectivity and detection of a physical Wi-Fi adapter, a **Connect to
-Wi-Fi** dialog opens on the setup desktop. It runs after the OEM driver task, uses
-inbox Native Wi-Fi APIs, and starts WLAN AutoConfig if necessary. No OSDCloud module,
+After failed time synchronization or an update connectivity check, detection of a
+physical Wi-Fi adapter opens a **Connect to Wi-Fi** dialog on the setup desktop.
+The same dialog is available manually from **Tools > Connect to Wi-Fi** before
+Start, between tasks, while paused, or after completion. The manual action is
+disabled while a task is running to avoid competing recovery dialogs or network
+changes during installation. While the manual dialog is open, the main window
+and scheduler wait; closing it resumes the existing sequence without starting tasks
+or changing their selections or outcomes.
+The dialog uses inbox Native Wi-Fi APIs and starts WLAN AutoConfig if necessary. No OSDCloud module,
 WinPE wireless tool or logged-on user is needed. Missing drivers or a disabled radio
 must still be corrected before a connection can succeed.
 
@@ -415,7 +428,9 @@ must still be corrected before a connection can succeed.
   **Skip**, closing the dialog, or two minutes without interaction resumes offline
   handling. Closing the main PreOOBE window or selecting **Skip Step** also closes
   the dialog through cooperative cancellation.
-- After association, the original internet/TLS probe runs again (up to three checks
+- After association during time recovery, the original HTTP time synchronization
+  runs again as described above. For update recovery, the original internet/TLS
+  probe runs again (up to three checks
   with two-second pauses for DHCP/DNS readiness). Association alone never starts
   Windows Update. Each update task can offer recovery if its own check fails.
   Preview never scans adapters, starts WLAN services or opens the Wi-Fi dialog.
@@ -435,6 +450,8 @@ Windows Setup windows cannot cover it; minimize it when working in a launched sh
   `C:\Windows\Temp\osdcloud-logs\Autopilot.csv` exists and opens that file in Notepad.
   Save edits before continuing. Windows command processing may already have read
   parts of the current batch file; do not assume editing it changes the active run.
+  **Connect to Wi-Fi** opens the wireless dialog manually without requiring a failed
+  connectivity check. If no adapter is detected, this is reported in the task output.
 - No account icon, calendar control or live date/time display is shown.
   The running OS clock is still recorded in the task output and logs at startup.
   Use **Shell** for manual clock checks; do not change it during synchronization,
@@ -510,6 +527,11 @@ and main-window closure during connection. Verify new credentials are not persis
 in saved profiles or written to logs and that successful association is followed by
 the internet check before updates. Mocked dialog tests do not establish native
 radio/driver compatibility or setup-desktop visibility.
+Start offline with an incorrect clock: after OEM drivers, time sync must offer Wi-Fi,
+then repeat HTTP time synchronization after association before Windows Update.
+Test a successful retry, a blocked time source, Skip and cancellation. Also open
+**Tools > Connect to Wi-Fi** before Start and while paused; confirm the scheduler
+waits for the dialog and no tasks start merely from using the manual tool.
 Validate trusted application packages from both search roots, unchecked skips,
 missing/removable media, installer failures, reboot-required results, and closure
 during installation. Use package logs alongside the application stdout/stderr logs.
