@@ -35,8 +35,11 @@ function Invoke-OSDCloudBootMenu {
         A profile with a password token requires a successful masked password
         prompt before its assets or commands run, including single-profile startup.
         The WPF password dialog retries incorrect entries; -CLI uses console entry.
-        Cancellation stops startup without falling back to deployment. This gates
-        normal selection only; profile JSON and scripts are not encrypted.
+        Cancelling the password prompt returns to profile selection, including
+        after single-profile auto-selection. Profile selection requires a choice;
+        the runtime window has no Cancel action and cannot be closed or escaped.
+        An empty supplied ProfilePassword stops startup without deployment.
+        This gates normal selection only; profile JSON and scripts are not encrypted.
 
         Environment setup imports literal NAME=VALUE entries from
         X:\WinpeStartup\core\*\*.env, including hidden .env files, in sorted
@@ -608,20 +611,18 @@ function Invoke-OSDCloudBootMenu {
                 $currentIndex += 1
             }
 
-            # Use the underlying list's Count, which is always reliable, to decide auto-select vs. prompt.
             if ($candidateProfiles.Count -eq 1) {
                 $selectedProfile = $orderedProfiles[0]
                 Write-Verbose "Invoke-OSDCloudBootMenu: Auto-selected only available profile '$($selectedProfile.Path)'"
             }
-            else {
-                $useConsolePrompt = [bool]$CLI
-                if (-not $useConsolePrompt) {
+            $useConsolePrompt = [bool]$CLI
+            do {
+                if (-not $selectedProfile -and -not $useConsolePrompt) {
                     try {
                         $selectedProfile = Show-OSDCloudBootMenuProfileWindow -Profiles $orderedProfiles -ErrorAction Stop
                         if (-not $selectedProfile) {
-                            Write-Warning 'Invoke-OSDCloudBootMenu: Profile selection cancelled.'
-                            $skipExecution = $true
-                            return
+                            Write-Warning 'Invoke-OSDCloudBootMenu: Select a profile to continue.'
+                            continue
                         }
                     }
                     catch {
@@ -629,46 +630,53 @@ function Invoke-OSDCloudBootMenu {
                         $useConsolePrompt = $true
                     }
                 }
-            }
+                if (-not $selectedProfile -and $useConsolePrompt) {
+                    Write-Host ''
+                    Write-Host -ForegroundColor Cyan 'OSDCloud BootMenu Profiles:'
+                    $orderedProfiles |
+                        Select-Object Index, Profile, Path |
+                        Format-Table -AutoSize | Out-String | Write-Host
 
-            if (-not $selectedProfile -and $useConsolePrompt) {
-                Write-Host ''
-                Write-Host -ForegroundColor Cyan 'OSDCloud BootMenu Profiles:'
-                $orderedProfiles |
-                    Select-Object Index, Profile, Path |
-                    Format-Table -AutoSize | Out-String | Write-Host
+                    while (-not $selectedProfile) {
+                        $selection = Read-Host 'Select a profile by number'
 
-                while (-not $selectedProfile) {
-                    $selection = Read-Host 'Select a profile by number, or press Enter to cancel'
+                        $selectedIndex = 0
+                        if ([int]::TryParse($selection, [ref]$selectedIndex)) {
+                            $selectedProfile = $orderedProfiles | Where-Object { $_.Index -eq $selectedIndex } | Select-Object -First 1
+                        }
 
-                    if ([string]::IsNullOrWhiteSpace($selection)) {
-                        Write-Warning 'Invoke-OSDCloudBootMenu: Profile selection cancelled.'
-                        $skipExecution = $true
-                        return
-                    }
-
-                    if ($selection -match '^(?i)q(?:uit)?$') {
-                        Write-Warning 'Invoke-OSDCloudBootMenu: Profile selection cancelled.'
-                        $skipExecution = $true
-                        return
-                    }
-
-                    $selectedIndex = 0
-                    if ([int]::TryParse($selection, [ref]$selectedIndex)) {
-                        $selectedProfile = $orderedProfiles | Where-Object { $_.Index -eq $selectedIndex } | Select-Object -First 1
-                    }
-
-                    if (-not $selectedProfile) {
-                        Write-Warning "Invoke-OSDCloudBootMenu: Invalid selection '$selection'."
+                        if (-not $selectedProfile) {
+                            Write-Warning "Invoke-OSDCloudBootMenu: Invalid selection '$selection'."
+                        }
                     }
                 }
-            }
+                try {
+                    $profileDefaults = ConvertFrom-OSDCloudBootMenuProfile -Path $selectedProfile.Path
+                }
+                catch {
+                    Write-Warning "Invoke-OSDCloudBootMenu: Failed to load profile '$($selectedProfile.Path)': $($_.Exception.Message)"
+                    $skipExecution = $true
+                    return
+                }
+                if ($profileDefaults.Contains('password')) {
+                    $passwordParameters = @{ Token = $profileDefaults['password']; CLI = $useConsolePrompt }
+                    if ($PSBoundParameters.ContainsKey('ProfilePassword')) { $passwordParameters.Password = $ProfilePassword }
+                    if (-not (Confirm-OSDCloudBootMenuProfilePassword @passwordParameters)) {
+                        if ($PSBoundParameters.ContainsKey('ProfilePassword')) {
+                            Write-Warning 'Invoke-OSDCloudBootMenu: Profile password entry cancelled. No profile commands will run.'
+                            $skipExecution = $true
+                            return
+                        }
+                        Write-Warning 'Invoke-OSDCloudBootMenu: Profile unlock cancelled. Returning to profile selection.'
+                        $selectedProfile = $null
+                    }
+                }
+            } while (-not $selectedProfile)
         }
 
         if ($selectedProfile) {
             Write-Verbose "Invoke-OSDCloudBootMenu: Selected profile '$($selectedProfile.Path)'"
             try {
-                $profileDefaults = ConvertFrom-OSDCloudBootMenuProfile -Path $selectedProfile.Path
                 $environmentProperty = $profileDefaults.Contains('env')
                 if ($environmentProperty) { $profileEnvironment = $profileDefaults['env'] }
 
@@ -685,15 +693,6 @@ function Invoke-OSDCloudBootMenu {
             $resolvedDefaults['InvokeMainCommand'] = @('Import-Module -Name OSDCloud -DisableNameChecking -ErrorAction Stop', 'Deploy-OSDCloud')
         }
 
-        if ($selectedProfile -and $profileDefaults.Contains('password')) {
-            $passwordParameters = @{ Token = $profileDefaults['password']; CLI = ([bool]$CLI -or $useConsolePrompt) }
-            if ($PSBoundParameters.ContainsKey('ProfilePassword')) { $passwordParameters.Password = $ProfilePassword }
-            if (-not (Confirm-OSDCloudBootMenuProfilePassword @passwordParameters)) {
-                Write-Warning 'Invoke-OSDCloudBootMenu: Profile password entry cancelled. No profile commands will run.'
-                $skipExecution = $true
-                return
-            }
-        }
         if ($selectedProfile -and $profileDefaults.Contains('encryptedEnv')) {
             $unlockParameters = @{ Environment = $profileDefaults['encryptedEnv'] }
             if ($PSBoundParameters.ContainsKey('EnvironmentPassword')) { $unlockParameters.Password = $EnvironmentPassword }

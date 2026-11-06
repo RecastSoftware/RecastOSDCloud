@@ -9,8 +9,9 @@ function Show-OSDCloudBootMenuProfileWindow {
         "Recast Software - OSDCloud BootMenu" and the BootMenu module version, and the Recast logo
         in the footer. Only profile names are listed; hovering over a
         profile shows its JSON path and asset folder. Start, Enter, or a
-        double-click returns the selected profile. Cancel, Escape, or closing
-        the window returns nothing.
+        double-click returns the selected profile. Runtime selection requires a
+        choice: Cancel is unavailable and Escape or closing cannot dismiss the
+        window. Test mode permits closing without a selection.
 
         A collapsed left menu provides shortcuts. The title bar menu button
         expands it to show labels. Profiles returns to the profile list.
@@ -585,9 +586,6 @@ function Show-OSDCloudBootMenuProfileWindow {
                        AutomationProperties.Name="Recast Software"/>
                 <TextBlock x:Name="FooterStatusText" Grid.Column="1" Style="{StaticResource StatusTextStyle}" VerticalAlignment="Center"/>
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
-                    <Button x:Name="CancelButton" Content="Cancel" Width="112" IsCancel="True"
-                            Background="{StaticResource ControlBrush}" BorderBrush="{StaticResource BorderBrush}" Foreground="#F5F5F5"
-                            AutomationProperties.Name="Cancel BootMenu profile selection"/>
                     <Button x:Name="StartButton" Content="Start" Width="112" IsDefault="True"
                             Background="{StaticResource AccentBrush}" BorderBrush="{StaticResource AccentBrush}" Foreground="#161F5B"
                             AutomationProperties.Name="Start OSDCloud BootMenu with the selected profile"/>
@@ -624,6 +622,15 @@ function Show-OSDCloudBootMenuProfileWindow {
     $titleBarClose = $window.FindName('TitleBarClose')
     $logoImage = $window.FindName('LogoImage')
     $state = @{ Selected = $null }
+    if (-not $TestMode) {
+        $titleBarClose.Visibility = 'Collapsed'
+        $window.Add_Closing({
+            if ($null -eq $state.Selected) { $_.Cancel = $true }
+        })
+        $window.Add_PreviewKeyDown({
+            if ($_.Key -eq [System.Windows.Input.Key]::Escape) { $_.Handled = $true }
+        })
+    }
 
     $moduleVersion = $null
     try {
@@ -708,7 +715,7 @@ function Show-OSDCloudBootMenuProfileWindow {
         [void]$profileList.Items.Add($item)
     }
 
-    $statusText.Text = '{0} profiles found. Enter to start; Escape to cancel.' -f $Profiles.Count
+    $statusText.Text = '{0} profiles found. Select a profile and press Enter to start.' -f $Profiles.Count
     $profileList.SelectedIndex = 0
     if ($TestMode) {
         $footerStatusText.Text = 'Test mode. Start returns the profile without running it.'

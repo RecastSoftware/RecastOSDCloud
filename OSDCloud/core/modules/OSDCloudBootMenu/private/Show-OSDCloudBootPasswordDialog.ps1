@@ -4,10 +4,12 @@ function Show-OSDCloudBootPasswordDialog {
         Requests a masked profile password
 
     .DESCRIPTION
-        Shows a dark WPF PasswordBox dialog. Creation requires confirmation;
+        Shows a dark WPF PasswordBox dialog with BootMenu's custom title bar.
+        Creation requires confirmation;
         unlocking verifies the supplied authenticated profile token before closing.
         Incorrect passwords remain in the dialog for retry. Cancellation returns
-        nothing. Passwords are never converted into managed plaintext strings.
+        nothing, allowing the runtime caller to return to profile selection.
+        Passwords are never converted into managed plaintext strings.
 
     .PARAMETER Owner
         Specifies an optional owning WPF window.
@@ -55,10 +57,17 @@ function Show-OSDCloudBootPasswordDialog {
     [xml]$xaml = @'
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Width="440" SizeToContent="Height" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
         Background="#161F5B" Foreground="#F5F5F5" FontFamily="Segoe UI Variable Text, Segoe UI"
-        FontSize="13" ShowInTaskbar="False" UseLayoutRounding="True">
+        FontSize="13" ShowInTaskbar="False" UseLayoutRounding="True" SnapsToDevicePixels="True"
+        BorderBrush="#000000" BorderThickness="1" Topmost="True">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="48" GlassFrameThickness="0,0,0,1"
+                            ResizeBorderThickness="0" UseAeroCaptionButtons="False"/>
+    </shell:WindowChrome.WindowChrome>
     <Window.Resources>
+        <SolidColorBrush x:Key="SidebarBrush" Color="#111949"/>
         <SolidColorBrush x:Key="ControlBrush" Color="#243475"/>
         <SolidColorBrush x:Key="BorderBrush" Color="#53639C"/>
         <SolidColorBrush x:Key="AccentBrush" Color="#31D1FF"/>
@@ -90,6 +99,37 @@ function Show-OSDCloudBootPasswordDialog {
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="TitleBarCloseButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="MinWidth" Value="46"/>
+            <Setter Property="Height" Value="48"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#F5F5F5"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="shell:WindowChrome.IsHitTestVisibleInChrome" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="CaptionBorder" Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CaptionBorder" Property="Background" Value="#C42B1C"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="CaptionBorder" Property="Background" Value="#A82418"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="CaptionBorder" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="CaptionBorder" Property="BorderThickness" Value="1"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <Style TargetType="PasswordBox">
             <Setter Property="Background" Value="{StaticResource ControlBrush}"/>
             <Setter Property="Foreground" Value="#F5F5F5"/>
@@ -98,27 +138,46 @@ function Show-OSDCloudBootPasswordDialog {
             <Setter Property="Margin" Value="0,6,0,12"/>
         </Style>
     </Window.Resources>
-    <StackPanel Margin="24">
-        <TextBlock x:Name="PasswordInstructions" Text="Enter the password to start this BootMenu profile." TextWrapping="Wrap" Margin="0,0,0,16"/>
-        <TextBlock Text="Password"/>
-        <PasswordBox x:Name="Password" AutomationProperties.Name="Profile password"/>
-        <StackPanel x:Name="Confirmation">
-            <TextBlock Text="Confirm password"/>
-            <PasswordBox x:Name="ConfirmPassword" AutomationProperties.Name="Confirm profile password"/>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Background="{StaticResource SidebarBrush}" AutomationProperties.Name="BootMenu password title bar">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <TextBlock x:Name="WindowHeading" Margin="16,0" VerticalAlignment="Center"
+                       FontSize="16" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+            <Button x:Name="TitleBarClose" Grid.Column="1" Style="{StaticResource TitleBarCloseButtonStyle}"
+                    ToolTip="Cancel" AutomationProperties.Name="Cancel password entry">
+                <TextBlock Text="&#xE8BB;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12"/>
+            </Button>
+        </Grid>
+        <StackPanel Grid.Row="1" Margin="24">
+            <TextBlock x:Name="PasswordInstructions" Text="Enter the password to start this BootMenu profile." TextWrapping="Wrap" Margin="0,0,0,16"/>
+            <TextBlock Text="Password"/>
+            <PasswordBox x:Name="Password" AutomationProperties.Name="Profile password"/>
+            <StackPanel x:Name="Confirmation">
+                <TextBlock Text="Confirm password"/>
+                <PasswordBox x:Name="ConfirmPassword" AutomationProperties.Name="Confirm profile password"/>
+            </StackPanel>
+            <TextBlock x:Name="PasswordError" Foreground="#FFCC80" TextWrapping="Wrap" Margin="0,0,0,12"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="CancelPassword" Content="Cancel" IsCancel="True" Margin="0,0,8,0"
+                        AutomationProperties.Name="Cancel password entry"/>
+                <Button x:Name="AcceptPassword" Content="Unlock" IsDefault="True"
+                        Background="{StaticResource AccentBrush}" Foreground="#161F5B"/>
+            </StackPanel>
         </StackPanel>
-        <TextBlock x:Name="PasswordError" Foreground="#FFCC80" TextWrapping="Wrap" Margin="0,0,0,12"/>
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Cancel" IsCancel="True" Margin="0,0,8,0"/>
-            <Button x:Name="AcceptPassword" Content="Unlock" IsDefault="True"
-                    Background="{StaticResource AccentBrush}" Foreground="#161F5B"/>
-        </StackPanel>
-    </StackPanel>
+    </Grid>
 </Window>
 '@
     $reader = [System.Xml.XmlNodeReader]::new($xaml)
     try { $dialog = [System.Windows.Markup.XamlReader]::Load($reader) }
     finally { $reader.Dispose() }
     $dialog.Title = $Title
+    $dialog.FindName('WindowHeading').Text = $Title
+    $dialog.FindName('TitleBarClose').Add_Click({ $dialog.DialogResult = $false })
+    $dialog.FindName('CancelPassword').Add_Click({ $dialog.DialogResult = $false })
     if ($Owner) {
         $dialog.Owner = $Owner
         $dialog.WindowStartupLocation = 'CenterOwner'
@@ -134,6 +193,13 @@ function Show-OSDCloudBootPasswordDialog {
     if ($ConfirmPassword) {
         $dialog.FindName('PasswordInstructions').Text = 'Set the password required to start this profile in WinPE. Built-in profiles must be cloned before saving.'
         $accept.Content = 'Set Password'
+    }
+    else {
+        foreach ($buttonName in @('CancelPassword', 'TitleBarClose')) {
+            $button = $dialog.FindName($buttonName)
+            $button.ToolTip = 'Return to OSDCloud BootMenu profiles'
+            [System.Windows.Automation.AutomationProperties]::SetName($button, 'Return to OSDCloud BootMenu profiles')
+        }
     }
     $state = @{ Password = $null }
     $accept.Add_Click({
@@ -163,7 +229,11 @@ function Show-OSDCloudBootPasswordDialog {
             $state.Password = $first
             $dialog.DialogResult = $true
         }
-        catch [System.Security.Cryptography.CryptographicException] { $errorText.Text = 'Incorrect password or modified profile token. Try again.' }
+        catch [System.Security.Cryptography.CryptographicException] {
+            $errorText.Text = 'Incorrect password or modified profile token. Try again, or Cancel to return to profiles.'
+            $passwordBox.Clear()
+            [void]$passwordBox.Focus()
+        }
         catch { $errorText.Text = $_.Exception.Message }
         finally {
             $value = $null

@@ -166,24 +166,52 @@ Describe 'OSDCloud BootMenu runtime' {
             [ordered]@{ BOOTMENU_TEST_UNLOCK = 'Synthetic unlocked' }
         }
         Mock Import-WinpeStartupAssets { $script:authorized | Should -BeTrue }
-        Invoke-OSDCloudBootMenu -CLI
+        $emptyPassword = [Security.SecureString]::new()
+        try { Invoke-OSDCloudBootMenu -CLI -ProfilePassword $emptyPassword }
+        finally { $emptyPassword.Dispose() }
         Should -Invoke Confirm-OSDCloudBootMenuProfilePassword -Times 1 -Exactly -ParameterFilter { $CLI }
         $script:commands.Count | Should -Be ([int]$Authorize)
         Should -Invoke Import-WinpeStartupAssets -Times ([int]$Authorize) -Exactly
         Should -Invoke Unlock-OSDCloudBootEnvironment -Times ([int]$Authorize) -Exactly
     }
 
-    It 'does not bypass the password gate after GUI selection' {
+    It 'returns to selection after unlock cancellation without applying the rejected profile' -ForEach @(
+        @{ SingleProfile = $true }, @{ SingleProfile = $false }
+    ) {
         $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
         $profile | Add-Member password $syntheticToken
         $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
-        Mock Get-OSDCloudBootMenuProfileCandidates { $script:candidate; $script:candidate.PSObject.Copy() }
-        Mock Show-OSDCloudBootMenuProfileWindow { $script:candidate }
-        Mock Confirm-OSDCloudBootMenuProfilePassword { $false }
+        $script:otherCandidate = [pscustomobject]@{
+            Index = 0; Profile = 'Other'; Path = Join-Path $TestDrive 'z-other.json'; AssetPath = $null
+        }
+        '{"schemaVersion":1,"osdcloudBootStartup":{"main":{"commands":["Other-Command"]}}}' |
+            Set-Content -LiteralPath $script:otherCandidate.Path
+        Mock Get-OSDCloudBootMenuProfileCandidates {
+            $script:candidate
+            if (-not $SingleProfile) { $script:otherCandidate }
+        }
+        $script:selections = 0
+        Mock Show-OSDCloudBootMenuProfileWindow {
+            $script:selections++
+            if (-not $SingleProfile -and $script:selections -eq 1) { return $script:candidate }
+            $script:commands.Count | Should -Be 0
+            if ($SingleProfile) { $script:candidate } else { $script:otherCandidate }
+        }
+        $script:passwordAttempts = 0
+        Mock Confirm-OSDCloudBootMenuProfilePassword {
+            $script:passwordAttempts++
+            $SingleProfile -and $script:passwordAttempts -gt 1
+        }
         Invoke-OSDCloudBootMenu
-        Should -Invoke Confirm-OSDCloudBootMenuProfilePassword -Times 1 -Exactly -ParameterFilter { -not $CLI }
-        Should -Invoke Import-WinpeStartupAssets -Times 0 -Exactly
-        Should -Invoke Start-Process -Times 0 -Exactly
+        Should -Invoke Confirm-OSDCloudBootMenuProfilePassword -Times (1 + [int]$SingleProfile) -Exactly -ParameterFilter { -not $CLI }
+        Should -Invoke Import-WinpeStartupAssets -Times ([int]$SingleProfile) -Exactly
+        $expectedCommand = if ($SingleProfile) { "Write-Output 'Menu'" } else { 'Other-Command' }
+        $script:commands.ToArray() | Should -Be @($expectedCommand)
+        if (-not $SingleProfile) {
+            Should -Invoke Start-Process -Times 1 -Exactly -ParameterFilter { $ArgumentList -notcontains '-NoExit' }
+        }
+        Should -Invoke Initialize-WinpeStartupEnvironment -Times 1 -Exactly
+        Should -Invoke Show-OSDCloudBootMenuProfileWindow -Times (1 + [int](-not $SingleProfile)) -Exactly
     }
 
     It 'applies build Import Packs before startup and profile Import Packs after selection' {
@@ -261,19 +289,27 @@ Describe 'OSDCloud BootMenu runtime' {
         '{"schemaVersion":1,"osdcloudBootStartup":{"main":{"commands":["Other-Command"]}}}' |
             Set-Content -LiteralPath $script:otherCandidate.Path
         Mock Get-OSDCloudBootMenuProfileCandidates { $script:candidate; $script:otherCandidate }
-        Mock Read-Host { '2' }
+        $script:consoleSelections = [Collections.Generic.Queue[string]]::new()
+        foreach ($choice in @('', 'q', '2')) { $script:consoleSelections.Enqueue($choice) }
+        Mock Read-Host { $script:consoleSelections.Dequeue() }
         Mock Show-OSDCloudBootMenuProfileWindow { throw 'Must not open a window' }
         Invoke-OSDCloudBootMenu -CLI
         $script:commands.ToArray() | Should -Be @('Other-Command')
         Should -Invoke Show-OSDCloudBootMenuProfileWindow -Times 0 -Exactly
+        Should -Invoke Read-Host -Times 3 -Exactly
     }
 
-    It 'stops after cancelling the multiple-profile window' {
+    It 'requires a profile choice instead of exiting on a dismissed selector' {
         Mock Get-OSDCloudBootMenuProfileCandidates { $script:candidate; $script:candidate.PSObject.Copy() }
-        Mock Show-OSDCloudBootMenuProfileWindow { $null }
+        $script:selections = 0
+        Mock Show-OSDCloudBootMenuProfileWindow {
+            $script:selections++
+            if ($script:selections -gt 1) { $script:candidate }
+        }
         Invoke-OSDCloudBootMenu
-        $script:commands.Count | Should -Be 0
-        Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*selection cancelled*' }
+        $script:commands.ToArray() | Should -Be @("Write-Output 'Menu'")
+        Should -Invoke Show-OSDCloudBootMenuProfileWindow -Times 2 -Exactly
+        Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*Select a profile to continue*' }
     }
 
     It 'unlocks before selected assets, overrides asset env, and restores after every phase' {

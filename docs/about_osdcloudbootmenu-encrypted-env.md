@@ -39,8 +39,14 @@ Set Password writes an authenticated `OSDBS1:` token to the optional top-level
 auto-selecting that profile in WinPE requires the password before any selected
 profile assets, Import Packs, or commands run. The normal WPF flow uses a masked
 password dialog; `-CLI` uses a masked console prompt. Incorrect passwords retry;
-Cancel, closing the dialog, or empty console input stops the selected profile
-without falling back to deployment. Rebuild boot media after setting a password.
+Cancel or closing the password dialog returns to BootMenu profile selection,
+including after auto-selecting the only profile. After an incorrect password,
+retry or use Cancel to choose a different profile. Empty interactive console
+password input also returns to selection. No cancelled profile assets or commands
+run, and there is no fallback to deployment. Runtime profile selection requires
+a choice: there is no Cancel button, and Escape, Alt+F4, or closing the selector
+cannot dismiss it. The Windows test preview still allows closing.
+Rebuild boot media after setting a password.
 
 For automation, use `Invoke-OSDCloudBootMenu -ProfilePassword $password` with a
 SecureString. An incorrect supplied password terminates rather than prompting.

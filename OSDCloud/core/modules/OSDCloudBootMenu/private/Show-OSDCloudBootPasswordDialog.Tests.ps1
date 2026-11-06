@@ -84,4 +84,22 @@ Describe 'Masked BootMenu profile password dialog' -Skip:([Threading.Thread]::Cu
             $dialog.Close()
         } | Should -BeNullOrEmpty
     }
+
+    It 'allows cancellation after an incorrect password using <ButtonName>' -ForEach @(
+        @{ ButtonName = 'TitleBarClose' }, @{ ButtonName = 'CancelPassword' }
+    ) {
+        Invoke-PasswordDialogTest -Token $token -Action {
+            param ($dialog)
+            [System.Windows.Shell.WindowChrome]::GetWindowChrome($dialog).CaptionHeight | Should -Be 48
+            $dialog.FindName('WindowHeading').Text | Should -Be $dialog.Title
+            $dialog.FindName('Password').Password = 'Synthetic wrong'
+            $event = [System.Windows.RoutedEventArgs]::new([System.Windows.Controls.Button]::ClickEvent)
+            $dialog.FindName('AcceptPassword').RaiseEvent($event)
+            $dialog.FindName('PasswordError').Text | Should -Match 'Cancel to return to profiles'
+            $dialog.FindName('Password').SecurePassword.Length | Should -Be 0
+            $dialog.FindName('CancelPassword').IsCancel | Should -BeTrue
+            $dialog.FindName($ButtonName).RaiseEvent($event)
+            $dialog.IsVisible | Should -BeFalse
+        } | Should -BeNullOrEmpty
+    }
 }
