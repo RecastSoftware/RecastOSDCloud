@@ -51,7 +51,7 @@ Volumes labeled for the other architecture are left untouched. Supplying
 Automatic labeling requires valid build metadata; missing or unsupported
 Architecture stops creation or updating before USB preparation or copying.
 
-Then on the target device: power on, F12/F10/Esc into the boot menu, select
+Then on the target device: power on, F12/F10/Esc into the bootmenu, select
 the USB device. UEFI mode is required.
 
 ## Option B — Boot from ISO

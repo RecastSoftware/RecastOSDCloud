@@ -39,7 +39,7 @@ function Get-OSDCloudBootMenuProfileCandidates {
                 Assert-OSDCloudBootMenuProfile -Path $file
                 $profile = Get-Content -LiteralPath $file -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
                 if (-not $profile.info.name -or -not $profile.info.id) {
-                    throw 'Boot Menu discovery requires info.name and info.id.'
+                    throw 'BootMenu discovery requires info.name and info.id.'
                 }
                 if (-not $seen.Add([guid]$profile.info.id)) {
                     Write-Verbose "Invoke-OSDCloudBootMenu: Ignoring duplicate profile ID '$($profile.info.id)' at '$file'."

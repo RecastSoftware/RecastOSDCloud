@@ -481,7 +481,7 @@ function Show-OSDCloudBootMenuProfileWindow {
                     <StackPanel>
                         <ListBox x:Name="Navigation" Background="Transparent" BorderThickness="0" Padding="0" Tag="Compact"
                                  FontSize="15" ItemContainerStyle="{StaticResource SidebarNavigationItemStyle}"
-                                 AutomationProperties.Name="Boot Menu navigation" SelectionMode="Single">
+                                 AutomationProperties.Name="BootMenu navigation" SelectionMode="Single">
                             <ListBox.Template>
                                 <ControlTemplate TargetType="ListBox">
                                     <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
@@ -490,9 +490,9 @@ function Show-OSDCloudBootMenuProfileWindow {
                                 </ControlTemplate>
                             </ListBox.Template>
                             <ListBoxItem x:Name="ProfileNavigationItem" IsSelected="True"
-                                         ToolTip="Select the Boot Menu profile to start."
+                                         ToolTip="Select the BootMenu profile to start."
                                          AutomationProperties.Name="Profiles"
-                                         AutomationProperties.HelpText="Show the Boot Menu profiles.">
+                                         AutomationProperties.HelpText="Show the BootMenu profiles.">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE77B;" Style="{StaticResource SidebarNavigationIconStyle}" Margin="0,0,10,0"/>
                                     <TextBlock Text="Profiles" Style="{StaticResource SidebarLabelStyle}"/>
@@ -534,11 +534,11 @@ function Show-OSDCloudBootMenuProfileWindow {
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource IconStyle}" Text="&#xE77B;"
-                               AutomationProperties.Name="Boot Menu profile"/>
+                               AutomationProperties.Name="BootMenu profile"/>
                     <StackPanel Grid.Row="0" Grid.Column="1">
-                        <TextBlock Style="{StaticResource CardTitleStyle}" Text="Boot Menu Profile"/>
+                        <TextBlock Style="{StaticResource CardTitleStyle}" Text="BootMenu Profile"/>
                         <TextBlock Foreground="{StaticResource SecondaryTextBrush}" Margin="0,6,0,12"
-                                   Text="Select the profile to start. Hover over a profile for its location."/>
+                                   Text="Select a BootMenu profile and press start. Hover over a BootMenu profile for details."/>
                     </StackPanel>
                     <ListBox x:Name="ProfileList" Grid.Row="1" Grid.Column="1"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -587,7 +587,7 @@ function Show-OSDCloudBootMenuProfileWindow {
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <Button x:Name="CancelButton" Content="Cancel" Width="112" IsCancel="True"
                             Background="{StaticResource ControlBrush}" BorderBrush="{StaticResource BorderBrush}" Foreground="#F5F5F5"
-                            AutomationProperties.Name="Cancel Boot Menu profile selection"/>
+                            AutomationProperties.Name="Cancel BootMenu profile selection"/>
                     <Button x:Name="StartButton" Content="Start" Width="112" IsDefault="True"
                             Background="{StaticResource AccentBrush}" BorderBrush="{StaticResource AccentBrush}" Foreground="#161F5B"
                             AutomationProperties.Name="Start OSDCloud BootMenu with the selected profile"/>
@@ -853,7 +853,7 @@ function Show-OSDCloudBootMenuProfileWindow {
         $showKeyboard = ($navigation.SelectedItem -eq $keyboardNavigationItem)
         $profilePage.Visibility = if ($showKeyboard) { 'Collapsed' } else { 'Visible' }
         $keyboardPage.Visibility = if ($showKeyboard) { 'Visible' } else { 'Collapsed' }
-        # Enter must not start the Boot Menu while choosing a keyboard layout.
+        # Enter must not start the BootMenu while choosing a keyboard layout.
         $startButton.IsDefault = -not $showKeyboard
         if ($showKeyboard) { & $loadKeyboardLayouts }
     }

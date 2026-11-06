@@ -9,7 +9,7 @@ Create profiles that configure `Invoke-WinpeStartup` without embedding workflow 
 
 This is the **legacy** format. For `Invoke-OSDCloudBootMenu` or
 `osdcloudbootmenu.json`, use [OSDCloud BootMenu Profiles](../osdcloudbootmenu-profile-json/SKILL.md).
-Do not convert or modify existing legacy profiles when authoring new Boot Menu content.
+Do not convert or modify existing legacy profiles when authoring new BootMenu content.
 
 ## Profile location and discovery
 

@@ -565,7 +565,7 @@ function Invoke-WinpeStartup {
                 }
 
                 Add-WinpeStartupDefaults -InputObject $profileDefaults -SourceName $selectedProfile.Path -KeyFormat Any
-                Write-Host "WinPE profile applied: $($selectedProfile.Path)"
+                Write-Host "OSDCloud BootMenu profile selected: $($selectedProfile.Path)"
             }
             catch {
                 Write-Warning "Invoke-WinpeStartup: Failed to load profile '$($selectedProfile.Path)': $($_.Exception.Message)"

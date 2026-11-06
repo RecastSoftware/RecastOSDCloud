@@ -108,7 +108,7 @@ function Initialize-WinpeStartupEnvironment {
 
     process {
         if ($skipExecution) { return }
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize WinpeStartup"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Initialize environment"
 
         $corePath = Join-Path -Path $systemDrive -ChildPath 'WinpeStartup\core'
         $coreFolders = @()

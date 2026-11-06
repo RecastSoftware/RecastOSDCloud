@@ -43,7 +43,7 @@ function Show-OSDCloudBootPasswordDialog {
     [OutputType([System.Security.SecureString])]
     param (
         [System.Windows.Window]$Owner,
-        [string]$Title = 'Unlock BootMenu Profile',
+        [string]$Title = 'OSDCloud BootMenu Profile | Unlock',
         [switch]$ConfirmPassword,
         [string]$Token
     )

@@ -22,7 +22,7 @@ function Assert-OSDCloudBootMenuProfile {
     .EXAMPLE
         PS> Assert-OSDCloudBootMenuProfile -Path 'C:\ProgramData\OSDeployCore\boot-assets\bootmenu-profiles\Deploy\osdcloudbootmenu.json'
 
-        Validates the selected Boot Menu profile without executing its commands.
+        Validates the selected BootMenu profile without executing its commands.
 
     .INPUTS
         None. This function does not accept pipeline input.
