@@ -1,84 +1,107 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="35" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-11-04" time="16:13:21">
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="42" errors="0" failures="0" not-run="36" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-11-07" time="08:10:17">
   <environment clr-version="4.0.30319.42000" user-domain="OSDMAIN" cwd="C:\GitHub\recast-osd\RecastOSDCloud" platform="Microsoft Windows 11 Pro|C:\Windows|\Device\Harddisk0\Partition3" machine-name="OSDMAIN" nunit-version="2.5.8.0" os-version="10.0.26300" user="david" />
   <culture-info current-culture="en-US" current-uiculture="en-US" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="16.1769" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="16.6374" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Time.Tests.ps1" executed="True" result="Success" success="True" time="6.5915" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Time.Tests.ps1">
+      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudBootMenu\OSDCloudBootMenu.Tests.ps1" executed="True" result="Success" success="True" time="4.6903" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudBootMenu\OSDCloudBootMenu.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="PreOOBE internet time bootstrap" executed="True" result="Success" success="True" time="4.1438" asserts="0" description="PreOOBE internet time bootstrap">
+          <test-suite type="TestFixture" name="Standalone BootMenu process isolation" executed="True" result="Success" success="True" time="1.9281" asserts="0" description="Standalone BootMenu process isolation">
             <results>
-              <test-case description="repairs a years-old clock using UTC HTTP time without TLS or changing the time zone" name="PreOOBE internet time bootstrap.repairs a years-old clock using UTC HTTP time without TLS or changing the time zone" time="2.7368" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="bounds unavailable time sources to two five-second attempts and logs timeout" name="PreOOBE internet time bootstrap.bounds unavailable time sources to two five-second attempts and logs timeout" time="0.1809" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not set the clock if closure requests cancellation during retrieval" name="PreOOBE internet time bootstrap.does not set the clock if closure requests cancellation during retrieval" time="0.0533" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not create a request when already cancelled" name="PreOOBE internet time bootstrap.does not create a request when already cancelled" time="0.0504" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="requires SYSTEM before retrieving or changing time" name="PreOOBE internet time bootstrap.requires SYSTEM before retrieving or changing time" time="0.0451" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="reports failure instead of success if setting the clock is denied" name="PreOOBE internet time bootstrap.reports failure instead of success if setting the clock is denied" time="0.1058" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="verifies the clock was actually corrected" name="PreOOBE internet time bootstrap.verifies the clock was actually corrected" time="0.0861" asserts="0" success="True" result="Success" executed="True" />
-              <test-suite type="ParameterizedTest" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: &lt;Case&gt;" executed="True" result="Success" success="True" time="0.4127" asserts="0" description="rejects missing, invalid or cached dates and redirects: &lt;Case&gt;">
+              <test-suite type="TestFixture" name="Standalone BootMenu process isolation.Standalone BootMenu bundled profiles" executed="True" result="Success" success="True" time="1.8143" asserts="0" description="Standalone BootMenu process isolation.Standalone BootMenu bundled profiles">
                 <results>
-                  <test-case description="rejects missing, invalid or cached dates and redirects: missing" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: missing" time="0.1616" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects missing, invalid or cached dates and redirects: invalid" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: invalid" time="0.1302" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects missing, invalid or cached dates and redirects: cached" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: cached" time="0.0557" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects missing, invalid or cached dates and redirects: redirect" name="PreOOBE internet time bootstrap.rejects missing, invalid or cached dates and redirects: redirect" time="0.0653" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="validates every bundled profile without changing command or environment types" name="Standalone BootMenu process isolation.Standalone BootMenu bundled profiles.validates every bundled profile without changing command or environment types" time="1.4245" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
             </results>
           </test-suite>
         </results>
       </test-suite>
-      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1" executed="True" result="Success" success="True" time="9.5854" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1">
+      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudBootMenu\public\Invoke-OSDCloudBootMenu.Tests.ps1" executed="True" result="Success" success="True" time="11.6194" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudBootMenu\public\Invoke-OSDCloudBootMenu.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Bounded Microsoft connectivity probe" executed="True" result="Success" success="True" time="0.5836" asserts="0" description="Bounded Microsoft connectivity probe">
+          <test-suite type="TestFixture" name="OSDCloud BootMenu schema conversion" executed="True" result="Success" success="True" time="1.3245" asserts="0" description="OSDCloud BootMenu schema conversion">
             <results>
-              <test-case description="accepts the expected NCSI content over HTTP, validates HTTPS, and disposes transport resources" name="Bounded Microsoft connectivity probe.accepts the expected NCSI content over HTTP, validates HTTPS, and disposes transport resources" time="0.176" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="rejects captive portals and retries only twice" name="Bounded Microsoft connectivity probe.rejects captive portals and retries only twice" time="0.0693" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="rejects redirects rather than treating them as internet connectivity" name="Bounded Microsoft connectivity probe.rejects redirects rather than treating them as internet connectivity" time="0.0411" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="bounds request waits to two attempts of five seconds and reports timeout" name="Bounded Microsoft connectivity probe.bounds request waits to two attempts of five seconds and reports timeout" time="0.0326" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not create a request when cancellation was already requested" name="Bounded Microsoft connectivity probe.does not create a request when cancellation was already requested" time="0.0191" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="runs TLS and clock troubleshooting only for certificate failures" name="Bounded Microsoft connectivity probe.runs TLS and clock troubleshooting only for certificate failures" time="0.24" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="retains encryptedEnv as ciphertext without prompting or decrypting" name="OSDCloud BootMenu schema conversion.retains encryptedEnv as ciphertext without prompting or decrypting" time="0.9475" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="validates and renders the new schema without running commands" name="OSDCloud BootMenu schema conversion.validates and renders the new schema without running commands" time="0.1782" asserts="0" success="True" result="Success" executed="True" />
+              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions" executed="True" result="Success" success="True" time="0.0859" asserts="0" description="rejects invalid encrypted names, values, and collisions">
+                <results>
+                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;BAD-NAME&quot;:&quot;TOKEN&quot;&quot;)" time="0.0527" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;SECRET&quot;:false&quot;)" time="0.0064" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;SECRET&quot;:&quot;not-a-token&quot;&quot;)" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;SECRET&quot;:&quot;TOKEN&quot;,&quot;SECRET&quot;:&quot;TOKEN&quot;&quot;)" time="0.0063" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;SECRET&quot;:&quot;TOKEN&quot;,&quot;SECR\u0045T&quot;:&quot;TOKEN&quot;&quot;)" time="0.0078" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;plain&quot;:&quot;TOKEN&quot;&quot;)" time="0.0059" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements" executed="True" result="Success" success="True" time="0.0594" asserts="0" description="rejects old schema sections and conflicting requirements">
+                <results>
+                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;bootImage&quot;:{}&quot;)" time="0.0161" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;winpeStartup&quot;:{}&quot;)" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;osdcloud&quot;:{}&quot;)" time="0.0091" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;osdcloudMenu&quot;:{}&quot;)" time="0.0053" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;deployOSDCloud&quot;:{&quot;enabled&quot;:true}&quot;)" time="0.0171" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;osdcloudBoot&quot;:{&quot;requireWinPE&quot;:true,&quot;requireWinRE&quot;:true}&quot;)" time="0.0061" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="Clock shift troubleshooting" executed="True" result="Success" success="True" time="0.9701" asserts="0" description="Clock shift troubleshooting">
+          <test-suite type="TestFixture" name="OSDCloud BootMenu runtime" executed="True" result="Success" success="True" time="11.2167" asserts="0" description="OSDCloud BootMenu runtime">
             <results>
-              <test-case description="probes at +1 hour and -1 hour, restores the clock, then probes again" name="Clock shift troubleshooting.probes at +1 hour and -1 hour, restores the clock, then probes again" time="0.2125" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="reports when only a shifted clock connects" name="Clock shift troubleshooting.reports when only a shifted clock connects" time="0.047" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="always restores the clock when a probe throws" name="Clock shift troubleshooting.always restores the clock when a probe throws" time="0.0477" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not change the clock without SYSTEM" name="Clock shift troubleshooting.does not change the clock without SYSTEM" time="0.0752" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="applies env and nested startup settings and runs the main phase" name="OSDCloud BootMenu runtime.applies env and nested startup settings and runs the main phase" time="1.3884" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="applies build Import Packs before startup and profile Import Packs after selection" name="OSDCloud BootMenu runtime.applies build Import Packs before startup and profile Import Packs after selection" time="0.1909" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not import profile assets again when the profile has no Import Packs" name="OSDCloud BootMenu runtime.does not import profile assets again when the profile has no Import Packs" time="0.093" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="allows explicit arguments to override JSON" name="OSDCloud BootMenu runtime.allows explicit arguments to override JSON" time="0.0776" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="runs deployment when there are no profiles" name="OSDCloud BootMenu runtime.runs deployment when there are no profiles" time="0.0689" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not run startup checks or commands when the startup section is disabled" name="OSDCloud BootMenu runtime.does not run startup checks or commands when the startup section is disabled" time="0.0702" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="stops on malformed selected JSON without running deployment" name="OSDCloud BootMenu runtime.stops on malformed selected JSON without running deployment" time="0.0732" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not start anything outside WinPE" name="OSDCloud BootMenu runtime.does not start anything outside WinPE" time="0.0419" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="does not default to deployment after profile discovery fails" name="OSDCloud BootMenu runtime.does not default to deployment after profile discovery fails" time="0.0655" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="supports multiple-profile CLI selection without opening a window" name="OSDCloud BootMenu runtime.supports multiple-profile CLI selection without opening a window" time="0.1475" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="requires a profile choice instead of exiting on a dismissed selector" name="OSDCloud BootMenu runtime.requires a profile choice instead of exiting on a dismissed selector" time="0.0938" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="unlocks before selected assets, overrides asset env, and restores after every phase" name="OSDCloud BootMenu runtime.unlocks before selected assets, overrides asset env, and restores after every phase" time="0.1568" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="restores environment on a pipeline interruption in an isolated Windows PowerShell process" name="OSDCloud BootMenu runtime.restores environment on a pipeline interruption in an isolated Windows PowerShell process" time="0.6044" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="passes unlocked variables to a real Windows PowerShell child without embedding their values" name="OSDCloud BootMenu runtime.passes unlocked variables to a real Windows PowerShell child without embedding their values" time="5.8345" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="forwards an explicit SecureString without owning or disposing it" name="OSDCloud BootMenu runtime.forwards an explicit SecureString without owning or disposing it" time="0.0995" asserts="0" success="True" result="Success" executed="True" />
+              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu runtime.requires profile authentication before env unlock or selected-profile side effects" executed="True" result="Success" success="True" time="0.308" asserts="0" description="requires profile authentication before env unlock or selected-profile side effects">
+                <results>
+                  <test-case description="requires profile authentication before env unlock or selected-profile side effects" name="OSDCloud BootMenu runtime.requires profile authentication before env unlock or selected-profile side effects(True)" time="0.1811" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="requires profile authentication before env unlock or selected-profile side effects" name="OSDCloud BootMenu runtime.requires profile authentication before env unlock or selected-profile side effects(False)" time="0.1269" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu runtime.returns to selection after unlock cancellation without applying the rejected profile" executed="True" result="Success" success="True" time="0.2157" asserts="0" description="returns to selection after unlock cancellation without applying the rejected profile">
+                <results>
+                  <test-case description="returns to selection after unlock cancellation without applying the rejected profile" name="OSDCloud BootMenu runtime.returns to selection after unlock cancellation without applying the rejected profile(True)" time="0.1115" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="returns to selection after unlock cancellation without applying the rejected profile" name="OSDCloud BootMenu runtime.returns to selection after unlock cancellation without applying the rejected profile(False)" time="0.1042" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu runtime.restores absent variables after initialization or child failures" executed="True" result="Success" success="True" time="0.1965" asserts="0" description="restores absent variables after initialization or child failures">
+                <results>
+                  <test-case description="restores absent variables after initialization or child failures" name="OSDCloud BootMenu runtime.restores absent variables after initialization or child failures(&quot;Asset&quot;)" time="0.094" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="restores absent variables after initialization or child failures" name="OSDCloud BootMenu runtime.restores absent variables after initialization or child failures(&quot;Child&quot;)" time="0.1025" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu runtime.does not run selected assets or child commands after a cancelled or failed unlock" executed="True" result="Success" success="True" time="0.1519" asserts="0" description="does not run selected assets or child commands after a cancelled or failed unlock">
+                <results>
+                  <test-case description="does not run selected assets or child commands after a cancelled or failed unlock" name="OSDCloud BootMenu runtime.does not run selected assets or child commands after a cancelled or failed unlock(True)" time="0.0746" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="does not run selected assets or child commands after a cancelled or failed unlock" name="OSDCloud BootMenu runtime.does not run selected assets or child commands after a cancelled or failed unlock(False)" time="0.0773" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="UTC clock setter" executed="True" result="Success" success="True" time="1.0604" asserts="0" description="UTC clock setter">
+          <test-suite type="TestFixture" name="OSDCloud BootMenu discovery" executed="True" result="Success" success="True" time="11.4849" asserts="0" description="OSDCloud BootMenu discovery">
             <results>
-              <test-case description="sets UTC through local time in the running time zone and verifies it" name="UTC clock setter.sets UTC through local time in the running time zone and verifies it" time="0.0474" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="fails verification when the clock does not change" name="UTC clock setter.fails verification when the clock does not change" time="0.0392" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="searches only OSDCloud profile roots with X first followed by C through Z" name="OSDCloud BootMenu discovery.searches only OSDCloud profile roots with X first followed by C through Z" time="0.0806" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="uses info identity, ignores legacy JSON and deduplicates GUIDs" name="OSDCloud BootMenu discovery.uses info identity, ignores legacy JSON and deduplicates GUIDs" time="0.1731" asserts="0" success="True" result="Success" executed="True" />
             </results>
           </test-suite>
-          <test-suite type="TestFixture" name="User-facing task errors" executed="True" result="Success" success="True" time="1.1357" asserts="0" description="User-facing task errors">
+        </results>
+      </test-suite>
+      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1" executed="True" result="Success" success="True" time="0.3277" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1">
+        <results>
+          <test-suite type="TestFixture" name="Temporary wireless profiles" executed="True" result="Success" success="True" time="0.1941" asserts="0" description="Temporary wireless profiles">
             <results>
-              <test-case description="shows only the innermost message and logs the full exception" name="User-facing task errors.shows only the innermost message and logs the full exception" time="0.0182" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="keeps stack traces out of the task output" name="User-facing task errors.keeps stack traces out of the task output" time="0.0532" asserts="0" success="True" result="Success" executed="True" />
-            </results>
-          </test-suite>
-          <test-suite type="TestFixture" name="Wireless recovery eligibility" executed="True" result="Success" success="True" time="1.4687" asserts="0" description="Wireless recovery eligibility">
-            <results>
-              <test-case description="offers the dialog only for physical wireless adapters" name="Wireless recovery eligibility.offers the dialog only for physical wireless adapters" time="0.1515" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="starts a stopped WLAN service before opening the dialog" name="Wireless recovery eligibility.starts a stopped WLAN service before opening the dialog" time="0.0854" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not access hardware or display a dialog in preview or after cancellation" name="Wireless recovery eligibility.does not access hardware or display a dialog in preview or after cancellation" time="0.0326" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="reports wireless failures without leaking exception data and permits offline continuation" name="Wireless recovery eligibility.reports wireless failures without leaking exception data and permits offline continuation" time="0.0595" asserts="0" success="True" result="Success" executed="True" />
-            </results>
-          </test-suite>
-          <test-suite type="TestFixture" name="Temporary wireless profiles" executed="True" result="Success" success="True" time="1.6176" asserts="0" description="Temporary wireless profiles">
-            <results>
-              <test-case description="builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes" name="Temporary wireless profiles.builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes" time="0.0251" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials" name="Temporary wireless profiles.omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials" time="0.0314" asserts="0" success="True" result="Success" executed="True" />
-            </results>
-          </test-suite>
-          <test-suite type="TestFixture" name="Wireless dialog automation" executed="True" result="Success" success="True" time="9.2761" asserts="0" description="Wireless dialog automation">
-            <results>
-              <test-case description="renders network selection and a masked password, then returns association without logging the password" name="Wireless dialog automation.renders network selection and a masked password, then returns association without logging the password" time="1.3261" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="closes on cooperative cancellation without connecting and disposes native resources" name="Wireless dialog automation.closes on cooperative cancellation without connecting and disposes native resources" time="1.0431" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="keeps the dialog open below the idle limit and skips at 120 seconds" name="Wireless dialog automation.keeps the dialog open below the idle limit and skips at 120 seconds" time="2.0677" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="allows retry at the 25-second association limit and Skip closes without success" name="Wireless dialog automation.allows retry at the 25-second association limit and Skip closes without success" time="3.2022" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes" name="Temporary wireless profiles.builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes" time="0.0199" asserts="0" success="True" result="Success" executed="True" />
+              <test-case description="omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials" name="Temporary wireless profiles.omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials" time="0.0449" asserts="0" success="True" result="Success" executed="True" />
             </results>
           </test-suite>
         </results>

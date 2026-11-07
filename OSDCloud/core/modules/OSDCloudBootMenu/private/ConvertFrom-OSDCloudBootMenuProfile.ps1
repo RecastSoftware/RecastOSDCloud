@@ -64,24 +64,24 @@ function ConvertFrom-OSDCloudBootMenuProfile {
     }
     else { $Path }
     Assert-OSDCloudBootMenuProfile -Path $ProfileFilePath
-    $Profile = Get-Content -LiteralPath $ProfileFilePath -Raw | ConvertFrom-Json
+    $profileData = Get-Content -LiteralPath $ProfileFilePath -Raw | ConvertFrom-Json
 
     $Result = [ordered]@{}
-    if ($Profile.password) { $Result['password'] = $Profile.password }
+    if ($profileData.password) { $Result['password'] = $profileData.password }
     $Environment = [ordered]@{}
-    if ($Profile.info.name) { $Environment['OSDCLOUDBOOTMENU_PROFILE'] = $Profile.info.name }
-    if ($Profile.info.author) { $Environment['OSDCLOUDBOOT_AUTHOR'] = $Profile.info.author }
-    if ($Profile.env) {
-        foreach ($Variable in $Profile.env.PSObject.Properties) { $Environment[$Variable.Name] = $Variable.Value }
+    if ($profileData.info.name) { $Environment['OSDCLOUDBOOTMENU_PROFILE'] = $profileData.info.name }
+    if ($profileData.info.author) { $Environment['OSDCLOUDBOOT_AUTHOR'] = $profileData.info.author }
+    if ($profileData.env) {
+        foreach ($Variable in $profileData.env.PSObject.Properties) { $Environment[$Variable.Name] = $Variable.Value }
     }
     if ($Environment.Count -gt 0) { $Result['env'] = $Environment }
-    if ($Profile.encryptedEnv) {
+    if ($profileData.encryptedEnv) {
         $EncryptedEnvironment = [ordered]@{}
-        foreach ($Variable in $Profile.encryptedEnv.PSObject.Properties) { $EncryptedEnvironment[$Variable.Name] = $Variable.Value }
+        foreach ($Variable in $profileData.encryptedEnv.PSObject.Properties) { $EncryptedEnvironment[$Variable.Name] = $Variable.Value }
         if ($EncryptedEnvironment.Count -gt 0) { $Result['encryptedEnv'] = $EncryptedEnvironment }
     }
 
-    $Startup = $Profile.osdcloudBootStartup
+    $Startup = $profileData.osdcloudBootStartup
     $StartupEnabled = $Startup -and ($null -eq $Startup.enabled -or $Startup.enabled)
     $MainCommands = [System.Collections.Generic.List[string]]::new()
 
@@ -123,7 +123,7 @@ function ConvertFrom-OSDCloudBootMenuProfile {
     }
 
     foreach ($Key in 'osdcloudBootMenu') {
-        $Section = $Profile.$Key
+        $Section = $profileData.$Key
         if (-not $Section -or -not $Section.enabled -or -not $Section.command) { continue }
         $Parts = [System.Collections.Generic.List[string]]::new()
         $Parts.Add($Section.command)

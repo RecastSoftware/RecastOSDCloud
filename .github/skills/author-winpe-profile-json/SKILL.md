@@ -112,14 +112,14 @@ Use an unprefixed top-level `Environment` object to set process-scoped environme
 5. Parse the edited file with PowerShell 5.1:
 
 ```powershell
-$profile = Get-Content -LiteralPath '.\OSDCloud\core\winpestartup-profiles\<profile>\winpestartup.json' -Raw | ConvertFrom-Json
-$profile | Out-Null
+$profileData = Get-Content -LiteralPath '.\OSDCloud\core\winpestartup-profiles\<profile>\winpestartup.json' -Raw | ConvertFrom-Json
+$profileData | Out-Null
 ```
 
 6. For command changes, verify the resulting property explicitly:
 
 ```powershell
-$profile.'Invoke-WinpeStartup:InvokeShutdownCommand'
+$profileData.'Invoke-WinpeStartup:InvokeShutdownCommand'
 ```
 
 Do not execute profile commands during validation. Parsing verifies syntax without starting deployment, downloading content, or restarting the workstation.

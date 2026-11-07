@@ -252,10 +252,10 @@ InModuleScope OSDCloudPreOOBE {
             $network.Cipher = 4
             $network.SsidHex = '436166652026203C'
             $password = 'test&<password>'
-            [xml]$profile = [Recast.PreOOBE.Wireless]::ProfileXml($network, $password)
-            $profile.WLANProfile.SSIDConfig.SSID.hex | Should -Be $network.SsidHex
-            $profile.WLANProfile.MSM.security.sharedKey.keyMaterial | Should -Be $password
-            $profile.WLANProfile.MSM.security.authEncryption.authentication | Should -Be WPA2PSK
+            [xml]$wirelessProfile = [Recast.PreOOBE.Wireless]::ProfileXml($network, $password)
+            $wirelessProfile.WLANProfile.SSIDConfig.SSID.hex | Should -Be $network.SsidHex
+            $wirelessProfile.WLANProfile.MSM.security.sharedKey.keyMaterial | Should -Be $password
+            $wirelessProfile.WLANProfile.MSM.security.authEncryption.authentication | Should -Be WPA2PSK
             $network.Auth = 9
             ([xml][Recast.PreOOBE.Wireless]::ProfileXml($network, $password)).WLANProfile.MSM.security.authEncryption.authentication |
                 Should -Be WPA3SAE
@@ -265,8 +265,8 @@ InModuleScope OSDCloudPreOOBE {
             $network = [Recast.PreOOBE.Wireless+Network]::new()
             $network.SsidHex = '43616665'
             $network.Auth = 1
-            [xml]$profile = [Recast.PreOOBE.Wireless]::ProfileXml($network, 'ignored')
-            $profile.WLANProfile.MSM.security.sharedKey | Should -BeNullOrEmpty
+            [xml]$wirelessProfile = [Recast.PreOOBE.Wireless]::ProfileXml($network, 'ignored')
+            $wirelessProfile.WLANProfile.MSM.security.sharedKey | Should -BeNullOrEmpty
             $network.Auth = 5
             $network.Cipher = 4
             { [Recast.PreOOBE.Wireless]::ProfileXml($network, 'password') } | Should -Throw '*saved Windows Wi-Fi profile*'

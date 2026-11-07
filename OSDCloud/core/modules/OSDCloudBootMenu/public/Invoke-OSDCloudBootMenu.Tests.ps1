@@ -155,10 +155,10 @@ Describe 'OSDCloud BootMenu runtime' {
     It 'requires profile authentication before env unlock or selected-profile side effects' -ForEach @(
         @{ Authorize = $true }, @{ Authorize = $false }
     ) {
-        $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
-        $profile | Add-Member password $syntheticToken
-        $profile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
-        $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
+        $testProfile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
+        $testProfile | Add-Member password $syntheticToken
+        $testProfile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
         $script:authorized = $false
         Mock Confirm-OSDCloudBootMenuProfilePassword { $script:authorized = $Authorize; $Authorize }
         Mock Unlock-OSDCloudBootEnvironment {
@@ -178,9 +178,9 @@ Describe 'OSDCloud BootMenu runtime' {
     It 'returns to selection after unlock cancellation without applying the rejected profile' -ForEach @(
         @{ SingleProfile = $true }, @{ SingleProfile = $false }
     ) {
-        $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
-        $profile | Add-Member password $syntheticToken
-        $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
+        $testProfile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
+        $testProfile | Add-Member password $syntheticToken
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
         $script:otherCandidate = [pscustomobject]@{
             Index = 0; Profile = 'Other'; Path = Join-Path $TestDrive 'z-other.json'; AssetPath = $null
         }
@@ -316,9 +316,9 @@ Describe 'OSDCloud BootMenu runtime' {
         $saved = $env:BOOTMENU_TEST_UNLOCK
         try {
             $env:BOOTMENU_TEST_UNLOCK = 'Synthetic original'
-            $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
-            $profile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
-            $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
+            $testProfile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
+            $testProfile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
+            $testProfile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
             Mock Unlock-OSDCloudBootEnvironment {
                 $env:BOOTMENU_TEST_UNLOCK | Should -BeExactly 'Synthetic original'
                 [ordered]@{ BOOTMENU_TEST_UNLOCK = 'Synthetic unlocked' }
@@ -347,9 +347,9 @@ Describe 'OSDCloud BootMenu runtime' {
         $saved = $env:BOOTMENU_TEST_UNLOCK
         try {
             [Environment]::SetEnvironmentVariable('BOOTMENU_TEST_UNLOCK', $null, 'Process')
-            $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
-            $profile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
-            $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
+            $testProfile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
+            $testProfile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
+            $testProfile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
             Mock Unlock-OSDCloudBootEnvironment { [ordered]@{ BOOTMENU_TEST_UNLOCK = 'Synthetic unlocked' } }
             if ($Failure -eq 'Asset') {
                 Mock Import-WinpeStartupAssets { $env:BOOTMENU_TEST_UNLOCK = 'Synthetic asset'; throw 'Synthetic asset failure' }
@@ -365,9 +365,9 @@ Describe 'OSDCloud BootMenu runtime' {
     }
 
     It 'restores environment on a pipeline interruption in an isolated Windows PowerShell process' {
-        $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
-        $profile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
-        $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
+        $testProfile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
+        $testProfile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
         $scriptPath = Join-Path $TestDrive 'interrupt.ps1'
         $resultPath = Join-Path $TestDrive 'interrupt-result.txt'
         @'
@@ -416,10 +416,10 @@ $module = Import-Module $ModulePath -PassThru
         $password = ConvertTo-SecureString 'Synthetic integration password' -AsPlainText -Force
         try {
             $env:BOOTMENU_TEST_UNLOCK = 'Synthetic original'
-            $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
+            $testProfile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
             $token = Invoke-OSDCloudBootStringCrypto -InputString 'Synthetic inherited' -Password $password
-            $profile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $token }
-            $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
+            $testProfile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $token }
+            $testProfile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
             $script:childErrorPath = Join-Path $TestDrive 'inheritance.stderr'
             Mock Start-Process {
                 $child = & $script:realStartProcess -FilePath $FilePath -ArgumentList $ArgumentList -PassThru -Wait -WindowStyle Hidden -RedirectStandardError $script:childErrorPath
@@ -438,9 +438,9 @@ $module = Import-Module $ModulePath -PassThru
     It 'does not run selected assets or child commands after a cancelled or failed unlock' -ForEach @(
         @{ Cancel = $true }, @{ Cancel = $false }
     ) {
-        $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
-        $profile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
-        $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
+        $testProfile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
+        $testProfile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
         Mock Unlock-OSDCloudBootEnvironment {
             if ($Cancel) { throw [OperationCanceledException]::new('Synthetic cancellation') }
             throw [Security.Cryptography.CryptographicException]::new('Synthetic authentication failure')
@@ -453,10 +453,10 @@ $module = Import-Module $ModulePath -PassThru
     }
 
     It 'forwards an explicit SecureString without owning or disposing it' {
-        $profile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
-        $profile | Add-Member password $syntheticToken
-        $profile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
-        $profile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
+        $testProfile = Get-Content $script:candidate.Path -Raw | ConvertFrom-Json
+        $testProfile | Add-Member password $syntheticToken
+        $testProfile | Add-Member encryptedEnv @{ BOOTMENU_TEST_UNLOCK = $syntheticToken }
+        $testProfile | ConvertTo-Json -Depth 10 | Set-Content $script:candidate.Path
         $script:suppliedPassword = ConvertTo-SecureString 'Synthetic supplied' -AsPlainText -Force
         try {
             Mock Confirm-OSDCloudBootMenuProfilePassword {

@@ -37,18 +37,18 @@ function Get-OSDCloudBootMenuProfileCandidates {
             if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { continue }
             try {
                 Assert-OSDCloudBootMenuProfile -Path $file
-                $profile = Get-Content -LiteralPath $file -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-                if (-not $profile.info.name -or -not $profile.info.id) {
+                $profileData = Get-Content -LiteralPath $file -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+                if (-not $profileData.info.name -or -not $profileData.info.id) {
                     throw 'BootMenu discovery requires info.name and info.id.'
                 }
-                if (-not $seen.Add([guid]$profile.info.id)) {
-                    Write-Verbose "Invoke-OSDCloudBootMenu: Ignoring duplicate profile ID '$($profile.info.id)' at '$file'."
+                if (-not $seen.Add([guid]$profileData.info.id)) {
+                    Write-Verbose "Invoke-OSDCloudBootMenu: Ignoring duplicate profile ID '$($profileData.info.id)' at '$file'."
                     continue
                 }
                 [pscustomobject]@{
                     Index     = 0
-                    Id        = $profile.info.id
-                    Profile   = $profile.info.name
+                    Id        = $profileData.info.id
+                    Profile   = $profileData.info.name
                     Path      = $file
                     AssetPath = $folder.FullName
                 }

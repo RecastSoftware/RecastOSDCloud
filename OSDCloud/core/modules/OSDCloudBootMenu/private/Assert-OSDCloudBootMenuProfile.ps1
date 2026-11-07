@@ -56,7 +56,7 @@ function Assert-OSDCloudBootMenuProfile {
     try {
         $Raw = Get-Content -LiteralPath $Path -Raw -ErrorAction Stop
         if (-not $Raw.TrimStart().StartsWith('{')) { throw 'Expected one JSON object.' }
-        $Profile = ConvertFrom-Json -InputObject $Raw -ErrorAction Stop
+        $profileData = ConvertFrom-Json -InputObject $Raw -ErrorAction Stop
     }
     catch {
         throw "Invalid OSDCloud BootMenu profile JSON '$Path': $($_.Exception.Message) Backslashes in JSON strings must be escaped as '\\'."
@@ -138,15 +138,15 @@ function Assert-OSDCloudBootMenuProfile {
         }
     }
 
-    if (-not (& $IsObject $Profile)) { & $Fail 'The profile must contain one JSON object.' }
-    & $AssertKeys $Profile '' @('schemaVersion', 'info', 'env', 'encryptedEnv', 'password', 'osdcloudBoot', 'osdcloudBootStartup', 'osdcloudBootMenu')
+    if (-not (& $IsObject $profileData)) { & $Fail 'The profile must contain one JSON object.' }
+    & $AssertKeys $profileData '' @('schemaVersion', 'info', 'env', 'encryptedEnv', 'password', 'osdcloudBoot', 'osdcloudBootStartup', 'osdcloudBootMenu')
 
-    $SchemaVersion = $Profile.PSObject.Properties['schemaVersion']
+    $SchemaVersion = $profileData.PSObject.Properties['schemaVersion']
     if (-not $SchemaVersion -or $SchemaVersion.Value -isnot [System.Int64] -and $SchemaVersion.Value -isnot [System.Int32] -or $SchemaVersion.Value -ne 1) {
         & $Fail "'schemaVersion' is required and must be 1."
     }
 
-    $Info = & $AssertSection $Profile 'info'
+    $Info = & $AssertSection $profileData 'info'
     if ($Info) {
         & $AssertKeys $Info 'info.' @('id', 'name', 'author', 'description')
         $IdProperty = $Info.PSObject.Properties['id']
@@ -160,7 +160,7 @@ function Assert-OSDCloudBootMenuProfile {
         }
     }
 
-    $Env = & $AssertSection $Profile 'env'
+    $Env = & $AssertSection $profileData 'env'
     if ($Env) {
         foreach ($Property in $Env.PSObject.Properties) {
             if ($Property.Name -notmatch '^[A-Za-z_][A-Za-z0-9_]*$') { & $Fail "'env.$($Property.Name)' is not a valid environment variable name." }
@@ -179,9 +179,9 @@ function Assert-OSDCloudBootMenuProfile {
             & $Fail 'Invalid or unsupported encrypted string envelope.'
         }
     }
-    $Password = $Profile.PSObject.Properties['password']
+    $Password = $profileData.PSObject.Properties['password']
     if ($Password) { & $AssertEncryptedToken $Password.Value }
-    $EncryptedEnv = & $AssertSection $Profile 'encryptedEnv'
+    $EncryptedEnv = & $AssertSection $profileData 'encryptedEnv'
     if ($EncryptedEnv) {
         # ConvertFrom-Json can discard exact duplicate keys; inspect JSON keys before conversion loses them.
         $Depth = 0
@@ -223,7 +223,7 @@ function Assert-OSDCloudBootMenuProfile {
         }
     }
 
-    $BootImage = & $AssertSection $Profile 'osdcloudBoot'
+    $BootImage = & $AssertSection $profileData 'osdcloudBoot'
     if ($BootImage) {
         & $AssertKeys $BootImage 'osdcloudBoot.' @('requireWinPE', 'requireWinRE', 'installModule', 'buildPacks', 'importPacks')
         foreach ($PackKey in 'buildPacks', 'importPacks') {
@@ -259,7 +259,7 @@ function Assert-OSDCloudBootMenuProfile {
         }
     }
 
-    $WinpeStartup = & $AssertSection $Profile 'osdcloudBootStartup'
+    $WinpeStartup = & $AssertSection $profileData 'osdcloudBootStartup'
     if ($WinpeStartup) {
         $Name = 'osdcloudBootStartup.'
         & $AssertKeys $WinpeStartup $Name @('enabled', 'onScreenKeyboard', 'showPnpDevices', 'showPnpErrors', 'wifi', 'ipConfig', 'updateOSDCloud', 'installModules', 'startup', 'main', 'shutdown')
@@ -270,5 +270,5 @@ function Assert-OSDCloudBootMenuProfile {
         foreach ($Key in 'startup', 'main', 'shutdown') { & $AssertCommandSection $WinpeStartup $Key }
     }
 
-    & $AssertRunSection $Profile 'osdcloudBootMenu'
+    & $AssertRunSection $profileData 'osdcloudBootMenu'
 }
