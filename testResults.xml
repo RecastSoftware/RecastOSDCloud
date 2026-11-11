@@ -1,107 +1,278 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="42" errors="0" failures="0" not-run="36" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-11-07" time="08:10:17">
-  <environment clr-version="4.0.30319.42000" user-domain="OSDMAIN" cwd="C:\GitHub\recast-osd\RecastOSDCloud" platform="Microsoft Windows 11 Pro|C:\Windows|\Device\Harddisk0\Partition3" machine-name="OSDMAIN" nunit-version="2.5.8.0" os-version="10.0.26300" user="david" />
+<test-results xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="nunit_schema_2.5.xsd" name="Pester" total="23" errors="0" failures="0" not-run="504" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2026-11-07" time="11:22:42">
+  <environment cwd="C:\GitHub\recast-osd\RecastOSDCloud" machine-name="OSDMAIN" user="david" platform="Microsoft Windows 11 Pro|C:\Windows|\Device\Harddisk0\Partition3" os-version="10.0.26300" clr-version="10.0.14" nunit-version="2.5.8.0" user-domain="OSDMAIN" />
   <culture-info current-culture="en-US" current-uiculture="en-US" />
-  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="16.6374" asserts="0" description="Pester">
+  <test-suite type="TestFixture" name="Pester" executed="True" result="Success" success="True" time="37.2583" asserts="0" description="Pester">
     <results>
-      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudBootMenu\OSDCloudBootMenu.Tests.ps1" executed="True" result="Success" success="True" time="4.6903" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudBootMenu\OSDCloudBootMenu.Tests.ps1">
+      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloudBoot\Tests\NewOSDCloudBoot.Tests.ps1" executed="True" result="Success" success="True" time="37.2583" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloudBoot\Tests\NewOSDCloudBoot.Tests.ps1">
         <results>
-          <test-suite type="TestFixture" name="Standalone BootMenu process isolation" executed="True" result="Success" success="True" time="1.9281" asserts="0" description="Standalone BootMenu process isolation">
+          <test-suite type="TestFixture" name="Invoke-OSDCloudBoot handoff" executed="True" result="Success" success="True" time="1.8638" asserts="0" description="Invoke-OSDCloudBoot handoff">
             <results>
-              <test-suite type="TestFixture" name="Standalone BootMenu process isolation.Standalone BootMenu bundled profiles" executed="True" result="Success" success="True" time="1.8143" asserts="0" description="Standalone BootMenu process isolation.Standalone BootMenu bundled profiles">
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.activates the imported license for the profile and selected workflow (&lt;Mode&gt;, &lt;Selection&gt;)" executed="True" result="Success" success="True" time="0.0047" asserts="0" description="activates the imported license for the profile and selected workflow (&lt;Mode&gt;, &lt;Selection&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.preserves profile license settings when import returns no license or under WhatIf (&lt;Mode&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="preserves profile license settings when import returns no license or under WhatIf (&lt;Mode&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.initializes the profile editor context on &lt;Mode&gt; startup without unintended state writes" executed="True" result="Success" success="True" time="0.0021" asserts="0" description="initializes the profile editor context on &lt;Mode&gt; startup without unintended state writes">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.warns once per retired folder without moving or deleting content (WhatIf=&lt;Preview&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="warns once per retired folder without moving or deleting content (WhatIf=&lt;Preview&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.returns to Builds after selected-run VM &lt;Outcome&gt; preserving temporary settings and selection" executed="True" result="Success" success="True" time="0.947" asserts="0" description="returns to Builds after selected-run VM &lt;Outcome&gt; preserving temporary settings and selection">
                 <results>
-                  <test-case description="validates every bundled profile without changing command or environment types" name="Standalone BootMenu process isolation.Standalone BootMenu bundled profiles.validates every bundled profile without changing command or environment types" time="1.4245" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="returns to Builds after selected-run VM success preserving temporary settings and selection" name="Invoke-OSDCloudBoot handoff.returns to Builds after selected-run VM success preserving temporary settings and selection" time="0.6478" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="returns to Builds after selected-run VM failure preserving temporary settings and selection" name="Invoke-OSDCloudBoot handoff.returns to Builds after selected-run VM failure preserving temporary settings and selection" time="0.1654" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="returns to Builds after selected-run VM WhatIf preserving temporary settings and selection" name="Invoke-OSDCloudBoot handoff.returns to Builds after selected-run VM WhatIf preserving temporary settings and selection" time="0.1338" asserts="0" success="True" result="Success" executed="True" />
                 </results>
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.returns to Builds after selected-run ISO &lt;Outcome&gt; preserving settings and selection" executed="True" result="Success" success="True" time="0.3983" asserts="0" description="returns to Builds after selected-run ISO &lt;Outcome&gt; preserving settings and selection">
+                <results>
+                  <test-case description="returns to Builds after selected-run ISO success preserving settings and selection" name="Invoke-OSDCloudBoot handoff.returns to Builds after selected-run ISO success preserving settings and selection" time="0.147" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="returns to Builds after selected-run ISO failure preserving settings and selection" name="Invoke-OSDCloudBoot handoff.returns to Builds after selected-run ISO failure preserving settings and selection" time="0.1295" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="returns to Builds after selected-run ISO WhatIf preserving settings and selection" name="Invoke-OSDCloudBoot handoff.returns to Builds after selected-run ISO WhatIf preserving settings and selection" time="0.1218" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.runs exact selected-row USB media and returns to Builds (&lt;Action&gt;, &lt;Directory&gt;, &lt;Failure&gt;)" executed="True" result="Success" success="True" time="0.4408" asserts="0" description="runs exact selected-row USB media and returns to Builds (&lt;Action&gt;, &lt;Directory&gt;, &lt;Failure&gt;)">
+                <results>
+                  <test-case description="runs exact selected-row USB media and returns to Builds (New, bootmedia, False)" name="Invoke-OSDCloudBoot handoff.runs exact selected-row USB media and returns to Builds (New, bootmedia, False)" time="0.1634" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="runs exact selected-row USB media and returns to Builds (Update, bootmedia_ca2023, False)" name="Invoke-OSDCloudBoot handoff.runs exact selected-row USB media and returns to Builds (Update, bootmedia_ca2023, False)" time="0.1471" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="runs exact selected-row USB media and returns to Builds (Update, bootmedia, True)" name="Invoke-OSDCloudBoot handoff.runs exact selected-row USB media and returns to Builds (Update, bootmedia, True)" time="0.1303" asserts="0" success="True" result="Success" executed="True" />
+                </results>
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.announces startup stages for profile and workflow separately in &lt;Mode&gt; mode" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="announces startup stages for profile and workflow separately in &lt;Mode&gt; mode">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.does not recreate a deleted profile during final trace and activity publication (&lt;KeepOther&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="does not recreate a deleted profile during final trace and activity publication (&lt;KeepOther&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.opens without updating catalogs (licensed=&lt;Licensed&gt;, ADK ready=&lt;Ready&gt;, WhatIf=&lt;Preview&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="opens without updating catalogs (licensed=&lt;Licensed&gt;, ADK ready=&lt;Ready&gt;, WhatIf=&lt;Preview&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.checks storage before opening the window, including WhatIf" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="checks storage before opening the window, including WhatIf">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.quits cleanly and logs storage startup failures (TEMP fallback: &lt;Fallback&gt;, WhatIf: &lt;Preview&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="quits cleanly and logs storage startup failures (TEMP fallback: &lt;Fallback&gt;, WhatIf: &lt;Preview&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.executes the Sources maintenance steps for &lt;Task&gt; (WhatIf=&lt;Preview&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="executes the Sources maintenance steps for &lt;Task&gt; (WhatIf=&lt;Preview&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.installs selected &lt;Software&gt; software and reopens the window before building" executed="True" result="Success" success="True" time="0.0003" asserts="0" description="installs selected &lt;Software&gt; software and reopens the window before building">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.preserves WhatIf for Software installer &lt;Software&gt;" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="preserves WhatIf for Software installer &lt;Software&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.installs MDT using the separate module and reopens Software (WhatIf=&lt;Preview&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="installs MDT using the separate module and reopens Software (WhatIf=&lt;Preview&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="Invoke-OSDCloudBoot handoff.hands Software uninstall to confirmed maintenance without a console prompt and reopens (WhatIf=&lt;Preview&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="hands Software uninstall to confirmed maintenance without a console prompt and reopens (WhatIf=&lt;Preview&gt;)">
+                <results />
               </test-suite>
             </results>
           </test-suite>
-        </results>
-      </test-suite>
-      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudBootMenu\public\Invoke-OSDCloudBootMenu.Tests.ps1" executed="True" result="Success" success="True" time="11.6194" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudBootMenu\public\Invoke-OSDCloudBootMenu.Tests.ps1">
-        <results>
-          <test-suite type="TestFixture" name="OSDCloud BootMenu schema conversion" executed="True" result="Success" success="True" time="1.3245" asserts="0" description="OSDCloud BootMenu schema conversion">
+          <test-suite type="TestFixture" name="OSDCloud Boot WPF configuration" executed="True" result="Success" success="True" time="36.2086" asserts="0" description="OSDCloud Boot WPF configuration">
             <results>
-              <test-case description="retains encryptedEnv as ciphertext without prompting or decrypting" name="OSDCloud BootMenu schema conversion.retains encryptedEnv as ciphertext without prompting or decrypting" time="0.9475" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="validates and renders the new schema without running commands" name="OSDCloud BootMenu schema conversion.validates and renders the new schema without running commands" time="0.1782" asserts="0" success="True" result="Success" executed="True" />
-              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions" executed="True" result="Success" success="True" time="0.0859" asserts="0" description="rejects invalid encrypted names, values, and collisions">
+              <test-case description="renders scrollable read-only build Properties with copyable diagnostics and reachable Close" name="OSDCloud Boot WPF configuration.renders scrollable read-only build Properties with copyable diagnostics and reachable Close" time="0.7871" asserts="0" success="True" result="Success" executed="True" />
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.defaults to host WinPE when WinRE is absent or incompatible with the target build" executed="True" result="Success" success="True" time="0" asserts="0" description="defaults to host WinPE when WinRE is absent or incompatible with the target build">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.maps source &lt;SourceName&gt; to only &lt;Parameter&gt;" executed="True" result="Success" success="True" time="0" asserts="0" description="maps source &lt;SourceName&gt; to only &lt;Parameter&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.opens the folder for &lt;Source&gt; profiles" executed="True" result="Success" success="True" time="0" asserts="0" description="opens the folder for &lt;Source&gt; profiles">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.lays out Boot Apps at minimum and default sizes (licensed=&lt;Licensed&gt;, DaRT=&lt;CabExists&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="lays out Boot Apps at minimum and default sizes (licensed=&lt;Licensed&gt;, DaRT=&lt;CabExists&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.hides and excludes a checked AzCopy option after selecting &lt;LicenseChoice&gt;" executed="True" result="Success" success="True" time="0" asserts="0" description="hides and excludes a checked AzCopy option after selecting &lt;LicenseChoice&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.shows DaRT without its CAB and disables its toggle when unavailable or arm64 (&lt;CabExists&gt;)" executed="True" result="Success" success="True" time="0" asserts="0" description="shows DaRT without its CAB and disables its toggle when unavailable or arm64 (&lt;CabExists&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.hands off only &lt;ExpectedCacheName&gt; from its overflow menu without changing build selections" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="hands off only &lt;ExpectedCacheName&gt; from its overflow menu without changing build selections">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.reopens Apps after an AzCopy update in an &lt;Architecture&gt; workflow (NoProfile=&lt;UseNoProfile&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="reopens Apps after an AzCopy update in an &lt;Architecture&gt; workflow (NoProfile=&lt;UseNoProfile&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.rejects a &lt;Scenario&gt; temporary app cache configuration" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="rejects a &lt;Scenario&gt; temporary app cache configuration">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.retains hidden &lt;PowerShellOption&gt; and DaRT selections but omits them from an unlicensed build" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="retains hidden &lt;PowerShellOption&gt; and DaRT selections but omits them from an unlicensed build">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.gates DaRT with a usable source or cache while keeping its menu available (&lt;Scenario&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="gates DaRT with a usable source or cache while keeping its menu available (&lt;Scenario&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.restores .NET 10 Apps choices and forwards only the selected runtime for &lt;Architecture&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="restores .NET 10 Apps choices and forwards only the selected runtime for &lt;Architecture&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.reopens with the imported license active in the current profile (&lt;Mode&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="reopens with the imported license active in the current profile (&lt;Mode&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.reports timestamped window startup stages in &lt;Mode&gt; mode before showing the window" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="reports timestamped window startup stages in &lt;Mode&gt; mode before showing the window">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.prompts for the first Profile and handles &lt;Choice&gt; without creating default" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="prompts for the first Profile and handles &lt;Choice&gt; without creating default">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.does not prompt for or create a first Profile under &lt;Mode&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="does not prompt for or create a first Profile under &lt;Mode&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.opens About without ADK and Software for incomplete ADK before Profile onboarding (&lt;Requirement&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="opens About without ADK and Software for incomplete ADK before Profile onboarding (&lt;Requirement&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.preserves ADK-based sidebar visibility without a profile across license changes when ADK is &lt;Adk&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="preserves ADK-based sidebar visibility without a profile across license changes when ADK is &lt;Adk&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.shows profile selectors with an empty-build state and no legacy settings adoption (&lt;WorkflowsRemain&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="shows profile selectors with an empty-build state and no legacy settings adoption (&lt;WorkflowsRemain&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.preserves profile &lt;Kind&gt; selection handoffs through the Home card" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="preserves profile &lt;Kind&gt; selection handoffs through the Home card">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.creates a Profile with a native-architecture build and selected &lt;License&gt; license through the themed Profile actions dialog" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="creates a Profile with a native-architecture build and selected &lt;License&gt; license through the themed Profile actions dialog">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.creates workflows from architecture-specific actions without an architecture selector (&lt;HasWorkflow&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="creates workflows from architecture-specific actions without an architecture selector (&lt;HasWorkflow&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.applies sidebar visibility by ADK installation and Active License (&lt;Scenario&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="applies sidebar visibility by ADK installation and Active License (&lt;Scenario&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.hides optional sidebar entries for None but disables invalid selected licenses (&lt;LicenseCondition&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="hides optional sidebar entries for None but disables invalid selected licenses (&lt;LicenseCondition&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.refreshes licensed sidebar entries when &lt;Page&gt; loses its license (&lt;LicenseChoice&gt;)" executed="True" result="Success" success="True" time="0.0003" asserts="0" description="refreshes licensed sidebar entries when &lt;Page&gt; loses its license (&lt;LicenseChoice&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.preserves Escape cancellation from &lt;Page&gt; (&lt;ExpectedVisible&gt; footer)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="preserves Escape cancellation from &lt;Page&gt; (&lt;ExpectedVisible&gt; footer)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.uses Escape to close an open dropdown before closing &lt;Page&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="uses Escape to close an open dropdown before closing &lt;Page&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.opens Boot VM on physical and virtual hosts but retains VM testing safeguards (VM=&lt;IsVM&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="opens Boot VM on physical and virtual hosts but retains VM testing safeguards (VM=&lt;IsVM&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.reflects Hyper-V feature state &lt;FeatureState&gt; on Boot VM" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="reflects Hyper-V feature state &lt;FeatureState&gt; on Boot VM">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.opens Software from the first About card with a chevron (ADK=&lt;Installed&gt;, licensed=&lt;Licensed&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="opens Software from the first About card with a chevron (ADK=&lt;Installed&gt;, licensed=&lt;Licensed&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.labels only ADK as required and every other Software app as optional (installed=&lt;Installed&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="labels only ADK as required and every other Software app as optional (installed=&lt;Installed&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.offers each additional Software installer and returns its component (&lt;Component&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="offers each additional Software installer and returns its component (&lt;Component&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.shows installed Software versions and confirmed uninstall when expanded (&lt;Component&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="shows installed Software versions and confirmed uninstall when expanded (&lt;Component&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.shows Control Panel uninstall instructions when the per-user Code uninstaller is missing (&lt;Component&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="shows Control Panel uninstall instructions when the per-user Code uninstaller is missing (&lt;Component&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.keeps Uninstall available when the per-user Code uninstaller exists (&lt;Component&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="keeps Uninstall available when the per-user Code uninstaller exists (&lt;Component&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.disables Software Hyper-V enablement for VMs, pending restarts, and failed queries (&lt;State&gt;, VM=&lt;Virtual&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="disables Software Hyper-V enablement for VMs, pending restarts, and failed queries (&lt;State&gt;, VM=&lt;Virtual&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.orders Software maintenance cards without a license (ADK ready=&lt;AdkReady&gt;, Hyper-V=&lt;FeatureState&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="orders Software maintenance cards without a license (ADK ready=&lt;AdkReady&gt;, Hyper-V=&lt;FeatureState&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.shows the Hyper-V status and disable action on Software (licensed=&lt;Licensed&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="shows the Hyper-V status and disable action on Software (licensed=&lt;Licensed&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.places VM testing first without the Hyper-V status card on Boot VM (&lt;State&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="places VM testing first without the Hyper-V status card on Boot VM (&lt;State&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.restores source-restricted BootMenu selections after reopening with &lt;SourceType&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="restores source-restricted BootMenu selections after reopening with &lt;SourceType&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.silently preserves the saved source after ADK removal with license valid: &lt;LicenseValid&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="silently preserves the saved source after ADK removal with license valid: &lt;LicenseValid&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.filters Windows RE sources on launch for selected license validity &lt;Valid&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="filters Windows RE sources on launch for selected license validity &lt;Valid&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.shows the Sources WinRE &lt;Target&gt; task only for a valid selected license" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="shows the Sources WinRE &lt;Target&gt; task only for a valid selected license">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.opens Software until ADK is ready regardless of license (valid=&lt;Valid&gt;, ready=&lt;Ready&gt;, files=&lt;HasFiles&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="opens Software until ADK is ready regardless of license (valid=&lt;Valid&gt;, ready=&lt;Ready&gt;, files=&lt;HasFiles&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.keeps the archived Packs UI absent across license states (ID=&lt;Id&gt;, valid=&lt;Valid&gt;)" executed="True" result="Success" success="True" time="0.0002" asserts="0" description="keeps the archived Packs UI absent across license states (ID=&lt;Id&gt;, valid=&lt;Valid&gt;)">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.shows the profile build table with license-independent row actions at minimum and default sizes (&lt;Preview&gt;, &lt;LicenseId&gt;)" executed="True" result="Success" success="True" time="18.1553" asserts="0" description="shows the profile build table with license-independent row actions at minimum and default sizes (&lt;Preview&gt;, &lt;LicenseId&gt;)">
                 <results>
-                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;BAD-NAME&quot;:&quot;TOKEN&quot;&quot;)" time="0.0527" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;SECRET&quot;:false&quot;)" time="0.0064" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;SECRET&quot;:&quot;not-a-token&quot;&quot;)" time="0.0068" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;SECRET&quot;:&quot;TOKEN&quot;,&quot;SECRET&quot;:&quot;TOKEN&quot;&quot;)" time="0.0063" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;SECRET&quot;:&quot;TOKEN&quot;,&quot;SECR\u0045T&quot;:&quot;TOKEN&quot;&quot;)" time="0.0078" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects invalid encrypted names, values, and collisions" name="OSDCloud BootMenu schema conversion.rejects invalid encrypted names, values, and collisions(&quot;&quot;plain&quot;:&quot;TOKEN&quot;&quot;)" time="0.0059" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="shows the profile build table with license-independent row actions at minimum and default sizes (False, 088d41d8-ba6b-4a28-a62c-6d164ecfec74)" name="OSDCloud Boot WPF configuration.shows the profile build table with license-independent row actions at minimum and default sizes (False, 088d41d8-ba6b-4a28-a62c-6d164ecfec74)" time="8.7591" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="shows the profile build table with license-independent row actions at minimum and default sizes (True, 088d41d8-ba6b-4a28-a62c-6d164ecfec74)" name="OSDCloud Boot WPF configuration.shows the profile build table with license-independent row actions at minimum and default sizes (True, 088d41d8-ba6b-4a28-a62c-6d164ecfec74)" time="3.359" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="shows the profile build table with license-independent row actions at minimum and default sizes (False, 11111111-1111-1111-1111-111111111111)" name="OSDCloud Boot WPF configuration.shows the profile build table with license-independent row actions at minimum and default sizes (False, 11111111-1111-1111-1111-111111111111)" time="6.0372" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements" executed="True" result="Success" success="True" time="0.0594" asserts="0" description="rejects old schema sections and conflicting requirements">
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.targets row USB menus and distinguishes row Refresh from table Refresh (&lt;Action&gt;, &lt;Directory&gt;)" executed="True" result="Success" success="True" time="4.6486" asserts="0" description="targets row USB menus and distinguishes row Refresh from table Refresh (&lt;Action&gt;, &lt;Directory&gt;)">
                 <results>
-                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;bootImage&quot;:{}&quot;)" time="0.0161" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;winpeStartup&quot;:{}&quot;)" time="0.0057" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;osdcloud&quot;:{}&quot;)" time="0.0091" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;osdcloudMenu&quot;:{}&quot;)" time="0.0053" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;deployOSDCloud&quot;:{&quot;enabled&quot;:true}&quot;)" time="0.0171" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="rejects old schema sections and conflicting requirements" name="OSDCloud BootMenu schema conversion.rejects old schema sections and conflicting requirements(&quot;&quot;osdcloudBoot&quot;:{&quot;requireWinPE&quot;:true,&quot;requireWinRE&quot;:true}&quot;)" time="0.0061" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="targets row USB menus and distinguishes row Refresh from table Refresh (New, bootmedia)" name="OSDCloud Boot WPF configuration.targets row USB menus and distinguishes row Refresh from table Refresh (New, bootmedia)" time="1.1743" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="targets row USB menus and distinguishes row Refresh from table Refresh (New, bootmedia_ca2023)" name="OSDCloud Boot WPF configuration.targets row USB menus and distinguishes row Refresh from table Refresh (New, bootmedia_ca2023)" time="1.1651" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="targets row USB menus and distinguishes row Refresh from table Refresh (Update, bootmedia)" name="OSDCloud Boot WPF configuration.targets row USB menus and distinguishes row Refresh from table Refresh (Update, bootmedia)" time="1.1928" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="targets row USB menus and distinguishes row Refresh from table Refresh (Update, bootmedia_ca2023)" name="OSDCloud Boot WPF configuration.targets row USB menus and distinguishes row Refresh from table Refresh (Update, bootmedia_ca2023)" time="1.1164" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-            </results>
-          </test-suite>
-          <test-suite type="TestFixture" name="OSDCloud BootMenu runtime" executed="True" result="Success" success="True" time="11.2167" asserts="0" description="OSDCloud BootMenu runtime">
-            <results>
-              <test-case description="applies env and nested startup settings and runs the main phase" name="OSDCloud BootMenu runtime.applies env and nested startup settings and runs the main phase" time="1.3884" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="applies build Import Packs before startup and profile Import Packs after selection" name="OSDCloud BootMenu runtime.applies build Import Packs before startup and profile Import Packs after selection" time="0.1909" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not import profile assets again when the profile has no Import Packs" name="OSDCloud BootMenu runtime.does not import profile assets again when the profile has no Import Packs" time="0.093" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="allows explicit arguments to override JSON" name="OSDCloud BootMenu runtime.allows explicit arguments to override JSON" time="0.0776" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="runs deployment when there are no profiles" name="OSDCloud BootMenu runtime.runs deployment when there are no profiles" time="0.0689" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not run startup checks or commands when the startup section is disabled" name="OSDCloud BootMenu runtime.does not run startup checks or commands when the startup section is disabled" time="0.0702" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="stops on malformed selected JSON without running deployment" name="OSDCloud BootMenu runtime.stops on malformed selected JSON without running deployment" time="0.0732" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not start anything outside WinPE" name="OSDCloud BootMenu runtime.does not start anything outside WinPE" time="0.0419" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="does not default to deployment after profile discovery fails" name="OSDCloud BootMenu runtime.does not default to deployment after profile discovery fails" time="0.0655" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="supports multiple-profile CLI selection without opening a window" name="OSDCloud BootMenu runtime.supports multiple-profile CLI selection without opening a window" time="0.1475" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="requires a profile choice instead of exiting on a dismissed selector" name="OSDCloud BootMenu runtime.requires a profile choice instead of exiting on a dismissed selector" time="0.0938" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="unlocks before selected assets, overrides asset env, and restores after every phase" name="OSDCloud BootMenu runtime.unlocks before selected assets, overrides asset env, and restores after every phase" time="0.1568" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="restores environment on a pipeline interruption in an isolated Windows PowerShell process" name="OSDCloud BootMenu runtime.restores environment on a pipeline interruption in an isolated Windows PowerShell process" time="0.6044" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="passes unlocked variables to a real Windows PowerShell child without embedding their values" name="OSDCloud BootMenu runtime.passes unlocked variables to a real Windows PowerShell child without embedding their values" time="5.8345" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="forwards an explicit SecureString without owning or disposing it" name="OSDCloud BootMenu runtime.forwards an explicit SecureString without owning or disposing it" time="0.0995" asserts="0" success="True" result="Success" executed="True" />
-              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu runtime.requires profile authentication before env unlock or selected-profile side effects" executed="True" result="Success" success="True" time="0.308" asserts="0" description="requires profile authentication before env unlock or selected-profile side effects">
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=&lt;Preview&gt;, license=&lt;LicenseId&gt;)" executed="True" result="Success" success="True" time="8.5461" asserts="0" description="hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=&lt;Preview&gt;, license=&lt;LicenseId&gt;)">
                 <results>
-                  <test-case description="requires profile authentication before env unlock or selected-profile side effects" name="OSDCloud BootMenu runtime.requires profile authentication before env unlock or selected-profile side effects(True)" time="0.1811" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="requires profile authentication before env unlock or selected-profile side effects" name="OSDCloud BootMenu runtime.requires profile authentication before env unlock or selected-profile side effects(False)" time="0.1269" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=False, license=088d41d8-ba6b-4a28-a62c-6d164ecfec74)" name="OSDCloud Boot WPF configuration.hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=False, license=088d41d8-ba6b-4a28-a62c-6d164ecfec74)" time="2.1528" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=True, license=088d41d8-ba6b-4a28-a62c-6d164ecfec74)" name="OSDCloud Boot WPF configuration.hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=True, license=088d41d8-ba6b-4a28-a62c-6d164ecfec74)" time="1.4535" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=False, license=11111111-1111-1111-1111-111111111111)" name="OSDCloud Boot WPF configuration.hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=False, license=11111111-1111-1111-1111-111111111111)" time="3.513" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=True, license=11111111-1111-1111-1111-111111111111)" name="OSDCloud Boot WPF configuration.hands the selected build to Rebuild ISO independently of license with safe, reachable actions (preview=True, license=11111111-1111-1111-1111-111111111111)" time="1.4268" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu runtime.returns to selection after unlock cancellation without applying the rejected profile" executed="True" result="Success" success="True" time="0.2157" asserts="0" description="returns to selection after unlock cancellation without applying the rejected profile">
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.restores Builds selection and preserves unsaved-settings safeguards after a VM handoff (&lt;SaveError&gt;)" executed="True" result="Success" success="True" time="1.8088" asserts="0" description="restores Builds selection and preserves unsaved-settings safeguards after a VM handoff (&lt;SaveError&gt;)">
                 <results>
-                  <test-case description="returns to selection after unlock cancellation without applying the rejected profile" name="OSDCloud BootMenu runtime.returns to selection after unlock cancellation without applying the rejected profile(True)" time="0.1115" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="returns to selection after unlock cancellation without applying the rejected profile" name="OSDCloud BootMenu runtime.returns to selection after unlock cancellation without applying the rejected profile(False)" time="0.1042" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="restores Builds selection and preserves unsaved-settings safeguards after a VM handoff ()" name="OSDCloud Boot WPF configuration.restores Builds selection and preserves unsaved-settings safeguards after a VM handoff ()" time="0.923" asserts="0" success="True" result="Success" executed="True" />
+                  <test-case description="restores Builds selection and preserves unsaved-settings safeguards after a VM handoff (Synthetic settings save failure)" name="OSDCloud Boot WPF configuration.restores Builds selection and preserves unsaved-settings safeguards after a VM handoff (Synthetic settings save failure)" time="0.8858" asserts="0" success="True" result="Success" executed="True" />
                 </results>
               </test-suite>
-              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu runtime.restores absent variables after initialization or child failures" executed="True" result="Success" success="True" time="0.1965" asserts="0" description="restores absent variables after initialization or child failures">
-                <results>
-                  <test-case description="restores absent variables after initialization or child failures" name="OSDCloud BootMenu runtime.restores absent variables after initialization or child failures(&quot;Asset&quot;)" time="0.094" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="restores absent variables after initialization or child failures" name="OSDCloud BootMenu runtime.restores absent variables after initialization or child failures(&quot;Child&quot;)" time="0.1025" asserts="0" success="True" result="Success" executed="True" />
-                </results>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.shows only automatic updates and drive settings on USB Media (preview=&lt;Preview&gt;)" executed="True" result="Success" success="True" time="0" asserts="0" description="shows only automatic updates and drive settings on USB Media (preview=&lt;Preview&gt;)">
+                <results />
               </test-suite>
-              <test-suite type="ParameterizedTest" name="OSDCloud BootMenu runtime.does not run selected assets or child commands after a cancelled or failed unlock" executed="True" result="Success" success="True" time="0.1519" asserts="0" description="does not run selected assets or child commands after a cancelled or failed unlock">
-                <results>
-                  <test-case description="does not run selected assets or child commands after a cancelled or failed unlock" name="OSDCloud BootMenu runtime.does not run selected assets or child commands after a cancelled or failed unlock(True)" time="0.0746" asserts="0" success="True" result="Success" executed="True" />
-                  <test-case description="does not run selected assets or child commands after a cancelled or failed unlock" name="OSDCloud BootMenu runtime.does not run selected assets or child commands after a cancelled or failed unlock(False)" time="0.0773" asserts="0" success="True" result="Success" executed="True" />
-                </results>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.uses the shared update preference and matching label for a &lt;Arch&gt; build" executed="True" result="Success" success="True" time="0" asserts="0" description="uses the shared update preference and matching label for a &lt;Arch&gt; build">
+                <results />
               </test-suite>
-            </results>
-          </test-suite>
-          <test-suite type="TestFixture" name="OSDCloud BootMenu discovery" executed="True" result="Success" success="True" time="11.4849" asserts="0" description="OSDCloud BootMenu discovery">
-            <results>
-              <test-case description="searches only OSDCloud profile roots with X first followed by C through Z" name="OSDCloud BootMenu discovery.searches only OSDCloud profile roots with X first followed by C through Z" time="0.0806" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="uses info identity, ignores legacy JSON and deduplicates GUIDs" name="OSDCloud BootMenu discovery.uses info identity, ignores legacy JSON and deduplicates GUIDs" time="0.1731" asserts="0" success="True" result="Success" executed="True" />
-            </results>
-          </test-suite>
-        </results>
-      </test-suite>
-      <test-suite type="TestFixture" name="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1" executed="True" result="Success" success="True" time="0.3277" asserts="0" description="C:\GitHub\recast-osd\RecastOSDCloud\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1">
-        <results>
-          <test-suite type="TestFixture" name="Temporary wireless profiles" executed="True" result="Success" success="True" time="0.1941" asserts="0" description="Temporary wireless profiles">
-            <results>
-              <test-case description="builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes" name="Temporary wireless profiles.builds in-memory WPA personal profiles with escaped credentials and the original SSID bytes" time="0.0199" asserts="0" success="True" result="Success" executed="True" />
-              <test-case description="omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials" name="Temporary wireless profiles.omits credentials for open networks and rejects unsupported enterprise or invalid personal credentials" time="0.0449" asserts="0" success="True" result="Success" executed="True" />
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.migrates a legacy preference for either architecture to the shared toggle" executed="True" result="Success" success="True" time="0" asserts="0" description="migrates a legacy preference for either architecture to the shared toggle">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.respects USB Media visibility with &lt;LicenseState&gt;" executed="True" result="Success" success="True" time="0" asserts="0" description="respects USB Media visibility with &lt;LicenseState&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.runs the Sources &lt;Target&gt; WinRE menu task (online=&lt;Online&gt;) without Home task cards" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="runs the Sources &lt;Target&gt; WinRE menu task (online=&lt;Online&gt;) without Home task cards">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.keeps WinRE menu tasks available with imported sources (&lt;Imported&gt;) for &lt;RunTarget&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="keeps WinRE menu tasks available with imported sources (&lt;Imported&gt;) for &lt;RunTarget&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.keeps every Boot Drivers overflow button inside its cell and viewport at &lt;Name&gt; sizes and while resizing" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="keeps every Boot Drivers overflow button inside its cell and viewport at &lt;Name&gt; sizes and while resizing">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.disables the card-level Builtin update when &lt;Gate&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="disables the card-level Builtin update when &lt;Gate&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.keeps Hyper-V on Software and offers disable only when enabled" executed="True" result="Success" success="True" time="0" asserts="0" description="keeps Hyper-V on Software and offers disable only when enabled">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.returns no configuration when first-run onboarding is closed using &lt;CloseAction&gt;" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="returns no configuration when first-run onboarding is closed using &lt;CloseAction&gt;">
+                <results />
+              </test-suite>
+              <test-suite type="ParameterizedTest" name="OSDCloud Boot WPF configuration.opens Settings from an accessible title bar action without a sidebar entry (ADK=&lt;Installed&gt;, ready=&lt;Ready&gt;)" executed="True" result="Success" success="True" time="0.0001" asserts="0" description="opens Settings from an accessible title bar action without a sidebar entry (ADK=&lt;Installed&gt;, ready=&lt;Ready&gt;)">
+                <results />
+              </test-suite>
             </results>
           </test-suite>
         </results>
