@@ -14,7 +14,7 @@ function Test-OSDCloudInternetConnection
         [Parameter(ValueFromPipeline)]
         # Uri to test
         [System.Uri]
-        $Uri = 'google.com'
+        $Uri = 'http://www.msftconnecttest.com/connecttest.txt'
     )
     $Params = @{
         Method = 'Head'
