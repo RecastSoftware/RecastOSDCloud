@@ -101,10 +101,10 @@ Describe 'Deploy-OSDCloud disk parameters' {
         Should -Invoke Send-OSDCloudResults -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly
         Should -Invoke Out-Host -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter {
             $expectedProperties = @(
-                'DeploymentId', 'ModuleVersion', 'WorkflowName', 'WorkflowTaskName',
-                'LaunchMethod', 'DeploymentPhase', 'OSDManufacturer', 'OSDModel',
-                'OSDProduct', 'IsComplete', 'Status', 'StartTimeUtc', 'EndTimeUtc',
-                'totalDuration', 'ContentSource', 'ContentInternet', 'ContentLocal'
+                'DeploymentId', 'Status', 'IsComplete', 'StartTimeUtc', 'EndTimeUtc',
+                'totalDuration', 'ContentSource', 'ContentInternet', 'ContentLocal',
+                'ModuleVersion', 'WorkflowName', 'WorkflowTaskName', 'LaunchMethod',
+                'DeploymentPhase', 'OSDManufacturer', 'OSDModel', 'OSDProduct'
             )
             $InputObject.DeploymentId -eq $global:OSDCloudResults.DeploymentId -and
             $InputObject.IsComplete -and
