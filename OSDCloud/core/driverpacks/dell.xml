@@ -1,4 +1,4 @@
-<DriverPackManifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" baseLocation="downloads.dell.com" dateTime="2026-11-09T06:48:59" releaseID="6YVTK" version="2026.11.02" application="OnDemandCabBuilder" schemaVersion="2.3" xsi:noNamespaceSchemaLocation="https://downloads.dell.com/catalog/clientschema/4.0/DriverPackManifest.xsd" baseLocationAccessProtocols="HTTP FTP" deltaBase="http://en.community.dell.com" xmlns="openmanage/cm/dm">
+<DriverPackManifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" baseLocation="downloads.dell.com" dateTime="2026-11-17T13:30:39" releaseID="52H11" version="2026.11.02" application="OnDemandCabBuilder" schemaVersion="2.3" xsi:noNamespaceSchemaLocation="https://downloads.dell.com/catalog/clientschema/4.0/DriverPackManifest.xsd" baseLocationAccessProtocols="HTTP FTP" deltaBase="http://en.community.dell.com" xmlns="openmanage/cm/dm">
   <DriverPackage format="cab" hashMD5="4B4B4330EBFF3E9F353D2C3D7B4450F6" size="72429980" dateTime="2014-07-11T00:00:00" vendorVersion="1.0" dellVersion="A01" path="FOLDER02291001M/1/160-vista-A01-JFH0G.CAB" releaseID="JFH0G" delta="/techcenter/enterprise-client/w/wiki/optiplex-160-vista-driver-cab" type="win">
     <Name>
       <Display lang="en"><![CDATA[160-vista-A01-JFH0G.CAB]]></Display>
@@ -50570,51 +50570,6 @@
       </Cryptography>
     </DriverPackMetadataInfo>
   </DriverPackage>
-  <DriverPackage format="exe" hashMD5="0487E1A2F4710614C06F95BBDE53CB65" size="2281343008" dateTime="2026-07-02T05:01:33" vendorVersion="1.0" dellVersion="A06" path="FOLDER14709713M/1/MB16250-FWT3C_Win11_1.0_A06.exe" releaseID="FWT3C" delta="" type="win">
-    <Name>
-      <Display lang="en"><![CDATA[MB16250-FWT3C_Win11_1.0_A06.exe]]></Display>
-    </Name>
-    <Description>
-      <Display lang="en"><![CDATA[With the Dell Command Deploy Driver Packs, an I/T Administrator can perform the following tasks:
-1) Use Microsoft Windows OS-based PnP enumeration capabilities to install drivers for applicable devices
-2) Create a system-level optimized deployment sequence
-3) Setup an appropriate boot control sequence.
-4) Optimize the deployment of targeted system-specific driver packages.]]></Display>
-    </Description>
-    <SupportedOperatingSystems>
-      <OperatingSystem osCode="Windows11" osVendor="Microsoft" osArch="x64" osType="client" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0">
-        <Display lang="en"><![CDATA[ Windows 11 x64 ]]></Display>
-        <SupportedLanguages>
-          <Language lang="en">English</Language>
-        </SupportedLanguages>
-      </OperatingSystem>
-    </SupportedOperatingSystems>
-    <SupportedSystems>
-      <Brand key="60" prefix="DPML">
-        <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
-        <Model systemID="0D12" name="Dell Pro Max 16 Plus MB16250" rtsDate="2025-07-16T16:00:00" generation="">
-          <Display lang="en"><![CDATA[ Dell Pro Max 16 Plus MB16250 ]]></Display>
-        </Model>
-      </Brand>
-    </SupportedSystems>
-    <ImportantInfo URL="http://www.dell.com/support/home/us/en/04/Drivers/DriversDetails?driverId=FWT3C">
-      <Display lang="en"><![CDATA[Please visit http://Dell.com/Command for additional help on using CABs for OS Deployment.]]></Display>
-    </ImportantInfo>
-    <Cryptography>
-      <Hash algorithm="MD5">0487E1A2F4710614C06F95BBDE53CB65</Hash>
-      <Hash algorithm="SHA1">581172722D025B768AC441239E5447A67E56816D</Hash>
-      <Hash algorithm="SHA256">C28D4425BDC4565B5DFC9F566098632C5F09082BC915D4330E7B6CBCBBA7B821</Hash>
-    </Cryptography>
-    <DriverPackMetadataInfo>
-      <Size>618682</Size>
-      <path>FOLDER14709682M/1/MB16250-FWT3C_Win11_1.0_A06.xml</path>
-      <Cryptography>
-        <Hash algorithm="MD5">1B5E2D478B3350192E021CBE5F822A85</Hash>
-        <Hash algorithm="SHA1">B4E1E101466C9243FBA3DA558C3E408D47D679FE</Hash>
-        <Hash algorithm="SHA256">D15D0E57043686A11979F708A33A73E762C067AA85DFD104B8EEA706BF5919AE</Hash>
-      </Cryptography>
-    </DriverPackMetadataInfo>
-  </DriverPackage>
   <DriverPackage format="exe" hashMD5="945B8401E58F9D1E6D04648E03252568" size="1912958200" dateTime="2026-07-22T22:53:24" vendorVersion="1.0" dellVersion="A08" path="FOLDER14767362M/1/PB14250-121HY_Win11_1.0_A08.exe" releaseID="121HY" delta="" type="win">
     <Name>
       <Display lang="en"><![CDATA[PB14250-121HY_Win11_1.0_A08.exe]]></Display>
@@ -51359,57 +51314,6 @@
         <Hash algorithm="MD5">FBB08F8635DD38BDE8450AF5BF75366B</Hash>
         <Hash algorithm="SHA1">576707384588886448A9C7D5E173747EAF43231A</Hash>
         <Hash algorithm="SHA256">C7A03329DB61CEAED97FA8F600D660BB83E268F601BF6DDC95391D4CF23CE071</Hash>
-      </Cryptography>
-    </DriverPackMetadataInfo>
-  </DriverPackage>
-  <DriverPackage format="exe" hashMD5="F884C794BA2CEC11AFD4A2FC88041D0F" size="2281408880" dateTime="2026-08-11T01:07:36" vendorVersion="1.0" dellVersion="A06" path="FOLDER14697491M/1/MB18250-J0TYF_Win11_1.0_A06.exe" releaseID="J0TYF" delta="" type="win">
-    <Name>
-      <Display lang="en"><![CDATA[MB18250-J0TYF_Win11_1.0_A06.exe]]></Display>
-    </Name>
-    <Description>
-      <Display lang="en"><![CDATA[With the Dell Command Deploy Driver Packs, an I/T Administrator can perform the following tasks:
-1) Use Microsoft Windows OS-based PnP enumeration capabilities to install drivers for applicable devices
-2) Create a system-level optimized deployment sequence
-3) Setup an appropriate boot control sequence.
-4) Optimize the deployment of targeted system-specific driver packages.]]></Display>
-    </Description>
-    <SupportedOperatingSystems>
-      <OperatingSystem osCode="Windows11" osVendor="Microsoft" osArch="x64" osType="client" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0">
-        <Display lang="en"><![CDATA[ Windows 11 x64 ]]></Display>
-        <SupportedLanguages>
-          <Language lang="en">English</Language>
-        </SupportedLanguages>
-      </OperatingSystem>
-    </SupportedOperatingSystems>
-    <SupportedSystems>
-      <Brand key="60" prefix="DPML">
-        <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
-        <Model systemID="0D13" name="Dell Pro Max 18 Plus MB18250" rtsDate="2025-07-16T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ Dell Pro Max 18 Plus MB18250 ]]></Display>
-        </Model>
-      </Brand>
-      <Brand key="60" prefix="DPML">
-        <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
-        <Model systemID="0E87" name="Dell Pro Max 18 Plus MB18250" rtsDate="2025-07-16T16:00:00" generation="-">
-          <Display lang="en"><![CDATA[ Dell Pro Max 18 Plus MB18250 ]]></Display>
-        </Model>
-      </Brand>
-    </SupportedSystems>
-    <ImportantInfo URL="http://www.dell.com/support/home/us/en/04/Drivers/DriversDetails?driverId=J0TYF">
-      <Display lang="en"><![CDATA[Please visit http://Dell.com/Command for additional help on using CABs for OS Deployment.]]></Display>
-    </ImportantInfo>
-    <Cryptography>
-      <Hash algorithm="MD5">F884C794BA2CEC11AFD4A2FC88041D0F</Hash>
-      <Hash algorithm="SHA1">D125D918EB34AB27D5A409F1FFDBFA01E7708145</Hash>
-      <Hash algorithm="SHA256">91DCB5A91360F7E5B8F946BCE9A2E5A12E918EFD64668F4B219976FA6FBCDDE5</Hash>
-    </Cryptography>
-    <DriverPackMetadataInfo>
-      <Size>620554</Size>
-      <path>FOLDER14697473M/1/MB18250-J0TYF_Win11_1.0_A06.xml</path>
-      <Cryptography>
-        <Hash algorithm="MD5">1CA34B8D09A21BCDC442597F68F156AB</Hash>
-        <Hash algorithm="SHA1">DF6E7F347EA548C199A3047D57466DEDADFDCAF9</Hash>
-        <Hash algorithm="SHA256">4FE2B4BA94772F4EA24B98EFC8450672AE47E79A7DA4CAED51FE058F75763DDA</Hash>
       </Cryptography>
     </DriverPackMetadataInfo>
   </DriverPackage>
@@ -55779,6 +55683,108 @@
         <Hash algorithm="MD5">8EDA5C136D5AFB0603281B609C6CE396</Hash>
         <Hash algorithm="SHA1">61A12199E414EB4DAA0134784BDD8EF84026B8E9</Hash>
         <Hash algorithm="SHA256">0832DD38B10647BFCEE22BB82E331A14C4847D38811B048A7A915D772E99BB55</Hash>
+      </Cryptography>
+    </DriverPackMetadataInfo>
+  </DriverPackage>
+  <DriverPackage format="exe" hashMD5="AE434BB48E9F2439AA7E28155E8B346F" size="2327133472" dateTime="2026-11-17T00:11:08" vendorVersion="1.0" dellVersion="A07" path="FOLDER15213168M/1/MB18250-M3R5F_Win11_1.0_A07.exe" releaseID="M3R5F" delta="" type="win">
+    <Name>
+      <Display lang="en"><![CDATA[MB18250-M3R5F_Win11_1.0_A07.exe]]></Display>
+    </Name>
+    <Description>
+      <Display lang="en"><![CDATA[With the Dell Command Deploy Driver Packs, an I/T Administrator can perform the following tasks:
+1) Use Microsoft Windows OS-based PnP enumeration capabilities to install drivers for applicable devices
+2) Create a system-level optimized deployment sequence
+3) Setup an appropriate boot control sequence.
+4) Optimize the deployment of targeted system-specific driver packages.]]></Display>
+    </Description>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="Windows11" osVendor="Microsoft" osArch="x64" osType="client" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0">
+        <Display lang="en"><![CDATA[ Windows 11 x64 ]]></Display>
+        <SupportedLanguages>
+          <Language lang="en">English</Language>
+        </SupportedLanguages>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <SupportedSystems>
+      <Brand key="60" prefix="DPML">
+        <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
+        <Model systemID="0D13" name="Dell Pro Max 18 Plus MB18250" rtsDate="2025-07-16T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro Max 18 Plus MB18250 ]]></Display>
+        </Model>
+      </Brand>
+      <Brand key="60" prefix="DPML">
+        <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
+        <Model systemID="0E87" name="Dell Pro Max 18 Plus MB18250" rtsDate="2025-07-16T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro Max 18 Plus MB18250 ]]></Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/04/Drivers/DriversDetails?driverId=M3R5F">
+      <Display lang="en"><![CDATA[Please visit http://Dell.com/Command for additional help on using CABs for OS Deployment.]]></Display>
+    </ImportantInfo>
+    <Cryptography>
+      <Hash algorithm="MD5">AE434BB48E9F2439AA7E28155E8B346F</Hash>
+      <Hash algorithm="SHA1">9CF5374FA54066CE3EA10C2FCD5F48F64C8319EE</Hash>
+      <Hash algorithm="SHA256">7903035AC151129272A3E4EDC4523114339D4F0C4E0C5CA2C0C7878511D30E2C</Hash>
+    </Cryptography>
+    <DriverPackMetadataInfo>
+      <Size>1375112</Size>
+      <path>FOLDER15213134M/1/MB18250-M3R5F_Win11_1.0_A07.xml</path>
+      <Cryptography>
+        <Hash algorithm="MD5">2CCDD85E9A5F61194A644DA9E766E19A</Hash>
+        <Hash algorithm="SHA1">5C3696A607980BBE29F3BC5F508BD526A17B4090</Hash>
+        <Hash algorithm="SHA256">EE6A0E20117E17F6146155B73F009C303FFC02706736E152A255430BF7CF696E</Hash>
+      </Cryptography>
+    </DriverPackMetadataInfo>
+  </DriverPackage>
+  <DriverPackage format="exe" hashMD5="FD3C40F0639BBE2C08EA0919BBD49D54" size="2328971256" dateTime="2026-11-17T00:11:08" vendorVersion="1.0" dellVersion="A07" path="FOLDER15197281M/1/MB16250-452H7_Win11_1.0_A07.exe" releaseID="452H7" delta="" type="win">
+    <Name>
+      <Display lang="en"><![CDATA[MB16250-452H7_Win11_1.0_A07.exe]]></Display>
+    </Name>
+    <Description>
+      <Display lang="en"><![CDATA[With the Dell Command Deploy Driver Packs, an I/T Administrator can perform the following tasks:
+1) Use Microsoft Windows OS-based PnP enumeration capabilities to install drivers for applicable devices
+2) Create a system-level optimized deployment sequence
+3) Setup an appropriate boot control sequence.
+4) Optimize the deployment of targeted system-specific driver packages.]]></Display>
+    </Description>
+    <SupportedOperatingSystems>
+      <OperatingSystem osCode="Windows11" osVendor="Microsoft" osArch="x64" osType="client" majorVersion="10" minorVersion="0" spMajorVersion="0" spMinorVersion="0">
+        <Display lang="en"><![CDATA[ Windows 11 x64 ]]></Display>
+        <SupportedLanguages>
+          <Language lang="en">English</Language>
+        </SupportedLanguages>
+      </OperatingSystem>
+    </SupportedOperatingSystems>
+    <SupportedSystems>
+      <Brand key="60" prefix="DPML">
+        <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
+        <Model systemID="0D12" name="Dell Pro Max 16 Plus MB16250" rtsDate="2025-07-16T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro Max 16 Plus MB16250 ]]></Display>
+        </Model>
+      </Brand>
+      <Brand key="60" prefix="DPML">
+        <Display lang="en"><![CDATA[ Dell Pro Max Laptops ]]></Display>
+        <Model systemID="0E86" name="Dell Pro Max 16 Plus MB16250" rtsDate="2025-07-16T16:00:00" generation="-">
+          <Display lang="en"><![CDATA[ Dell Pro Max 16 Plus MB16250 ]]></Display>
+        </Model>
+      </Brand>
+    </SupportedSystems>
+    <ImportantInfo URL="http://www.dell.com/support/home/us/en/04/Drivers/DriversDetails?driverId=452H7">
+      <Display lang="en"><![CDATA[Please visit http://Dell.com/Command for additional help on using CABs for OS Deployment.]]></Display>
+    </ImportantInfo>
+    <Cryptography>
+      <Hash algorithm="MD5">FD3C40F0639BBE2C08EA0919BBD49D54</Hash>
+      <Hash algorithm="SHA1">F9B709D2843755CDFA475170C0B54BA3CC4B5934</Hash>
+      <Hash algorithm="SHA256">F4B88A8C45B1B15F4A583B70FDE24BB2D5E726EF71DAC5F6AB646ADC13AE5BF6</Hash>
+    </Cryptography>
+    <DriverPackMetadataInfo>
+      <Size>1375112</Size>
+      <path>FOLDER15197257M/1/MB16250-452H7_Win11_1.0_A07.xml</path>
+      <Cryptography>
+        <Hash algorithm="MD5">F90AA2A921E22D39ED5FCD416BDFEF24</Hash>
+        <Hash algorithm="SHA1">7ED489C826A1356A8E5324124B8C84A131721D6A</Hash>
+        <Hash algorithm="SHA256">79AAAF52DA2E5CA78D72E1992AC40EE05384D33C7158A821507F376B95907FE8</Hash>
       </Cryptography>
     </DriverPackMetadataInfo>
   </DriverPackage>
