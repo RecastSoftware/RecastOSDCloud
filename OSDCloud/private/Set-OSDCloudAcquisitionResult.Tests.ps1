@@ -180,11 +180,20 @@ Describe 'OS and driver pack acquisition measurements' {
         $global:OSDCloudWorkflowInvoke.DriverPackAcquisition.Copied | Should -BeTrue
         $global:OSDCloudWorkflowInvoke.DriverPackAcquisition.Downloaded | Should -BeFalse
         $global:OSDCloudWorkflowInvoke.DriverPackAcquisition.Cached | Should -BeFalse
+        $global:OSDCloudWorkflowInvoke.CompletedTransfers.stepDriverPackCopy | Should -BeTrue
+        $global:OSDCloudWorkflowInvoke.Durations.stepDriverPackCopy | Should -BeGreaterOrEqual 0.02
+        $global:OSDCloudWorkflowInvoke.Durations.stepDriverPackDownload | Should -BeNullOrEmpty
+        $global:OSDCloudWorkflowInvoke.Durations.stepDriverPackCache | Should -BeNullOrEmpty
+        Should -Invoke Copy-Item -Times 2 -Exactly -ParameterFilter {
+            $LiteralPath -like 'F:\ModelDrivers\*' -and
+            $Destination -eq 'C:\Windows\Temp\osdcloud-driverpack-expand' -and $Recurse -and $Force
+        }
         Should -Invoke Get-ChildItem -Times 1 -Exactly -ParameterFilter {
             $LiteralPath -eq 'C:\Windows\Temp\osdcloud-driverpack-expand' -and
             $Recurse -and $File -and $Force -and $ErrorAction -eq 'Stop'
         }
         Should -Invoke Invoke-RecastOSDDownloadFile -Times 0 -Exactly
+        Should -Invoke Invoke-WebRequest -Times 0 -Exactly
     }
 
     It 'measures a driver download once after USB failure and local fallback' {
