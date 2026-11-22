@@ -19,6 +19,7 @@ a boot image and just want to deploy, start at [`04-deploy-windows.md`](04-deplo
 | 7 | [Deploy to ARM64 devices](07-arm64-devices.md) | Image a Snapdragon / Surface Pro 11 / Copilot+ PC |
 | 8 | [Hand off to Autopilot and OOBE](08-autopilot-oobe.md) | Enrol the device in Intune after deployment |
 | 9 | [Troubleshoot a failed deployment](09-troubleshooting.md) | Diagnose a deployment that didn't finish |
+| 10 | [Use OSDCloud PreOOBE](10-osdcloud-preoobe.md) | Run drivers, time sync, updates and custom apps at first boot before OOBE |
 
 ## Function reference
 

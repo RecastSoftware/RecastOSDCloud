@@ -6,8 +6,10 @@ function Assert-OSDCloudBootMenuProfile {
         Validates a standalone OSDCloud BootMenu profile JSON file
 
     .DESCRIPTION
-        Parses one osdcloudbootmenu.json file and verifies that it uses only supported
-        sections, properties, and value types. Supported top-level sections are
+        Parses one osdcloudbootmenu.json file and verifies that the supported
+        sections and properties use valid value types. Unknown sections and properties are
+        ignored without a warning so profiles written by newer OSDCloudBoot versions still
+        load. Supported top-level sections are
         schemaVersion (must be 1), info, env, encryptedEnv, password, osdcloudBoot, osdcloudBootStartup,
         and osdcloudBootMenu. osdcloudBoot.buildPacks and
         osdcloudBoot.importPacks contain objects with a GUID id and an optional name that
@@ -64,11 +66,10 @@ function Assert-OSDCloudBootMenuProfile {
 
     $Fail = { param ($Message) throw "Invalid OSDCloud BootMenu profile '$Path': $Message" }
     $IsObject = { param ($Value) $Value -is [System.Management.Automation.PSCustomObject] }
+    # Forward compatibility: newer OSDCloudBoot versions may add properties this module version does not
+    # know. Unknown properties are silently ignored (no error, no warning); only the known ones are validated.
     $AssertKeys = {
         param ($Object, $Name, $Allowed)
-        foreach ($Property in $Object.PSObject.Properties) {
-            if ($Property.Name -notin $Allowed) { & $Fail "Unsupported property '$Name$($Property.Name)'." }
-        }
     }
     $AssertBoolean = {
         param ($Object, $Name, $Key)

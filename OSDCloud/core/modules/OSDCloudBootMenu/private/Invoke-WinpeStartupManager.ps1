@@ -109,6 +109,24 @@ function Invoke-WinpeStartupManager {
             Invoke-PEStartupCommand Show-WinpeStartupDevices -WindowStyle Minimized -NoExit
         }
         'WiFi' {
+            # Nothing for Wi-Fi to do without the wireless components or wireless hardware (e.g. a virtual machine)
+            $missingWifiDlls = @('dmcmnutils.dll', 'mdmpostprocessevaluator.dll', 'mdmregistration.dll', 'raschap.dll', 'raschapext.dll', 'rastls.dll', 'rastlsext.dll') |
+                Where-Object { -not (Test-Path -LiteralPath (Join-Path $env:SystemRoot "System32\$_")) }
+            if ($missingWifiDlls) {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Wi-Fi not started. Wireless components are not in this WinPE: $($missingWifiDlls -join ', ')"
+                return
+            }
+            $wifiAdapters = @()
+            $wifiQueried = $true
+            try {
+                $wifiAdapters = @(Get-CimInstance -ClassName Win32_NetworkAdapter -ErrorAction Stop | Where-Object { $_.PhysicalAdapter -and $_.Name -match 'Wireless|Wi-?Fi|WLAN|802\.11' })
+            }
+            catch { $wifiQueried = $false }  # Hardware could not be queried; do not block Wi-Fi
+            if ($wifiQueried -and $wifiAdapters.Count -eq 0) {
+                Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Wi-Fi not started. No wireless network adapter was found."
+                return
+            }
+
             # Wait a few seconds for the network stack to initialize before checking for connectivity
             Start-Sleep -Seconds 2
 

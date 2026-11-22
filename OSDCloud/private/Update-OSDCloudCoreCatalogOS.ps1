@@ -412,7 +412,8 @@ function Update-OSDCloudCoreCatalogOS {
 		}
 	}
 	catch {
-		Write-Warning "[$(Get-Date -format s)] [$functionName] Catalog update was not successful. $($_.Exception.Message)"
+		# OSDCloud is designed to work offline, so a failed catalog update (for example no network) is informational only.
+		Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] [$functionName] Catalog update was not successful. $($_.Exception.Message)"
 	}
 	finally {
 		foreach ($cleanupPath in @($stagedModulePath) + @($stagedDrivePaths) + @($writeProbePath)) {

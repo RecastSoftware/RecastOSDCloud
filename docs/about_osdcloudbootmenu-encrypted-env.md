@@ -22,7 +22,7 @@ button, and right-click or the keyboard context-menu key opens the row menu:
 - **View** opens a read-only JSON preview.
 - **Clone** copies any profile and its supporting files into OSDeployCore with a
   new GUID identity and a matching GUID-named folder.
-- **Open Folder** opens any profile's folder in Explorer.
+- **Open in Windows Explorer** opens any profile's folder in Explorer.
 - **Rename** changes a Custom profile's display name (`info.name`), preserving
   its GUID-named folder, ID, password, and enabled state. Builtin profiles cannot
   be renamed.
