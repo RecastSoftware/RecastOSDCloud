@@ -61,7 +61,7 @@ InModuleScope OSDCloudPost {
             }
             $script:timeProbe.Local.ToUniversalTime() | Should -Be $script:timeProbe.Date.UtcDateTime
             Should -Invoke Set-TimeZone -Times 0 -Exactly
-            $lines = $state.Messages.ToArray()
+            $lines = $state.Messages.ToArray() -replace '^\[[^\]]+\] '
             $lines | Should -Contain "Clock before: $(([datetime]'2020-01-01T00:00:00Z').ToUniversalTime().ToString('o'))"
             $lines | Should -Contain "Internet UTC: $($script:timeProbe.Date.UtcDateTime.ToString('o'))"
             @($lines | Where-Object { $_ -like 'Correction: * seconds.' }).Count | Should -Be 1

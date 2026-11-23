@@ -511,9 +511,13 @@ verification or sandbox mechanism.
 
 While a selected application runs, its stdout and stderr appear live in the
 PreOOBE output box (refreshed about every 250 ms), so you don't need to open
-the log files during OOBE. Lines are prefixed with the task label, for example
-`Application Workspace [D:]: <line>` and
-`Application Workspace [D:] [stderr]: <line>`, and are also written to
+the log files during OOBE. Every output line starts with a timestamp in the
+`OSDCloudPreOOBE.log` format, `[2026-11-23T07:06:24] <line>`. Installer lines
+that already carry a `[date time.ms] [Info]` stamp reuse that time and drop the
+`[Info]` level (other levels such as `[Debug]` are kept); stderr lines are marked
+`[stderr]`. Each application starts with a dashed separator and
+`[timestamp] Starting <name>` and ends with `[timestamp] Finished <name> in 2m 14s.`
+Lines are also written to
 `OSDCloudPreOOBE.log`. Blank lines are skipped, lines longer than 1,000
 characters are truncated, and the output box keeps about the most recent
 5,000 lines. The `PreOOBE-*-App.stdout.log` and `PreOOBE-*-App.stderr.log`

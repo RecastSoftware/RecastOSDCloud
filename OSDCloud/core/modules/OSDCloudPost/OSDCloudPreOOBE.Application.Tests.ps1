@@ -341,9 +341,10 @@ InModuleScope OSDCloudPost {
                     $writer.Write("first line`r`n"); $writer.Flush()
                     $watch = [Diagnostics.Stopwatch]::StartNew()
                     while (-not $live.SeenWhileRunning -and $watch.Elapsed.TotalSeconds -lt 10) {
-                        $live.SeenWhileRunning = $live.Queue.ToArray() -contains 'My App [G:]: first line'
+                        $live.SeenWhileRunning = @($live.Queue.ToArray() -like '*] first line').Count -gt 0
                         Start-Sleep -Milliseconds 50
                     }
+                    $writer.Write("[2026-11-23 07:06:24.427] [Info] Agent started`r`n[2026-11-23 07:06:25.001] [Debug] Probe failed`r`n")
                     $writer.Write("progress 50%`rprogress 100%`n`n$('x' * 1500)`ntrailing partial")
                 }
                 finally { $writer.Dispose() }
@@ -359,12 +360,19 @@ InModuleScope OSDCloudPost {
             $seenWhileRunning | Should -BeTrue -Because ("output: " + ($state.ProcessOutput.ToArray() -join ' | ') +
                 "; messages: " + ($state.Messages.ToArray() -join ' | '))
             $lines = $state.ProcessOutput.ToArray()
-            $lines[0..2] | Should -Be @('My App [G:]: first line', 'My App [G:]: progress 50%', 'My App [G:]: progress 100%')
-            $lines[3] | Should -Be "My App [G:]: $('x' * 1000) ... [truncated]"
-            $lines | Should -Contain 'My App [G:]: trailing partial'
-            $lines | Should -Contain 'My App [G:] [stderr]: warning line'
-            $lines.Count | Should -Be 6
-            $state.Messages.ToArray() | Should -Not -Contain 'My App [G:]: first line'
+            $stamp = '^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] '
+            $text = $lines -replace $stamp
+            $text[0..4] | Should -Be @('first line', 'Agent started', '[Debug] Probe failed', 'progress 50%', 'progress 100%')
+            $lines[1] | Should -Be '[2026-11-23T07:06:24] Agent started'
+            $text[5] | Should -Be "$('x' * 1000) ... [truncated]"
+            $text | Should -Contain 'trailing partial'
+            $text | Should -Contain '[stderr] warning line'
+            $lines | ForEach-Object { $_ | Should -Match $stamp }
+            $lines.Count | Should -Be 8
+            ($state.Messages.ToArray() -replace $stamp) | Should -Not -Contain 'first line'
+            ($state.Messages.ToArray() -replace $stamp) | Should -Contain ('-' * 72)
+            $state.Messages.ToArray() | Where-Object { $_ -like '*] Starting My App `[G:`]' } | Should -Not -BeNullOrEmpty
+            $state.Messages.ToArray() | Where-Object { $_ -like '*] Finished My App `[G:`] in *s.' } | Should -Not -BeNullOrEmpty
         }
 
         It 'installs normally when live output cannot start or stop cleanly: <Case>' -TestCases @(

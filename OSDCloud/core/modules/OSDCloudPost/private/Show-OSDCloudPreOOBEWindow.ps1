@@ -360,7 +360,8 @@ function Add-OSDCloudPreOOBEOutputText {
     if (-not $Ui.DisplayedLengths) { $Ui.DisplayedLengths = [Collections.Generic.Queue[int]]::new() }
     $text = [Text.StringBuilder]::new()
     while ($Ui.OutputCount -lt $Output.Count) {
-        $line = "$($Output[$Ui.OutputCount])`r`n"
+        $line = Format-OSDCloudPreOOBEConsoleLine -Message $Output[$Ui.OutputCount]
+        $line = "$line`r`n"
         [void]$text.Append($line)
         $Ui.DisplayedLengths.Enqueue($line.Length)
         $Ui.OutputCount++

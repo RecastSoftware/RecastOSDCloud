@@ -351,7 +351,10 @@ InModuleScope OSDCloudPost {
             ($box.Text -split "`r`n" | Where-Object { $_ }).Count | Should -Be 11
             $output.Add('line 12')
             Add-OSDCloudPreOOBEOutputText -TextBox $box -Output $output -Ui $ui -MaximumLines 10
-            $box.Text | Should -Be ((3..12 | ForEach-Object { "line $_`r`n" }) -join '')
+            $stamp = '\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] '
+            $box.Text | Should -Match "^${stamp}line 3\r\n${stamp}line 4\r\n"
+            $box.Text | Should -Match "${stamp}line 12\r\n$"
+            ($box.Text -split "`r`n" | Where-Object { $_ }).Count | Should -Be 10
             $ui.OutputCount | Should -Be 12
         }
 
@@ -382,7 +385,7 @@ InModuleScope OSDCloudPost {
             $lines = @('Installing application.', 'Output: C:\Tools; Cache\install.log', 'Waiting for safe completion.')
             Write-OOBEMenuUpdateStatus -State $state -Message $lines
             $state.Status | Should -Be $lines[0]
-            $state.Messages.ToArray() | Should -Be $lines
+            $state.Messages.ToArray() -replace '^\[[^\]]+\] ' | Should -Be $lines
             Should -Invoke Write-OOBEMenuLog -Times 1 -Exactly -ParameterFilter {
                 $Message.Count -eq 3 -and $Message[1] -eq 'Output: C:\Tools; Cache\install.log'
             }

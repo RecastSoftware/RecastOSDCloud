@@ -155,8 +155,29 @@ function Write-OOBEMenuUpdateStatus {
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] $Message"
     $State.Status = $Message[0]
-    foreach ($line in $Message) { $State.Messages.Enqueue($line) }
+    foreach ($line in $Message) { $State.Messages.Enqueue((Format-OSDCloudPreOOBEConsoleLine -Message $line)) }
     Write-OOBEMenuLog -Message $Message
+}
+
+function Format-OSDCloudPreOOBEConsoleLine {
+    <#
+    .SYNOPSIS
+        Prefixes a console line with the log-format timestamp.
+    .DESCRIPTION
+        Returns the message as '[yyyy-MM-ddTHH:mm:ss] message', matching the
+        OSDCloudPreOOBE.log timestamp. Lines that already start with that
+        timestamp, separator lines and empty lines are returned unchanged.
+    .PARAMETER Message
+        Console line.
+    .EXAMPLE
+        Format-OSDCloudPreOOBEConsoleLine -Message 'Searching for updates.'
+    .NOTES
+        Called on the worker and dispatcher threads.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][AllowEmptyString()][string]$Message)
+    if ($Message -match '^(-{10,})?$' -or $Message -match '^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\] ') { return $Message }
+    return "[$([datetime]::Now.ToString('s'))] $Message"
 }
 
 function Get-OSDCloudPreOOBEErrorMessage {
@@ -1107,7 +1128,13 @@ function Start-OSDCloudPreOOBEOutputTail {
             $line = $Text.TrimEnd()
             if ($line.Length -eq 0) { return }
             if ($line.Length -gt $maxLength) { $line = $line.Substring(0, $maxLength) + ' ... [truncated]' }
-            $Queue.Enqueue("$Prefix`: $line")
+            # Installers such as the Application Workspace agent write '[date time.ms] [Info] text'; reuse that time and drop the Info level.
+            $stamp = [datetime]::Now.ToString('s')
+            if ($line -match '^\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})(?:\.\d+)?\]\s*(?:\[Info\]\s*)?(.*)$') {
+                $stamp = "$($Matches[1])T$($Matches[2])"
+                $line = $Matches[3]
+            }
+            $Queue.Enqueue("[$stamp] $Prefix$line")
         }
         try {
             while ($true) {
@@ -1289,6 +1316,10 @@ function Invoke-OSDCloudPreOOBEApplication {
         throw "Application toolkit executable is missing or invalid: $path"
     }
     if ($State.CancelRequested) { $State.Outcome = 'Cancelled'; return }
+    $label = if ($State.ApplicationName) { [string]$State.ApplicationName } else { [IO.Path]::GetFileName($path) }
+    $State.Messages.Enqueue('-' * 72)
+    Write-OOBEMenuUpdateStatus -State $State -Message "Starting $label"
+    $watch = [Diagnostics.Stopwatch]::StartNew()
     $runId = [guid]::NewGuid().ToString('N')
     if ($State.ApplicationCommand -and $State.ApplicationCommand.CopyToLocal) {
         $source = $State.ApplicationCommand.WorkingDirectory
@@ -1331,14 +1362,13 @@ function Invoke-OSDCloudPreOOBEApplication {
             "Errors: $errors"
             'Waiting for safe completion.'
         )
-        $label = if ($State.ApplicationName) { [string]$State.ApplicationName } else { [IO.Path]::GetFileName($path) }
         # Assign directly; emitting the queue from an if expression would unroll an empty queue to $null.
         $outputQueue = $State.ProcessOutput
         if ($null -eq $outputQueue) { $outputQueue = $State.Messages }
         try {
             $tail = Start-OSDCloudPreOOBEOutputTail -Queue $outputQueue -Source @(
-                [pscustomobject]@{ Path = $output; Prefix = $label }
-                [pscustomobject]@{ Path = $errors; Prefix = "$label [stderr]" }
+                [pscustomobject]@{ Path = $output; Prefix = '' }
+                [pscustomobject]@{ Path = $errors; Prefix = '[stderr] ' }
             )
         }
         catch {
@@ -1367,6 +1397,11 @@ function Invoke-OSDCloudPreOOBEApplication {
     }
     finally {
         if ($process) { $process.Dispose() }
+        $elapsed = $watch.Elapsed
+        $duration = if ($elapsed.TotalHours -ge 1) { '{0}h {1}m {2}s' -f [int]$elapsed.TotalHours, $elapsed.Minutes, $elapsed.Seconds }
+        elseif ($elapsed.TotalMinutes -ge 1) { '{0}m {1}s' -f $elapsed.Minutes, $elapsed.Seconds }
+        else { '{0}s' -f [int][Math]::Floor($elapsed.TotalSeconds) }
+        Write-OOBEMenuUpdateStatus -State $State -Message "Finished $label in $duration."
         $State.InstallationActive = $false
     }
 }
@@ -1516,7 +1551,7 @@ function Start-OOBEMenuUpdateWorker {
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Start worker"
     $initialState = [Management.Automation.Runspaces.InitialSessionState]::CreateDefault()
-    foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Get-OSDCloudPreOOBEErrorMessage', 'Invoke-OOBEMenuWindowsUpdate',
+    foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Format-OSDCloudPreOOBEConsoleLine', 'Get-OSDCloudPreOOBEErrorMessage', 'Invoke-OOBEMenuWindowsUpdate',
         'Sync-OSDCloudPreOOBETime', 'Test-OSDCloudPreOOBEConnectivity', 'Set-OSDCloudPreOOBEUtcClock', 'Test-OSDCloudPreOOBEClockShift',
         'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Resolve-OSDCloudPreOOBEApplicationPath',
         'Initialize-OSDCloudPreOOBEWireless', 'Invoke-OSDCloudPreOOBEWirelessRecovery', 'Show-OSDCloudPreOOBEWireless', 'Add-OSDCloudPreOOBESoftwarePointer',
