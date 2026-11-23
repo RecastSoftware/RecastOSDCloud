@@ -6,10 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- OSDCloud BootMenu honors an optional `OSDCloud\core\bootmenu-profiles\order.json` (`schemaVersion` 1, `profiles` list of `info.id` GUIDs) written by the OSDCloud Boot builder. Ordered profiles are listed first in that order; unlisted profiles follow sorted by name, and a malformed file is ignored with a warning.
 - Sort OSDCloud BootMenu profiles by name (`info.name`) instead of profile path in the selection window, the `-CLI` numbered prompt and `Test-OSDCloudBootMenu`. Path is the tiebreaker for profiles with the same name.
 - Merge the standalone OSDCloudPreOOBE and OSDCloudSetupComplete modules into a single `OSDCloudPost` module (`OSDCloud\core\modules\OSDCloudPost`) that exports `Invoke-OSDCloudPreOOBE` (alias `OSDCloudPreOOBE`) and `Invoke-OSDCloudSetupComplete`. One `step-update-osdcloudpost` step replaces `step-update-preoobe` and `step-update-setupcomplete`, stages the module to `C:\Windows\Setup\Modules\OSDCloudPost`, and removes the retired module folders. Logs, the driver-pack handoff file and the batch block markers are unchanged.
 - Add an **OSDCloud Post** section to the `recast` deployment window with a **WinPE Post Action** dropdown and **Windows Update - OS** and **Windows Update - Drivers** toggles. Cleared toggles start those PreOOBE tasks unchecked through `C:\Windows\Setup\Scripts\OSDCloudPost.json`. The section is collapsible like **Device and Identity**, its header summarizes the post action and selected Windows Update tasks, defaults the post action to `Restart` unless `-PostAction` is passed, and expands with a warning when no internet access is detected at launch.
 - Make **Deployment Settings** in the `recast` deployment window collapsible. It still opens expanded, and when collapsed its header summarizes the task sequence, operating system, language, edition and activation.
+- The PreOOBE window title is now `Recast Software - OSDCloud Post <version> PreOOBE` (was `OSDCloud PreOOBE <version>`).
 - PreOOBE Windows Update tasks now end **Skipped** instead of **Failed** (and never pause) when connectivity or Wi-Fi recovery errors. Wi-Fi recovery is not offered again after it fails in the same session.
 - Rename the PreOOBE tasks **Update Windows 11** and **Update Drivers** to **Windows Update - OS** and **Windows Update - Drivers**.
 - Rename the `recast-winui-dark` workflow to `recast`. Use `Deploy-OSDCloud -WorkflowName recast`; deployment settings and task behavior are unchanged.

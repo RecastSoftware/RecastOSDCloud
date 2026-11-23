@@ -268,7 +268,9 @@ function Invoke-OOBEMenuWindowsUpdate {
                     "Identity: $($identity.UpdateID)"
                     "Revision: $($identity.RevisionNumber)."
                 )
-                if ($update.Title -match 'Preview' -or $behavior.CanRequestUserInput) {
+                # The Malicious Software Removal Tool can stall during setup and Windows Update delivers it later.
+                $isRemovalTool = $update.Title -match 'Malicious Software Removal Tool' -or @($update.KBArticleIDs) -contains '890830'
+                if ($update.Title -match 'Preview' -or $behavior.CanRequestUserInput -or $isRemovalTool) {
                     $skipped++
                     Write-OOBEMenuUpdateStatus -State $State -Message "Skipped: $($update.Title)"
                     continue
@@ -1517,7 +1519,7 @@ function Start-OOBEMenuUpdateWorker {
     foreach ($name in 'Write-OOBEMenuLog', 'Get-OOBEMenuContext', 'Write-OOBEMenuUpdateStatus', 'Get-OSDCloudPreOOBEErrorMessage', 'Invoke-OOBEMenuWindowsUpdate',
         'Sync-OSDCloudPreOOBETime', 'Test-OSDCloudPreOOBEConnectivity', 'Set-OSDCloudPreOOBEUtcClock', 'Test-OSDCloudPreOOBEClockShift',
         'Write-OSDCloudPreOOBETlsDiagnostic', 'Invoke-OSDCloudPreOOBEDriverPack', 'Resolve-OSDCloudPreOOBEApplicationPath',
-        'Initialize-OSDCloudPreOOBEWireless', 'Invoke-OSDCloudPreOOBEWirelessRecovery', 'Show-OSDCloudPreOOBEWireless',
+        'Initialize-OSDCloudPreOOBEWireless', 'Invoke-OSDCloudPreOOBEWirelessRecovery', 'Show-OSDCloudPreOOBEWireless', 'Add-OSDCloudPreOOBESoftwarePointer',
         'Invoke-OSDCloudPreOOBEApplication', 'Invoke-OSDCloudPreOOBETask', 'Start-OSDCloudPreOOBEOutputTail', 'Stop-OSDCloudPreOOBEOutputTail') {
         $definition = (Get-Command -Name $name -CommandType Function -ErrorAction Stop).Definition
         $initialState.Commands.Add([Management.Automation.Runspaces.SessionStateFunctionEntry]::new($name, $definition))
@@ -1619,6 +1621,11 @@ namespace Recast.OOBE {
         private struct MonitorInfo { public uint size; public Rect monitor, work; public uint flags; }
         [StructLayout(LayoutKind.Sequential)]
         private struct MinMaxInfo { public Point reserved, maxSize, maxPosition, minTrackSize, maxTrackSize; }
+        [StructLayout(LayoutKind.Sequential)]
+        private struct CursorInfo { public uint size, flags; public IntPtr cursor; public Point position; }
+        [DllImport("user32.dll", SetLastError = true)] private static extern bool GetCursorInfo(ref CursorInfo information);
+        [DllImport("user32.dll")] private static extern int ShowCursor(bool show);
+        [DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
         [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr window, uint flags);
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo information);
@@ -1682,6 +1689,24 @@ namespace Recast.OOBE {
             sizes.maxSize.x = monitor.work.right - monitor.work.left;
             sizes.maxSize.y = monitor.work.bottom - monitor.work.top;
             Marshal.StructureToPtr(sizes, parameter, false);
+        }
+        // 0 = hidden, 1 = CURSOR_SHOWING, 2 = CURSOR_SUPPRESSED (touch or pen input).
+        public static uint CursorFlags {
+            get {
+                CursorInfo information = new CursorInfo();
+                information.size = (uint)Marshal.SizeOf(typeof(CursorInfo));
+                if (!GetCursorInfo(ref information))
+                    throw new Win32Exception(Marshal.GetLastWin32Error(), "Get cursor information");
+                return information.flags;
+            }
+        }
+        public static bool MousePresent { get { return GetSystemMetrics(19) != 0; } }
+        // Raises this thread's display counter to zero without leaving it above its original value.
+        public static int ShowPointer() {
+            int count = ShowCursor(true);
+            if (count > 0) return ShowCursor(false);
+            for (int attempt = 0; count < 0 && attempt < 64; attempt++) count = ShowCursor(true);
+            return count;
         }
         public static bool IsInputDesktop() {
             if (Process.GetCurrentProcess().SessionId != WTSGetActiveConsoleSessionId() ||
@@ -1812,6 +1837,178 @@ function Get-OOBEMenuContext {
         }
     }
     finally { $identity.Dispose(); $process.Dispose() }
+}
+
+function Get-OSDCloudPreOOBEPointerState {
+    <#
+    .SYNOPSIS
+        Describes the current mouse pointer state for diagnostics.
+    .DESCRIPTION
+        Reports cursor visibility flags, whether a mouse is detected and the
+        EnableCursorSuppression policy value. Errors are returned as text.
+    .PARAMETER PolicyPath
+        Registry key that holds EnableCursorSuppression.
+    .EXAMPLE
+        Get-OSDCloudPreOOBEPointerState
+    .OUTPUTS
+        System.String
+    .NOTES
+        Requires the embedded native helpers to be loaded first.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param ([string]$PolicyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System')
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Inspect pointer"
+    $flags = try {
+        switch ([Recast.OOBE.Native]::CursorFlags) { 0 { 'hidden' } 1 { 'showing' } 2 { 'suppressed' } default { "flags $_" } }
+    } catch { "unknown ($($_.Exception.Message))" }
+    $mouse = try { [Recast.OOBE.Native]::MousePresent } catch { 'unknown' }
+    $policy = try {
+        $value = (Get-ItemProperty -LiteralPath $PolicyPath -Name EnableCursorSuppression -ErrorAction Stop).EnableCursorSuppression
+        "$value"
+    } catch { 'absent' }
+    return "cursor $flags, mouse present $mouse, EnableCursorSuppression $policy"
+}
+
+function Enable-OSDCloudPreOOBEPointer {
+    <#
+    .SYNOPSIS
+        Tries to make the mouse pointer visible during Windows OOBE.
+    .DESCRIPTION
+        Raises the calling thread's cursor display counter and, outside preview,
+        sets the EnableCursorSuppression policy to 0 while PreOOBE runs. The
+        original policy value is saved to a marker file before it is changed so
+        Restore-OSDCloudPreOOBEPointer can restore it, including after a crash.
+        Failures are logged and never stop PreOOBE.
+    .PARAMETER PolicyPath
+        Registry key that holds EnableCursorSuppression.
+    .PARAMETER MarkerPath
+        File that records the original policy value.
+    .EXAMPLE
+        Enable-OSDCloudPreOOBEPointer
+    .NOTES
+        Call on the WPF UI thread; ShowCursor applies only to the calling thread.
+        Windows may read the policy only at sign-in, so the override can have no effect.
+    #>
+    [CmdletBinding()]
+    param (
+        [string]$PolicyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System',
+        [string]$MarkerPath = (Join-Path $env:WINDIR 'Temp\osdcloud-logs\OSDCloudPreOOBE.CursorSuppression.json')
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Enable pointer"
+    Write-OOBEMenuLog -Message "Pointer before: $(Get-OSDCloudPreOOBEPointerState -PolicyPath $PolicyPath)."
+    try { Write-OOBEMenuLog -Message "Pointer display counter: $([Recast.OOBE.Native]::ShowPointer())." }
+    catch { Write-OOBEMenuLog -Message "Pointer display counter not changed: $($_.Exception.Message)" }
+    if ($Preview) { return }
+    try {
+        # An existing marker means an earlier run did not restore; keep its original value.
+        if (-not (Test-Path -LiteralPath $MarkerPath -PathType Leaf)) {
+            $original = Get-ItemProperty -LiteralPath $PolicyPath -Name EnableCursorSuppression -ErrorAction SilentlyContinue
+            $marker = [ordered]@{ Exists = $null -ne $original; Value = if ($original) { [int]$original.EnableCursorSuppression } else { $null } }
+            [void][IO.Directory]::CreateDirectory((Split-Path -Path $MarkerPath -Parent))
+            [IO.File]::WriteAllText($MarkerPath, ($marker | ConvertTo-Json -Compress), [Text.Encoding]::UTF8)
+        }
+        if (-not (Test-Path -LiteralPath $PolicyPath)) { [void](New-Item -Path $PolicyPath -Force -ErrorAction Stop) }
+        [void](New-ItemProperty -LiteralPath $PolicyPath -Name EnableCursorSuppression -Value 0 -PropertyType DWord -Force -ErrorAction Stop)
+        Write-OOBEMenuLog -Message 'Cursor suppression disabled while PreOOBE runs.'
+    }
+    catch { Write-OOBEMenuLog -Message "Cursor suppression not changed: $($_.Exception.Message)" }
+}
+
+function Restore-OSDCloudPreOOBEPointer {
+    <#
+    .SYNOPSIS
+        Restores the EnableCursorSuppression policy changed by PreOOBE.
+    .DESCRIPTION
+        Reads the marker written by Enable-OSDCloudPreOOBEPointer, restores the
+        original value or removes the value when it was absent, then deletes the
+        marker. Does nothing without a marker. Failures are logged only.
+    .PARAMETER PolicyPath
+        Registry key that holds EnableCursorSuppression.
+    .PARAMETER MarkerPath
+        File that records the original policy value.
+    .EXAMPLE
+        Restore-OSDCloudPreOOBEPointer
+    .NOTES
+        The marker is kept when restoration fails so the next start can retry.
+    #>
+    [CmdletBinding()]
+    param (
+        [string]$PolicyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System',
+        [string]$MarkerPath = (Join-Path $env:WINDIR 'Temp\osdcloud-logs\OSDCloudPreOOBE.CursorSuppression.json')
+    )
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Restore pointer policy"
+    if ($Preview -or -not (Test-Path -LiteralPath $MarkerPath -PathType Leaf)) { return }
+    try {
+        $marker = [IO.File]::ReadAllText($MarkerPath) | ConvertFrom-Json -ErrorAction Stop
+        if ($marker.Exists) {
+            [void](New-ItemProperty -LiteralPath $PolicyPath -Name EnableCursorSuppression -Value ([int]$marker.Value) -PropertyType DWord -Force -ErrorAction Stop)
+        }
+        elseif (Get-ItemProperty -LiteralPath $PolicyPath -Name EnableCursorSuppression -ErrorAction SilentlyContinue) {
+            Remove-ItemProperty -LiteralPath $PolicyPath -Name EnableCursorSuppression -ErrorAction Stop
+        }
+        Remove-Item -LiteralPath $MarkerPath -Force -ErrorAction Stop
+        Write-OOBEMenuLog -Message "Cursor suppression restored: $(if ($marker.Exists) { $marker.Value } else { 'absent' })."
+    }
+    catch { Write-OOBEMenuLog -Message "Cursor suppression not restored: $($_.Exception.Message)" }
+}
+
+function Add-OSDCloudPreOOBESoftwarePointer {
+    <#
+    .SYNOPSIS
+        Draws a software mouse pointer in a window when Windows hides the system pointer.
+    .DESCRIPTION
+        OOBE can hide or suppress the system pointer while mouse input still
+        arrives. This wraps the window content in a grid with a click-through
+        overlay and shows a white arrow that follows the mouse whenever Windows
+        reports the system pointer as hidden or suppressed. It is hidden when the
+        system pointer is showing or the mouse leaves the window.
+    .PARAMETER Window
+        WPF window whose content is wrapped. Call before the window is shown.
+    .EXAMPLE
+        Add-OSDCloudPreOOBESoftwarePointer -Window $window
+    .NOTES
+        Registers the PointerLayer and SoftwarePointer names on the window.
+        Requires the embedded native helpers to be loaded first.
+    #>
+    [CmdletBinding()]
+    param ([Parameter(Mandatory)][Windows.Window]$Window)
+    $Error.Clear()
+    Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Add software pointer"
+    $content = $Window.Content
+    $Window.Content = $null
+    $root = [Windows.Controls.Grid]::new()
+    if ($content) { [void]$root.Children.Add($content) }
+    $layer = [Windows.Controls.Canvas]::new()
+    $layer.IsHitTestVisible = $false
+    $layer.Visibility = 'Collapsed'
+    $pointer = [Windows.Shapes.Path]::new()
+    $pointer.Data = [Windows.Media.Geometry]::Parse('M0,0 L0,17 L4.5,13 L7.5,20 L10,19 L7,12 L12.5,12 Z')
+    $pointer.Fill = [Windows.Media.Brushes]::White
+    $pointer.Stroke = [Windows.Media.Brushes]::Black
+    $pointer.StrokeThickness = 1.2
+    $pointer.StrokeLineJoin = 'Round'
+    $pointer.IsHitTestVisible = $false
+    [void]$layer.Children.Add($pointer)
+    [void]$root.Children.Add($layer)
+    $Window.Content = $root
+    $Window.RegisterName('PointerLayer', $layer)
+    $Window.RegisterName('SoftwarePointer', $pointer)
+    $Window.Add_PreviewMouseMove({
+        try {
+            $systemPointerShowing = try { [Recast.OOBE.Native]::CursorFlags -eq 1 } catch { $false }
+            if ($systemPointerShowing) { $layer.Visibility = 'Collapsed'; return }
+            $position = $_.GetPosition($layer)
+            [Windows.Controls.Canvas]::SetLeft($pointer, $position.X)
+            [Windows.Controls.Canvas]::SetTop($pointer, $position.Y)
+            $layer.Visibility = 'Visible'
+        }
+        catch { }
+    }.GetNewClosure())
+    $Window.Add_MouseLeave({ $layer.Visibility = 'Collapsed' }.GetNewClosure())
 }
 
 function Get-OSDCloudPreOOBEChildArguments {
@@ -1976,7 +2173,8 @@ function Invoke-OOBEMenu {
             [Recast.OOBE.Native]::AttachInputDesktop()
         } elseif (-not $context.IsInputDesktop) {
             if ($Preview) { throw 'Preview must run on the local console input desktop.' }
-            return Invoke-OOBEMenuChild -ModulePath $ModulePath
+            try { return Invoke-OOBEMenuChild -ModulePath $ModulePath }
+            finally { Restore-OSDCloudPreOOBEPointer }
         }
         $exitCode = Show-OOBEMenuWindow -ReadyEventName $ReadyEvent
         Write-OOBEMenuLog -Message "Menu closed with exit code $exitCode."

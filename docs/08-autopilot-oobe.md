@@ -272,8 +272,8 @@ produce a nonzero exit code for the existing batch failure logging.
 
 ### Automatic sequence
 
-The title is **Recast Software - OSDCloud PreOOBE** followed by the OSDCloud module
-version (stamped into the copied module manifest). On start it logs the running OS date, time and
+The title is **Recast Software - OSDCloud Post <version> PreOOBE**, where the version is the
+OSDCloud module version stamped into the copied module manifest. On start it logs the running OS date, time and
 time zone, then waits: nothing runs until the technician selects **Start**, so the
 sequence can be presented in demos. Each task then shows a **Starting in 10 seconds**
 countdown before it runs, giving clock changes time to apply and the technician time
@@ -285,10 +285,26 @@ Use **Tab** / **Shift+Tab** to cycle through available actions, caption buttons,
 task checkboxes (including applications), the task summary and output. **Space**
 toggles a focused checkbox or activates a button; **Enter** activates Start.
 Tools and Shell menus focus their first item on opening and support Tab and arrow
-keys; Escape dismisses the menu. Focus outlines identify the current control.
+keys; Escape dismisses the menu. Escape does not close the PreOOBE window.
+Focus outlines identify the current control.
 When a focused action becomes unavailable, focus moves to an available action.
 PreOOBE explicitly uses the standard-size arrow throughout its window and menus;
-it does not load an enlarged pointer or change system pointer settings.
+it does not load an enlarged pointer or change pointer size settings.
+Windows can hide the pointer during OOBE. While the window is open, PreOOBE
+shows the pointer for its own thread. Outside preview it also sets
+`HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\EnableCursorSuppression`
+to `0`. The original value is saved in
+`%SystemRoot%\Temp\osdcloud-logs\OSDCloudPreOOBE.CursorSuppression.json`, and
+PreOOBE restores it, or removes the value if it was absent, when it exits. If an
+earlier run did not restore it, the next run restores it. Windows might read this
+policy only at sign-in, so the override might not show the pointer. As a fallback,
+whenever Windows reports the system pointer as hidden or suppressed, PreOOBE draws
+a white arrow inside its own window that follows the mouse. The same arrow is
+drawn in the Connect to Wi-Fi dialog. It is visible only over those windows and
+disappears when the system pointer is showing.
+`OSDCloudPreOOBE.log` records `Pointer before` and `Pointer after render` lines
+with the cursor state (`showing`, `hidden`, or `suppressed`), whether a mouse is
+detected, and the policy value. Use these lines to diagnose a missing pointer.
 Verify pointer visibility and keyboard navigation on the actual OOBE
 desktop; a preview cannot establish setup-desktop pointer rendering.
 
@@ -516,7 +532,8 @@ Local tests and preview do not establish that the real installer succeeds.
 ### Task completion and failures
 
 The update actions honor configured Windows Update/WSUS policies, exclude hidden/
-Preview updates and updates requiring interactive input, and accept EULAs.
+Preview updates, updates requiring interactive input and the Windows Malicious
+Software Removal Tool (KB890830, which can stall during setup), and accept EULAs.
 No third-party module is imported and update-service settings are not changed.
 There are no per-update Skip buttons. **Skip Step** cooperatively cancels the
 active update after its current WUA operation. The next independent task still runs.
@@ -528,8 +545,9 @@ stack traces are written only to `OSDCloudPreOOBE.log`. The engine continues ind
 After all tasks reach terminal states, a **Continue to OOBE** button appears; selecting
 it closes the window with **exit 0**, allowing Windows Setup to continue. There is no
 automatic continuation, so PreOOBE requires a technician. No task automatically reboots.
-Close/Escape/Alt+F4 requests safe completion of the active OEM operation or cancellation
-of the active update, skips remaining tasks, and then continues setup.
+Close/Alt+F4 requests safe completion of the active OEM operation or cancellation
+of the active update, skips remaining tasks, and then continues setup. Escape does
+not close the window.
 Startup failure returns nonzero; the batch reports/logs it and continues.
 
 ### Connectivity and wireless recovery

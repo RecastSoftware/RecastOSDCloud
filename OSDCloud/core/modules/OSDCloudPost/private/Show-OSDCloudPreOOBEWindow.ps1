@@ -580,7 +580,7 @@ function Show-OOBEMenuWindow {
    <Button x:Name="PaneToggleButton" KeyboardNavigation.TabIndex="10" Width="56" Padding="0" Style="{StaticResource CaptionButtonStyle}" ToolTip="Collapse steps" AutomationProperties.Name="Collapse steps">
     <TextBlock Text="&#xE700;" Style="{StaticResource IconStyle}"/>
    </Button>
-   <TextBlock x:Name="TitleText" Grid.Column="1" Text="Recast Software - OSDCloud PreOOBE" FontWeight="SemiBold" Margin="4,0,4,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+   <TextBlock x:Name="TitleText" Grid.Column="1" Text="Recast Software - OSDCloud Post PreOOBE" FontWeight="SemiBold" Margin="4,0,4,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
    <StackPanel Grid.Column="2" Orientation="Horizontal">
     <Button x:Name="ToolsMenuButton" KeyboardNavigation.TabIndex="11" Style="{StaticResource CaptionButtonStyle}" ToolTip="Deployment tools and Wi-Fi" AutomationProperties.Name="Tools">
      <StackPanel Orientation="Horizontal"><TextBlock Text="&#xE90F;" Style="{StaticResource IconStyle}" Margin="0,0,8,0"/><TextBlock Text="Tools" VerticalAlignment="Center"/></StackPanel>
@@ -625,8 +625,10 @@ function Show-OOBEMenuWindow {
     $reader = [Xml.XmlNodeReader]::new($xaml)
     try { $window = [Windows.Markup.XamlReader]::Load($reader) }
     finally { $reader.Close() }
-    $windowTitle = 'Recast Software - OSDCloud PreOOBE'
-    if ($OSDCloudPreOOBEVersion) { $windowTitle += " $OSDCloudPreOOBEVersion" }
+    $windowTitle = if ($OSDCloudPreOOBEVersion) {
+        "Recast Software - OSDCloud Post $OSDCloudPreOOBEVersion PreOOBE"
+    }
+    else { 'Recast Software - OSDCloud Post PreOOBE' }
     $window.Title = $windowTitle
     $window.FindName('TitleText').Text = $windowTitle
     if ($Preview) { $window.Title += ' (Preview)' }
@@ -866,9 +868,6 @@ function Show-OOBEMenuWindow {
         [Windows.Automation.AutomationProperties]::SetName($window.FindName('MaximizeButton'),$name)
     })
     $window.FindName('CloseButton').Add_Click({ $window.Close() })
-    $window.Add_PreviewKeyDown({
-        if ($_.Key -eq [Windows.Input.Key]::Escape) { $_.Handled = $true; $window.Close() }
-    })
     $window.Add_Closing({
         if ($ui.WirelessState) { $ui.WirelessState.CancelRequested = $true }
         if (-not $engine.Done) {
@@ -887,6 +886,7 @@ function Show-OOBEMenuWindow {
             $activated = $window.Activate()
             [void]$window.FindName('StepButton').Focus()
             Write-OOBEMenuLog -Message "PreOOBE rendered: session $([Diagnostics.Process]::GetCurrentProcess().SessionId), desktop $([Recast.OOBE.Native]::Desktop), activated $activated, topmost $($window.Topmost), bounds $($window.Left),$($window.Top) $($window.ActualWidth)x$($window.ActualHeight)."
+            Write-OOBEMenuLog -Message "Pointer after render: $(Get-OSDCloudPreOOBEPointerState)."
             if ($ReadyEventName) {
                 $signal = [Threading.EventWaitHandle]::OpenExisting($ReadyEventName)
                 try { [void]$signal.Set() } finally { $signal.Dispose() }
@@ -901,9 +901,12 @@ function Show-OOBEMenuWindow {
             $window.Close()
         }
     })
+    Enable-OSDCloudPreOOBEPointer
+    Add-OSDCloudPreOOBESoftwarePointer -Window $window
     try { [void]$window.ShowDialog() }
     finally {
         $timer.Stop()
+        Restore-OSDCloudPreOOBEPointer
         if ($engine.Worker) {
             $engine.Shared.CancelRequested = $true
             try { [void]$engine.Worker.Pipeline.EndInvoke($engine.Worker.Handle) }

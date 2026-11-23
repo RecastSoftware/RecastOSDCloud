@@ -315,6 +315,22 @@ Describe 'OSDCloud BootMenu runtime' {
         $script:shownProfiles.Index | Should -Be @(1, 2, 3)
     }
 
+    It 'lists ordered profiles first, then unlisted profiles by name' {
+        $ordered = @(
+            [pscustomobject]@{ Index = 0; Profile = 'Alpha'; Path = 'X:\a\osdcloudbootmenu.json'; AssetPath = $null; RootIndex = 0; OrderIndex = [int]::MaxValue }
+            [pscustomobject]@{ Index = 0; Profile = 'Zulu'; Path = 'X:\z\osdcloudbootmenu.json'; AssetPath = $null; RootIndex = 0; OrderIndex = 0 }
+            [pscustomobject]@{ Index = 0; Profile = 'Mike'; Path = 'X:\m\osdcloudbootmenu.json'; AssetPath = $null; RootIndex = 0; OrderIndex = 1 }
+            [pscustomobject]@{ Index = 0; Profile = 'Bravo'; Path = 'C:\b\osdcloudbootmenu.json'; AssetPath = $null; RootIndex = 1; OrderIndex = 0 }
+        )
+        Mock Get-OSDCloudBootMenuProfileCandidates { $ordered }
+        Mock Show-OSDCloudBootMenuProfileWindow {
+            $script:shownProfiles = @($Profiles)
+            $script:candidate
+        }
+        Invoke-OSDCloudBootMenu
+        $script:shownProfiles.Profile | Should -Be @('Zulu', 'Mike', 'Alpha', 'Bravo')
+    }
+
     It 'requires a profile choice instead of exiting on a dismissed selector' {
         Mock Get-OSDCloudBootMenuProfileCandidates { $script:candidate; $script:candidate.PSObject.Copy() }
         $script:selections = 0
@@ -523,5 +539,32 @@ Describe 'OSDCloud BootMenu discovery' {
         $items[0].Profile | Should -Be 'Display Name'
         $items[0].Id | Should -Be '11111111-1111-1111-1111-111111111111'
         $items[0].Path | Should -Match 'osdcloudbootmenu.json$'
+    }
+
+    It 'applies order.json and puts unlisted or malformed-order profiles after' {
+        $base = Join-Path $TestDrive 'ordered'
+        $root = Join-Path $base 'OSDCloud\core\bootmenu-profiles'
+        $ids = @{ a = 'aaaaaaaa-0000-0000-0000-000000000001'; b = 'bbbbbbbb-0000-0000-0000-000000000002'; c = 'cccccccc-0000-0000-0000-000000000003' }
+        foreach ($name in $ids.Keys) {
+            $null = New-Item -ItemType Directory -Path (Join-Path $root $name) -Force
+            '{{"schemaVersion":1,"info":{{"name":"{0}","id":"{1}"}}}}' -f $name, $ids[$name] |
+                Set-Content -LiteralPath (Join-Path $root "$name\osdcloudbootmenu.json")
+        }
+        $createdDrive = -not (Get-PSDrive -Name X -ErrorAction SilentlyContinue)
+        if ($createdDrive) { $null = New-PSDrive -Name X -PSProvider FileSystem -Root $base }
+        Mock Test-Path { $LiteralPath -eq 'X:\OSDCloud\core\bootmenu-profiles' } -ParameterFilter { $LiteralPath -match '^[A-Z]:\\OSDCloud\\core\\bootmenu-profiles$' }
+        Mock Write-Warning { }
+        try {
+            ('{{"schemaVersion":1,"profiles":["{0}","{1}"]}}' -f $ids.c.ToUpper(), $ids.a) |
+                Set-Content -LiteralPath (Join-Path $root 'order.json')
+            $ordered = @(Get-OSDCloudBootMenuProfileCandidates | Sort-Object RootIndex, OrderIndex, Profile, Path)
+            '{ not json' | Set-Content -LiteralPath (Join-Path $root 'order.json')
+            $fallback = @(Get-OSDCloudBootMenuProfileCandidates | Sort-Object RootIndex, OrderIndex, Profile, Path)
+        }
+        finally { if ($createdDrive) { Remove-PSDrive -Name X } }
+        $ordered.Profile | Should -Be @('c', 'a', 'b')
+        $ordered[2].OrderIndex | Should -Be ([int]::MaxValue)
+        $fallback.Profile | Should -Be @('a', 'b', 'c')
+        Should -Invoke Write-Warning -Times 1 -Exactly -ParameterFilter { $Message -like '*Ignoring profile order*' }
     }
 }

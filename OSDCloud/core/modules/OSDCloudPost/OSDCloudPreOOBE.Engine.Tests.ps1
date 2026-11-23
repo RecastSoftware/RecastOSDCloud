@@ -588,6 +588,8 @@ InModuleScope OSDCloudPost {
             Mock Write-OOBEMenuLog { $script:renderLog.Add($Message) }
             Mock Set-Content {}
             Mock Write-Error {}
+            Mock Enable-OSDCloudPreOOBEPointer {}
+            Mock Restore-OSDCloudPreOOBEPointer {}
             Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase
             $result = @{ Error = $null }
             $uiProbeTimer = [Windows.Threading.DispatcherTimer]::new()
@@ -764,6 +766,66 @@ InModuleScope OSDCloudPost {
             }
         }
 
+        It 'provides a click-through software pointer layer that is hidden until the mouse moves' {
+            $uiProbeTimer.Add_Tick({
+                $uiProbeTimer.Stop()
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $layer = $testWindow.FindName('PointerLayer')
+                    $result.Hidden = $layer.Visibility
+                    $result.HitTest = $layer.IsHitTestVisible
+                    $result.Pointer = $null -ne $testWindow.FindName('SoftwarePointer')
+                }
+                catch { $result.Error = $_ }
+                finally { $testWindow.Close() }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            "$($result.Hidden)" | Should -Be 'Collapsed'
+            $result.HitTest | Should -BeFalse
+            $result.Pointer | Should -BeTrue
+        }
+
+        It 'ignores Escape instead of closing the window and restores the pointer policy on exit' {
+            $result.Ticks = 0
+            $uiProbeTimer.Add_Tick({
+                $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object { $_.RootVisual -is [Windows.Window] } |
+                    Select-Object -ExpandProperty RootVisual)[0]
+                try {
+                    $result.Ticks++
+                    if ($result.Ticks -eq 1) {
+                        $target = [Windows.Input.Keyboard]::FocusedElement
+                        foreach ($routedEvent in [Windows.Input.Keyboard]::PreviewKeyDownEvent, [Windows.Input.Keyboard]::KeyDownEvent) {
+                            $key = [Windows.Input.KeyEventArgs]::new([Windows.Input.Keyboard]::PrimaryDevice,
+                                [Windows.PresentationSource]::FromVisual($testWindow), 0, [Windows.Input.Key]::Escape)
+                            $key.RoutedEvent = $routedEvent
+                            $target.RaiseEvent($key)
+                        }
+                        return
+                    }
+                    if ($result.Ticks -lt 6) { return }
+                    $uiProbeTimer.Stop()
+                    $result.Visible = $testWindow.IsVisible
+                    $result.Status = $testWindow.FindName('StatusText').Text
+                    $testWindow.Close()
+                }
+                catch {
+                    $result.Error = $_
+                    $uiProbeTimer.Stop()
+                    $testWindow.Close()
+                }
+            })
+            $uiProbeTimer.Start()
+            Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
+            $result.Error | Should -BeNullOrEmpty
+            $result.Visible | Should -BeTrue
+            $result.Status | Should -Be 'Ready. Select Start to begin OSDCloud PreOOBE.'
+            Should -Invoke Enable-OSDCloudPreOOBEPointer -Times 1 -Exactly
+            Should -Invoke Restore-OSDCloudPreOOBEPointer -Times 1 -Exactly
+        }
+
         It 'renders discovered application checkboxes after Windows Update - Drivers and allows unchecking' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {
@@ -929,7 +991,7 @@ InModuleScope OSDCloudPost {
             $uiProbeTimer.Add_Tick({
                 $result.Ticks++
                 $testWindow = @([Windows.PresentationSource]::CurrentSources | Where-Object {
-                    $_.RootVisual -is [Windows.Window] -and $_.RootVisual.Title -like 'Recast Software - OSDCloud PreOOBE*'
+                    $_.RootVisual -is [Windows.Window] -and $_.RootVisual.Title -like 'Recast Software - OSDCloud Post*PreOOBE*'
                 } | Select-Object -ExpandProperty RootVisual)[0]
                 try {
                     if ($result.Ticks -eq 1) {
@@ -1024,8 +1086,8 @@ InModuleScope OSDCloudPost {
             Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
             $result.Error | Should -BeNullOrEmpty
             $version = (Import-PowerShellDataFile $OSDCloudPreOOBEModulePath).ModuleVersion
-            $result.Title | Should -Be "Recast Software - OSDCloud PreOOBE $version (Preview)"
-            $result.TitleText | Should -Be "Recast Software - OSDCloud PreOOBE $version"
+            $result.Title | Should -Be "Recast Software - OSDCloud Post $version PreOOBE (Preview)"
+            $result.TitleText | Should -Be "Recast Software - OSDCloud Post $version PreOOBE"
             $result.User | Should -BeNullOrEmpty
             $result.StepButton | Should -Be 'Start'
             $result.ContinueOobe | Should -Be ([Windows.Visibility]::Collapsed)
@@ -1095,6 +1157,44 @@ InModuleScope OSDCloudPost {
             $setting = Get-OSDCloudPostSetting
             $setting.WindowsUpdateOS | Should -BeTrue
             Should -Invoke Test-Path -Times 0 -Exactly
+        }
+    }
+
+    Describe 'PreOOBE pointer policy' {
+        BeforeEach {
+            Mock Write-OOBEMenuLog {}
+            $policyPath = 'TestRegistry:\Policies\System'
+            $markerPath = Join-Path $TestDrive 'logs\cursor.json'
+            Remove-Item -LiteralPath $markerPath -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $policyPath -Recurse -Force -ErrorAction SilentlyContinue
+            $Preview = $false
+        }
+        AfterEach { $Preview = $true }
+
+        It 'disables suppression and then removes a value that was absent' {
+            Enable-OSDCloudPreOOBEPointer -PolicyPath $policyPath -MarkerPath $markerPath
+            (Get-ItemProperty -LiteralPath $policyPath).EnableCursorSuppression | Should -Be 0
+            Restore-OSDCloudPreOOBEPointer -PolicyPath $policyPath -MarkerPath $markerPath
+            Get-ItemProperty -LiteralPath $policyPath -Name EnableCursorSuppression -ErrorAction SilentlyContinue | Should -BeNullOrEmpty
+            Test-Path -LiteralPath $markerPath | Should -BeFalse
+        }
+
+        It 'keeps the original value across an unrestored run and restores it later' {
+            [void](New-Item -Path $policyPath -Force)
+            [void](New-ItemProperty -LiteralPath $policyPath -Name EnableCursorSuppression -Value 1 -PropertyType DWord)
+            Enable-OSDCloudPreOOBEPointer -PolicyPath $policyPath -MarkerPath $markerPath
+            Enable-OSDCloudPreOOBEPointer -PolicyPath $policyPath -MarkerPath $markerPath
+            (Get-ItemProperty -LiteralPath $policyPath).EnableCursorSuppression | Should -Be 0
+            Restore-OSDCloudPreOOBEPointer -PolicyPath $policyPath -MarkerPath $markerPath
+            (Get-ItemProperty -LiteralPath $policyPath).EnableCursorSuppression | Should -Be 1
+            Test-Path -LiteralPath $markerPath | Should -BeFalse
+        }
+
+        It 'writes no policy or marker in preview' {
+            $Preview = $true
+            Enable-OSDCloudPreOOBEPointer -PolicyPath $policyPath -MarkerPath $markerPath
+            Test-Path -LiteralPath $policyPath | Should -BeFalse
+            Test-Path -LiteralPath $markerPath | Should -BeFalse
         }
     }
 }

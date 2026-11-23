@@ -101,10 +101,14 @@ InModuleScope OSDCloudPost {
             $state.Status | Should -BeLike '*Reboot required; no reboot initiated*'
         }
 
-        It 'does not download or install excluded Preview or interactive updates' {
-            foreach ($reason in 'Preview', 'Interactive') {
+        It 'does not download or install excluded Preview, interactive or Malicious Software Removal Tool updates' {
+            foreach ($reason in 'Preview', 'Interactive', 'RemovalTool') {
                 $script:wu.Calls.Clear()
-                $script:wu.Update.Title = if ($reason -eq 'Preview') { 'Windows 11 Preview update' } else { 'Interactive update' }
+                $script:wu.Update.Title = switch ($reason) {
+                    'Preview' { 'Windows 11 Preview update' }
+                    'Interactive' { 'Interactive update' }
+                    default { 'Windows Malicious Software Removal Tool x64 - v5.147 (KB890830)' }
+                }
                 $script:wu.Update.InstallationBehavior.CanRequestUserInput = $reason -eq 'Interactive'
                 Invoke-OOBEMenuWindowsUpdate -Type Software -State $state
                 $script:wu.Calls | Should -Not -Contain 'Download'

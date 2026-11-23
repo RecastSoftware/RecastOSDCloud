@@ -105,7 +105,7 @@ function Test-OSDCloudBootMenu {
         )
     }
 
-    $orderedProfiles = @($profiles | Sort-Object Profile, Path)
+    $orderedProfiles = @($profiles | Sort-Object RootIndex, OrderIndex, Profile, Path)
     for ($i = 0; $i -lt $orderedProfiles.Count; $i++) {
         $orderedProfiles[$i].Index = $i + 1
     }

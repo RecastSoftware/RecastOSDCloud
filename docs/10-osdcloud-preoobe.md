@@ -3,7 +3,7 @@
 **When:** you want a technician to run a guided, interactive stage on the
 freshly deployed device, after Windows is applied but before the OOBE screens.
 
-**What it does:** PreOOBE shows a **Recast Software - OSDCloud PreOOBE** window
+**What it does:** PreOOBE shows a **Recast Software - OSDCloud Post <version> PreOOBE** window
 on the setup desktop (running as SYSTEM) and runs these tasks in a fixed order:
 
 1. OEM driver pack install (Lenovo / Surface)

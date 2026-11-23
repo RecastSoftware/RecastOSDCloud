@@ -311,6 +311,7 @@ function Show-OSDCloudPreOOBEWireless {
     try { $window = [Windows.Markup.XamlReader]::Load($reader) }
     finally { $reader.Close() }
     $wireless = $null
+    Add-OSDCloudPreOOBESoftwarePointer -Window $window
     $timer = [Windows.Threading.DispatcherTimer]::new()
     $timer.Interval = [TimeSpan]::FromSeconds(1)
     $ui = @{ Connected = $false; Pending = $null; Attempt = $null; Idle = [Diagnostics.Stopwatch]::StartNew(); Ticks = 0 }

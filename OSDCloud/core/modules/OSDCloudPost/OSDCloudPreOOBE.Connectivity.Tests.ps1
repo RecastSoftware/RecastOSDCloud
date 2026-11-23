@@ -336,6 +336,28 @@ InModuleScope OSDCloudPost {
             ($state.Messages.ToArray() -join "`n") | Should -Not -BeLike '*private-test-key*'
         }
 
+        It 'includes a click-through software pointer layer without breaking the dialog controls' {
+            $probe.Add_Tick({
+                $probe.Stop()
+                $dialog = @([Windows.PresentationSource]::CurrentSources | ForEach-Object RootVisual |
+                    Where-Object Title -eq 'OSDCloud PreOOBE - Connect to Wi-Fi')[0]
+                try {
+                    $layer = $dialog.FindName('PointerLayer')
+                    $result.Layer = "$($layer.Visibility)|$($layer.IsHitTestVisible)"
+                    $result.Pointer = $null -ne $dialog.FindName('SoftwarePointer')
+                    $result.Connect = $null -ne $dialog.FindName('Connect')
+                }
+                catch { $result.Error = $_ }
+                finally { $state.CancelRequested = $true }
+            })
+            $probe.Start()
+            Show-OSDCloudPreOOBEWireless -State $state | Should -BeFalse
+            $result.Error | Should -BeNullOrEmpty
+            $result.Layer | Should -Be 'Collapsed|False'
+            $result.Pointer | Should -BeTrue
+            $result.Connect | Should -BeTrue
+        }
+
         It 'closes on cooperative cancellation without connecting and disposes native resources' {
             $probe.Add_Tick({ $probe.Stop(); $state.CancelRequested = $true })
             $probe.Start()

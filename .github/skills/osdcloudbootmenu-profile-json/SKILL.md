@@ -17,6 +17,11 @@ examples. Do not execute stored commands during authoring or validation.
 - Optional build-profile-local content: `bootmenu-profiles\<id>\osdcloudbootmenu.json`
   beside the build's `osdcloudboot.json`.
 - Image/runtime content: `<drive>:\OSDCloud\core\bootmenu-profiles\<id>\osdcloudbootmenu.json`.
+- Menu order: the builder writes `<image>\OSDCloud\core\bootmenu-profiles\order.json`
+  as `{"schemaVersion":1,"profiles":["<info.id>", ...]}` in Startup Menu order
+  (saved as `Content.BootMenuProfileOrder`). Invoke/Test-OSDCloudBootMenu sort
+  by drive root, then that order (case-insensitive GUIDs), then `info.name`;
+  unlisted profiles follow by name, and a malformed file warns and is ignored.
 - Only that exact filename in profile folders is discovered. Do not list legacy
   `winpestartup.json`, root-level JSON, or saved paths outside discovery roots.
 - Each profile folder is named with the same GUID as `info.id`; `info.name` is
