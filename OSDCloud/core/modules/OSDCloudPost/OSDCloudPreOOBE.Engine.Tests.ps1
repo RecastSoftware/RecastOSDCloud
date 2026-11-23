@@ -1,5 +1,5 @@
-Import-Module "$PSScriptRoot\OSDCloudPreOOBE.psd1" -Force
-InModuleScope OSDCloudPreOOBE {
+Import-Module "$PSScriptRoot\OSDCloudPost.psd1" -Force
+InModuleScope OSDCloudPost {
     BeforeAll {
         $Preview = $true
         Initialize-OOBEMenuNative
@@ -183,7 +183,7 @@ InModuleScope OSDCloudPreOOBE {
             ($engine.Output -join "`n") | Should -BeLike '*Simulated startup error*Shell*'
         }
 
-        It 'pauses after Update Windows 11 fails and retries it after the clock is corrected' {
+        It 'pauses after Windows Update - OS fails and retries it after the clock is corrected' {
             $script:softwareRuns = 0
             Mock Start-OOBEMenuUpdateWorker {
                 $script:types.Add($Type)
@@ -716,7 +716,7 @@ InModuleScope OSDCloudPreOOBE {
             }
         }
 
-        It 'renders discovered application checkboxes after Update Drivers and allows unchecking' {
+        It 'renders discovered application checkboxes after Windows Update - Drivers and allows unchecking' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {
                     [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\core\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
@@ -745,7 +745,7 @@ InModuleScope OSDCloudPreOOBE {
             Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
             $result.Error | Should -BeNullOrEmpty
             $result.Count | Should -Be 16
-            $result.Drivers | Should -Be 'Update Drivers'
+            $result.Drivers | Should -Be 'Windows Update - Drivers'
             $result.App | Should -Be 'Custom App 1 [G:]'
             $result.Checked | Should -BeTrue
             $result.Enabled | Should -BeFalse

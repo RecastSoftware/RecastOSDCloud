@@ -1,5 +1,5 @@
-Import-Module "$PSScriptRoot\OSDCloudPreOOBE.psd1" -Force
-InModuleScope OSDCloudPreOOBE {
+Import-Module "$PSScriptRoot\OSDCloudPost.psd1" -Force
+InModuleScope OSDCloudPost {
     BeforeAll {
         $Preview = $true
         Initialize-OOBEMenuNative

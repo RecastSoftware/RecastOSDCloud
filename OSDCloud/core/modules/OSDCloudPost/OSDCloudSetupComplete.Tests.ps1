@@ -1,20 +1,22 @@
-Import-Module (Join-Path $PSScriptRoot 'OSDCloudSetupComplete.psd1') -Force
+Import-Module (Join-Path $PSScriptRoot 'OSDCloudPost.psd1') -Force
 
-Describe 'Standalone SetupComplete contract' {
-    It 'imports inertly and exports only the entry point with rendered help' {
-        @(Get-Command -Module OSDCloudSetupComplete).Name | Should -Be @('Invoke-OSDCloudSetupComplete')
+Describe 'Standalone OSDCloudPost contract' {
+    It 'imports inertly and exports only the entry points with rendered help' {
+        @(Get-Command -Module OSDCloudPost -CommandType Function).Name | Sort-Object |
+            Should -Be @('Invoke-OSDCloudPreOOBE', 'Invoke-OSDCloudSetupComplete')
+        @(Get-Command -Module OSDCloudPost -CommandType Alias).Name | Should -Be @('OSDCloudPreOOBE')
         (Get-Help Invoke-OSDCloudSetupComplete -Full).Examples.Example.Count | Should -Be 2
     }
 }
 
-InModuleScope OSDCloudSetupComplete {
+InModuleScope OSDCloudPost {
     Describe 'SetupComplete runtime' {
         BeforeAll {
             '{"Warmup":"Load Windows PowerShell JSON assemblies before changing SystemRoot"}' | ConvertFrom-Json | Out-Null
             $script:realSystemRoot = $env:SystemRoot
             $script:testPowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
             $script:startProcessCmdlet = Get-Command Start-Process -CommandType Cmdlet
-            $script:exampleRoot = Join-Path $PSScriptRoot 'files'
+            $script:exampleRoot = Join-Path $PSScriptRoot 'files\SetupComplete'
             function New-TestPackage {
                 [CmdletBinding()]
                 param (
