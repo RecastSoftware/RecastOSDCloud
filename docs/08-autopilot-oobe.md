@@ -298,7 +298,7 @@ once a task has started or finished.
 
 Tasks run in this order:
 
-1. **Driver unpack / install**: runs first because the OEM drivers may be required
+1. **Install staged drivers**: runs first because the OEM drivers may be required
    for network connectivity and time sync. The opted-in driver-download step stages
    `C:\Windows\Setup\Scripts\OSDCloudPreOOBE.DriverPack.json` instead of appending Lenovo
    or Surface installation commands to SetupComplete. The engine validates the local
@@ -310,7 +310,7 @@ Tasks run in this order:
    Surface MSI uses `/qn /norestart` with verbose MSI logging. Exit 3010 records
    a reboot requirement but does not reboot. Artifacts are retained for diagnostics.
    No staged manifest means **NotApplicable**.
-2. **Synchronizing internet time**: retrieve Google's HTTP `Date` header and set
+2. **Synchronize internet time**: retrieve Google's HTTP `Date` header and set
    the system clock before any HTTPS connectivity checks or Windows Update work.
    This follows the existing OSDCloud time-source convention using HTTP to avoid
    the incorrect-clock/certificate bootstrap problem. Two attempts have five-second
@@ -328,12 +328,12 @@ Tasks run in this order:
    without another time request.
    HTTP time is unauthenticated: use a trusted deployment network. This does not
    disable certificate validation for connectivity probes or Windows Update.
-3. **Updating Windows 11**: check connectivity, then scan/download/install applicable
+3. **Update Windows 11**: check connectivity, then scan/download/install applicable
    software updates (including Windows servicing and .NET). If this task **fails**,
    the sequence pauses: use **Shell** to verify the system date, time and time zone,
    then select **Retry** (runs it again after the 10-second countdown) or **Continue**.
    The pause has no timeout; closing the window skips the remaining tasks.
-4. **Updating Drivers**: check connectivity again, then scan/download/install
+4. **Update Drivers**: check connectivity again, then scan/download/install
    applicable driver updates.
 5. **Custom applications**: when the window opens, discover immediate application
    folders containing `OSDCloudPreOOBE.json` or `Invoke-AppDeployToolkit.exe` under
@@ -342,7 +342,7 @@ Tasks run in this order:
    the local `%SystemRoot%\Setup\PreOOBE` path is unchanged.
    Local applications appear first, followed by drive-hosted applications in
    drive-letter order; folders within each root are sorted by name.
-   Each eligible application appears below **Updating Drivers**, checked by default
+   Each eligible application appears below **Update Drivers**, checked by default
    unless its manifest specifies otherwise. The label is the manifest name or
    folder name, with the drive appended for drive-hosted content,
    such as **My AppFolder [G:]**. Uncheck it before it starts to skip installation.

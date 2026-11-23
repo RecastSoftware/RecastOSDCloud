@@ -136,7 +136,7 @@ InModuleScope OSDCloudPreOOBE {
             1..4 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
             ($script:types -join ',') | Should -Be 'DriverPack,Software,Driver'
             $engine.Tasks[1].Outcome | Should -Be 'Skipped'
-            ($engine.Output -join "`n") | Should -BeLike '*Skipped Synchronizing internet time: unchecked by technician.*'
+            ($engine.Output -join "`n") | Should -BeLike '*Skipped Synchronize internet time: unchecked by technician.*'
             $engine.Complete | Should -BeTrue
         }
 
@@ -159,7 +159,7 @@ InModuleScope OSDCloudPreOOBE {
             Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
             ($script:types -join ',') | Should -Be 'DriverPack'
             $engine.StartNow | Should -BeFalse
-            ($engine.Output -join "`n") | Should -BeLike '*Starting Driver unpack / install now by technician request.*'
+            ($engine.Output -join "`n") | Should -BeLike '*Starting Install staged drivers now by technician request.*'
         }
 
         It 'never starts a skipped pending update and still completes' {
@@ -183,7 +183,7 @@ InModuleScope OSDCloudPreOOBE {
             ($engine.Output -join "`n") | Should -BeLike '*Simulated startup error*Shell*'
         }
 
-        It 'pauses after Updating Windows 11 fails and retries it after the clock is corrected' {
+        It 'pauses after Update Windows 11 fails and retries it after the clock is corrected' {
             $script:softwareRuns = 0
             Mock Start-OOBEMenuUpdateWorker {
                 $script:types.Add($Type)
@@ -227,7 +227,7 @@ InModuleScope OSDCloudPreOOBE {
             $script:types.Count | Should -Be 0
             $engine.StepTask | Should -Be $engine.Tasks[0]
             $engine.StepRemaining | Should -Be 10
-            ($engine.Output -join "`n") | Should -BeLike '*Driver unpack / install starting in 10 seconds.*'
+            ($engine.Output -join "`n") | Should -BeLike '*Install staged drivers starting in 10 seconds.*'
             $engine.StepDelay = [pscustomobject]@{ Elapsed = [TimeSpan]::FromSeconds(9.99) }
             Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
             $engine.StepRemaining | Should -Be 1
@@ -716,7 +716,7 @@ InModuleScope OSDCloudPreOOBE {
             }
         }
 
-        It 'renders discovered application checkboxes after Updating Drivers and allows unchecking' {
+        It 'renders discovered application checkboxes after Update Drivers and allows unchecking' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {
                     [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\core\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
@@ -745,7 +745,7 @@ InModuleScope OSDCloudPreOOBE {
             Invoke-OSDCloudPreOOBE -Preview | Should -Be 0 -Because ($script:renderLog -join '; ')
             $result.Error | Should -BeNullOrEmpty
             $result.Count | Should -Be 16
-            $result.Drivers | Should -Be 'Updating Drivers'
+            $result.Drivers | Should -Be 'Update Drivers'
             $result.App | Should -Be 'Custom App 1 [G:]'
             $result.Checked | Should -BeTrue
             $result.Enabled | Should -BeFalse
@@ -984,7 +984,7 @@ InModuleScope OSDCloudPreOOBE {
             $result.Steps | Should -Be 4
             $result.Collapsed | Should -Be 56
             $result.Expanded | Should -Be 300
-            $result.StepName | Should -Be 'Driver unpack / install'
+            $result.StepName | Should -Be 'Install staged drivers'
             $result.ToggleName | Should -Be 'Collapse steps'
             $result.CollapsedStep | Should -BeNullOrEmpty
             $result.Resize | Should -Be 8
@@ -993,7 +993,7 @@ InModuleScope OSDCloudPreOOBE {
             ($result.Tools -join ',') | Should -Be 'Connect to Wi-Fi,Open oobe.cmd,Open setupcomplete.cmd'
             ($result.Shells -join ',') | Should -Be 'CMD Prompt,Windows PowerShell'
             $result.Calendar | Should -BeNullOrEmpty
-            $result.Time | Should -BeLike 'Synchronizing internet time*'
+            $result.Time | Should -BeLike 'Synchronize internet time*'
             $result.SkipSoftware | Should -BeNullOrEmpty
             $result.SkipDrivers | Should -BeNullOrEmpty
             $result.Open | Should -BeTrue

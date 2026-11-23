@@ -31,10 +31,10 @@ function New-OSDCloudPreOOBEState {
     Write-OOBEMenuLog -Message $messages
     return @{
         Tasks = @(
-            [pscustomobject]@{ Type = 'DriverPack'; Name = 'Driver unpack / install'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
-            [pscustomobject]@{ Type = 'Time'; Name = 'Synchronizing internet time'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
-            [pscustomobject]@{ Type = 'Software'; Name = 'Updating Windows 11'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
-            [pscustomobject]@{ Type = 'Driver'; Name = 'Updating Drivers'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null }
+            [pscustomobject]@{ Type = 'DriverPack'; Name = 'Install staged drivers'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
+            [pscustomobject]@{ Type = 'Time'; Name = 'Synchronize internet time'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
+            [pscustomobject]@{ Type = 'Software'; Name = 'Update Windows 11'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null },
+            [pscustomobject]@{ Type = 'Driver'; Name = 'Update Drivers'; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null }
             foreach ($application in Get-OSDCloudPreOOBEApplication) {
                 [pscustomobject]@{
                     Type = 'Application'; Name = $application.Name; Path = $application.Path
@@ -127,7 +127,7 @@ function Update-OSDCloudPreOOBEState {
     .DESCRIPTION
         Waits for Start, then owns one worker at a time and waits StepDelaySeconds (10)
         before each task starts. Unchecked (disabled) tasks are skipped when reached.
-        Failure never becomes success; an Updating Windows 11 failure pauses until
+        Failure never becomes success; an Update Windows 11 failure pauses until
         Retry or Continue. After all tasks finish the engine waits for Continue to OOBE
         (a close request). Close requests cancel updates safely, finish active OEM
         and application installations, and skip pending work.
@@ -605,7 +605,7 @@ function Show-OOBEMenuWindow {
     <Button x:Name="StepButton" KeyboardNavigation.TabIndex="0" IsDefault="True" Style="{StaticResource PrimaryButtonStyle}" DockPanel.Dock="Right" Content="Start" Margin="12,0,0,0" AutomationProperties.Name="Start OSDCloud PreOOBE"/>
     <Button x:Name="ContinueOobeButton" KeyboardNavigation.TabIndex="0" Style="{StaticResource PrimaryButtonStyle}" DockPanel.Dock="Right" Content="Continue to OOBE" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Continue to OOBE"/>
     <Button x:Name="ContinueButton" KeyboardNavigation.TabIndex="2" DockPanel.Dock="Right" Content="Continue" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Continue with the remaining tasks"/>
-    <Button x:Name="RetryButton" KeyboardNavigation.TabIndex="1" DockPanel.Dock="Right" Content="Retry" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Retry Updating Windows 11"/>
+    <Button x:Name="RetryButton" KeyboardNavigation.TabIndex="1" DockPanel.Dock="Right" Content="Retry" Visibility="Collapsed" Margin="12,0,0,0" AutomationProperties.Name="Retry Update Windows 11"/>
     <TextBlock x:Name="StatusText" Text="Starting..." TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource SecondaryTextBrush}" AutomationProperties.LiveSetting="Polite"/>
    </DockPanel>
   </Grid>

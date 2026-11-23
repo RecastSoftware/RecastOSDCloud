@@ -123,7 +123,7 @@ When the device reaches OOBE, the window opens at the top-left of the screen.
    it immediately.
 3. Watch live output in the window. While an update runs the button reads
    **Skip Step**.
-4. If **Updating Windows 11** fails, the sequence pauses. Use **Shell** to
+4. If **Update Windows 11** fails, the sequence pauses. Use **Shell** to
    check date, time and time zone, then **Retry** or **Continue**.
 5. When all tasks finish, select **Continue to OOBE**.
 
