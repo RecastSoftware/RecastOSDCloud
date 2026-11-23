@@ -116,7 +116,7 @@
                                               Content="{TemplateBinding Header}"
                                               IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
                                               AutomationProperties.Name="{Binding (AutomationProperties.Name), RelativeSource={RelativeSource TemplatedParent}}"
-                                              AutomationProperties.HelpText="Expand or collapse device and identity details">
+                                              AutomationProperties.HelpText="{Binding (AutomationProperties.HelpText), RelativeSource={RelativeSource TemplatedParent}}">
                                     <ToggleButton.Template>
                                         <ControlTemplate TargetType="ToggleButton">
                                             <Border x:Name="HeaderBorder" Background="{TemplateBinding Background}"
@@ -403,6 +403,50 @@
             <Setter Property="Padding" Value="8,5"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        <Style x:Key="OptionToggleStyle" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#F5F5F5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Margin" Value="0,4"/>
+            <Setter Property="MinHeight" Value="30"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Grid x:Name="ToggleRoot" Background="Transparent">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="ToggleTrack" Width="40" Height="20" CornerRadius="10" VerticalAlignment="Center"
+                                    Background="{StaticResource ControlBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                <Ellipse x:Name="ToggleKnob" Width="12" Height="12" Margin="4,0" HorizontalAlignment="Left"
+                                         Fill="{StaticResource SecondaryTextBrush}"/>
+                            </Border>
+                            <ContentPresenter Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ToggleTrack" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="ToggleTrack" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="ToggleTrack" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="ToggleKnob" Property="HorizontalAlignment" Value="Right"/>
+                                <Setter TargetName="ToggleKnob" Property="Fill" Value="#161F5B"/>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="ToggleTrack" Property="BorderBrush" Value="#F5F5F5"/>
+                                <Setter TargetName="ToggleTrack" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="ToggleRoot" Property="Opacity" Value="0.4"/>
+                                <Setter Property="Cursor" Value="Arrow"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
         <!-- WPF shows FocusVisualStyle only for keyboard focus, so mouse clicks leave no outline. -->
         <Style x:Key="TitleBarFocusVisualStyle">
             <Setter Property="Control.Template">
@@ -669,7 +713,8 @@
                       Focusable="False" KeyboardNavigation.TabIndex="0">
             <StackPanel Margin="24,20,24,16">
                 <Expander x:Name="DeviceIdentityExpander" Style="{StaticResource DeviceIdentityExpanderStyle}"
-                          IsExpanded="False" Margin="0,0,0,8" AutomationProperties.Name="Device and Identity">
+                          IsExpanded="False" Margin="0,0,0,8" AutomationProperties.Name="Device and Identity"
+                          AutomationProperties.HelpText="Expand or collapse device and identity details">
                     <Expander.Header>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE7F8;" Style="{StaticResource IconStyle}" Margin="0,0,12,0"/>
@@ -749,12 +794,28 @@
                         </StackPanel>
                     </Grid>
                 </Expander>
-                <Border Style="{StaticResource CardStyle}">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <Expander x:Name="DeploymentSettingsExpander" Style="{StaticResource DeviceIdentityExpanderStyle}"
+                          IsExpanded="True" AutomationProperties.Name="Deployment Settings"
+                          AutomationProperties.HelpText="Expand or collapse task sequence, operating system, and driver pack settings">
+                    <Expander.Header>
+                        <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE896;" Style="{StaticResource IconStyle}" Margin="0,0,12,0"/>
                             <TextBlock Text="Deployment Settings" Style="{StaticResource CardTitleStyle}"/>
+                            <TextBlock x:Name="DeploymentSettingsSummaryText" Text="" Margin="16,0,0,0" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource DescriptionTextStyle}">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsExpanded, ElementName=DeploymentSettingsExpander}" Value="False">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
                         </StackPanel>
+                    </Expander.Header>
+                    <StackPanel>
                         <TextBlock Text="Choose the task sequence, operating system, and driver pack for this device." Style="{StaticResource DescriptionTextStyle}" Margin="0,0,0,12"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -794,7 +855,55 @@
                             <TextBlock Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" x:Name="DriverPackUrlText" Text="-" Style="{StaticResource DescriptionTextStyle}" Margin="0,2,0,4"/>
                         </Grid>
                     </StackPanel>
-                </Border>
+                </Expander>
+                <Expander x:Name="OSDCloudPostExpander" Style="{StaticResource DeviceIdentityExpanderStyle}"
+                          IsExpanded="False" Margin="0,8,0,0" AutomationProperties.Name="OSDCloud Post"
+                          AutomationProperties.HelpText="Expand or collapse WinPE post action and PreOOBE settings">
+                    <Expander.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE7E8;" Style="{StaticResource IconStyle}" Margin="0,0,12,0"/>
+                            <TextBlock Text="OSDCloud Post" Style="{StaticResource CardTitleStyle}"/>
+                            <TextBlock x:Name="OSDCloudPostSummaryText" Text="" Style="{StaticResource DescriptionTextStyle}" Margin="16,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Expander.Header>
+                    <StackPanel>
+                        <TextBlock Text="Choose what WinPE does after the deployment and which PreOOBE tasks start selected on first boot." Style="{StaticResource DescriptionTextStyle}" Margin="0,0,0,12"/>
+                        <Border x:Name="InternetWarningPanel" Visibility="Collapsed" BorderBrush="{StaticResource WarningBrush}" BorderThickness="1"
+                                CornerRadius="4" Padding="10,8" Margin="0,0,0,12" AutomationProperties.Name="No internet access warning">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="&#xE7BA;" Style="{StaticResource IconStyle}" Foreground="{StaticResource WarningBrush}" Margin="0,0,10,0" VerticalAlignment="Top"/>
+                                <TextBlock Grid.Column="1" x:Name="InternetWarningText" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"
+                                           Text="Warning: No internet access was detected. Windows Update - OS and Windows Update - Drivers require internet access on first boot; if the device is still offline, they are skipped and setup continues."/>
+                            </Grid>
+                        </Border>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" MinWidth="130"/>
+                                <ColumnDefinition Width="*" MinWidth="200" MaxWidth="360"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0" Text="WinPE Post Action" Style="{StaticResource LabelTextStyle}"/>
+                            <ComboBox Grid.Row="0" Grid.Column="1" x:Name="PostActionCombo" Margin="0,4" AutomationProperties.Name="WinPE Post Action"/>
+                            <TextBlock Grid.Row="0" Grid.Column="2" x:Name="PostActionHintText" Text="-" Style="{StaticResource DescriptionTextStyle}" Margin="16,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Row="1" Text="PreOOBE" Style="{StaticResource LabelTextStyle}"/>
+                            <CheckBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" x:Name="WindowsUpdateOSToggle" Content="Windows Update - OS" Style="{StaticResource OptionToggleStyle}"
+                                      AutomationProperties.Name="Windows Update - OS" ToolTip="Start the PreOOBE Windows Update - OS task selected"/>
+                            <CheckBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="WindowsUpdateDriversToggle" Content="Windows Update - Drivers" Style="{StaticResource OptionToggleStyle}"
+                                      AutomationProperties.Name="Windows Update - Drivers" ToolTip="Start the PreOOBE Windows Update - Drivers task selected"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="PreOOBEHintText" Text="-" Style="{StaticResource DescriptionTextStyle}" Margin="0,2,0,4"/>
+                        </Grid>
+                    </StackPanel>
+                </Expander>
             </StackPanel>
         </ScrollViewer>
         <Border Grid.Row="2" Background="{StaticResource SidebarBrush}" BorderBrush="{StaticResource BorderBrush}"

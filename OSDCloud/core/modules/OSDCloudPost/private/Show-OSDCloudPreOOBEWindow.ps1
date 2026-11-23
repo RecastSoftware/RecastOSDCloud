@@ -49,7 +49,7 @@ function New-OSDCloudPreOOBEState {
             }
         )
         Worker = $null; Active = $null; Shared = $null; CloseRequested = $false
-        RebootRequired = $false; Started = $false; Complete = $false; Done = $false
+        RebootRequired = $false; Started = $false; Complete = $false; Done = $false; WirelessRecoveryFailed = $false
         StepDelaySeconds = 10; StepDelay = $null; StepTask = $null; StepRemaining = 10; StartNow = $false
         Paused = $false; PausedTask = $null; StartClock = $startClock
         Output = $output; SummaryWritten = $false
@@ -190,6 +190,7 @@ function Update-OSDCloudPreOOBEState {
             while ($State.Shared.Messages.TryDequeue([ref]$message)) { $State.Output.Add($message) }
             Receive-OSDCloudPreOOBEProcessOutput -State $State
             $State.RebootRequired = $State.RebootRequired -or $State.Shared.RebootRequired
+            $State.WirelessRecoveryFailed = [bool]$State.WirelessRecoveryFailed -or [bool]$State.Shared.WirelessRecoveryFailed
             $State.Active.DurationMs = $State.Shared.DurationMs
             $State.Active.Finished = (Get-Date).ToUniversalTime().ToString('o')
             Write-OOBEMenuLog -Message "Task $($State.Active.Name) ended $($State.Active.Outcome), $($State.Active.DurationMs) ms."
@@ -240,6 +241,7 @@ function Update-OSDCloudPreOOBEState {
             ProcessOutput = [Collections.Concurrent.ConcurrentQueue[string]]::new()
             Status = $State.Active.Name; CancelRequested = $false; RebootRequired = $State.RebootRequired
             Succeeded = $false; Outcome = 'Running'; DurationMs = 0L; InstallationActive = $false; ClockTestActive = $false
+            WirelessRecoveryFailed = [bool]$State.WirelessRecoveryFailed
         })
         if ($State.Active.Type -eq 'Application') {
             $State.Shared.ApplicationPath = $State.Active.Path

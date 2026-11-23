@@ -11,7 +11,7 @@ AfterAll { $global:OSDCloudDeploy = $originalDeploy; $global:OSDCloudWorkflowInv
 
 Describe 'Opted-in PreOOBE OEM handoff' {
     BeforeEach {
-        $global:OSDCloudDeploy = @{ WorkflowTaskObject = @{ steps = @(@{ command = 'step-update-preoobe'; skip = $false }) } }
+        $global:OSDCloudDeploy = @{ WorkflowTaskObject = @{ steps = @(@{ command = 'step-update-osdcloudpost'; skip = $false }) } }
         $global:OSDCloudWorkflowInvoke = @{}
         $package = Join-Path $TestDrive 'Lenovo.exe'
         [IO.File]::WriteAllText($package,'Inert')

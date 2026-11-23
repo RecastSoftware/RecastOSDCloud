@@ -107,7 +107,7 @@ function Get-OSDCloudSetupCompleteRoot {
     $Error.Clear()
     Write-Verbose "[$(Get-Date -Format s)] [$($MyInvocation.MyCommand.Name)] Discover roots"
     Join-Path $env:SystemRoot 'Setup\SetupComplete'
-    foreach ($letter in 65..90) { "$([char]$letter):\OSDCloud\core\SetupComplete" }
+    foreach ($letter in 65..90) { "$([char]$letter):\OSDCloud\post\SetupComplete" }
 }
 
 function Resolve-OSDCloudSetupCompleteScript {

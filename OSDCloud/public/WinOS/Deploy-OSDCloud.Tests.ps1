@@ -202,6 +202,43 @@ Describe 'Deploy-OSDCloud disk parameters' {
         }
     }
 
+    It 'seeds the GUI with -PostAction and runs the confirmed GUI selection' {
+        $global:OSDCloudDeploy = [pscustomobject]@{ TimeStart = $null; PostAction = 'Quit' }
+        Mock Invoke-OSDCloudWorkflowUI {
+            $global:OSDCloudDeploy.PostAction | Should -Be 'Exit'
+            $global:OSDCloudDeploy.PostAction = 'Shutdown'
+            $global:OSDCloudDeploy.TimeStart = Get-Date
+        } -ModuleName DiskParameterDeploymentTests
+        Mock Start-Sleep { throw 'Stop before host restart' } -ModuleName DiskParameterDeploymentTests
+        $originalSystemDrive = $env:SystemDrive
+        try {
+            $env:SystemDrive = 'X:'
+            { Deploy-OSDCloud -PostAction Exit } | Should -Throw '*Stop before host restart*'
+        }
+        finally { $env:SystemDrive = $originalSystemDrive }
+        Should -Invoke Write-Host -ModuleName DiskParameterDeploymentTests -Times 1 -Exactly -ParameterFilter { "$Object" -like "*PostAction 'Shutdown' will run*" }
+    }
+
+    It 'tells the workflow UI whether -PostAction was passed: <Name>' -TestCases @(
+        @{ Name = 'omitted'; Splat = @{}; Expected = $false }
+        @{ Name = 'explicit Quit'; Splat = @{ PostAction = 'Quit' }; Expected = $true }
+    ) {
+        param ($Splat, $Expected)
+        $global:OSDCloudDeploy = [pscustomobject]@{ TimeStart = $null; PostAction = 'Quit' }
+        $script:seenSpecified = $null
+        Mock Invoke-OSDCloudWorkflowUI { $script:seenSpecified = $global:OSDCloudDeploy.PostActionSpecified } -ModuleName DiskParameterDeploymentTests
+        Deploy-OSDCloud @Splat
+        $script:seenSpecified | Should -Be $Expected
+    }
+
+    It 'does not run the GUI PostAction when the GUI is closed without Start' {
+        $global:OSDCloudDeploy = [pscustomobject]@{ TimeStart = $null; PostAction = 'Quit' }
+        Mock Invoke-OSDCloudWorkflowUI { $global:OSDCloudDeploy.PostAction = 'Restart' } -ModuleName DiskParameterDeploymentTests
+        Mock Start-Sleep {} -ModuleName DiskParameterDeploymentTests
+        Deploy-OSDCloud
+        Should -Invoke Start-Sleep -ModuleName DiskParameterDeploymentTests -Times 0 -Exactly
+    }
+
     It 'forwards all explicit disk parameters for CLI and GUI launches: CLI=<CLI>' -TestCases @(
         @{ CLI = $true }
         @{ CLI = $false }

@@ -6,7 +6,7 @@ numbered JSON example, copy it into a package folder, and rename it to
 `Example-Content.json` beside it:
 
 ```text
-G:\OSDCloud\core\SetupComplete\010-Example\
+G:\OSDCloud\post\SetupComplete\010-Example\
     OSDCloudSetupComplete.json
     Example-SetupComplete.ps1
     Example-Content.json

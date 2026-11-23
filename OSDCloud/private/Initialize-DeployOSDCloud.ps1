@@ -222,6 +222,10 @@ function Initialize-DeployOSDCloud {
         OSLanguageCode             = $null
         OSLanguageCodeValues       = $null
         OSVersion                  = $OSVersion
+        PostAction                 = 'Quit'
+        PostActionValues           = [string[]]@('Quit', 'Restart', 'Shutdown', 'Exit')
+        PreOOBEWindowsUpdateDrivers = $true
+        PreOOBEWindowsUpdateOS     = $true
         SkipFirmwareUpdate         = $false
         TimeStart                  = $null
         WorkflowName               = $WorkflowName

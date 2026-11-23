@@ -109,19 +109,20 @@ and [Wi-Fi profile lookup](../OSDCloud/core/modules/OSDCloudBootMenu/private/Sho
 | Searched or read path | Purpose | Discovery rules |
 |---|---|---|
 | `%SystemRoot%\Setup\PreOOBE\<application>` | Applications staged on the deployed Windows installation. | Searched first; immediate application folders sorted by name. |
-| `<drive>:\OSDCloud\core\PreOOBE\<application>` | Drive-hosted custom applications. | A: through Z:, after the local root; immediate folders sorted by name. Display names include the drive letter. |
+| `<drive>:\OSDCloud\post\PreOOBE\<application>` | Drive-hosted custom applications. | A: through Z:, after the local root; immediate folders sorted by name. Display names include the drive letter. |
 | `<application>\OSDCloudPreOOBE.json` | Custom application command, conditions, and initial checkbox selection. | Takes precedence over toolkit detection. Invalid manifests do not fall back to toolkit detection. |
 | `<application>\Invoke-AppDeployToolkit.exe` | PSAppDeployToolkit application entry point. | Used only when the application folder has no custom manifest. |
 | `%SystemRoot%\Setup\Scripts\OSDCloudPreOOBE.DriverPack.json` | Deferred OEM driver installation handoff. | Explicit local manifest, not an external-drive scan. The installer validates the package path under `%SystemRoot%\Temp\osdcloud-driverpack-download`. |
-| `<ModuleRoot>\core\modules\OSDCloudPreOOBE` | Bundled standalone PreOOBE module source. | The WinPE staging step validates and copies the entire module. |
-| `%SystemRoot%\Setup\Modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1` | Staged PreOOBE runtime module. | Explicitly imported by the setup launch hook; not discovered across drives. |
+| `%SystemRoot%\Setup\Scripts\OSDCloudPost.json` | PreOOBE task selections written from the deployment window (`WindowsUpdateOS`, `WindowsUpdateDrivers`). | Explicit local file. A cleared value starts that task unchecked; a missing or invalid file leaves both tasks checked. |
+| `<ModuleRoot>\core\modules\OSDCloudPost` | Bundled standalone OSDCloudPost module source (PreOOBE and SetupComplete). | The WinPE staging step validates and copies the entire module. |
+| `%SystemRoot%\Setup\Modules\OSDCloudPost\OSDCloudPost.psd1` | Staged OSDCloudPost runtime module. | Explicitly imported by the OOBE.cmd launch hook; not discovered across drives. |
 
 Application discovery does not execute installers. The local
 `%SystemRoot%\Setup\PreOOBE` location has not moved.
 
-Sources: [application discovery](../OSDCloud/core/modules/OSDCloudPreOOBE/private/OSDCloudPreOOBE.ps1),
-[driver handoff](../OSDCloud/core/modules/OSDCloudPreOOBE/private/Invoke-OSDCloudPreOOBEDriverPack.ps1),
-and [module staging](../OSDCloud/private/steps/7-update/step-update-preoobe.ps1).
+Sources: [application discovery](../OSDCloud/core/modules/OSDCloudPost/private/OSDCloudPreOOBE.ps1),
+[driver handoff](../OSDCloud/core/modules/OSDCloudPost/private/Invoke-OSDCloudPreOOBEDriverPack.ps1),
+and [module staging](../OSDCloud/private/steps/7-update/step-update-osdcloudpost.ps1).
 See the [PreOOBE guide](08-autopilot-oobe.md) for package manifests and execution behavior.
 
 ## SetupComplete
@@ -129,19 +130,19 @@ See the [PreOOBE guide](08-autopilot-oobe.md) for package manifests and executio
 | Searched or read path | Purpose | Discovery rules |
 |---|---|---|
 | `%SystemRoot%\Setup\SetupComplete\<name>` | Locally staged script packages. | Searched first; immediate package folders sorted by name. |
-| `<drive>:\OSDCloud\core\SetupComplete\<name>` | Drive-hosted script packages and supporting content. | A: through Z: after the local root; immediate folders sorted by name. |
+| `<drive>:\OSDCloud\post\SetupComplete\<name>` | Drive-hosted script packages and supporting content. | A: through Z: after the local root; immediate folders sorted by name. |
 | `<name>\OSDCloudSetupComplete.json` | Required script configuration, enabled flag, conditions, and optional local copying. | Only enabled, matching packages execute; folders without configuration are skipped. |
-| `<ModuleRoot>\core\modules\OSDCloudSetupComplete` | Bundled standalone runtime source and example templates. | WinPE staging copies the module, not external package content. |
-| `%SystemRoot%\Setup\Modules\OSDCloudSetupComplete\OSDCloudSetupComplete.psd1` | Staged runtime module. | Explicitly imported synchronously by the SetupComplete hook. |
+| `<ModuleRoot>\core\modules\OSDCloudPost` | Bundled standalone OSDCloudPost module source and example templates. | WinPE staging copies the module, not external package content. |
+| `%SystemRoot%\Setup\Modules\OSDCloudPost\OSDCloudPost.psd1` | Staged OSDCloudPost runtime module (shared with PreOOBE). | Explicitly imported synchronously by the SetupComplete hook. |
 
 The configured entry script must be a `.ps1` directly inside its package folder.
 Its `$PSScriptRoot` and working directory are that folder or the retained local
 copy when `CopyToLocal` is enabled. Every invocation reruns eligible packages.
 
-Sources: [SetupComplete runtime](../OSDCloud/core/modules/OSDCloudSetupComplete/public/Invoke-OSDCloudSetupComplete.ps1)
-and [staging](../OSDCloud/private/steps/7-update/step-update-setupcomplete.ps1).
+Sources: [SetupComplete runtime](../OSDCloud/core/modules/OSDCloudPost/public/Invoke-OSDCloudSetupComplete.ps1)
+and [staging](../OSDCloud/private/steps/7-update/step-update-osdcloudpost.ps1).
 See the [deployment guide](08-autopilot-oobe.md#osdcloudsetupcomplete-silent-scripts-recast)
-and [package examples](../OSDCloud/core/modules/OSDCloudSetupComplete/files/README.md).
+and [package examples](../OSDCloud/core/modules/OSDCloudPost/files/SetupComplete/README.md).
 
 ## Deployment configuration and bundled modules
 
@@ -176,6 +177,7 @@ and [module loading](../OSDCloud/OSDCloud.psm1).
 |---|---|---|
 | `<drive>:\OSDCloud\catalogs\operatingsystems` | `<drive>:\OSDCloud\core\operatingsystems` | Old catalogs are not searched, moved, or deleted. |
 | `C:\ProgramData\OSDeployCore\OSDCloud\catalogs\operatingsystems` | `C:\ProgramData\OSDeployCore\OSDCloud\core\operatingsystems` | Old catalogs are not searched, moved, or deleted. |
-| `<drive>:\OSDCloud\PreOOBE` | `<drive>:\OSDCloud\core\PreOOBE` | Old drive-hosted application roots are not searched or migrated. |
+| `<drive>:\OSDCloud\PreOOBE` and `<drive>:\OSDCloud\core\PreOOBE` | `<drive>:\OSDCloud\post\PreOOBE` | Old drive-hosted application roots are not searched or migrated. |
+| `<drive>:\OSDCloud\core\SetupComplete` | `<drive>:\OSDCloud\post\SetupComplete` | Old drive-hosted script roots are not searched or migrated. |
 | `<drive>:\OSDCloud\bootmenu-profiles` | `<drive>:\OSDCloud\core\bootmenu-profiles` | Old runtime profile roots are not searched or migrated. |
 | `<ModuleRoot>\modules` | `<ModuleRoot>\core\modules` | Bundled module sources moved in the package; existing external data is not migrated. |

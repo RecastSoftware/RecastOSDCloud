@@ -13,27 +13,41 @@ current operator-facing behavior and real-device validation requirements.
 
 ## Architecture and invariants
 
-- The standalone module lives under
-  [OSDCloudPreOOBE](../../../OSDCloud/core/modules/OSDCloudPreOOBE).
+- PreOOBE ships in the standalone OSDCloudPost module under
+  [OSDCloudPost](../../../OSDCloud/core/modules/OSDCloudPost), which also
+  exports `Invoke-OSDCloudSetupComplete`.
   Its public entry point is
-  [Invoke-OSDCloudPreOOBE](../../../OSDCloud/core/modules/OSDCloudPreOOBE/public/Invoke-OSDCloudPreOOBE.ps1),
+  [Invoke-OSDCloudPreOOBE](../../../OSDCloud/core/modules/OSDCloudPost/public/Invoke-OSDCloudPreOOBE.ps1),
   exported with the `OSDCloudPreOOBE` alias. Import alone is inert; the entry point
   returns a numeric status and never exits the caller. Runtime helpers are private in
-  [OSDCloudPreOOBE.ps1](../../../OSDCloud/core/modules/OSDCloudPreOOBE/private/OSDCloudPreOOBE.ps1).
+  [OSDCloudPreOOBE.ps1](../../../OSDCloud/core/modules/OSDCloudPost/private/OSDCloudPreOOBE.ps1).
   Its driver installer and WPF window are maintained in
-  [Invoke-OSDCloudPreOOBEDriverPack.ps1](../../../OSDCloud/core/modules/OSDCloudPreOOBE/private/Invoke-OSDCloudPreOOBEDriverPack.ps1)
+  [Invoke-OSDCloudPreOOBEDriverPack.ps1](../../../OSDCloud/core/modules/OSDCloudPost/private/Invoke-OSDCloudPreOOBEDriverPack.ps1)
   and
-  [Show-OSDCloudPreOOBEWindow.ps1](../../../OSDCloud/core/modules/OSDCloudPreOOBE/private/Show-OSDCloudPreOOBEWindow.ps1).
+  [Show-OSDCloudPreOOBEWindow.ps1](../../../OSDCloud/core/modules/OSDCloudPost/private/Show-OSDCloudPreOOBEWindow.ps1).
 - The WinPE-only
-  [step-update-preoobe](../../../OSDCloud/private/steps/7-update/step-update-preoobe.ps1)
-  copies the entire module folder to `C:\Windows\Setup\Modules\OSDCloudPreOOBE`,
-  stamps the parent OSDCloud version into the destination manifest, and appends
+  [step-update-osdcloudpost](../../../OSDCloud/private/steps/7-update/step-update-osdcloudpost.ps1)
+  copies the entire module folder to `C:\Windows\Setup\Modules\OSDCloudPost`
+  (removing the retired `OSDCloudPreOOBE` and `OSDCloudSetupComplete` module folders),
+  stamps the parent OSDCloud version into the destination manifest, writes the
+  GUI task selections to `Setup\Scripts\OSDCloudPost.json`, and appends
   an explicit manifest import and synchronous `OSDCloudPreOOBE` launch to
   `C:\Windows\Setup\Scripts\OOBE.cmd`. The SYSTEM desktop child also imports the
   same module path. It does not install an interactive
-  menu in `SetupComplete.cmd`; that file is only cleaned of a legacy managed
-  invocation. Change module source and staging logic, not a staged copy.
+  menu in `SetupComplete.cmd`; it removes a legacy managed menu invocation and
+  appends the silent `Invoke-OSDCloudSetupComplete` runner. Change module source
+  and staging logic, not a staged copy.
   The OEM handoff manifest remains in `Setup\Scripts\OSDCloudPreOOBE.DriverPack.json`.
+- `OSDCloudPost.json` (`{Version:1, PreOOBE:{WindowsUpdateOS, WindowsUpdateDrivers}}`)
+  only sets the initial checkbox of **Windows Update - OS** and
+  **Windows Update - Drivers**; a missing or invalid file means both are checked.
+  The recast deployment window's **OSDCloud Post** section supplies these values
+  and the WinPE `PostAction`. **Install staged drivers** has no setting.
+- Offline must never fail or pause **Windows Update - OS** or **Windows Update -
+  Drivers**: connectivity and Wi-Fi recovery errors resolve to `Skipped`, and
+  `WirelessRecoveryFailed` (carried between tasks via the scheduler's shared
+  state) stops recovery being offered again. Only a Windows Update attempted
+  while connected can fail and pause for Retry/Continue.
 - The runtime requires inbox Windows PowerShell 5.1, WPF, and `-STA`; it
   supports AMD64 and ARM64 and runs as SYSTEM during setup. It is standalone:
   do not introduce a dependency on the OSDCloud module, PowerShell 7,
@@ -49,8 +63,8 @@ current operator-facing behavior and real-device validation requirements.
   updates, then discovered custom applications. Do not add an automatic reboot
   or automatic continuation.
 - Application discovery searches immediate folders under
-  `%SystemRoot%\Setup\PreOOBE` first, then `A:\OSDCloud\core\PreOOBE` through
-  `Z:\OSDCloud\core\PreOOBE`. Only `Invoke-AppDeployToolkit.exe` packages become
+  `%SystemRoot%\Setup\PreOOBE` first, then `A:\OSDCloud\post\PreOOBE` through
+  `Z:\OSDCloud\post\PreOOBE`. Only `Invoke-AppDeployToolkit.exe` packages become
   checked tasks; drive-hosted labels append `[G:]`-style drive identifiers.
   Run selected packages sequentially with Install/Silent arguments and their
   folder as the working directory. Do not force-cancel active installers.
@@ -83,7 +97,7 @@ current operator-facing behavior and real-device validation requirements.
 ## Tests and validation
 
 Run the smallest relevant Pester tests. The main coverage is under
-`OSDCloud/core/modules/OSDCloudPreOOBE/`. Tests use module scope for private helpers:
+`OSDCloud/core/modules/OSDCloudPost/`. Tests use module scope for private helpers:
 
 - `OSDCloudPreOOBE.Tests.ps1` for the runtime entry point
 - `OSDCloudPreOOBE.Engine.Tests.ps1` for task ordering and UI automation
@@ -92,16 +106,17 @@ Run the smallest relevant Pester tests. The main coverage is under
 - `OSDCloudPreOOBE.WindowsUpdate.Tests.ps1` for update actions
 - `OSDCloudPreOOBE.Application.Tests.ps1` for application discovery and installation
 - `Invoke-OSDCloudPreOOBEDriverPack.Tests.ps1` for OEM package handling
-- `OSDCloud/private/steps/7-update/step-update-preoobe.Tests.ps1` for module
-  copying, version stamping and setup-script staging
+- `OSDCloud/private/steps/7-update/step-update-osdcloudpost.Tests.ps1` for module
+  copying, version stamping, `OSDCloudPost.json` settings and OOBE/SetupComplete staging
+- `OSDCloudSetupComplete.Tests.ps1` for the silent SetupComplete runner
 - `OSDCloud/private/steps/5-drivers/step-Save-WindowsDriver-DriverPack.PreOOBE.Tests.ps1`
   for opt-in driver handoff
 
 For example, run a focused selection from the repository root:
 
 ```powershell
-Invoke-Pester -Path .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Engine.Tests.ps1,
-    .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.Connectivity.Tests.ps1
+Invoke-Pester -Path .\OSDCloud\core\modules\OSDCloudPost\OSDCloudPreOOBE.Engine.Tests.ps1,
+    .\OSDCloud\core\modules\OSDCloudPost\OSDCloudPreOOBE.Connectivity.Tests.ps1
 ```
 
 The local preview command is documented in the

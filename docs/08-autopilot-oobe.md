@@ -102,12 +102,14 @@ account. No additional configuration is needed.
 
 ## OSDCloudSetupComplete silent scripts (recast)
 
-The two `recast` tasks enable `step-update-setupcomplete`. During
+The two `recast` tasks enable `step-update-osdcloudpost`, which stages both the
+SetupComplete runner and PreOOBE. During
 WinPE deployment it validates and copies the standalone
-[OSDCloudSetupComplete module](../OSDCloud/core/modules/OSDCloudSetupComplete)
-to `C:\Windows\Setup\Modules\OSDCloudSetupComplete`, stamps its version from
-OSDCloud, and appends a synchronous, noninteractive invocation to
-`C:\Windows\Setup\Scripts\SetupComplete.cmd`.
+[OSDCloudPost module](../OSDCloud/core/modules/OSDCloudPost)
+to `C:\Windows\Setup\Modules\OSDCloudPost`, stamps its version from
+OSDCloud, removes the retired `Setup\Modules\OSDCloudPreOOBE` and
+`Setup\Modules\OSDCloudSetupComplete` folders, and appends a synchronous,
+noninteractive invocation to `C:\Windows\Setup\Scripts\SetupComplete.cmd`.
 
 The hook explicitly imports the staged manifest and calls
 `Invoke-OSDCloudSetupComplete`. Import alone is inert; the runtime has no
@@ -127,7 +129,7 @@ warned about; they may prevent the appended runner from executing.
 The runtime searches immediate package folders in this order:
 
 1. `%SystemRoot%\Setup\SetupComplete`
-2. `A:\OSDCloud\core\SetupComplete` through `Z:\OSDCloud\core\SetupComplete`
+2. `A:\OSDCloud\post\SetupComplete` through `Z:\OSDCloud\post\SetupComplete`
 
 Folders are sorted by name within each root. Prefix names with numbers to
 control order within that root. Identically named folders on different drives
@@ -137,7 +139,7 @@ Each package requires `OSDCloudSetupComplete.json`. Folders without this file
 are logged and skipped; no arbitrary script or PSADT fallback is used.
 
 ```text
-G:\OSDCloud\core\SetupComplete\010-ConfigureAgent\
+G:\OSDCloud\post\SetupComplete\010-ConfigureAgent\
     OSDCloudSetupComplete.json
     ConfigureAgent.ps1
     AgentSettings.json
@@ -196,8 +198,8 @@ them under the local Windows package root.
 
 Five numbered manifest templates, a harmless companion script, and supporting
 JSON are provided in the module's
-[example directory](../OSDCloud/core/modules/OSDCloudSetupComplete/files).
-The [packaging instructions](../OSDCloud/core/modules/OSDCloudSetupComplete/files/README.md)
+[example directory](../OSDCloud/core/modules/OSDCloudPost/files/SetupComplete).
+The [packaging instructions](../OSDCloud/core/modules/OSDCloudPost/files/SetupComplete/README.md)
 explain how to rename a chosen template to `OSDCloudSetupComplete.json`.
 Templates are not automatically discovered as tasks.
 
@@ -235,20 +237,19 @@ invokes the hook on a particular installation.
 
 ## OSDCloudPreOOBE automated tasks (recast)
 
-Only the two `recast` tasks enable `step-update-preoobe`. During WinPE
+Only the two `recast` tasks enable `step-update-osdcloudpost`. During WinPE
 deployment it copies the entire standalone
-[OSDCloudPreOOBE module](../OSDCloud/core/modules/OSDCloudPreOOBE) folder to
-`C:\Windows\Setup\Modules\OSDCloudPreOOBE` and **appends** a synchronous import
+[OSDCloudPost module](../OSDCloud/core/modules/OSDCloudPost) folder to
+`C:\Windows\Setup\Modules\OSDCloudPost` and **appends** a synchronous import
 and launch as the last block in `C:\Windows\Setup\Scripts\OOBE.cmd`, after the
 original commands. The module exports `Invoke-OSDCloudPreOOBE` and its launch alias
-`OSDCloudPreOOBE`; implementation helpers remain private. Import alone does not
+`OSDCloudPreOOBE`, plus `Invoke-OSDCloudSetupComplete`; implementation helpers remain private. Import alone does not
 open the window or run tasks. No standalone runtime is generated in Setup\Scripts,
 and the old `core\preoobe` script path is no longer supported.
 No interactive invocation is added to `SetupComplete.cmd`: that hook is noninteractive.
-PreOOBE staging removes a previously managed SetupComplete menu block if present, leaving
-all other content unchanged and not creating a missing SetupComplete script.
-The separate `step-update-setupcomplete` step above installs the new silent
-script runner, not an interactive menu.
+Staging removes a previously managed SetupComplete menu block if present, leaving
+all other content unchanged. The same step then installs the silent
+SetupComplete script runner described above, not an interactive menu.
 Original batch content is preserved byte-for-byte, with a separating newline added
 if needed; repeated staging is idempotent. Earlier managed OOBE menu blocks are replaced.
 An original `exit` or `goto :eof` can bypass the appended engine; staging warns about
@@ -261,7 +262,7 @@ The batch invocation selects native Windows PowerShell (using Sysnative when
 needed) and runs the equivalent of:
 
 ```cmd
-"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -Command "try { Import-Module -Name (Join-Path $env:SystemRoot 'Setup\Modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1') -ErrorAction Stop; exit (OSDCloudPreOOBE) } catch { Write-Error -ErrorRecord $_ -ErrorAction Continue; exit 1 }"
+"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -STA -ExecutionPolicy Bypass -Command "try { Import-Module -Name (Join-Path $env:SystemRoot 'Setup\Modules\OSDCloudPost\OSDCloudPost.psd1') -ErrorAction Stop; exit (OSDCloudPreOOBE) } catch { Write-Error -ErrorRecord $_ -ErrorAction Continue; exit 1 }"
 ```
 
 The explicit manifest path avoids any dependence on `PSModulePath`. The launch
@@ -296,6 +297,31 @@ checkbox. Unchecking a task before it starts skips it (logged as unchecked by
 technician); checking it again before it is reached runs it. Checkboxes are disabled
 once a task has started or finished.
 
+The `recast` deployment window has an **OSDCloud Post** section below
+**Deployment Settings**. It starts collapsed like **Device and Identity**; the
+header shows the selected post action.
+
+- **WinPE Post Action** chooses what WinPE does after a successful deployment:
+  `Quit`, `Restart`, `Shutdown` or `Exit`. It defaults to `Restart` in this
+  window, or to the `-PostAction` value when one is passed to `Deploy-OSDCloud`.
+  (The command-line default remains `Quit`.) The selection applies only after
+  **Start**; cancelling the window runs nothing.
+- **Windows Update - OS** and **Windows Update - Drivers** set whether those
+  PreOOBE tasks start checked. Staging writes the choices to
+  `C:\Windows\Setup\Scripts\OSDCloudPost.json`. A cleared toggle starts the task
+  unchecked; the technician can still check it in the PreOOBE window. A missing
+  or invalid file leaves both tasks checked. The toggles are disabled when the
+  selected task sequence does not run `step-update-osdcloudpost`.
+- Both Windows Update tasks need internet access on first boot. When the window
+  opens, it checks `http://www.msftconnecttest.com/connecttest.txt` in the
+  background (5-second timeout). If there is no network or the check fails, the
+  section expands and shows a warning, and the header shows
+  **Warning: no internet access**. **Start** stays available: an offline device
+  skips those tasks and setup continues.
+
+**Install staged drivers** has no toggle; it always runs when a driver pack was
+staged.
+
 Tasks run in this order:
 
 1. **Install staged drivers**: runs first because the OEM drivers may be required
@@ -328,21 +354,21 @@ Tasks run in this order:
    without another time request.
    HTTP time is unauthenticated: use a trusted deployment network. This does not
    disable certificate validation for connectivity probes or Windows Update.
-3. **Update Windows 11**: check connectivity, then scan/download/install applicable
+3. **Windows Update - OS**: check connectivity, then scan/download/install applicable
    software updates (including Windows servicing and .NET). If this task **fails**,
    the sequence pauses: use **Shell** to verify the system date, time and time zone,
    then select **Retry** (runs it again after the 10-second countdown) or **Continue**.
    The pause has no timeout; closing the window skips the remaining tasks.
-4. **Update Drivers**: check connectivity again, then scan/download/install
+4. **Windows Update - Drivers**: check connectivity again, then scan/download/install
    applicable driver updates.
 5. **Custom applications**: when the window opens, discover immediate application
    folders containing `OSDCloudPreOOBE.json` or `Invoke-AppDeployToolkit.exe` under
-   `%SystemRoot%\Setup\PreOOBE` and `<drive>:\OSDCloud\core\PreOOBE` on A: through Z:.
+   `%SystemRoot%\Setup\PreOOBE` and `<drive>:\OSDCloud\post\PreOOBE` on A: through Z:.
    The former drive-hosted `OSDCloud\PreOOBE` location is not searched or migrated;
    the local `%SystemRoot%\Setup\PreOOBE` path is unchanged.
    Local applications appear first, followed by drive-hosted applications in
    drive-letter order; folders within each root are sorted by name.
-   Each eligible application appears below **Update Drivers**, checked by default
+   Each eligible application appears below **Windows Update - Drivers**, checked by default
    unless its manifest specifies otherwise. The label is the manifest name or
    folder name, with the drive appended for drive-hosted content,
    such as **My AppFolder [G:]**. Uncheck it before it starts to skip installation.
@@ -364,7 +390,7 @@ Put a file named **OSDCloudPreOOBE.json** beside your installer in an immediate
 application folder under one of the search roots above. For example:
 
 ```text
-G:\OSDCloud\core\PreOOBE\Workspace Agent\
+G:\OSDCloud\post\PreOOBE\Workspace Agent\
     OSDCloudPreOOBE.json
     AgentBootstrapper.exe
     AgentRegistration.cer
@@ -569,7 +595,11 @@ must still be corrected before a connection can succeed.
   runs again as described above. For update recovery, the original internet/TLS
   probe runs again (up to three checks
   with two-second pauses for DHCP/DNS readiness). Association alone never starts
-  Windows Update. Each update task can offer recovery if its own check fails.
+  Windows Update. If recovery is skipped or fails, the remaining update tasks do
+  not offer it again in the same session (the dialog stays available under
+  **Tools**). An update task that cannot reach the internet, including when the
+  connectivity check or Wi-Fi recovery itself errors, ends **Skipped**, never
+  **Failed**, so it does not pause the sequence for Retry/Continue.
   Preview never scans adapters, starts WLAN services or opens the Wi-Fi dialog.
 
 ### Technician tools and display
@@ -604,7 +634,7 @@ Windows Setup windows cannot cover it; minimize it when working in a launched sh
 **Security:** this is a technician feature that deliberately exposes SYSTEM
 shells, setup script editing, clock changes, and update installation. Disable the
 engine for end-user deployments by setting
-`"skip": true` on `step-update-preoobe` in the selected dark-workflow task
+`"skip": true` on `step-update-osdcloudpost` in the selected dark-workflow task
 **before deployment**. Editing the task afterward does not remove an already
 staged invocation. Driver handoff requires both the explicit `PreOOBE` parameter
 and an enabled staging step; when disabled, original SetupComplete driver handling remains.
@@ -630,13 +660,13 @@ if Windows subsequently changes desktops. The menu does not force a desktop swit
 For an inert **local console** preview, use:
 
 ```powershell
-powershell.exe -NoLogo -NoProfile -STA -Command "Import-Module .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop; exit (OSDCloudPreOOBE -Preview)"
+powershell.exe -NoLogo -NoProfile -STA -Command "Import-Module .\OSDCloud\core\modules\OSDCloudPost\OSDCloudPost.psd1 -ErrorAction Stop; exit (OSDCloudPreOOBE -Preview)"
 ```
 
 From an existing Windows PowerShell 5.1 STA console, the equivalent is:
 
 ```powershell
-Import-Module .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop
+Import-Module .\OSDCloud\core\modules\OSDCloudPost\OSDCloudPost.psd1 -ErrorAction Stop
 Invoke-OSDCloudPreOOBE -Preview
 ```
 
@@ -652,7 +682,7 @@ the actual SYSTEM hook on disposable AMD64 and ARM64 Windows 11 installations:
 the menu must be visible and keyboard/mouse interactive, setup must wait while
 it is open, both shells must work, and closing with shells still open must allow
 setup to proceed normally. Also test missing assets and unavailable desktops.
-Confirm the complete module is present under `C:\Windows\Setup\Modules\OSDCloudPreOOBE`
+Confirm the complete module is present under `C:\Windows\Setup\Modules\OSDCloudPost`
 with the deployment version in its manifest. Verify the OOBE hook imports that
 manifest and runs after original OOBE commands, and that SetupComplete has no
 managed menu invocation. Verify date, time and time zone changes and normal continuation.

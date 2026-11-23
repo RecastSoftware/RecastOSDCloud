@@ -299,6 +299,22 @@ Describe 'OSDCloud BootMenu runtime' {
         Should -Invoke Read-Host -Times 3 -Exactly
     }
 
+    It 'lists profiles by name, not by path' {
+        $named = @(
+            [pscustomobject]@{ Index = 0; Profile = 'PowerShell'; Path = 'X:\b\osdcloudbootmenu.json'; AssetPath = $null }
+            [pscustomobject]@{ Index = 0; Profile = 'Application Workspace Demo'; Path = 'X:\c\osdcloudbootmenu.json'; AssetPath = $null }
+            [pscustomobject]@{ Index = 0; Profile = 'OSDCloud'; Path = 'X:\a\osdcloudbootmenu.json'; AssetPath = $null }
+        )
+        Mock Get-OSDCloudBootMenuProfileCandidates { $named }
+        Mock Show-OSDCloudBootMenuProfileWindow {
+            $script:shownProfiles = @($Profiles)
+            $script:candidate
+        }
+        Invoke-OSDCloudBootMenu
+        $script:shownProfiles.Profile | Should -Be @('Application Workspace Demo', 'OSDCloud', 'PowerShell')
+        $script:shownProfiles.Index | Should -Be @(1, 2, 3)
+    }
+
     It 'requires a profile choice instead of exiting on a dismissed selector' {
         Mock Get-OSDCloudBootMenuProfileCandidates { $script:candidate; $script:candidate.PSObject.Copy() }
         $script:selections = 0

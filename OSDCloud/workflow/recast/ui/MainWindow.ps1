@@ -570,6 +570,135 @@ function Update-DriverPackResults {
         [string]$global:OSDCloudDeploy.DriverPackCloudObject.Url
     }
 }
+#================================================
+# OSDCloud Post
+$PostActionCombo = $window.FindName('PostActionCombo')
+$PostActionHintText = $window.FindName('PostActionHintText')
+$WindowsUpdateOSToggle = $window.FindName('WindowsUpdateOSToggle')
+$WindowsUpdateDriversToggle = $window.FindName('WindowsUpdateDriversToggle')
+$PreOOBEHintText = $window.FindName('PreOOBEHintText')
+$script:PostActionDescriptions = @{
+    Quit     = 'Stay in WinPE and return to the prompt'
+    Restart  = 'Restart WinPE into Windows Setup (wpeutil reboot)'
+    Shutdown = 'Shut down the device (wpeutil shutdown)'
+    Exit     = 'Close the PowerShell session'
+}
+$PostActionValues = @($global:OSDCloudDeploy.PostActionValues | Where-Object { $_ })
+if ($PostActionValues.Count -eq 0) { $PostActionValues = @('Quit', 'Restart', 'Shutdown', 'Exit') }
+$PostActionCombo.ItemsSource = $PostActionValues
+# This workflow restarts into Windows Setup unless -PostAction was passed explicitly.
+$PostActionDefault = if ($global:OSDCloudDeploy.PostActionSpecified -eq $true) { [string]$global:OSDCloudDeploy.PostAction } else { 'Restart' }
+$PostActionCombo.SelectedItem = if ($PostActionValues -contains $PostActionDefault) { $PostActionDefault } else { $PostActionValues[0] }
+$OSDCloudPostExpander = $window.FindName('OSDCloudPostExpander')
+$OSDCloudPostSummaryText = $window.FindName('OSDCloudPostSummaryText')
+$InternetWarningPanel = $window.FindName('InternetWarningPanel')
+$script:InternetAvailable = $null
+function Update-OSDCloudPostSummary {
+    $summary = @()
+    $selectedPostAction = Get-ComboValue -ComboBox $PostActionCombo
+    if ($selectedPostAction) { $summary += $selectedPostAction }
+    if ($WindowsUpdateOSToggle.IsEnabled) {
+        $updates = @(
+            if ($WindowsUpdateOSToggle.IsChecked -eq $true) { $WindowsUpdateOSToggle.Content }
+            if ($WindowsUpdateDriversToggle.IsChecked -eq $true) { $WindowsUpdateDriversToggle.Content }
+        )
+        $summary += if ($updates.Count -gt 0) { $updates } else { 'No Windows Update' }
+    }
+    if ($script:InternetAvailable -eq $false) {
+        $summary += 'Warning: no internet access'
+        $OSDCloudPostSummaryText.Foreground = $window.FindResource('WarningBrush')
+    }
+    else {
+        $OSDCloudPostSummaryText.ClearValue([System.Windows.Controls.TextBlock]::ForegroundProperty)
+    }
+    $OSDCloudPostSummaryText.Text = $summary -join '  |  '
+}
+function Update-PostActionHint {
+    $selectedPostAction = Get-ComboValue -ComboBox $PostActionCombo
+    $PostActionHintText.Text = if ($selectedPostAction -and $script:PostActionDescriptions.ContainsKey($selectedPostAction)) {
+        $script:PostActionDescriptions[$selectedPostAction]
+    }
+    else {
+        '-'
+    }
+    Update-OSDCloudPostSummary
+}
+$PostActionCombo.Add_SelectionChanged({ Update-PostActionHint })
+Update-PostActionHint
+
+function Set-MainWindowInternetState {
+    param ([bool]$Available)
+    $script:InternetAvailable = $Available
+    $InternetWarningPanel.Visibility = if ($Available) { 'Collapsed' } else { 'Visible' }
+    if (-not $Available) { $OSDCloudPostExpander.IsExpanded = $true }
+    Update-OSDCloudPostSummary
+}
+# Windows Update - OS and Drivers need internet on first boot. The probe runs
+# asynchronously so the window never waits on the network; Start stays enabled.
+if (-not $script:InternetProbeUri) { $script:InternetProbeUri = 'http://www.msftconnecttest.com/connecttest.txt' }
+try {
+    if (-not [System.Net.NetworkInformation.NetworkInterface]::GetIsNetworkAvailable()) {
+        Set-MainWindowInternetState -Available $false
+    }
+    else {
+        Add-Type -AssemblyName System.Net.Http -ErrorAction Stop
+        $script:InternetProbeClient = [System.Net.Http.HttpClient]::new()
+        $script:InternetProbeClient.Timeout = [TimeSpan]::FromSeconds(5)
+        $script:InternetProbe = $script:InternetProbeClient.GetStringAsync($script:InternetProbeUri)
+        $script:InternetProbeTimer = [System.Windows.Threading.DispatcherTimer]::new()
+        $script:InternetProbeTimer.Interval = [TimeSpan]::FromMilliseconds(250)
+        $script:InternetProbeTimer.Add_Tick({
+                if (-not $script:InternetProbe.IsCompleted) { return }
+                $script:InternetProbeTimer.Stop()
+                $probeSucceeded = $script:InternetProbe.Status -eq [System.Threading.Tasks.TaskStatus]::RanToCompletion -and
+                    ([string]$script:InternetProbe.Result).Trim() -eq 'Microsoft Connect Test'
+                $script:InternetProbeClient.Dispose()
+                Set-MainWindowInternetState -Available $probeSucceeded
+            })
+        $script:InternetProbeTimer.Start()
+        $window.Add_Closed({ if ($script:InternetProbeTimer) { $script:InternetProbeTimer.Stop() } })
+    }
+}
+catch {
+    Write-Verbose "Internet check unavailable: $($_.Exception.Message)"
+}
+
+$WindowsUpdateOSToggle.IsChecked = ($global:OSDCloudDeploy.PreOOBEWindowsUpdateOS -ne $false)
+$WindowsUpdateDriversToggle.IsChecked = ($global:OSDCloudDeploy.PreOOBEWindowsUpdateDrivers -ne $false)
+function Update-OSDCloudPostState {
+    # PreOOBE toggles only apply when the selected task stages OSDCloudPost.
+    $selectedTaskName = Get-ComboValue -ComboBox $TaskSequenceCombo
+    $selectedTask = $global:OSDCloudDeploy.WorkflowTasks | Where-Object { $_.Name -eq $selectedTaskName } | Select-Object -First 1
+    $postStepEnabled = [bool](@($selectedTask.steps) | Where-Object { $_.command -eq 'step-update-osdcloudpost' -and $_.skip -ne $true })
+    $WindowsUpdateOSToggle.IsEnabled = $postStepEnabled
+    $WindowsUpdateDriversToggle.IsEnabled = $postStepEnabled
+    $PreOOBEHintText.Text = if ($postStepEnabled) {
+        'Cleared tasks start unchecked in the PreOOBE window; the technician can still select them.'
+    }
+    else {
+        'Unavailable: the selected task sequence does not stage OSDCloudPost.'
+    }
+    Update-OSDCloudPostSummary
+}
+foreach ($postToggle in @($WindowsUpdateOSToggle, $WindowsUpdateDriversToggle)) {
+    $postToggle.Add_Checked({ Update-OSDCloudPostSummary })
+    $postToggle.Add_Unchecked({ Update-OSDCloudPostSummary })
+}
+$TaskSequenceCombo.Add_SelectionChanged({ Update-OSDCloudPostState })
+Update-OSDCloudPostState
+#================================================
+$DeploymentSettingsSummaryText = $window.FindName('DeploymentSettingsSummaryText')
+function Update-DeploymentSettingsSummary {
+    $summary = foreach ($combo in @($TaskSequenceCombo, $OperatingSystemCombo, $OSLanguageCodeCombo, $OSEditionCombo, $OSActivationCombo)) {
+        Get-ComboValue -ComboBox $combo
+    }
+    $DeploymentSettingsSummaryText.Text = @($summary | Where-Object { $_ }) -join '  |  '
+}
+foreach ($deploymentCombo in @($TaskSequenceCombo, $OperatingSystemCombo, $OSLanguageCodeCombo, $OSEditionCombo, $OSActivationCombo)) {
+    $deploymentCombo.Add_SelectionChanged({ Update-DeploymentSettingsSummary })
+}
+Update-DeploymentSettingsSummary
+#================================================
 $DriverPackCombo.Add_SelectionChanged({ Update-DriverPackResults })
 $OperatingSystemCombo.Add_SelectionChanged({ Update-OsResults })
 $OSActivationCombo.Add_SelectionChanged({ Update-OsResults })
@@ -618,6 +747,12 @@ if ($script:SelectionConfirmed) {
     $global:OSDCloudDeploy.OSEditionId = $OSEditionId
     $global:OSDCloudDeploy.OSLanguageCode = $OperatingSystemCloudObject.OSLanguageCode
     $global:OSDCloudDeploy.OSVersion = $OperatingSystemCloudObject.OSVersion
+    $selectedPostAction = Get-ComboValue -ComboBox $PostActionCombo
+    if ($selectedPostAction) {
+        $global:OSDCloudDeploy | Add-Member -NotePropertyName PostAction -NotePropertyValue $selectedPostAction -Force
+    }
+    $global:OSDCloudDeploy | Add-Member -NotePropertyName PreOOBEWindowsUpdateOS -NotePropertyValue ([bool]$WindowsUpdateOSToggle.IsChecked) -Force
+    $global:OSDCloudDeploy | Add-Member -NotePropertyName PreOOBEWindowsUpdateDrivers -NotePropertyValue ([bool]$WindowsUpdateDriversToggle.IsChecked) -Force
     $global:OSDCloudDeploy.TimeStart = (Get-Date)
 
     $LogsPath = "$env:TEMP\osdcloud-logs"

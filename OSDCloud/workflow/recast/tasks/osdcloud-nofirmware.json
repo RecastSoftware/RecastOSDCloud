@@ -199,13 +199,8 @@
             "skip": true
         },
         {
-            "name": "Stage OSDCloudPreOOBE",
-            "command": "step-update-preoobe",
-            "skip": false
-        },
-        {
-            "name": "Stage OSDCloudSetupComplete",
-            "command": "step-update-setupcomplete",
+            "name": "Stage OSDCloudPost",
+            "command": "step-update-osdcloudpost",
             "skip": false
         },
         {

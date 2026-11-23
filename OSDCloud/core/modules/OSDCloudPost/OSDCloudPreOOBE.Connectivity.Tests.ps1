@@ -187,7 +187,8 @@ InModuleScope OSDCloudPost {
             $state = [hashtable]::Synchronized(@{ Messages = [Collections.Concurrent.ConcurrentQueue[string]]::new(); CancelRequested = $false; RebootRequired = $false; Succeeded = $false; Outcome = 'Running'; DurationMs = 0L })
             Invoke-OSDCloudPreOOBETask -Type Software -State $state
             $output = $state.Messages.ToArray() -join "`n"
-            $output | Should -BeLike '*Software task failed: Name not resolved*'
+            $output | Should -BeLike '*Skipped Software updates: internet unavailable. Connectivity check failed: Name not resolved*'
+            $state.Outcome | Should -Be Skipped
             $output | Should -Not -BeLike '*AggregateException*'
             ($script:logged -join "`n") | Should -BeLike '*System.AggregateException*'
         }

@@ -975,7 +975,7 @@ function Get-OSDCloudPreOOBEApplication {
 
     .DESCRIPTION
         Searches immediate application folders under SystemRoot\Setup\PreOOBE,
-        then A: through Z: under OSDCloud\core\PreOOBE. OSDCloudPreOOBE.json takes
+        then A: through Z: under OSDCloud\post\PreOOBE. OSDCloudPreOOBE.json takes
         precedence over Invoke-AppDeployToolkit.exe and supplies a custom command,
         conditions and default selection. Nonmatches are hidden. Invalid packages
         and unreadable roots are reported without preventing later discovery.
@@ -1007,7 +1007,7 @@ function Get-OSDCloudPreOOBEApplication {
     $roots = @([pscustomobject]@{ Path = (Join-Path $env:SystemRoot 'Setup\PreOOBE'); Drive = $null })
     $roots += foreach ($letter in 65..90) {
         $drive = "$([char]$letter):"
-        [pscustomobject]@{ Path = "$drive\OSDCloud\core\PreOOBE"; Drive = $drive }
+        [pscustomobject]@{ Path = "$drive\OSDCloud\post\PreOOBE"; Drive = $drive }
     }
     foreach ($root in $roots) {
         try {
@@ -1376,7 +1376,10 @@ function Invoke-OSDCloudPreOOBETask {
     .DESCRIPTION
         Internet time and driver work precede updates. Failed connectivity offers
         Wi-Fi recovery when wireless hardware is detected, then skips updates if
-        still offline, not local drivers or applications. Application tasks use the
+        still offline, not local drivers or applications. Wi-Fi recovery is not
+        offered again after it fails in the same session (State.WirelessRecoveryFailed),
+        and connectivity errors resolve to Skipped rather than Failed so offline
+        update tasks never pause the sequence. Application tasks use the
         discovered executable path in State.ApplicationPath.
         Preview produces managed sample results without external calls.
     .PARAMETER Type
@@ -1422,7 +1425,10 @@ function Invoke-OSDCloudPreOOBETask {
                         if ($State.CancelRequested) { $State.Outcome = 'Cancelled' }
                         else { Sync-OSDCloudPreOOBETime -State $State }
                     }
-                    else { throw }
+                    else {
+                        $State.WirelessRecoveryFailed = $true
+                        throw
+                    }
                 }
             }
         }
@@ -1433,16 +1439,29 @@ function Invoke-OSDCloudPreOOBETask {
             Invoke-OSDCloudPreOOBEApplication -State $State
         }
         else {
-            $connection = Test-OSDCloudPreOOBEConnectivity -State $State
-            if (-not $connection.Connected -and -not $State.CancelRequested) {
-                if (Invoke-OSDCloudPreOOBEWirelessRecovery -State $State) {
-                    # Association can precede DHCP/DNS readiness.
-                    for ($retry = 0; $retry -lt 3 -and -not $State.CancelRequested; $retry++) {
-                        $connection = Test-OSDCloudPreOOBEConnectivity -State $State
-                        if ($connection.Connected) { break }
-                        if ($retry -lt 2) { Start-Sleep -Seconds 2 }
+            # Offline must never fail or pause an update task: any connectivity or
+            # Wi-Fi recovery problem resolves to Skipped and the sequence continues.
+            $connection = $null
+            try {
+                $connection = Test-OSDCloudPreOOBEConnectivity -State $State
+                if (-not $connection.Connected -and -not $State.CancelRequested) {
+                    if ($State.WirelessRecoveryFailed) {
+                        Write-OOBEMenuUpdateStatus -State $State -Message 'Wi-Fi recovery already failed in this session; not offering it again.'
                     }
+                    elseif (Invoke-OSDCloudPreOOBEWirelessRecovery -State $State) {
+                        # Association can precede DHCP/DNS readiness.
+                        for ($retry = 0; $retry -lt 3 -and -not $State.CancelRequested; $retry++) {
+                            $connection = Test-OSDCloudPreOOBEConnectivity -State $State
+                            if ($connection.Connected) { break }
+                            if ($retry -lt 2) { Start-Sleep -Seconds 2 }
+                        }
+                    }
+                    elseif (-not $State.CancelRequested) { $State.WirelessRecoveryFailed = $true }
                 }
+            }
+            catch {
+                Write-OOBEMenuLog -Message "$Type connectivity check failed: $($_.Exception.ToString())"
+                $connection = [pscustomobject]@{ Connected = $false; Reason = "Connectivity check failed: $(Get-OSDCloudPreOOBEErrorMessage -Exception $_.Exception)" }
             }
             if ($State.CancelRequested) { $State.Outcome = 'Cancelled' }
             elseif (-not $connection.Connected) {

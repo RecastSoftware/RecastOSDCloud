@@ -14,7 +14,7 @@ function step-Save-WindowsDriver-DriverPack {
 
     try {
     $deferToPreOOBE = $PreOOBE -and @($global:OSDCloudDeploy.WorkflowTaskObject.steps | Where-Object {
-        $_.command -eq 'step-update-preoobe' -and $_.skip -ne $true -and $_.disable -ne $true
+        $_.command -eq 'step-update-osdcloudpost' -and $_.skip -ne $true -and $_.disable -ne $true
     }).Count -eq 1
     if ($deferToPreOOBE) {
         $manifestPath = 'C:\Windows\Setup\Scripts\OSDCloudPreOOBE.DriverPack.json'

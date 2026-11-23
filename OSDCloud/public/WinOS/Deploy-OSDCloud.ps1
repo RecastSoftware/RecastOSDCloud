@@ -44,7 +44,10 @@ function Deploy-OSDCloud {
         Specifies what to do after the workflow completes successfully. Restart and
         Shutdown are available only in WinPE. Exit closes the PowerShell session.
         Restart, Shutdown, and Exit run after a 10-second delay. Defaults to Quit,
-        which returns without taking further action.
+        which returns without taking further action. In the GUI, this value is the
+        initial WinPE Post Action selection; a workflow UI that offers the choice
+        can change it before Start. When omitted, the recast workflow UI selects
+        Restart.
 
     .PARAMETER Force
         Suppresses supported confirmation prompts for destructive workflow steps.
@@ -507,10 +510,18 @@ function Deploy-OSDCloud {
             else {
                 # Prevents the workflow from starting unless the Start button is clicked in the GUI
                 $global:OSDCloudDeploy.TimeStart = $null
+                if ($global:OSDCloudDeploy.PSObject.Properties.Name -contains 'PostAction') {
+                    $global:OSDCloudDeploy.PostAction = $PostAction
+                }
+                # Workflow UIs may choose their own default when -PostAction was not passed.
+                $global:OSDCloudDeploy | Add-Member -NotePropertyName PostActionSpecified -NotePropertyValue $PSBoundParameters.ContainsKey('PostAction') -Force
 
                 Invoke-OSDCloudWorkflowUI -WorkflowName $WorkflowName
 
                 if ($null -ne $global:OSDCloudDeploy.TimeStart) {
+                    if ($global:OSDCloudDeploy.PostAction -in 'Quit', 'Restart', 'Shutdown', 'Exit') {
+                        $PostAction = [string]$global:OSDCloudDeploy.PostAction
+                    }
                     Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Invoke-OSDCloudWorkflowTask $WorkflowName"
                 }
                 else {

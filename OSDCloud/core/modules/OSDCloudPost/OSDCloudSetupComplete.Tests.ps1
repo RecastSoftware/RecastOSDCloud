@@ -275,7 +275,7 @@ Set-Content -LiteralPath (Join-Path $PSScriptRoot 'new.txt') -Value 'created'
             It 'lists local discovery first and A through Z after it' {
                 $roots = @(Get-OSDCloudSetupCompleteRoot)
                 $roots[0] | Should -Be (Join-Path $env:SystemRoot 'Setup\SetupComplete')
-                $roots[1..26] | Should -Be @(65..90 | ForEach-Object { "$([char]$_):\OSDCloud\core\SetupComplete" })
+                $roots[1..26] | Should -Be @(65..90 | ForEach-Object { "$([char]$_):\OSDCloud\post\SetupComplete" })
             }
 
             It 'sorts within each root, continues failures, returns only a status, and reruns every time' {

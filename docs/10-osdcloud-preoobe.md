@@ -8,8 +8,8 @@ on the setup desktop (running as SYSTEM) and runs these tasks in a fixed order:
 
 1. OEM driver pack install (Lenovo / Surface)
 2. Internet time synchronization
-3. Windows 11 software updates (including .NET)
-4. Driver updates
+3. Windows Update - OS (software updates, including .NET)
+4. Windows Update - Drivers
 5. Custom applications you stage (optional)
 
 Nothing runs until the technician selects **Start**. It never reboots the
@@ -21,7 +21,7 @@ validation checklist are in [Hand off to Autopilot and OOBE](08-autopilot-oobe.m
 ## Prerequisites
 
 - A deployment that uses a `recast` workflow task (`osdcloud` or
-  `osdcloud-nofirmware`). Only these enable the `step-update-preoobe` step.
+  `osdcloud-nofirmware`). Only these enable the `step-update-osdcloudpost` step.
 - Windows 11 on AMD64 or ARM64. The runtime uses inbox Windows PowerShell 5.1
   and WPF; it needs no OSDCloud module, PowerShell 7, PsExec or downloads.
 - A technician at the device when it reaches OOBE.
@@ -31,14 +31,27 @@ validation checklist are in [Hand off to Autopilot and OOBE](08-autopilot-oobe.m
 ## 1. Deploy with PreOOBE enabled
 
 Deploy normally (see [Deploy Windows 11](04-deploy-windows.md)) with a
-`recast` task. During the WinPE phase the `step-update-preoobe` step:
+`recast` task. During the WinPE phase the `step-update-osdcloudpost` step:
 
-- copies the module to `C:\Windows\Setup\Modules\OSDCloudPreOOBE`
+- copies the OSDCloudPost module to `C:\Windows\Setup\Modules\OSDCloudPost`
+- writes the deployment window's PreOOBE task selections to
+  `C:\Windows\Setup\Scripts\OSDCloudPost.json`
 - appends a launch block to `C:\Windows\Setup\Scripts\OOBE.cmd`, after any
   existing commands (repeat runs are idempotent)
+- appends the silent SetupComplete runner to `SetupComplete.cmd`
+
+In the `recast` deployment window, the collapsible **OSDCloud Post** section
+below **Deployment Settings** sets the **WinPE Post Action** (`Quit`, `Restart`,
+`Shutdown` or `Exit`; defaults to `Restart` unless `-PostAction` is passed) and
+whether **Windows Update - OS** and **Windows Update - Drivers** start checked.
+A cleared toggle only unchecks the task; the technician can still select it.
+**Install staged drivers** always runs when a driver pack was staged. If the
+window finds no internet access, the section expands with a warning that both
+Windows Update tasks need internet on first boot.
 
 To **turn PreOOBE off** (for example for end-user deployments), set
-`"skip": true` on `step-update-preoobe` in the task **before** deploying.
+`"skip": true` on `step-update-osdcloudpost` in the task **before** deploying.
+This also skips the SetupComplete runner, which is staged by the same step.
 Editing the task afterward does not remove an already staged hook.
 
 ## 2. (Optional) Stage custom applications
@@ -48,7 +61,7 @@ PreOOBE discovers application folders, one level deep, in these roots:
 | Order | Root |
 |---|---|
 | 1 | `%SystemRoot%\Setup\PreOOBE` (local disk) |
-| 2 | `<drive>:\OSDCloud\core\PreOOBE` on A: through Z: (for example a USB drive) |
+| 2 | `<drive>:\OSDCloud\post\PreOOBE` on A: through Z: (for example a USB drive) |
 
 A folder becomes a task if it contains either:
 
@@ -60,7 +73,7 @@ A folder becomes a task if it contains either:
 Example layout on a USB drive:
 
 ```text
-G:\OSDCloud\core\PreOOBE\Workspace Agent\
+G:\OSDCloud\post\PreOOBE\Workspace Agent\
     OSDCloudPreOOBE.json
     AgentBootstrapper.exe
     AgentRegistration.cer
@@ -77,7 +90,7 @@ G:\OSDCloud\core\PreOOBE\Workspace Agent\
 ```
 
 Start from the samples in
-[files/](../OSDCloud/core/modules/OSDCloudPreOOBE/files/): copy one next to
+[files/](../OSDCloud/core/modules/OSDCloudPost/files/PreOOBE/): copy one next to
 your installer and rename it to `OSDCloudPreOOBE.json`.
 
 | Field | Required | Notes |
@@ -105,7 +118,7 @@ Preview is inert: no network, installs, shells or clock changes. From a
 Windows PowerShell 5.1 console in the repository root:
 
 ```powershell
-powershell.exe -NoLogo -NoProfile -STA -Command "Import-Module .\OSDCloud\core\modules\OSDCloudPreOOBE\OSDCloudPreOOBE.psd1 -ErrorAction Stop; exit (OSDCloudPreOOBE -Preview)"
+powershell.exe -NoLogo -NoProfile -STA -Command "Import-Module .\OSDCloud\core\modules\OSDCloudPost\OSDCloudPost.psd1 -ErrorAction Stop; exit (OSDCloudPreOOBE -Preview)"
 ```
 
 Use it to confirm your application folders are discovered, labelled
@@ -123,7 +136,7 @@ When the device reaches OOBE, the window opens at the top-left of the screen.
    it immediately.
 3. Watch live output in the window. While an update runs the button reads
    **Skip Step**.
-4. If **Update Windows 11** fails, the sequence pauses. Use **Shell** to
+4. If **Windows Update - OS** fails, the sequence pauses. Use **Shell** to
    check date, time and time zone, then **Retry** or **Continue**.
 5. When all tasks finish, select **Continue to OOBE**.
 
@@ -143,8 +156,9 @@ present, a **Connect to Wi-Fi** dialog opens (also under **Tools**). It
 supports saved profiles, open networks and WPA2/WPA3-Personal. New connections
 use a temporary in-memory profile: nothing is saved to disk, and it may not
 survive a reboot. After you connect, time sync (or the update check) retries.
-If recovery fails, update tasks are **Skipped**; local driver install and
-applications still run.
+If recovery fails, both Windows Update tasks are **Skipped** without pausing,
+Wi-Fi is not offered again for the next update task, and local driver install
+and applications still run.
 
 ## 5. Logs and results
 

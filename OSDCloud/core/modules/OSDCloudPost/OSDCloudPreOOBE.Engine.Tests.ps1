@@ -55,7 +55,7 @@ InModuleScope OSDCloudPost {
         It 'appends checked applications after drivers, passes their paths, and skips unchecked applications' {
             Mock Get-OSDCloudPreOOBEApplication {
                 [pscustomobject]@{ Name = 'Local App'; Path = 'C:\Windows\Setup\PreOOBE\Local App\Invoke-AppDeployToolkit.exe' }
-                [pscustomobject]@{ Name = 'USB App [G:]'; Path = 'G:\OSDCloud\core\PreOOBE\USB App\Invoke-AppDeployToolkit.exe' }
+                [pscustomobject]@{ Name = 'USB App [G:]'; Path = 'G:\OSDCloud\post\PreOOBE\USB App\Invoke-AppDeployToolkit.exe' }
             }
             $engine = New-OSDCloudPreOOBEState
             $engine.Started = $true
@@ -75,7 +75,7 @@ InModuleScope OSDCloudPost {
         It 'waits for an active application on close without requesting cancellation' {
             $engine.Started = $true
             $engine.Tasks[0].Type = 'Application'
-            $engine.Tasks[0] | Add-Member NoteProperty Path 'G:\OSDCloud\core\PreOOBE\App\Invoke-AppDeployToolkit.exe'
+            $engine.Tasks[0] | Add-Member NoteProperty Path 'G:\OSDCloud\post\PreOOBE\App\Invoke-AppDeployToolkit.exe'
             Update-OSDCloudPreOOBEState -State $engine -PreviewOnly
             $engine.Worker.Handle.IsCompleted = $false
             $engine.CloseRequested = $true
@@ -90,16 +90,16 @@ InModuleScope OSDCloudPost {
 
         It 'skips default-unchecked applications but runs a rechecked custom command with its metadata' {
             $script:customCommand = [pscustomobject]@{
-                Executable = 'AgentBootstrapper.exe'; WorkingDirectory = 'G:\OSDCloud\core\PreOOBE\Agent'
+                Executable = 'AgentBootstrapper.exe'; WorkingDirectory = 'G:\OSDCloud\post\PreOOBE\Agent'
                 Arguments = '--certificate AgentRegistration.cer --startDeployment --wait'
             }
             Mock Get-OSDCloudPreOOBEApplication {
                 [pscustomobject]@{
-                    Name = 'Unchecked App'; Path = 'G:\OSDCloud\core\PreOOBE\Agent\AgentBootstrapper.exe'
+                    Name = 'Unchecked App'; Path = 'G:\OSDCloud\post\PreOOBE\Agent\AgentBootstrapper.exe'
                     DefaultSelected = $false; Command = $script:customCommand
                 }
                 [pscustomobject]@{
-                    Name = 'Rechecked App'; Path = 'G:\OSDCloud\core\PreOOBE\Agent\AgentBootstrapper.exe'
+                    Name = 'Rechecked App'; Path = 'G:\OSDCloud\post\PreOOBE\Agent\AgentBootstrapper.exe'
                     DefaultSelected = $false; Command = $script:customCommand
                 }
             }
@@ -114,7 +114,7 @@ InModuleScope OSDCloudPost {
             $engine.Tasks[5].Outcome | Should -Be Succeeded
             Should -Invoke Start-OOBEMenuUpdateWorker -Times 1 -Exactly -ParameterFilter {
                 $Type -eq 'Application' -and $State.ApplicationCommand -eq $script:customCommand -and
-                $State.ApplicationPath -eq 'G:\OSDCloud\core\PreOOBE\Agent\AgentBootstrapper.exe'
+                $State.ApplicationPath -eq 'G:\OSDCloud\post\PreOOBE\Agent\AgentBootstrapper.exe'
             }
         }
 
@@ -206,6 +206,29 @@ InModuleScope OSDCloudPost {
             1..3 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
             ($script:types -join ',') | Should -Be 'DriverPack,Time,Software,Software,Driver'
             $engine.Tasks[2].Outcome | Should -Be 'Succeeded'
+            $engine.Complete | Should -BeTrue
+        }
+
+        It 'continues past both offline Windows Update tasks without pausing and carries the failed Wi-Fi state forward' {
+            $script:sharedWireless = @{}
+            Mock Start-OOBEMenuUpdateWorker {
+                $script:types.Add($Type)
+                $script:sharedWireless[$Type] = $State.WirelessRecoveryFailed
+                $State.Outcome = 'Skipped'
+                $State.WirelessRecoveryFailed = $true
+                $pipeline = [pscustomobject]@{ Streams = [pscustomobject]@{ Error = @() } }
+                $pipeline | Add-Member ScriptMethod EndInvoke { param($handle) }
+                $pipeline | Add-Member ScriptMethod Dispose {}
+                $runspace = [pscustomobject]@{}
+                $runspace | Add-Member ScriptMethod Dispose {}
+                [pscustomobject]@{ Pipeline = $pipeline; Runspace = $runspace; Handle = [pscustomobject]@{ IsCompleted = $true } }
+            } -ParameterFilter { $Type -in 'Software', 'Driver' }
+            1..6 | ForEach-Object { Update-OSDCloudPreOOBEState -State $engine -PreviewOnly }
+            $engine.Paused | Should -BeFalse
+            $engine.Tasks[2].Outcome | Should -Be 'Skipped'
+            $engine.Tasks[3].Outcome | Should -Be 'Skipped'
+            $script:sharedWireless['Software'] | Should -BeFalse
+            $script:sharedWireless['Driver'] | Should -BeTrue
             $engine.Complete | Should -BeTrue
         }
 
@@ -308,7 +331,7 @@ InModuleScope OSDCloudPost {
 
         It 'passes the application label to the worker for output prefixes' {
             $engine.Tasks = @([pscustomobject]@{
-                Type = 'Application'; Name = 'Agent [G:]'; Path = 'G:\OSDCloud\core\PreOOBE\Agent\Invoke-AppDeployToolkit.exe'
+                Type = 'Application'; Name = 'Agent [G:]'; Path = 'G:\OSDCloud\post\PreOOBE\Agent\Invoke-AppDeployToolkit.exe'
                 Command = $null; Enabled = $true; Outcome = 'Pending'; DurationMs = 0L; Started = $null; Finished = $null
             })
             Mock Start-OOBEMenuUpdateWorker { $script:sharedName = $State.ApplicationName; throw 'stop here' }
@@ -418,6 +441,31 @@ InModuleScope OSDCloudPost {
             Mock Invoke-OSDCloudPreOOBEWirelessRecovery { $State.CancelRequested = $true; $false }
             Invoke-OSDCloudPreOOBETask -Type Software -State $state
             $state.Outcome | Should -Be Cancelled
+            Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 0 -Exactly
+        }
+
+        It 'skips both update tasks and offers Wi-Fi only once when it cannot be established' {
+            Mock Test-OSDCloudPreOOBEConnectivity { [pscustomobject]@{ Connected = $false; Reason = 'offline' } }
+            Invoke-OSDCloudPreOOBETask -Type Software -State $state
+            $state.Outcome | Should -Be Skipped
+            $state.WirelessRecoveryFailed | Should -BeTrue
+            Invoke-OSDCloudPreOOBETask -Type Driver -State $state
+            $state.Outcome | Should -Be Skipped
+            Should -Invoke Invoke-OSDCloudPreOOBEWirelessRecovery -Times 1 -Exactly
+            Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 0 -Exactly
+        }
+
+        It 'skips instead of failing when the <Stage> throws' -TestCases @(
+            @{ Stage = 'connectivity check' }, @{ Stage = 'Wi-Fi recovery' }
+        ) {
+            param($Stage)
+            if ($Stage -eq 'connectivity check') { Mock Test-OSDCloudPreOOBEConnectivity { throw 'Network stack unavailable' } }
+            else {
+                Mock Test-OSDCloudPreOOBEConnectivity { [pscustomobject]@{ Connected = $false; Reason = 'offline' } }
+                Mock Invoke-OSDCloudPreOOBEWirelessRecovery { throw 'WLAN unavailable' }
+            }
+            Invoke-OSDCloudPreOOBETask -Type Software -State $state
+            $state.Outcome | Should -Be Skipped
             Should -Invoke Invoke-OOBEMenuWindowsUpdate -Times 0 -Exactly
         }
 
@@ -550,7 +598,7 @@ InModuleScope OSDCloudPost {
         It 'focuses highlighted Start and tabs through every action and offscreen application in both directions' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {
-                    [pscustomobject]@{ Name = "Custom App $_"; Path = "G:\OSDCloud\core\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
+                    [pscustomobject]@{ Name = "Custom App $_"; Path = "G:\OSDCloud\post\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
                 }
             }
             $uiProbeTimer.Add_Tick({
@@ -719,7 +767,7 @@ InModuleScope OSDCloudPost {
         It 'renders discovered application checkboxes after Windows Update - Drivers and allows unchecking' {
             Mock Get-OSDCloudPreOOBEApplication {
                 1..12 | ForEach-Object {
-                    [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\core\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
+                    [pscustomobject]@{ Name = "Custom App $_ [G:]"; Path = "G:\OSDCloud\post\PreOOBE\App$_\Invoke-AppDeployToolkit.exe" }
                 }
             }
             $uiProbeTimer.Add_Tick({
@@ -798,7 +846,7 @@ InModuleScope OSDCloudPost {
 
         It 'renders a manifest application initially unchecked and allows selecting it' {
             Mock Get-OSDCloudPreOOBEApplication {
-                [pscustomobject]@{ Name = 'Optional Agent'; Path = 'G:\OSDCloud\core\PreOOBE\Agent\AgentBootstrapper.exe'; DefaultSelected = $false }
+                [pscustomobject]@{ Name = 'Optional Agent'; Path = 'G:\OSDCloud\post\PreOOBE\Agent\AgentBootstrapper.exe'; DefaultSelected = $false }
             }
             $uiProbeTimer.Add_Tick({
                 $uiProbeTimer.Stop()
@@ -1001,6 +1049,52 @@ InModuleScope OSDCloudPost {
             $result.Small | Should -BeGreaterThan 0
             $result.Maximized | Should -Be ([Windows.WindowState]::Maximized)
             $result.Restored | Should -Be ([Windows.WindowState]::Normal)
+        }
+    }
+
+    Describe 'OSDCloud Post settings' {
+        BeforeEach {
+            Mock Write-OOBEMenuLog {}
+            Mock Get-OSDCloudPreOOBEApplication {}
+            $settingsPath = Join-Path $TestDrive 'OSDCloudPost.json'
+            Remove-Item -LiteralPath $settingsPath -Force -ErrorAction SilentlyContinue
+        }
+
+        It 'starts Windows Update tasks unchecked when the deployment turned them off' {
+            '{"Version":1,"PreOOBE":{"WindowsUpdateOS":false,"WindowsUpdateDrivers":true}}' |
+                Set-Content -LiteralPath $settingsPath
+            Mock Get-OSDCloudPostSetting { & (Get-Command Get-OSDCloudPostSetting -CommandType Function).ScriptBlock -Path $settingsPath }
+            $state = New-OSDCloudPreOOBEState
+            $software = $state.Tasks | Where-Object Type -eq Software
+            $driver = $state.Tasks | Where-Object Type -eq Driver
+            $software.Name | Should -Be 'Windows Update - OS'
+            $software.Enabled | Should -BeFalse
+            $driver.Name | Should -Be 'Windows Update - Drivers'
+            $driver.Enabled | Should -BeTrue
+            ($state.Tasks | Where-Object Type -eq DriverPack).Enabled | Should -BeTrue
+            ($state.Output -join "`n") | Should -BeLike '*Windows Update - OS unchecked*'
+        }
+
+        It 'keeps both tasks checked for a missing or invalid file' -TestCases @(
+            @{ Json = $null }
+            @{ Json = 'not json' }
+            @{ Json = '{"Version":2,"PreOOBE":{"WindowsUpdateOS":false,"WindowsUpdateDrivers":false}}' }
+            @{ Json = '{"Version":1,"PreOOBE":{"WindowsUpdateOS":"false","WindowsUpdateDrivers":false}}' }
+            @{ Json = '{"Version":1}' }
+        ) {
+            param ($Json)
+            if ($Json) { $Json | Set-Content -LiteralPath $settingsPath }
+            $setting = Get-OSDCloudPostSetting -Path $settingsPath
+            $setting.WindowsUpdateOS | Should -BeTrue
+            $setting.WindowsUpdateDrivers | Should -BeTrue
+        }
+
+        It 'ignores the system settings file in preview' {
+            $Preview = $true
+            Mock Test-Path { $true }
+            $setting = Get-OSDCloudPostSetting
+            $setting.WindowsUpdateOS | Should -BeTrue
+            Should -Invoke Test-Path -Times 0 -Exactly
         }
     }
 }

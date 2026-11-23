@@ -159,6 +159,14 @@ Describe 'Initialize-DeployOSDCloud ModelDrivers defaults' {
         $global:OSDCloudDeploy.DiskSizeOS | Should -BeNullOrEmpty
     }
 
+    It 'defaults the OSDCloud Post selections' {
+        Initialize-DeployOSDCloud
+        $global:OSDCloudDeploy.PostAction | Should -Be 'Quit'
+        ($global:OSDCloudDeploy.PostActionValues -join ',') | Should -Be 'Quit,Restart,Shutdown,Exit'
+        $global:OSDCloudDeploy.PreOOBEWindowsUpdateOS | Should -BeTrue
+        $global:OSDCloudDeploy.PreOOBEWindowsUpdateDrivers | Should -BeTrue
+    }
+
     It 'retains all disk overrides without losing disk number zero' {
         Initialize-DeployOSDCloud -DiskNumber 0 -DiskLabelOS Windows -DiskLabelRecovery WinRE `
             -DiskSizeSystem 1GB -DiskSizeOS 32GB -DiskSizeRecovery 3GB -WarningVariable warnings

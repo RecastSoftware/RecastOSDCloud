@@ -603,7 +603,7 @@ function Invoke-OSDCloudBootMenu {
 
         if ($candidateProfiles.Count -gt 0) {
             # Force array semantics so .Count and indexing behave reliably on PS 5.1 even with a single item.
-            $orderedProfiles = @($candidateProfiles | Sort-Object Path)
+            $orderedProfiles = @($candidateProfiles | Sort-Object Profile, Path)
             $currentIndex = 1
 
             foreach ($menuEntry in $orderedProfiles) {

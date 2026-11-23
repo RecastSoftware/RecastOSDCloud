@@ -6,7 +6,7 @@ function Invoke-OSDCloudSetupComplete {
     .DESCRIPTION
         Requires SYSTEM in full Windows using Windows PowerShell 5.1.
         Searches immediate package folders under SystemRoot\Setup\SetupComplete,
-        then A: through Z: under OSDCloud\core\SetupComplete, sorted by folder name
+        then A: through Z: under OSDCloud\post\SetupComplete, sorted by folder name
         within each root. Requires OSDCloudSetupComplete.json in each package.
 
         Runs enabled matching scripts sequentially in noninteractive child processes.
