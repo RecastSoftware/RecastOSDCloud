@@ -392,7 +392,7 @@ function Show-OOBEMenuWindow {
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
- Title="OSDCloudPreOOBE" Width="820" Height="480" MinWidth="520" MinHeight="360"
+ Title="OSDCloudPreOOBE" Width="900" Height="480" MinWidth="520" MinHeight="360"
  WindowStartupLocation="Manual" Background="#161F5B" Foreground="#F5F5F5"
  FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Topmost="True"
  UseLayoutRounding="True" SnapsToDevicePixels="True" KeyboardNavigation.TabNavigation="Cycle"
@@ -474,14 +474,14 @@ function Show-OOBEMenuWindow {
    <Setter Property="Height" Value="40"/><Setter Property="Padding" Value="19,0,12,0"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="CheckBox">
     <Border x:Name="StepBorder" Background="Transparent" Padding="{TemplateBinding Padding}">
-     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-      <Border x:Name="Box" Width="18" Height="18" CornerRadius="4" BorderThickness="1"
+     <DockPanel VerticalAlignment="Center" LastChildFill="True">
+      <Border x:Name="Box" DockPanel.Dock="Left" Width="18" Height="18" CornerRadius="4" BorderThickness="1"
        BorderBrush="{StaticResource BorderBrush}" Background="{StaticResource ControlBrush}">
        <TextBlock x:Name="Check" Text="&#xE73E;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="12"
         Foreground="#111949" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed"/>
       </Border>
-      <ContentPresenter Margin="12,0,0,0" VerticalAlignment="Center"/>
-     </StackPanel>
+      <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Text="{TemplateBinding Content}" TextTrimming="CharacterEllipsis"/>
+     </DockPanel>
     </Border>
     <ControlTemplate.Triggers>
      <Trigger Property="IsChecked" Value="True">
@@ -588,7 +588,7 @@ function Show-OOBEMenuWindow {
    </StackPanel>
   </Grid>
   <Grid Grid.Row="1">
-   <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="220"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Grid.ColumnDefinitions><ColumnDefinition x:Name="SidebarColumn" Width="300"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Background="{StaticResource SidebarBrush}">
     <ScrollViewer Focusable="False" KeyboardNavigation.IsTabStop="False" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
      <StackPanel x:Name="StepPanel" Margin="0,8,0,0" AutomationProperties.Name="PreOOBE steps"/>
@@ -752,7 +752,7 @@ function Show-OOBEMenuWindow {
     $ui.PaneExpanded = $true
     $ui.StepBoxes = [Collections.Generic.List[object]]::new()
     $setPane = {
-        $window.FindName('SidebarColumn').Width = [Windows.GridLength]::new($(if ($ui.PaneExpanded) { 220 } else { 56 }))
+        $window.FindName('SidebarColumn').Width = [Windows.GridLength]::new($(if ($ui.PaneExpanded) { 300 } else { 56 }))
         $name = if ($ui.PaneExpanded) { 'Collapse steps' } else { 'Expand steps' }
         $window.FindName('PaneToggleButton').ToolTip = $name
         [Windows.Automation.AutomationProperties]::SetName($window.FindName('PaneToggleButton'), $name)

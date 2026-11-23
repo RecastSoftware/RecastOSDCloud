@@ -983,7 +983,7 @@ InModuleScope OSDCloudPreOOBE {
             $result.ContinueOobe | Should -Be ([Windows.Visibility]::Collapsed)
             $result.Steps | Should -Be 4
             $result.Collapsed | Should -Be 56
-            $result.Expanded | Should -Be 220
+            $result.Expanded | Should -Be 300
             $result.StepName | Should -Be 'Driver unpack / install'
             $result.ToggleName | Should -Be 'Collapse steps'
             $result.CollapsedStep | Should -BeNullOrEmpty
