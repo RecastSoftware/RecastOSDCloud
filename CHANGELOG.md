@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Stop reading `ID_REGISTEREDEMAIL` and the license email: `OSDCoreDevice` no longer has `idRegisteredEmail` (personal information), and the registered message no longer shows an email. `idRegisteredLicense` is unchanged.
 - OSDCloud BootMenu honors an optional `OSDCloud\core\bootmenu-profiles\order.json` (`schemaVersion` 1, `profiles` list of `info.id` GUIDs) written by the OSDCloud Boot builder. Ordered profiles are listed first in that order; unlisted profiles follow sorted by name, and a malformed file is ignored with a warning.
 - Sort OSDCloud BootMenu profiles by name (`info.name`) instead of profile path in the selection window, the `-CLI` numbered prompt and `Test-OSDCloudBootMenu`. Path is the tiebreaker for profiles with the same name.
 - Merge the standalone OSDCloudPreOOBE and OSDCloudSetupComplete modules into a single `OSDCloudPost` module (`OSDCloud\core\modules\OSDCloudPost`) that exports `Invoke-OSDCloudPreOOBE` (alias `OSDCloudPreOOBE`) and `Invoke-OSDCloudSetupComplete`. One `step-update-osdcloudpost` step replaces `step-update-preoobe` and `step-update-setupcomplete`, stages the module to `C:\Windows\Setup\Modules\OSDCloudPost`, and removes the retired module folders. Logs, the driver-pack handoff file and the batch block markers are unchanged.

@@ -738,23 +738,15 @@ function Initialize-OSDCoreDevice {
         $idOSDeployBoot = [System.String]$env:ID_OSDEPLOYBOOT
     }
 
-    $idRegisteredEmail = $null
-    if (-not [string]::IsNullOrWhiteSpace($env:ID_REGISTEREDEMAIL)) {
-        $idRegisteredEmail = [System.String]$env:ID_REGISTEREDEMAIL
-    }
-
     $idRegisteredLicense = $null
     if (-not [string]::IsNullOrWhiteSpace($env:ID_REGISTEREDLICENSE)) {
         $idRegisteredLicense = [System.String]$env:ID_REGISTEREDLICENSE
     }
 
-    if ([string]::IsNullOrWhiteSpace($idRegisteredEmail) -or [string]::IsNullOrWhiteSpace($idRegisteredLicense)) {
+    if ([string]::IsNullOrWhiteSpace($idRegisteredLicense)) {
         try {
             if (-not $global:OSDCoreLicense.License) {
                 Initialize-OSDCoreLicense
-            }
-            if ([string]::IsNullOrWhiteSpace($idRegisteredEmail) -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreLicense.License.Email)) {
-                $idRegisteredEmail = [System.String]$global:OSDCoreLicense.License.Email
             }
             if ([string]::IsNullOrWhiteSpace($idRegisteredLicense) -and -not [string]::IsNullOrWhiteSpace($global:OSDCoreLicense.License.LicenseGuid)) {
                 $idRegisteredLicense = [System.String]$global:OSDCoreLicense.License.LicenseGuid
@@ -767,7 +759,7 @@ function Initialize-OSDCoreDevice {
     #   OSLanguage
     #=================================================
     if ($global:OSDCoreLicense.IsRegistered) {
-        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered to $idRegisteredEmail"
+        Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] OSDCloud is registered"
         if (Get-Command -Name 'Convert-KeyboardLayoutToLanguageCode' -ErrorAction Ignore) {
             $AutoOSLanguageCode = Convert-KeyboardLayoutToLanguageCode -KeyboardLayout $KeyboardLayout -FallbackLanguageCode 'en-US' -LowerCase
         }
@@ -857,7 +849,6 @@ function Initialize-OSDCoreDevice {
         EndpointSHA              = [System.String]$EndpointSHA #Device UUID SHA256
         idOSDeployDevice         = $idOSDeployDevice
         idOSDeployBoot           = $idOSDeployBoot
-        idRegisteredEmail        = $idRegisteredEmail
         idRegisteredLicense      = $idRegisteredLicense
     }
     #=================================================
