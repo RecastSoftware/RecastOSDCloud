@@ -108,11 +108,11 @@ examples. Do not execute stored commands during authoring or validation.
 
 ## Lifecycle and validation
 
-The standalone runtime is bundled at `OSDCloud\core\modules\OSDCloudBootMenu`.
+The standalone runtime is bundled at `OSDCloud\core\modules\OSDCloudWinPE`.
 Import its manifest explicitly on a technician host; Invoke/Test commands are
 not exported by OSDCloud. OSDCloudBoot stages the complete folder as a top-level
 Windows PowerShell module and explicitly imports it in standard startnet.cmd.
-Do not add OSDCloudBootMenu to Gallery `installModule` entries.
+Do not add OSDCloudWinPE to Gallery `installModule` entries.
 Profile child sessions import BootMenu automatically. OSDCloud commands should
 import OSDCloud explicitly.
 Keep bundled examples mirrored in the runtime's `core\bootmenu-profiles`,
@@ -128,7 +128,7 @@ Dot-source `Assert-OSDCloudBootMenuProfile.ps1` and
 `ConvertFrom-OSDCloudBootMenuProfile.ps1` from the owning module's `private`
 directory, then validate with `Assert-OSDCloudBootMenuProfile -Path <file>`.
 Conversion returns settings without executing commands. The helper sources in
-OSDCloudBoot and `OSDCloud\core\modules\OSDCloudBootMenu` are mirrored to support independent module deployment;
+OSDCloudBoot and `OSDCloud\core\modules\OSDCloudWinPE` are mirrored to support independent module deployment;
 keep their schema and conversion behavior aligned and test on PowerShell 5.1.
 
 `Invoke-WinpeStartup`, `core\winpestartup-profiles`, and the flat

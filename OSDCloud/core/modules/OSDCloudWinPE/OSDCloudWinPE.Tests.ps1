@@ -1,15 +1,15 @@
 BeforeDiscovery {
-    Import-Module (Join-Path $PSScriptRoot 'OSDCloudBootMenu.psd1') -Force -ErrorAction Stop
+    Import-Module (Join-Path $PSScriptRoot 'OSDCloudWinPE.psd1') -Force -ErrorAction Stop
 }
 
 BeforeAll {
     $script:moduleRoot = $PSScriptRoot
-    Import-Module (Join-Path $moduleRoot 'OSDCloudBootMenu.psd1') -Force -ErrorAction Stop
+    Import-Module (Join-Path $moduleRoot 'OSDCloudWinPE.psd1') -Force -ErrorAction Stop
     $script:windowsPowerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 }
 
 AfterAll {
-    Remove-Module OSDCloudBootMenu -Force -ErrorAction SilentlyContinue
+    Remove-Module OSDCloudWinPE -Force -ErrorAction SilentlyContinue
 }
 
 Describe 'Standalone BootMenu process isolation' {
@@ -17,7 +17,7 @@ Describe 'Standalone BootMenu process isolation' {
         $parentManifest = Import-PowerShellDataFile (Join-Path $moduleRoot '..\..\..\OSDCloud.psd1') -ErrorAction Stop
         $parentManifest.FunctionsToExport | Should -Not -Contain 'Invoke-OSDCloudBootMenu'
         $parentManifest.FunctionsToExport | Should -Not -Contain 'Test-OSDCloudBootMenu'
-        $manifest = Import-PowerShellDataFile (Join-Path $moduleRoot 'OSDCloudBootMenu.psd1')
+        $manifest = Import-PowerShellDataFile (Join-Path $moduleRoot 'OSDCloudWinPE.psd1')
         foreach ($file in @(Get-ChildItem (Join-Path $moduleRoot 'private'), (Join-Path $moduleRoot 'public') -Filter '*.ps1' -File |
                     Where-Object { $_.Name -notlike '*.Tests.ps1' })) {
             $relativePath = $file.FullName.Substring($moduleRoot.Length + 1)
@@ -26,10 +26,10 @@ Describe 'Standalone BootMenu process isolation' {
     }
 
     It 'imports a relocated payload without OSDCloud or startup side effects' {
-        $isolatedRoot = Join-Path $TestDrive "relocated O'Brien\OSDCloudBootMenu"
+        $isolatedRoot = Join-Path $TestDrive "relocated O'Brien\OSDCloudWinPE"
         $null = New-Item -Path $isolatedRoot -ItemType Directory -Force
         Copy-Item -Path (Join-Path $moduleRoot '*') -Destination $isolatedRoot -Recurse -Force
-        $manifestPath = (Join-Path $isolatedRoot 'OSDCloudBootMenu.psd1').Replace("'", "''")
+        $manifestPath = (Join-Path $isolatedRoot 'OSDCloudWinPE.psd1').Replace("'", "''")
         $child = @"
 Import-Module Microsoft.PowerShell.Management, Microsoft.PowerShell.Utility -ErrorAction Stop
 `$env:PSModulePath = Join-Path `$PSHOME 'Modules'
@@ -38,12 +38,12 @@ function global:Start-Process { throw 'Unexpected process launch during import' 
 function global:Start-Transcript { throw 'Unexpected startup during import' }
 `$module = Import-Module '$manifestPath' -PassThru -ErrorAction Stop
 if (Get-Module OSDCloud) { throw 'OSDCloud was loaded' }
-`$commands = @(Get-Command -Module OSDCloudBootMenu)
+`$commands = @(Get-Command -Module OSDCloudWinPE)
 if (`$commands.Count -ne 4) { throw 'Unexpected exports' }
 `$scriptText = & `$module { New-OSDCloudBootMenuChildCommand -Command '(Get-Command Initialize-WinpeStartupEnvironment).ModuleName' -Private }
 `$encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes(`$scriptText))
 `$result = & '$windowsPowerShell' -NoProfile -EncodedCommand `$encoded
-if (`$LASTEXITCODE -ne 0 -or `$result -ne 'OSDCloudBootMenu') { throw 'Private child helper did not resolve' }
+if (`$LASTEXITCODE -ne 0 -or `$result -ne 'OSDCloudWinPE') { throw 'Private child helper did not resolve' }
 'isolated-import-and-child-ok'
 "@
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($child))
@@ -53,7 +53,7 @@ if (`$LASTEXITCODE -ne 0 -or `$result -ne 'OSDCloudBootMenu') { throw 'Private c
     }
 
     Describe 'Standalone BootMenu bundled profiles' {
-        InModuleScope OSDCloudBootMenu {
+        InModuleScope OSDCloudWinPE {
             It 'validates every bundled profile without changing command or environment types' {
                 $moduleRoot = Split-Path $script:OSDCloudBootMenuModulePath -Parent
                 $roots = @(
@@ -74,7 +74,7 @@ if (`$LASTEXITCODE -ne 0 -or `$result -ne 'OSDCloudBootMenu') { throw 'Private c
     }
 
     Describe 'Standalone BootMenu shell initialization' {
-        InModuleScope OSDCloudBootMenu {
+        InModuleScope OSDCloudWinPE {
             It 'keeps ungated shell setup without discovering licensed assets' {
                 $savedEnvironment = @{}
                 foreach ($name in @('SystemDrive', 'APPDATA', 'HOMEDRIVE', 'HOMEPATH', 'LOCALAPPDATA', 'USERPROFILE')) {
@@ -104,7 +104,7 @@ if (`$LASTEXITCODE -ne 0 -or `$result -ne 'OSDCloudBootMenu') { throw 'Private c
     }
 
     It 'reports a missing OSDCloud action dependency as a child failure' {
-        $command = & (Get-Module OSDCloudBootMenu) {
+        $command = & (Get-Module OSDCloudWinPE) {
             New-OSDCloudBootMenuChildCommand -Command @'
 $env:PSModulePath = Join-Path $env:TEMP ('BootMenuAbsent-' + [guid]::NewGuid().ToString('N'))
 Import-Module -Name OSDCloud -ErrorAction Stop
@@ -140,7 +140,7 @@ Show-WinpeStartupIpconfig
 Show-WinpeStartupWifi
 if (Get-Module OSDCloud) { throw 'Unexpected OSDCloud dependency' }
 "@
-        & (Get-Module OSDCloudBootMenu) {
+        & (Get-Module OSDCloudWinPE) {
             param($Command)
             Invoke-PEStartupCommand -Command $Command -WindowStyle Hidden -Wait
         } $command
@@ -150,7 +150,7 @@ if (Get-Module OSDCloud) { throw 'Unexpected OSDCloud dependency' }
 }
 
 Describe 'Module-owned BootMenu runtime' {
-    InModuleScope OSDCloudBootMenu {
+    InModuleScope OSDCloudWinPE {
         BeforeEach {
             $script:savedSystemDrive = $env:SystemDrive
             $env:SystemDrive = 'X:'

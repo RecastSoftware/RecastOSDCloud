@@ -11,7 +11,7 @@ Boot image builder asset libraries are separate from these runtime locations.
 - `<drive>:` means a mounted file-system drive letter, not necessarily USB.
   Individual features restrict the letters or eligible volumes as noted below.
 - `<ModuleRoot>` is the installed OSDCloud module directory, not the repository root.
-- `<BootMenuRoot>` is the standalone OSDCloudBootMenu module directory.
+- `<BootMenuRoot>` is the standalone OSDCloudWinPE module directory.
 - `<arch>` is `amd64` or `arm64`.
 - `<name>` and `<application>` are immediate child folders unless stated otherwise.
 - `%ProgramData%` normally resolves to `C:\ProgramData`; `%SystemRoot%` normally
@@ -95,14 +95,14 @@ selected-profile Packs expand under `X:\OSDCloud\bootpack-expanded`.
 | `<asset-root>\winpe-reg\*.reg` | WinPE registry customization. | Immediate `.reg` files imported with `reg.exe`. |
 | `<asset-root>\winpe-root-cer\*.cer` | Trusted machine root certificates for WinPE. | Immediate `.cer` files imported with `certutil.exe`. |
 
-Sources: [BootMenu profile discovery](../OSDCloud/core/modules/OSDCloudBootMenu/private/Get-OSDCloudBootMenuProfileCandidates.ps1),
-[BootMenu runtime](../OSDCloud/core/modules/OSDCloudBootMenu/public/Invoke-OSDCloudBootMenu.ps1),
-[Import Pack processing](../OSDCloud/core/modules/OSDCloudBootMenu/private/Invoke-WinpeStartupBootPackScripts.ps1),
+Sources: [BootMenu profile discovery](../OSDCloud/core/modules/OSDCloudWinPE/private/Get-OSDCloudBootMenuProfileCandidates.ps1),
+[BootMenu runtime](../OSDCloud/core/modules/OSDCloudWinPE/public/Invoke-OSDCloudBootMenu.ps1),
+[Import Pack processing](../OSDCloud/core/modules/OSDCloudWinPE/private/Invoke-WinpeStartupBootPackScripts.ps1),
 [legacy profile discovery](../OSDCloud/private/Get-WinpeStartupProfileCandidates.ps1),
 [startup assets](../OSDCloud/private/WinpeStartup/Import-WinpeStartupAssets.ps1),
 [startup drivers](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupDrivers.ps1),
 [startup files](../OSDCloud/private/WinpeStartup/Initialize-WinpeStartupFiles.ps1),
-and [Wi-Fi profile lookup](../OSDCloud/core/modules/OSDCloudBootMenu/private/Show-WinpeStartupWifi.ps1).
+and [Wi-Fi profile lookup](../OSDCloud/core/modules/OSDCloudWinPE/private/Show-WinpeStartupWifi.ps1).
 
 ## PreOOBE
 
@@ -157,7 +157,7 @@ and [package examples](../OSDCloud/core/modules/OSDCloudPost/files/SetupComplete
 | `<ModuleRoot>\workflow\<workflow>\ui\MainWindow.ps1` | Workflow-specific deployment UI script. | Takes precedence over the default candidate. |
 | `<ModuleRoot>\workflow\default\ux\MainWindow.ps1` | Legacy default deployment UI script. | Checked instead of the default `ui` path only when the default `ui` directory is missing. |
 | `<ModuleRoot>\workflow\<workflow>\ux\MainWindow.ps1` | Legacy workflow-specific deployment UI script. | Checked instead of the selected workflow's `ui` path only when that workflow's `ui` directory is missing. |
-| `<ModuleRoot>\core\modules\OSDCloudBootMenu\OSDCloudBootMenu.psd1` | Bundled standalone BootMenu module. | Explicit module import or Boot builder staging source, not a scan of attached drives. |
+| `<ModuleRoot>\core\modules\OSDCloudWinPE\OSDCloudWinPE.psd1` | Bundled standalone BootMenu module. | Explicit module import or Boot builder staging source, not a scan of attached drives. |
 | `<ModuleRoot>\classes\*.ps1` | PowerShell class definitions. | Immediate files loaded before functions; test scripts excluded. |
 | `<ModuleRoot>\private\*.ps1` | Module helper implementations. | Recursive import; test scripts excluded. |
 | `<ModuleRoot>\public\WinOS\*.ps1` | General exported command implementations. | Recursive import; test scripts excluded. |

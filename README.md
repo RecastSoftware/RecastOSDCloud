@@ -43,13 +43,13 @@ complete release notes and older history.
 ## Standalone BootMenu (development)
 
 BootMenu is bundled as a separate module in
-[OSDCloud/core/modules/OSDCloudBootMenu](OSDCloud/core/modules/OSDCloudBootMenu).
+[OSDCloud/core/modules/OSDCloudWinPE](OSDCloud/core/modules/OSDCloudWinPE).
 `Invoke-OSDCloudBootMenu` and `Test-OSDCloudBootMenu` are no longer exported by
 OSDCloud. Import the embedded module explicitly on a technician host:
 
 ```powershell
 Import-Module .\OSDCloud\OSDCloud.psd1
-Import-Module (Join-Path (Get-OSDCloudModulePath) 'core\modules\OSDCloudBootMenu\OSDCloudBootMenu.psd1')
+Import-Module (Join-Path (Get-OSDCloudModulePath) 'core\modules\OSDCloudWinPE\OSDCloudWinPE.psd1')
 Test-OSDCloudBootMenu -SampleProfiles
 ```
 
@@ -57,7 +57,7 @@ The standalone folder contains its runtime, private startup helpers, defaults,
 license reader, logo, and bundled profile examples. Import alone does not start
 WinPE initialization or deployment. OSDCloudBoot copies this folder into a
 top-level Windows PowerShell module directory in new boot images; startup uses
-`Import-Module OSDCloudBootMenu -ErrorAction Stop` before invoking the menu.
+`Import-Module OSDCloudWinPE -ErrorAction Stop` before invoking the menu.
 It is not a separately published Gallery package.
 
 BootMenu startup does not import OSDCloud. Deployment, device information, and

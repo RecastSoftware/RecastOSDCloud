@@ -1,4 +1,4 @@
-$script:OSDCloudBootMenuModulePath = Join-Path $PSScriptRoot 'OSDCloudBootMenu.psd1'
+$script:OSDCloudBootMenuModulePath = Join-Path $PSScriptRoot 'OSDCloudWinPE.psd1'
 $script:OSDCloudBootMenuDefaultsPath = Join-Path $PSScriptRoot 'core\PSDefaultParameterValues.json'
 $moduleFiles = (Import-PowerShellDataFile -LiteralPath $script:OSDCloudBootMenuModulePath -ErrorAction Stop).FileList
 

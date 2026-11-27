@@ -95,7 +95,7 @@ Describe 'Portable encrypted strings' {
     }
 
     It 'encrypts and decrypts across Windows PowerShell 5.1 and the current runtime' {
-        $modulePath = Join-Path $PSScriptRoot '..\OSDCloudBootMenu.psd1'
+        $modulePath = Join-Path $PSScriptRoot '..\OSDCloudWinPE.psd1'
         $inputPath = Join-Path $TestDrive 'portable-token.txt'
         Protect-OSDCloudBootString -InputString 'Synthetic portable' -Password $password | Set-Content -LiteralPath $inputPath
         $child = @'

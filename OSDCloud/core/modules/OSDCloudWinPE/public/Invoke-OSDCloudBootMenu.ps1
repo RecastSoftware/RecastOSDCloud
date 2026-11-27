@@ -23,7 +23,7 @@ function Invoke-OSDCloudBootMenu {
         Deploy-OSDCloud runs after the standard startup checks.
         Legacy winpestartup.json and Invoke-WinpeStartup remain separate.
 
-        Import OSDCloudBootMenu before calling this command. All startup helpers,
+        Import OSDCloudWinPE before calling this command. All startup helpers,
         defaults, licensing helpers, and UI resources belong to this module.
         Child command sessions explicitly import the running BootMenu manifest.
         OSDCloud-specific profile commands require OSDCloud; ordinary startup does
@@ -215,7 +215,7 @@ function Invoke-OSDCloudBootMenu {
         Company: Recast Software
         Version: 1.0.0
         Date:    2026-11-04
-        Module:  OSDCloudBootMenu
+        Module:  OSDCloudWinPE
         This function is intended for WinPE scenarios.
     #>
     [CmdletBinding()]

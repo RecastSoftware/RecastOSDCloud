@@ -18,7 +18,7 @@ function Test-OSDCloudBootMenu {
         through Z:. Unlike Invoke-OSDCloudBootMenu, the window is shown even
         when only one profile is found. When no profiles are found, or discovery
         fails, sample profiles are shown instead and a warning explains why.
-        Import the standalone OSDCloudBootMenu manifest before calling this
+        Import the standalone OSDCloudWinPE manifest before calling this
         command. OSDCloud is needed only if the Explorer action is selected.
 
     .PARAMETER SampleProfiles

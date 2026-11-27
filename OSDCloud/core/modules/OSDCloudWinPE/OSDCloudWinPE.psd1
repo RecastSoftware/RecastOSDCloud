@@ -1,5 +1,5 @@
 @{
-    RootModule           = 'OSDCloudBootMenu.psm1'
+    RootModule           = 'OSDCloudWinPE.psm1'
     ModuleVersion        = '26.11.3'
     GUID                 = 'bcd062a1-829c-4230-a7d1-ab28d8f41f44'
     Author               = 'David Segura'
@@ -13,8 +13,8 @@
     CmdletsToExport      = @()
     VariablesToExport    = @()
     FileList             = @(
-        'OSDCloudBootMenu.psd1'
-        'OSDCloudBootMenu.psm1'
+        'OSDCloudWinPE.psd1'
+        'OSDCloudWinPE.psm1'
         'core\PSDefaultParameterValues.json'
         'core\recast-logo.png'
         'core\bootmenu-profiles\235fcd11-ff37-4382-9f18-edc9f0ee642e\osdcloudbootmenu.json'

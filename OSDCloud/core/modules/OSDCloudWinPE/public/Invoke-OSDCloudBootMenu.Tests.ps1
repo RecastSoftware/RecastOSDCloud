@@ -438,7 +438,7 @@ $module = Import-Module $ModulePath -PassThru
     }
 } $ProfilePath $ResultPath
 '@ | Set-Content -LiteralPath $scriptPath
-        $modulePath = Join-Path $PSScriptRoot '..\OSDCloudBootMenu.psd1'
+        $modulePath = Join-Path $PSScriptRoot '..\OSDCloudWinPE.psd1'
         $output = & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -File $scriptPath $modulePath $script:candidate.Path $resultPath 2> (Join-Path $TestDrive 'interrupt.stderr')
         Get-Content -LiteralPath $resultPath | Should -BeExactly 'True'
     }

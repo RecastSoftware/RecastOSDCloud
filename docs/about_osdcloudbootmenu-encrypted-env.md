@@ -5,7 +5,7 @@ tokens instead of plaintext values. BootMenu asks for a password after selecting
 the profile, including when a single profile is auto-selected. No archive or
 7-Zip dependency is involved.
 
-This is for **OSDCloudBootMenu**, not legacy `Invoke-WinpeStartup` profiles.
+This is for **OSDCloudWinPE**, not legacy `Invoke-WinpeStartup` profiles.
 Use an updated OSDCloud package containing these commands and rebuild the boot
 image with OSDCloud Boot. Older runtimes reject the new profile section.
 
@@ -64,13 +64,13 @@ not automatically unlock its encrypted variables.
 ## Create tokens on the technician PC
 
 Import the standalone runtime bundled with OSDCloud. These commands are exported
-by `OSDCloudBootMenu`, not the parent `OSDCloud` or builder `OSDCloudBoot` module.
+by `OSDCloudWinPE`, not the parent `OSDCloud` or builder `OSDCloudBoot` module.
 
 ```powershell
 $osdcloud = Get-Module -ListAvailable OSDCloud |
     Sort-Object Version -Descending | Select-Object -First 1
 if (-not $osdcloud) { throw 'Install an updated OSDCloud package first.' }
-Import-Module (Join-Path $osdcloud.ModuleBase 'core\modules\OSDCloudBootMenu\OSDCloudBootMenu.psd1')
+Import-Module (Join-Path $osdcloud.ModuleBase 'core\modules\OSDCloudWinPE\OSDCloudWinPE.psd1')
 
 # Synthetic values only. For real secrets, avoid literals in command history.
 $password = Read-Host -Prompt 'Choose one password for this profile' -AsSecureString

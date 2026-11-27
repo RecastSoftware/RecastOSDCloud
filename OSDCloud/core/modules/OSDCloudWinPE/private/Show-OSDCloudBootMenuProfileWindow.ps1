@@ -634,7 +634,7 @@ function Show-OSDCloudBootMenuProfileWindow {
 
     $moduleVersion = $null
     try {
-        $moduleVersion = [string](Import-PowerShellDataFile -LiteralPath (Join-Path $PSScriptRoot '..\OSDCloudBootMenu.psd1') -ErrorAction Stop).ModuleVersion
+        $moduleVersion = [string](Import-PowerShellDataFile -LiteralPath (Join-Path $PSScriptRoot '..\OSDCloudWinPE.psd1') -ErrorAction Stop).ModuleVersion
     }
     catch {
         Write-Verbose "[$($MyInvocation.MyCommand.Name)] Module version unavailable: $($_.Exception.Message)"
