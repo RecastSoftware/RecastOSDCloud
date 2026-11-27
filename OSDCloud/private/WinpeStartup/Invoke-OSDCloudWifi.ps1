@@ -79,12 +79,12 @@ function Invoke-OSDCloudWifi {
     $null = Start-Transcript -Path $TranscriptFullName -ErrorAction SilentlyContinue
     #=================================================
     # Test-OSDCloudInternetConnection
-    if (Test-OSDCloudInternetConnection -Uri 'google.com') {
-        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ping google.com success. Device is already connected to the Internet"
+    if (Test-OSDCloudInternetConnection -Uri 'http://www.msftconnecttest.com/connecttest.txt') {
+        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft connectivity test succeeded. Device is already connected to the Internet"
         $StartOSDCloudWifi = $false
     }
     else {
-        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Ping google.com failed. Will attempt to connect to a Wireless Network"
+        # Write-Host -ForegroundColor DarkGray "[$(Get-Date -format s)] [INFO] Microsoft connectivity test failed. Will attempt to connect to a Wireless Network"
         $StartOSDCloudWifi = $true
     }
     #=================================================
