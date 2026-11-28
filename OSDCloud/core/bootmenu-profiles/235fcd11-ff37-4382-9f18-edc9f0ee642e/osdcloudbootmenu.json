@@ -37,7 +37,6 @@
     "main": {
       "enabled": true,
       "commands": [
-        "Show-OSDCloudDeviceInfo",
         "Deploy-OSDCloud"
       ],
       "noExit": true,
